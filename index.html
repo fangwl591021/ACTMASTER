@@ -53,6 +53,7 @@
         <h2 class="text-2xl font-black text-slate-800">建立會員檔案</h2>
         <p class="text-sm text-slate-500 font-medium mt-1">填寫一次，未來即可一鍵快速報名</p>
       </div>
+
       <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-4">
         <div class="space-y-1"><label class="text-xs font-bold text-slate-500 ml-1">真實姓名</label><input type="text" id="reg-name" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none focus:ring-2 focus:ring-blue-500"></div>
         <div class="space-y-1"><label class="text-xs font-bold text-slate-500 ml-1">性別</label><select id="reg-gender" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none"><option value="男">男</option><option value="女">女</option></select></div>
@@ -409,18 +410,19 @@
   }
 
   async function userJoinActivity(btn, activityName, feeType, price) {
-    let last5Digits = "";
-    if (feeType === '收費') {
-      last5Digits = prompt(`此為收費活動 (NT$ ${price})\n若已匯款，請輸入「匯款帳號後五碼」：`);
-      if (last5Digits === null) return; 
-      if (last5Digits.trim() === "") return showToast("⚠️ 請輸入後五碼以便核對", true);
-    }
+    if (!confirm(`確定要報名「${activityName}」嗎？`)) return;
 
     btn.classList.add('btn-disabled'); btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 報名中...';
     try {
-      await fetchAPI('joinActivity', { userId: userProfile.userId, activityName, last5Digits });
-      showToast("✅ 報名成功！");
+      await fetchAPI('joinActivity', { userId: userProfile.userId, activityName, last5Digits: '' });
       btn.classList.replace('bg-blue-600', 'bg-green-500'); btn.innerHTML = '<i class="fas fa-check"></i> 已報名';
+      
+      if (feeType === '收費') {
+        showToast("✅ 報名成功！請至歷史紀錄補填匯款後五碼");
+        setTimeout(() => switchView('user-history'), 1500); // 跳轉歷史紀錄讓用戶補填
+      } else {
+        showToast("✅ 報名成功！");
+      }
     } catch(err) {
       showToast(err.message || "報名失敗", true);
       btn.classList.remove('btn-disabled'); btn.innerHTML = '<i class="fas fa-paper-plane"></i> 一鍵報名';
@@ -448,6 +450,18 @@
             : '<span class="text-[10px] text-orange-400 font-bold ml-2"><i class="fas fa-exclamation-circle"></i> 未繳費</span>';
         }
 
+        // 渲染後五碼輸入區塊 (針對收費課程且尚未取消)
+        let last5InputHtml = '';
+        if (item.isPaidAct && item.regStatus === '正常') {
+          last5InputHtml = `
+            <div class="mt-3 flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
+               <i class="fas fa-money-check-alt text-slate-400 ml-1"></i>
+               <input type="text" id="last5-${item.name}" value="${item.last5 || ''}" placeholder="填寫匯款後五碼" maxlength="5" class="flex-1 bg-transparent text-sm font-bold outline-none text-slate-700 placeholder-slate-400">
+               <button onclick="updateUserLast5('${item.name}')" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors">儲存</button>
+            </div>
+          `;
+        }
+
         return `
         <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 relative">
           <div class="flex justify-between items-start">
@@ -463,14 +477,44 @@
                ${item.checkedIn ? '<i class="fas fa-check-circle text-green-500 text-2xl"></i><span class="text-[10px] font-bold text-green-600 mt-1">已簽到</span>' : '<i class="fas fa-clock text-slate-300 text-2xl"></i><span class="text-[10px] font-bold text-slate-400 mt-1">未簽到</span>'}
             </div>
           </div>
+          
+          ${last5InputHtml}
+
           ${item.regStatus === '正常' && !item.checkedIn ? `
-          <button onclick="userCancelRegistration('${item.name}')" class="mt-4 w-full py-2 bg-slate-50 text-slate-500 rounded-xl text-xs font-bold hover:bg-red-50 hover:text-red-500 transition-colors border border-slate-200">
+          <button onclick="userCancelRegistration('${item.name}')" class="mt-3 w-full py-2 bg-slate-50 text-slate-500 rounded-xl text-xs font-bold hover:bg-red-50 hover:text-red-500 transition-colors border border-slate-200">
             取消報名
           </button>` : ''}
         </div>
         `;
       }).join('');
     } catch(err){}
+  }
+
+  async function updateUserLast5(activityName) {
+    const inputEl = document.getElementById(`last5-${activityName}`);
+    const val = inputEl.value.trim();
+    if (!val) return showToast("⚠️ 請填寫後五碼", true);
+
+    const btn = inputEl.nextElementSibling;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    btn.disabled = true;
+
+    try {
+      await fetchAPI('updateLast5Digits', { userId: userProfile.userId, activityName, last5Digits: val });
+      showToast("✅ 已儲存匯款後五碼！");
+      btn.innerHTML = '已儲存';
+      btn.classList.replace('bg-blue-600', 'bg-green-500');
+      setTimeout(() => {
+         btn.innerHTML = '儲存';
+         btn.classList.replace('bg-green-500', 'bg-blue-600');
+         btn.disabled = false;
+      }, 2000);
+    } catch(err) {
+      showToast(err.message || "儲存失敗", true);
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }
   }
 
   async function userCancelRegistration(activityName) {
@@ -657,14 +701,14 @@
         <div class="grid grid-cols-2 gap-2 bg-slate-50 p-2 rounded-xl border border-slate-100">
           <div class="flex flex-col">
             <label class="text-[10px] text-slate-400 font-bold mb-1 ml-1">繳費狀態</label>
-            <select onchange="updateCellStatus('${p.rowId}', '繳費狀態', this.value)" class="text-xs font-bold px-2 py-2 bg-white border border-slate-200 rounded-lg outline-none text-slate-700">
+            <select onchange="updateCellStatus('${p.rowId}', '繳費狀態', this.value)" class="text-xs font-bold px-2 py-2 bg-white border border-slate-200 rounded-lg outline-none text-slate-700 focus:border-blue-500">
               <option value="未繳費" ${p.payStatus === '未繳費' ? 'selected' : ''}>未繳費</option>
               <option value="已完款" ${p.payStatus === '已完款' ? 'selected' : ''}>已完款</option>
             </select>
           </div>
           <div class="flex flex-col">
             <label class="text-[10px] text-slate-400 font-bold mb-1 ml-1">報名狀態</label>
-            <select onchange="updateCellStatus('${p.rowId}', '報名狀態', this.value)" class="text-xs font-bold px-2 py-2 bg-white border border-slate-200 rounded-lg outline-none text-slate-700">
+            <select onchange="updateCellStatus('${p.rowId}', '報名狀態', this.value)" class="text-xs font-bold px-2 py-2 bg-white border border-slate-200 rounded-lg outline-none text-slate-700 focus:border-blue-500">
               <option value="正常" ${p.regStatus === '正常' ? 'selected' : ''}>正常</option>
               <option value="已取消" ${p.regStatus === '已取消' ? 'selected' : ''}>已取消</option>
               <option value="已退款" ${p.regStatus === '已退款' ? 'selected' : ''}>已退款</option>
@@ -686,7 +730,10 @@
       await fetchAPI('updateCellStatus', { activityName: activeActivityName, rowId, colName, val });
       showToast(`✅ ${colName} 已更新`);
       const item = currentCheckinData.find(x => x.rowId === parseInt(rowId));
-      if(item) { if(colName === '繳費狀態') item.payStatus = val; if(colName === '報名狀態') item.regStatus = val; }
+      if(item) {
+        if(colName === '繳費狀態') item.payStatus = val;
+        if(colName === '報名狀態') item.regStatus = val;
+      }
     } catch(err){}
   }
 

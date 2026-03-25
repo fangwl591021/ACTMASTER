@@ -33,7 +33,6 @@
         <img id="user-avatar" src="" class="w-5 h-5 rounded-full object-cover">
         <span id="user-name-display" class="tracking-wide"></span>
       </div>
-      <!-- 管理員身分切換按鈕 -->
       <button id="role-switch-btn" onclick="toggleRoleMode()" class="hidden text-xs font-bold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full border border-white/40 transition-colors shadow-sm">
         <i class="fas fa-exchange-alt"></i> 前台
       </button>
@@ -277,11 +276,21 @@
           <h3 class="text-lg font-black text-blue-600 flex items-center gap-2"><i class="fab fa-telegram-plane"></i> Telegram 推播設定</h3>
           <p class="text-sm text-slate-400 mt-1">設定後，有新報名將自動通知到您的 TG 群組</p>
         </div>
-        <div class="space-y-1"><label class="text-sm font-bold text-slate-500">TG_BOT_TOKEN</label><input type="text" id="set-tg-token" class="w-full px-4 py-3 bg-slate-50 rounded-xl text-sm font-bold outline-none border border-slate-100"></div>
+        
+        <div class="space-y-1">
+          <label class="text-sm font-bold text-slate-500">TG_BOT_TOKEN</label>
+          <div class="flex gap-2">
+            <input type="text" id="set-tg-token" class="flex-1 px-4 py-3 bg-slate-50 rounded-xl text-sm font-bold outline-none border border-slate-100" placeholder="輸入您的 Bot Token">
+            <button onclick="autoFetchTgChatId()" id="btn-fetch-tg" class="bg-blue-100 text-blue-600 px-4 py-3 rounded-xl text-sm font-bold hover:bg-blue-200 transition-colors whitespace-nowrap active:scale-95 shadow-sm">
+              <i class="fas fa-sync-alt"></i> 轉換
+            </button>
+          </div>
+        </div>
+        
         <div class="space-y-1">
           <label class="text-sm font-bold text-slate-500">TG_CHAT_ID</label>
-          <input type="text" id="set-tg-chat" class="w-full px-4 py-3 bg-slate-50 rounded-xl text-sm font-bold outline-none border border-slate-100 placeholder-slate-300" placeholder="留空將自動透過 Token 抓取最新對話群組 ID">
-          <p class="text-[11px] text-slate-400 font-bold mt-1">※ 若要自動轉換，請先在 Telegram 傳送任意訊息給該機器人</p>
+          <input type="text" id="set-tg-chat" class="w-full px-4 py-3 bg-slate-50 rounded-xl text-sm font-bold outline-none border border-slate-100 placeholder-slate-300" placeholder="請先填寫 Token 後點擊轉換">
+          <p class="text-[11px] text-slate-400 font-bold mt-1">※ 轉換前，請務必先在 Telegram 傳送任意訊息給機器人</p>
         </div>
 
         <div class="border-b border-slate-100 pb-3 mb-2 mt-6">
@@ -604,6 +613,7 @@
           }
         }
 
+        // 後五碼：左取消、右送出
         let actionButtonsHtml = '';
         if (item.regStatus === '正常' && !item.checkedIn) {
           if (item.isPaidAct) {
@@ -799,8 +809,6 @@
     btn.classList.remove('btn-disabled'); btn.innerHTML = mode==='quick'?'快速建立':'發佈報名頁面';
   }
 
-  // ============== 管理員：編輯活動 =================
-
   function openEditActivity(actName) {
     const act = currentActivities.find(a => a.name === actName);
     if (!act) return;
@@ -867,8 +875,6 @@
     }
     btn.classList.remove('btn-disabled'); btn.innerHTML = '儲存修改';
   }
-
-  // =================================================
 
   async function loadAdminActivities() {
     const container = document.getElementById('admin-activity-list-container');
@@ -1029,6 +1035,27 @@
     } catch(err) {}
   }
 
+  // 新增：前端呼叫獨立的轉換 Chat ID API
+  async function autoFetchTgChatId() {
+    const token = document.getElementById('set-tg-token').value.trim();
+    if (!token) return showToast("⚠️ 請先輸入 TG_BOT_TOKEN", true);
+
+    const btn = document.getElementById('btn-fetch-tg');
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    btn.disabled = true;
+
+    try {
+      const chatId = await fetchAPI('getTgChatId', { token });
+      document.getElementById('set-tg-chat').value = chatId;
+      showToast("✅ 成功轉換 Chat ID！請記得按下儲存");
+    } catch(err) {
+      showToast(err.message || "轉換失敗", true);
+    }
+    btn.innerHTML = originalHtml;
+    btn.disabled = false;
+  }
+
   async function submitSettings() {
     const btn = document.getElementById('btn-submit-settings');
     btn.classList.add('btn-disabled'); btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 儲存中...';
@@ -1042,11 +1069,7 @@
     };
 
     try {
-      const updatedSettings = await fetchAPI('saveSettings', payload);
-      // 自動更新抓取回來的 TG_CHAT_ID
-      if (updatedSettings && updatedSettings['TG_CHAT_ID']) {
-        document.getElementById('set-tg-chat').value = updatedSettings['TG_CHAT_ID'];
-      }
+      await fetchAPI('saveSettings', payload);
       showToast("✅ 參數設定儲存成功！");
     } catch(err) {
       showToast(err.message || "儲存失敗", true);

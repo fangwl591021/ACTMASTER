@@ -137,7 +137,7 @@
       </div>
     </div>
 
-    <!-- View: User Activities (加入刷新按鈕) -->
+    <!-- View: User Activities -->
     <div id="view-user-activities" class="hidden space-y-6 animate-in fade-in duration-500">
       <div class="flex justify-between items-center px-2">
         <h2 class="text-2xl font-bold font-headline">近期活動</h2>
@@ -181,7 +181,8 @@
         <div>
           <label class="input-label">Telegram Bot Token</label>
           <div class="flex gap-2">
-            <input type="text" id="set-tg-token" class="flex-1 text-sm font-bold bg-surface-container-low border-none"><button onclick="autoFetchTgChatId()" id="btn-fetch-tg" class="bg-primary text-white px-4 rounded-2xl font-bold text-sm shadow-md whitespace-nowrap active:scale-95">轉換</button>
+            <input type="text" id="set-tg-token" class="flex-1 text-sm font-bold bg-surface-container-low border-none">
+            <button onclick="autoFetchTgChatId()" id="btn-fetch-tg" class="bg-primary text-white px-4 rounded-2xl font-bold text-sm shadow-md whitespace-nowrap active:scale-95">轉換</button>
           </div>
         </div>
         <div><label class="input-label">Telegram Chat ID</label><input type="text" id="set-tg-chat" class="text-sm font-bold bg-surface-container-low border-none"></div>
@@ -197,13 +198,13 @@
         <button onclick="toggleCreateMode('detailed')" id="tab-detailed" class="flex-1 py-3.5 rounded-xl text-sm font-bold text-slate-500 transition-all">🌟 完整發佈</button>
       </div>
       <div id="form-quick" class="bg-white rounded-[2rem] shadow-xl p-8 space-y-5">
-        <div><label class="input-label">活動標題</label><input type="text" id="quick-name"></div>
+        <div><label class="input-label">活動標題</label><input type="text" id="quick-name" placeholder="輸入活動名稱"></div>
         <div class="grid grid-cols-2 gap-4">
           <div><label class="input-label">性質</label><select id="quick-type"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option></select></div>
           <div><label class="input-label">身分</label><select id="quick-identity"><option>來賓</option><option>會員</option></select></div>
         </div>
         <div><label class="input-label">名單內容</label><textarea id="quick-names" class="h-48 text-sm" placeholder="一行一個姓名..."></textarea></div>
-        <button onclick="handleCreateActivity('quick')" id="btn-quick-create" class="w-full py-5 bg-primary text-white rounded-full font-bold shadow-lg">立即建立</button>
+        <button onclick="handleCreateActivity('quick')" id="btn-quick-create" class="w-full py-5 bg-primary text-white rounded-full font-bold shadow-lg active:scale-95 transition-all">立即建立</button>
       </div>
       <div id="form-detailed" class="hidden bg-white rounded-[2.5rem] shadow-xl p-8 space-y-5">
          <div><label class="input-label">正式標題</label><input type="text" id="detail-name"></div>
@@ -212,11 +213,11 @@
            <div><label class="input-label">收費方式</label><div class="flex gap-4 items-center h-12"><label class="flex items-center gap-2"><input type="radio" name="fee-type" value="免費" checked onchange="toggleFeeInput()"> <span>免費</span></label><label class="flex items-center gap-2"><input type="radio" name="fee-type" value="收費" onchange="toggleFeeInput()"> <span>收費</span></label></div></div>
          </div>
          <input type="number" id="detail-price" class="hidden" placeholder="金額 (NT$)">
-         <div class="pt-2 border-t"><label class="input-label">開始時間</label><input type="datetime-local" id="detail-start" class="text-sm font-bold bg-surface-container-low border-none"></div>
+         <div class="pt-2 border-t border-slate-100"><label class="input-label">開始時間</label><input type="datetime-local" id="detail-start" class="text-sm font-bold bg-surface-container-low border-none"></div>
          <div><label class="input-label">說明文案</label><textarea id="detail-desc" class="h-28 text-sm" placeholder="輸入詳盡說明..."></textarea></div>
          <div onclick="document.getElementById('file-input-create').click()" class="w-full h-44 border-2 border-dashed border-slate-200 rounded-[2rem] flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-all hover:bg-slate-100"><div id="preview-placeholder-create" class="text-center text-slate-300 font-medium"><span class="material-symbols-outlined text-4xl">image</span><p class="text-[11px] font-bold mt-2">上傳宣傳圖</p></div><img id="image-preview-create" class="hidden w-full h-full object-cover"><input type="file" id="file-input-create" class="hidden" accept="image/*" onchange="previewFile('create')"></div>
          <input type="hidden" id="in-image-url-create">
-         <button onclick="handleCreateActivity('detailed')" id="btn-detail-create" class="w-full py-5 bg-primary text-white rounded-full font-bold shadow-lg">正式發布報名頁</button>
+         <button onclick="handleCreateActivity('detailed')" id="btn-detail-create" class="w-full py-5 bg-primary text-white rounded-full font-bold shadow-lg active:scale-95 transition-all">發布報名頁</button>
       </div>
     </div>
     
@@ -226,23 +227,25 @@
     </div>
   </main>
 
-  <!-- 底部導覽 -->
+  <!-- 底部導覽：使用者 -->
   <nav id="bottom-nav-user" class="hidden fixed bottom-0 w-full max-w-md bg-white/90 backdrop-blur-md border-t border-slate-100 flex justify-around items-center px-2 py-3 z-50 pb-safe shadow-[0_-8px_24px_rgba(0,0,0,0.04)] left-1/2 -translate-x-1/2">
     <button onclick="switchView('user-activities')" id="nav-user-activities" class="nav-btn nav-active"><span class="material-symbols-outlined text-2xl">local_activity</span><span class="text-[10px] font-bold">報名活動</span></button>
     <button onclick="switchView('user-history')" id="nav-user-history" class="nav-btn"><span class="material-symbols-outlined text-2xl">search_check</span><span class="text-[10px] font-bold">報名查詢</span></button>
     <button onclick="switchView('user-profile')" id="nav-user-profile" class="nav-btn"><span class="material-symbols-outlined text-2xl">account_circle</span><span class="text-[10px] font-bold">帳號設定</span></button>
   </nav>
 
+  <!-- 底部導覽：管理員 -->
   <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white/90 backdrop-blur-md border-t border-slate-100 flex justify-around items-center px-1 py-3 z-50 pb-safe shadow-lg left-1/2 -translate-x-1/2">
     <button onclick="switchView('admin-activities')" id="nav-admin-activities" class="nav-btn nav-active"><span class="material-symbols-outlined text-2xl">check_box</span><span class="text-[10px] font-bold">列表核銷</span></button>
     <button onclick="switchView('admin-create')" id="nav-admin-create" class="nav-btn"><span class="material-symbols-outlined text-2xl">add_circle</span><span class="text-[10px] font-bold">建立活動</span></button>
-    <button onclick="switchView('admin-settings')" id="nav-admin-settings" class="nav-btn"><span class="material-symbols-outlined text-2xl">settings</span><span class="text-[10px] font-bold">設定</span></button>
+    <button onclick="switchView('admin-settings')" id="nav-admin-settings" class="nav-btn"><span class="material-symbols-outlined text-2xl">settings</span><span class="text-[10px] font-bold">參數設定</span></button>
   </nav>
 </div>
 
-<!-- Toast & Modal -->
+<!-- Toast 通知容器 -->
 <div id="toast" class="fixed top-12 left-1/2 -translate-x-1/2 px-7 py-4 rounded-3xl text-sm shadow-2xl transition-all z-[10000] font-bold transform translate-y-0 opacity-0 pointer-events-none flex items-center gap-3"></div>
 
+<!-- Modal 彈窗 -->
 <div id="custom-modal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-6">
   <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl text-center scale-95 transition-all duration-200">
     <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner"><span class="material-symbols-outlined text-3xl">info</span></div>
@@ -268,7 +271,17 @@
         body: JSON.stringify({ action, payload })
       });
       const resText = await response.text();
-      const result = JSON.parse(resText);
+      let result;
+      try { 
+        result = JSON.parse(resText); 
+      } catch(e) { 
+        console.error("Raw response:", resText);
+        let errorMsg = "伺服器連線異常，請確認 GAS 已設為「所有人」存取。";
+        if (resText.includes("<!DOCTYPE html>") || resText.includes("無法開啟這個檔案")) {
+          errorMsg = "權限異常：請在 GAS 中「部署 -> 管理部署 -> 編輯(鉛筆) -> 選擇新版本 -> 部署」。";
+        }
+        throw new Error(errorMsg); 
+      }
       if (!result.success) throw new Error(result.error);
       return result.data;
     } catch (err) {
@@ -276,7 +289,7 @@
     }
   }
 
-  // ⭐ 初始化與速度優化
+  // ⭐ 初始化
   window.onload = async () => {
     switchView('loading');
     try {
@@ -345,7 +358,7 @@
     else if (view === 'user-history') loadUserHistory();
   }
 
-  // ⭐ 手動刷新活動功能
+  // ⭐ 手動刷新
   async function reloadActivities() {
     const btn = document.getElementById('btn-refresh-activities');
     btn.classList.add('btn-disabled');
@@ -430,7 +443,6 @@
     try {
       await fetchAPI('updateLast5Digits', { userId: userProfile.userId, activityName: name, last5Digits: val });
       showToast("✅ 已送出審核");
-      // 直接重新載入歷史列表，舊的輸入區會因 payStatus 改變而消失 (達成關閉畫面效果)
       setTimeout(() => { loadUserHistory(); }, 500);
     } finally { isProcessing = false; }
   }
@@ -444,7 +456,7 @@
   function toggleCreateMode(m) { document.getElementById('tab-quick').className = `flex-1 py-3.5 rounded-xl text-sm font-bold ${m==='quick'?'bg-white text-primary shadow-sm':'text-slate-500'}`; document.getElementById('tab-detailed').className = `flex-1 py-3.5 rounded-xl text-sm font-bold ${m==='detailed'?'bg-white text-primary shadow-sm':'text-slate-500'}`; document.getElementById('form-quick').classList.toggle('hidden', m!=='quick'); document.getElementById('form-detailed').classList.toggle('hidden', m!=='detailed'); }
   function previewFile(mode) { const f = document.getElementById('file-input-create').files[0]; if(!f) return; const r = new FileReader(); r.onloadend = () => { const img = new Image(); img.onload = () => { let w = img.width; if (w > 650) { h = Math.round(img.height * (650/w)); w = 650; } else h = img.height; const cvs = document.createElement('canvas'); cvs.width = w; cvs.height = h; const ctx = cvs.getContext('2d'); ctx.drawImage(img, 0, 0, w, h); const b64 = cvs.toDataURL('image/jpeg', 0.8); document.getElementById('image-preview-create').src = b64; document.getElementById('image-preview-create').classList.remove('hidden'); document.getElementById('preview-placeholder-create').classList.add('hidden'); document.getElementById('in-image-url-create').value = b64; }; img.src = r.result; }; r.readAsDataURL(f); }
 
-  // --- 管理與後台邏輯 (與穩定版一致) ---
+  // --- 管理與後台邏輯 ---
   async function submitUserRegistration() { const p = { userId: userProfile.userId, name: document.getElementById('reg-name').value.trim(), gender: document.getElementById('reg-gender').value, phone: document.getElementById('reg-phone').value.trim(), industry: document.getElementById('reg-industry').value.trim() }; if (!p.name || !p.phone) return showToast("⚠️ 請完整填寫真實資料", true); await fetchAPI('registerUser', p); isRegistered = true; registeredInfo = p; switchView('user-activities'); }
   function populateUserProfile() { if(registeredInfo) { document.getElementById('edit-name').value=registeredInfo.name; document.getElementById('edit-gender').value=registeredInfo.gender; document.getElementById('edit-phone').value=registeredInfo.phone; document.getElementById('edit-industry').value=registeredInfo.industry; } }
   async function submitProfileUpdate() { const p = { userId: userProfile.userId, name: document.getElementById('edit-name').value.trim(), gender: document.getElementById('edit-gender').value, phone: document.getElementById('edit-phone').value.trim(), industry: document.getElementById('edit-industry').value.trim() }; await fetchAPI('updateUser', p); registeredInfo = p; showToast("✅ 個人資料已成功儲存"); }
@@ -452,7 +464,7 @@
   async function handleCreateActivity(mode) { if(isProcessing) return; const btn = document.getElementById(mode === 'quick' ? 'btn-quick-create' : 'btn-detail-create'); isProcessing=true; btn.classList.add('btn-disabled'); let payload = { activityName: document.getElementById(mode === 'quick' ? 'quick-name' : 'detail-name').value.trim(), activityType: document.getElementById(mode === 'quick' ? 'quick-type' : 'detail-type').value, feeType: '免費', price: '', startTime: '', description: '', imageUrl: '', names: [], defaultIdentity: mode === 'quick' ? document.getElementById('quick-identity').value : '來賓' }; if (!payload.activityName) { isProcessing=false; btn.classList.remove('btn-disabled'); return showToast("⚠️ 活動標題必填", true); } if (mode === 'quick') { const raw = document.getElementById('quick-names').value.trim(); payload.names = raw.split('\n').filter(n => n.trim()); } else { payload.feeType = document.querySelector('input[name="fee-type"]:checked').value; payload.price = document.getElementById('detail-price').value; payload.startTime = document.getElementById('detail-start').value; payload.description = document.getElementById('detail-desc').value; payload.imageUrl = document.getElementById('in-image-url-create').value; } try { await fetchAPI('bulkAddRegistrants', payload); showToast("✅ 活動建立成功"); switchView('admin-activities'); } finally { isProcessing=false; btn.classList.remove('btn-disabled'); } }
   async function loadAdminActivities() { const container = document.getElementById('admin-activity-list-container'); container.innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-primary text-xl"></i></div>'; currentActivities = await fetchAPI('getActivityDashboard'); container.innerHTML = currentActivities.map(act => `<div class="card space-y-4 shadow-xl border-none"><div class="flex justify-between items-start"><div><span class="badge bg-primary/5 text-primary mb-1 block w-fit">${act.type}</span><h3 class="text-lg font-bold text-slate-800">${act.name}</h3></div></div><div class="grid grid-cols-3 gap-3 bg-surface-container-low rounded-3xl p-5 text-center"><div><p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">報名</p><p class="font-bold text-lg text-slate-700">${act.total}</p></div><div><p class="text-[10px] text-green-500 font-bold uppercase tracking-widest">實到</p><p class="font-bold text-lg text-green-600">${act.attended}</p></div><div><p class="text-[10px] text-error font-bold uppercase tracking-widest">取消</p><p class="font-bold text-lg text-error">${act.cancelled}</p></div></div><button onclick="openAdminCheckin('${act.name}')" class="w-full py-4 bg-primary text-white rounded-2xl font-bold text-sm shadow-lg active:scale-95 transition-all">進入核銷簽到</button><div class="flex justify-between px-2 text-[11px] font-bold tracking-wider"><button onclick="toggleActStatus('${act.name}')" class="text-slate-400">${act.status==='下架'?'設為上架':'設為下架'}</button><button onclick="deleteAct('${act.name}')" class="text-error">刪除</button></div></div>`).join(''); }
   async function openAdminCheckin(name) { activeActivityName = name; switchView('admin-checkin'); currentCheckinData = await fetchAPI('getRegistrants', { activityName: name }); document.getElementById('checkin-list-container').innerHTML = `<div class="bg-white/80 backdrop-blur-md p-5 sticky top-0 border-b border-slate-100 mb-3 flex items-center gap-4 z-30 shadow-sm"><button onclick="switchView('admin-activities')" class="p-2.5 bg-slate-100 rounded-full text-slate-500 active:scale-90 transition-all"><span class="material-symbols-outlined">arrow_back</span></button><h2 class="font-bold truncate text-xl text-slate-800">${name}</h2></div>` + currentCheckinData.map(p => `<div class="card border-none shadow-md mb-4 mx-4"><div class="flex justify-between items-center mb-5"><div class="flex-1"><h4 class="text-lg font-bold text-slate-800">${p.姓名}</h4><p class="text-[13px] text-primary font-bold mt-1">${p.last5?'💰 後五碼: '+p.last5 : '⏳ 尚未填寫'}</p></div><button onclick="toggleCheckin('${p.rowId}', ${p.checkedIn})" class="px-7 py-3.5 rounded-full font-bold text-sm ${p.checkedIn?'bg-green-500 text-white shadow-lg shadow-green-100':'bg-slate-100 text-slate-400'}">${p.checkedIn?'已簽到':'未簽到'}</button></div><div class="grid grid-cols-2 gap-3 pt-4 border-t border-slate-50"><select onchange="updateRow('${p.rowId}', '繳費狀態', this.value)" class="py-3 text-[13px] font-bold rounded-2xl bg-surface-container-low border-none"><option value="未繳費" ${p.payStatus==='未繳費'?'selected':''}>未繳費</option><option value="匯款審核中" ${p.payStatus==='匯款審核中'?'selected':''}>匯款審核</option><option value="已完款" ${p.payStatus==='已完款'?'selected':''}>已完款</option></select><select onchange="updateRow('${p.rowId}', '報名狀態', this.value)" class="py-3 text-[13px] font-bold rounded-2xl bg-surface-container-low border-none"><option value="正常" ${p.regStatus==='正常'?'selected':''}>正常</option><option value="已取消" ${p.regStatus==='已取消'?'selected':''}>已取消</option></select></div></div>`).join(''); }
-  async function autoFetchTgChatId() { const token = document.getElementById('set-tg-token').value.trim(); if (!token) return showToast("⚠️ 請先輸入 Token", true); const btn = document.getElementById('btn-refresh-activities'); btn.disabled = true; try { const chatId = await fetchAPI('getTgChatId', { token }); document.getElementById('set-tg-chat').value = chatId; showToast("✅ 獲取成功！記得儲存設定"); } catch(err) { showToast(err.message, true); } btn.disabled = false; }
+  async function autoFetchTgChatId() { const token = document.getElementById('set-tg-token').value.trim(); if (!token) return showToast("⚠️ 請先輸入 Token", true); const btn = document.getElementById('btn-fetch-tg'); btn.disabled = true; try { const chatId = await fetchAPI('getTgChatId', { token }); document.getElementById('set-tg-chat').value = chatId; showToast("✅ 獲取成功！記得儲存設定"); } catch(err) { showToast(err.message, true); } btn.disabled = false; }
   async function loadAdminSettings() { const s = await fetchAPI('getSettings'); document.getElementById('set-tg-token').value = s.TG_BOT_TOKEN; document.getElementById('set-tg-chat').value = s.TG_CHAT_ID; document.getElementById('set-line-link').value = s.LINE_LINK; }
   async function submitSettings() { if (isProcessing) return; isProcessing = true; try { await fetchAPI('saveSettings', { TG_BOT_TOKEN: document.getElementById('set-tg-token').value.trim(), TG_CHAT_ID: document.getElementById('set-tg-chat').value.trim(), LINE_LINK: document.getElementById('set-line-link').value.trim() }); showToast("✅ 設定已儲存"); } finally { isProcessing = false; } }
   async function toggleActStatus(n) { await fetchAPI('toggleActivityStatus', { activityName: n }); loadAdminActivities(); }

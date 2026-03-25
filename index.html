@@ -33,7 +33,7 @@
         <img id="user-avatar" src="" class="w-5 h-5 rounded-full object-cover">
         <span id="user-name-display" class="tracking-wide"></span>
       </div>
-      <!-- 新增：管理員身分切換按鈕 -->
+      <!-- 管理員身分切換按鈕 -->
       <button id="role-switch-btn" onclick="toggleRoleMode()" class="hidden text-xs font-bold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full border border-white/40 transition-colors shadow-sm">
         <i class="fas fa-exchange-alt"></i> 前台
       </button>
@@ -275,10 +275,14 @@
       <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-5">
         <div class="border-b border-slate-100 pb-3 mb-2">
           <h3 class="text-lg font-black text-blue-600 flex items-center gap-2"><i class="fab fa-telegram-plane"></i> Telegram 推播設定</h3>
-          <p class="text-xs text-slate-400 mt-1">設定後，有新報名將自動通知到您的 TG 群組</p>
+          <p class="text-sm text-slate-400 mt-1">設定後，有新報名將自動通知到您的 TG 群組</p>
         </div>
         <div class="space-y-1"><label class="text-sm font-bold text-slate-500">TG_BOT_TOKEN</label><input type="text" id="set-tg-token" class="w-full px-4 py-3 bg-slate-50 rounded-xl text-sm font-bold outline-none border border-slate-100"></div>
-        <div class="space-y-1"><label class="text-sm font-bold text-slate-500">TG_CHAT_ID</label><input type="text" id="set-tg-chat" class="w-full px-4 py-3 bg-slate-50 rounded-xl text-sm font-bold outline-none border border-slate-100"></div>
+        <div class="space-y-1">
+          <label class="text-sm font-bold text-slate-500">TG_CHAT_ID</label>
+          <input type="text" id="set-tg-chat" class="w-full px-4 py-3 bg-slate-50 rounded-xl text-sm font-bold outline-none border border-slate-100 placeholder-slate-300" placeholder="留空將自動透過 Token 抓取最新對話群組 ID">
+          <p class="text-[11px] text-slate-400 font-bold mt-1">※ 若要自動轉換，請先在 Telegram 傳送任意訊息給該機器人</p>
+        </div>
 
         <div class="border-b border-slate-100 pb-3 mb-2 mt-6">
           <h3 class="text-lg font-black text-slate-700 flex items-center gap-2"><i class="fas fa-link"></i> 官方社群連結</h3>
@@ -330,7 +334,7 @@
 
   let userProfile = null;
   let isAdmin = false;
-  let isViewModeAdmin = false; // 新增：追蹤目前管理員是看後台還是前台
+  let isViewModeAdmin = false; 
   let isRegistered = false;
   let registeredInfo = null;
 
@@ -367,7 +371,6 @@
       
       isAdmin = ADMIN_IDS.includes(userProfile.userId);
       
-      // 首次登入檢查是否已註冊會員 (即使是管理員也可以註冊)
       const res = await fetchAPI('checkUser', { userId: userProfile.userId });
       isRegistered = res.isRegistered;
       registeredInfo = res.info;
@@ -537,7 +540,6 @@
     } catch(err) {}
   }
 
-  // 報名無阻力：取消強制填寫，改為成功後彈跳視窗提醒
   async function userJoinActivity(btn, activityName, feeType, price) {
     if (!confirm(`確定要報名「${activityName}」嗎？`)) return;
 
@@ -602,7 +604,6 @@
           }
         }
 
-        // 後五碼：左取消、右送出
         let actionButtonsHtml = '';
         if (item.regStatus === '正常' && !item.checkedIn) {
           if (item.isPaidAct) {
@@ -728,7 +729,6 @@
     reader.onloadend = () => {
       const img = new Image();
       img.onload = () => {
-        // 畫質極限操作：寬度放寬至 500px，品質 0.65
         let w = img.width, h = img.height; if (w > 500) { h = Math.round(h * (500/w)); w = 500; }
         const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
@@ -1042,10 +1042,14 @@
     };
 
     try {
-      await fetchAPI('saveSettings', payload);
+      const updatedSettings = await fetchAPI('saveSettings', payload);
+      // 自動更新抓取回來的 TG_CHAT_ID
+      if (updatedSettings && updatedSettings['TG_CHAT_ID']) {
+        document.getElementById('set-tg-chat').value = updatedSettings['TG_CHAT_ID'];
+      }
       showToast("✅ 參數設定儲存成功！");
     } catch(err) {
-      showToast("儲存失敗", true);
+      showToast(err.message || "儲存失敗", true);
     }
     btn.classList.remove('btn-disabled'); btn.innerHTML = '儲存設定';
   }

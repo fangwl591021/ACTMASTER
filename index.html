@@ -51,14 +51,18 @@
           <i class="fas fa-user-edit text-4xl text-blue-500"></i>
         </div>
         <h2 class="text-2xl font-black text-slate-800">建立會員檔案</h2>
-        <p class="text-sm text-slate-500 font-medium mt-1">填寫一次，未來即可一鍵快速報名</p>
+        <p class="text-base text-slate-500 font-medium mt-1">填寫一次，未來即可一鍵快速報名</p>
       </div>
+
       <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-4">
-        <div class="space-y-1"><label class="text-xs font-bold text-slate-500 ml-1">真實姓名</label><input type="text" id="reg-name" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none focus:ring-2 focus:ring-blue-500"></div>
-        <div class="space-y-1"><label class="text-xs font-bold text-slate-500 ml-1">性別</label><select id="reg-gender" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none"><option value="男">男</option><option value="女">女</option></select></div>
-        <div class="space-y-1"><label class="text-xs font-bold text-slate-500 ml-1">手機號碼</label><input type="tel" id="reg-phone" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="09XX-XXXXXX"></div>
-        <div class="space-y-1"><label class="text-xs font-bold text-slate-500 ml-1">業種 (行業別)</label><input type="text" id="reg-industry" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="請填寫行業"></div>
-        <button onclick="submitUserRegistration()" id="btn-submit-user-reg" class="w-full py-4 mt-4 bg-blue-600 text-white rounded-2xl font-black text-lg hover:bg-blue-700 transition-all shadow-xl shadow-blue-200">完成註冊</button>
+        <div class="space-y-1"><label class="text-sm font-bold text-slate-500 ml-1">真實姓名</label><input type="text" id="reg-name" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none focus:ring-2 focus:ring-blue-500"></div>
+        <div class="space-y-1"><label class="text-sm font-bold text-slate-500 ml-1">性別</label><select id="reg-gender" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none"><option value="男">男</option><option value="女">女</option></select></div>
+        <div class="space-y-1"><label class="text-sm font-bold text-slate-500 ml-1">手機號碼</label><input type="tel" id="reg-phone" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="09XX-XXXXXX"></div>
+        <div class="space-y-1"><label class="text-sm font-bold text-slate-500 ml-1">業種 (行業別)</label><input type="text" id="reg-industry" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="請填寫行業"></div>
+        
+        <button onclick="submitUserRegistration()" id="btn-submit-user-reg" class="w-full py-4 mt-4 bg-blue-600 text-white rounded-2xl font-black text-lg hover:bg-blue-700 transition-all shadow-xl shadow-blue-200">
+          完成註冊
+        </button>
       </div>
     </div>
 
@@ -66,13 +70,14 @@
     <div id="view-user-profile" class="hidden p-6 space-y-6">
       <div class="text-center mt-4 mb-4">
         <h2 class="text-2xl font-black text-slate-800">會員專區</h2>
-        <p class="text-sm text-slate-500 font-medium mt-1">您可以隨時更新個人資料</p>
+        <p class="text-base text-slate-500 font-medium mt-1">您可以隨時更新個人資料</p>
       </div>
+
       <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-4">
-        <div class="space-y-1"><label class="text-xs font-bold text-slate-500 ml-1">真實姓名</label><input type="text" id="edit-name" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none focus:ring-2 focus:ring-blue-500"></div>
-        <div class="space-y-1"><label class="text-xs font-bold text-slate-500 ml-1">性別</label><select id="edit-gender" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none"><option value="男">男</option><option value="女">女</option></select></div>
-        <div class="space-y-1"><label class="text-xs font-bold text-slate-500 ml-1">手機號碼</label><input type="tel" id="edit-phone" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none focus:ring-2 focus:ring-blue-500"></div>
-        <div class="space-y-1"><label class="text-xs font-bold text-slate-500 ml-1">業種 (行業別)</label><input type="text" id="edit-industry" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none focus:ring-2 focus:ring-blue-500"></div>
+        <div class="space-y-1"><label class="text-sm font-bold text-slate-500 ml-1">真實姓名</label><input type="text" id="edit-name" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none focus:ring-2 focus:ring-blue-500"></div>
+        <div class="space-y-1"><label class="text-sm font-bold text-slate-500 ml-1">性別</label><select id="edit-gender" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none"><option value="男">男</option><option value="女">女</option></select></div>
+        <div class="space-y-1"><label class="text-sm font-bold text-slate-500 ml-1">手機號碼</label><input type="tel" id="edit-phone" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none focus:ring-2 focus:ring-blue-500"></div>
+        <div class="space-y-1"><label class="text-sm font-bold text-slate-500 ml-1">業種 (行業別)</label><input type="text" id="edit-industry" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none focus:ring-2 focus:ring-blue-500"></div>
         <button onclick="submitProfileUpdate()" id="btn-submit-profile" class="w-full py-4 mt-4 bg-indigo-600 text-white rounded-2xl font-black text-lg hover:bg-indigo-700 transition-all shadow-xl">儲存變更</button>
       </div>
     </div>
@@ -80,7 +85,7 @@
     <!-- 活動專區 (供會員報名) -->
     <div id="view-user-activities" class="hidden p-4 space-y-4">
       <div class="bg-blue-600 text-white p-6 rounded-3xl shadow-lg mb-4 relative overflow-hidden">
-        <div class="relative z-10"><h2 class="text-2xl font-black mb-1">近期活動</h2><p class="text-blue-100 text-sm font-medium">點擊下方活動即可一鍵報名</p></div>
+        <div class="relative z-10"><h2 class="text-2xl font-black mb-1">近期活動</h2><p class="text-blue-100 text-base font-medium">點擊下方活動即可一鍵報名</p></div>
         <i class="fas fa-ticket-alt absolute -bottom-4 -right-2 text-7xl text-white opacity-10"></i>
       </div>
       <div id="user-activities-container" class="space-y-4"></div>
@@ -89,7 +94,7 @@
     <!-- 歷史報名紀錄 -->
     <div id="view-user-history" class="hidden p-4 space-y-4">
       <div class="bg-indigo-600 text-white p-6 rounded-3xl shadow-lg mb-4 relative overflow-hidden">
-        <div class="relative z-10"><h2 class="text-2xl font-black mb-1">歷史報名紀錄</h2><p class="text-indigo-100 text-sm font-medium">總覽您參與過的所有活動</p></div>
+        <div class="relative z-10"><h2 class="text-2xl font-black mb-1">歷史報名紀錄</h2><p class="text-indigo-100 text-base font-medium">總覽您參與過的所有活動</p></div>
         <i class="fas fa-history absolute -bottom-4 -right-2 text-7xl text-white opacity-10"></i>
       </div>
       <div id="user-history-container" class="space-y-4"></div>
@@ -100,7 +105,7 @@
     <!-- 後台：活動專區 -->
     <div id="view-admin-activities" class="hidden p-4 space-y-4">
       <div class="bg-blue-600 text-white p-6 rounded-3xl shadow-lg mb-6 relative overflow-hidden">
-        <div class="relative z-10"><h2 class="text-2xl font-black mb-1">活動與核銷</h2><p class="text-blue-100 text-sm font-medium">點擊活動進入簽到與管理名單</p></div>
+        <div class="relative z-10"><h2 class="text-2xl font-black mb-1">活動與核銷</h2><p class="text-blue-100 text-base font-medium">點擊活動進入簽到與管理名單</p></div>
         <i class="fas fa-calendar-check absolute -bottom-4 -right-4 text-7xl text-white opacity-10"></i>
       </div>
       <div id="admin-activity-list-container" class="space-y-4"></div>
@@ -112,14 +117,14 @@
         <div class="flex items-center gap-3 mb-4">
           <button onclick="switchView('admin-activities')" class="p-2 bg-blue-500 hover:bg-blue-400 rounded-full transition-colors"><i class="fas fa-arrow-left"></i></button>
           <div class="flex-1 overflow-hidden">
-            <p class="text-xs text-blue-200 font-bold mb-1">核銷與簽到管理</p>
+            <p class="text-sm text-blue-200 font-bold mb-1">核銷與簽到管理</p>
             <h2 id="checkin-act-name" class="text-xl font-black truncate">載入中...</h2>
           </div>
-          <button onclick="handleQuickAdd()" class="bg-white text-blue-600 px-3 py-2 rounded-xl text-xs font-black shadow-md flex items-center gap-1 active:scale-95 transition-transform"><i class="fas fa-user-plus"></i> 補登記</button>
+          <button onclick="handleQuickAdd()" class="bg-white text-blue-600 px-3 py-2 rounded-xl text-sm font-black shadow-md flex items-center gap-1 active:scale-95 transition-transform"><i class="fas fa-user-plus"></i> 補登記</button>
         </div>
         <div class="relative">
           <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-          <input type="text" id="search-checkin" oninput="renderCheckinList()" placeholder="輸入姓名或後五碼搜尋..." class="w-full pl-10 pr-4 py-3 bg-white border-none rounded-2xl text-sm font-bold text-slate-700 outline-none shadow-inner">
+          <input type="text" id="search-checkin" oninput="renderCheckinList()" placeholder="輸入姓名或後五碼搜尋..." class="w-full pl-10 pr-4 py-3 bg-white border-none rounded-2xl text-base font-bold text-slate-700 outline-none shadow-inner">
         </div>
       </div>
       <div id="checkin-list-container" class="p-4 space-y-4 pb-20"></div>
@@ -137,23 +142,23 @@
 
       <!-- 模式 A：快速建檔 -->
       <div id="form-quick" class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-5 animate-in fade-in zoom-in-95 duration-300">
-        <div class="space-y-1"><label class="text-xs font-bold text-slate-500">活動名稱 (必填)</label><input type="text" id="quick-name" class="w-full px-5 py-4 bg-slate-50 rounded-2xl font-bold outline-none border border-slate-100"></div>
+        <div class="space-y-1"><label class="text-sm font-bold text-slate-500">活動名稱 (必填)</label><input type="text" id="quick-name" class="w-full px-5 py-4 bg-slate-50 rounded-2xl font-bold outline-none border border-slate-100"></div>
         <div class="grid grid-cols-2 gap-4">
           <div class="space-y-1">
-            <label class="text-xs font-bold text-slate-500">活動性質</label>
+            <label class="text-sm font-bold text-slate-500">活動性質</label>
             <select id="quick-type" class="w-full px-4 py-4 bg-slate-50 rounded-2xl font-bold">
               <option value="例會">例會</option><option value="課程">課程</option><option value="教學">教學</option><option value="聯誼">聯誼</option><option value="參訪">參訪</option><option value="講座">講座</option><option value="工作坊">工作坊</option><option value="研討會">研討會</option><option value="說明會">說明會</option><option value="慶功宴">慶功宴</option><option value="發表會">發表會</option><option value="公益活動">公益活動</option><option value="其他">其他</option>
             </select>
           </div>
           <div class="space-y-1">
-            <label class="text-xs font-bold text-slate-500">預設身份</label>
+            <label class="text-sm font-bold text-slate-500">預設身份</label>
             <select id="quick-identity" class="w-full px-4 py-4 bg-slate-50 rounded-2xl font-bold">
               <option>來賓</option><option>會員</option>
             </select>
           </div>
         </div>
         <div class="space-y-1 pt-2 border-t border-slate-100">
-          <label class="text-xs font-bold text-slate-500 ml-1">直接貼上名單 (用換行分隔)</label>
+          <label class="text-sm font-bold text-slate-500 ml-1">直接貼上名單 (用換行分隔)</label>
           <textarea id="quick-names" class="w-full h-40 p-5 bg-slate-50 border border-slate-100 rounded-2xl font-medium text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 resize-none leading-relaxed" placeholder="王小明&#10;李大華..."></textarea>
         </div>
         <button id="btn-quick-create" onclick="handleCreateActivity('quick')" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-lg hover:bg-blue-700 shadow-xl shadow-blue-200">快速建立</button>
@@ -161,9 +166,9 @@
 
       <!-- 模式 B：完整活動設定 -->
       <div id="form-detailed" class="hidden bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-5 animate-in fade-in zoom-in-95 duration-300">
-        <div class="space-y-1"><label class="text-xs font-bold text-slate-500">活動名稱 (必填)</label><input type="text" id="detail-name" class="w-full px-5 py-4 bg-slate-50 rounded-2xl font-bold outline-none border border-slate-100"></div>
+        <div class="space-y-1"><label class="text-sm font-bold text-slate-500">活動名稱 (必填)</label><input type="text" id="detail-name" class="w-full px-5 py-4 bg-slate-50 rounded-2xl font-bold outline-none border border-slate-100"></div>
         <div class="space-y-2 pt-2">
-          <label class="text-xs font-bold text-slate-500">收費設定</label>
+          <label class="text-sm font-bold text-slate-500">收費設定</label>
           <div class="flex gap-4">
             <label class="flex items-center gap-2"><input type="radio" name="fee-type" value="免費" checked onchange="toggleFeeInput('create')" class="w-4 h-4 text-blue-600"> <span class="font-bold text-slate-700">免費</span></label>
             <label class="flex items-center gap-2"><input type="radio" name="fee-type" value="收費" onchange="toggleFeeInput('create')" class="w-4 h-4 text-blue-600"> <span class="font-bold text-slate-700">收費</span></label>
@@ -171,17 +176,17 @@
           <input type="number" id="detail-price" class="hidden w-full px-5 py-4 bg-slate-50 rounded-2xl font-bold outline-none mt-2 border border-slate-100" placeholder="請輸入金額 (NT$)">
         </div>
         <div class="grid grid-cols-2 gap-4 border-t border-slate-100 pt-4">
-          <div class="space-y-1"><label class="text-xs font-bold text-slate-500">開始時間</label><input type="datetime-local" id="detail-start" class="w-full px-2 py-3 bg-slate-50 rounded-2xl border border-slate-100 text-xs font-bold"></div>
-          <div class="space-y-1"><label class="text-xs font-bold text-slate-500">結束時間</label><input type="datetime-local" id="detail-end" class="w-full px-2 py-3 bg-slate-50 rounded-2xl border border-slate-100 text-xs font-bold"></div>
+          <div class="space-y-1"><label class="text-sm font-bold text-slate-500">開始時間</label><input type="datetime-local" id="detail-start" class="w-full px-2 py-3 bg-slate-50 rounded-2xl border border-slate-100 text-sm font-bold"></div>
+          <div class="space-y-1"><label class="text-sm font-bold text-slate-500">結束時間</label><input type="datetime-local" id="detail-end" class="w-full px-2 py-3 bg-slate-50 rounded-2xl border border-slate-100 text-sm font-bold"></div>
         </div>
         <div class="space-y-1 pt-4 border-t border-slate-100">
-          <label class="text-xs font-bold text-slate-500">活動性質</label>
+          <label class="text-sm font-bold text-slate-500">活動性質</label>
           <select id="detail-type" class="w-full px-5 py-4 bg-slate-50 rounded-2xl font-bold border border-slate-100">
             <option value="例會">例會</option><option value="課程">課程</option><option value="教學">教學</option><option value="聯誼">聯誼</option><option value="參訪">參訪</option><option value="講座">講座</option><option value="工作坊">工作坊</option><option value="研討會">研討會</option><option value="說明會">說明會</option><option value="慶功宴">慶功宴</option><option value="發表會">發表會</option><option value="公益活動">公益活動</option><option value="其他">其他</option>
           </select>
         </div>
         <div class="space-y-3 pt-4 border-t border-slate-100">
-          <label class="text-xs font-bold text-slate-500">開放線上報名填寫欄位</label>
+          <label class="text-sm font-bold text-slate-500">開放線上報名填寫欄位</label>
           <div class="grid grid-cols-2 gap-3">
             <label class="flex items-center gap-3 bg-slate-50 px-4 py-3 rounded-2xl border border-slate-100"><input type="checkbox" id="field-gender" checked class="w-5 h-5 text-blue-600"> <span class="text-sm font-bold text-slate-600">性別</span></label>
             <label class="flex items-center gap-3 bg-slate-50 px-4 py-3 rounded-2xl border border-slate-100"><input type="checkbox" id="field-phone" checked class="w-5 h-5 text-blue-600"> <span class="text-sm font-bold text-slate-600">電話</span></label>
@@ -189,15 +194,15 @@
           </div>
         </div>
         <div class="space-y-1 pt-4 border-t border-slate-100">
-           <label class="text-xs font-bold text-slate-500">活動宣傳圖</label>
-           <div id="image-preview-container" onclick="document.getElementById('file-input-create').click()" class="w-full h-32 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer">
-             <div id="preview-placeholder-create" class="text-center"><i class="fas fa-image text-3xl text-slate-300 mb-1"></i><p class="text-[10px] text-slate-400 font-bold uppercase">點擊上傳照片</p></div>
+           <label class="text-sm font-bold text-slate-500">活動宣傳圖</label>
+           <div id="image-preview-container" onclick="document.getElementById('file-input-create').click()" class="w-full h-40 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer">
+             <div id="preview-placeholder-create" class="text-center"><i class="fas fa-image text-3xl text-slate-300 mb-1"></i><p class="text-xs text-slate-400 font-bold uppercase">點擊上傳高畫質照片</p></div>
              <img id="image-preview-create" class="hidden w-full h-full object-contain p-2">
              <input type="file" id="file-input-create" class="hidden" accept="image/*" onchange="previewFile('create')">
            </div>
            <input type="hidden" id="in-image-url-create">
         </div>
-        <div class="space-y-1 pt-2 border-t border-slate-100"><label class="text-xs font-bold text-slate-500">活動說明</label><textarea id="detail-desc" class="w-full h-24 p-5 bg-slate-50 rounded-2xl font-medium border border-slate-100 resize-none"></textarea></div>
+        <div class="space-y-1 pt-2 border-t border-slate-100"><label class="text-sm font-bold text-slate-500">活動說明</label><textarea id="detail-desc" class="w-full h-24 p-5 bg-slate-50 rounded-2xl font-medium border border-slate-100 resize-none"></textarea></div>
         <button id="btn-detail-create" onclick="handleCreateActivity('detailed')" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-lg hover:bg-blue-700 shadow-xl shadow-blue-200">發佈報名頁面</button>
       </div>
     </div>
@@ -211,11 +216,11 @@
 
       <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-5">
         <div class="space-y-1">
-          <label class="text-xs font-bold text-slate-500">活動名稱 (不可修改)</label>
+          <label class="text-sm font-bold text-slate-500">活動名稱 (不可修改)</label>
           <input type="text" id="edit-act-name" class="w-full px-5 py-4 bg-slate-100 text-slate-500 rounded-2xl font-bold border border-slate-200" disabled>
         </div>
         <div class="space-y-2 pt-2">
-          <label class="text-xs font-bold text-slate-500">收費設定</label>
+          <label class="text-sm font-bold text-slate-500">收費設定</label>
           <div class="flex gap-4">
             <label class="flex items-center gap-2"><input type="radio" name="edit-fee-type" value="免費" onchange="toggleFeeInput('edit')" class="w-4 h-4 text-blue-600"> <span class="font-bold text-slate-700">免費</span></label>
             <label class="flex items-center gap-2"><input type="radio" name="edit-fee-type" value="收費" onchange="toggleFeeInput('edit')" class="w-4 h-4 text-blue-600"> <span class="font-bold text-slate-700">收費</span></label>
@@ -223,25 +228,25 @@
           <input type="number" id="edit-act-price" class="hidden w-full px-5 py-4 bg-slate-50 rounded-2xl font-bold outline-none mt-2 border border-slate-100" placeholder="請輸入金額 (NT$)">
         </div>
         <div class="grid grid-cols-2 gap-4 border-t border-slate-100 pt-4">
-          <div class="space-y-1"><label class="text-xs font-bold text-slate-500">開始時間</label><input type="datetime-local" id="edit-act-start" class="w-full px-2 py-3 bg-slate-50 rounded-2xl border border-slate-100 text-xs font-bold"></div>
-          <div class="space-y-1"><label class="text-xs font-bold text-slate-500">結束時間</label><input type="datetime-local" id="edit-act-end" class="w-full px-2 py-3 bg-slate-50 rounded-2xl border border-slate-100 text-xs font-bold"></div>
+          <div class="space-y-1"><label class="text-sm font-bold text-slate-500">開始時間</label><input type="datetime-local" id="edit-act-start" class="w-full px-2 py-3 bg-slate-50 rounded-2xl border border-slate-100 text-sm font-bold"></div>
+          <div class="space-y-1"><label class="text-sm font-bold text-slate-500">結束時間</label><input type="datetime-local" id="edit-act-end" class="w-full px-2 py-3 bg-slate-50 rounded-2xl border border-slate-100 text-sm font-bold"></div>
         </div>
         <div class="space-y-1 pt-4 border-t border-slate-100">
-          <label class="text-xs font-bold text-slate-500">活動性質</label>
+          <label class="text-sm font-bold text-slate-500">活動性質</label>
           <select id="edit-act-type" class="w-full px-5 py-4 bg-slate-50 rounded-2xl font-bold border border-slate-100">
             <option value="例會">例會</option><option value="課程">課程</option><option value="教學">教學</option><option value="聯誼">聯誼</option><option value="參訪">參訪</option><option value="講座">講座</option><option value="工作坊">工作坊</option><option value="研討會">研討會</option><option value="說明會">說明會</option><option value="慶功宴">慶功宴</option><option value="發表會">發表會</option><option value="公益活動">公益活動</option><option value="其他">其他</option>
           </select>
         </div>
         <div class="space-y-1 pt-4 border-t border-slate-100">
-           <label class="text-xs font-bold text-slate-500">活動宣傳圖</label>
-           <div id="image-preview-container-edit" onclick="document.getElementById('file-input-edit').click()" class="w-full h-32 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer">
-             <div id="preview-placeholder-edit" class="text-center hidden"><i class="fas fa-image text-3xl text-slate-300 mb-1"></i><p class="text-[10px] text-slate-400 font-bold uppercase">點擊修改照片</p></div>
+           <label class="text-sm font-bold text-slate-500">活動宣傳圖</label>
+           <div id="image-preview-container-edit" onclick="document.getElementById('file-input-edit').click()" class="w-full h-40 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer">
+             <div id="preview-placeholder-edit" class="text-center hidden"><i class="fas fa-image text-3xl text-slate-300 mb-1"></i><p class="text-xs text-slate-400 font-bold uppercase">點擊修改高畫質照片</p></div>
              <img id="image-preview-edit" class="w-full h-full object-contain p-2 hidden">
              <input type="file" id="file-input-edit" class="hidden" accept="image/*" onchange="previewFile('edit')">
            </div>
            <input type="hidden" id="in-image-url-edit">
         </div>
-        <div class="space-y-1 pt-2 border-t border-slate-100"><label class="text-xs font-bold text-slate-500">活動說明</label><textarea id="edit-act-desc" class="w-full h-24 p-5 bg-slate-50 rounded-2xl font-medium border border-slate-100 resize-none"></textarea></div>
+        <div class="space-y-1 pt-2 border-t border-slate-100"><label class="text-sm font-bold text-slate-500">活動說明</label><textarea id="edit-act-desc" class="w-full h-24 p-5 bg-slate-50 rounded-2xl font-medium border border-slate-100 resize-none"></textarea></div>
         <button id="btn-submit-edit" onclick="handleUpdateActivity()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-lg hover:bg-blue-700 shadow-xl shadow-blue-200">儲存修改</button>
       </div>
     </div>
@@ -249,28 +254,28 @@
     <!-- 後台：CRM -->
     <div id="view-admin-crm" class="hidden p-4 space-y-4">
       <div class="bg-indigo-600 text-white p-6 rounded-3xl shadow-lg relative overflow-hidden"><h2 class="text-2xl font-black mb-1 relative z-10">CRM 會員大數據</h2><i class="fas fa-users absolute -bottom-2 -right-2 text-8xl text-white opacity-10"></i></div>
-      <div class="relative mb-4"><i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i><input type="text" id="search-crm" oninput="renderCrmList()" placeholder="搜尋姓名..." class="w-full pl-12 pr-4 py-4 bg-white shadow-sm border border-slate-100 rounded-2xl text-sm font-bold outline-none"></div>
+      <div class="relative mb-4"><i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i><input type="text" id="search-crm" oninput="renderCrmList()" placeholder="搜尋姓名..." class="w-full pl-12 pr-4 py-4 bg-white shadow-sm border border-slate-100 rounded-2xl text-base font-bold outline-none"></div>
       <div id="crm-list-container" class="space-y-4"></div>
     </div>
   </main>
 
   <!-- 底部導覽列 (User) -->
   <nav id="bottom-nav-user" class="hidden absolute bottom-0 w-full bg-white border-t border-slate-200 flex justify-around items-center px-2 py-2 z-50 pb-safe shadow-[0_-4px_15px_rgba(0,0,0,0.03)]">
-    <button onclick="switchView('user-activities')" id="nav-user-activities" class="nav-btn"><div class="p-1 rounded-xl transition-colors"><i class="fas fa-calendar-alt text-xl"></i></div><span class="text-[10px] font-black">活動報名</span></button>
-    <button onclick="switchView('user-history')" id="nav-user-history" class="nav-btn"><div class="p-1 rounded-xl transition-colors"><i class="fas fa-history text-xl"></i></div><span class="text-[10px] font-black">歷史紀錄</span></button>
-    <button onclick="switchView('user-profile')" id="nav-user-profile" class="nav-btn"><div class="p-1 rounded-xl transition-colors"><i class="fas fa-user-circle text-xl"></i></div><span class="text-[10px] font-black">會員專區</span></button>
+    <button onclick="switchView('user-activities')" id="nav-user-activities" class="nav-btn"><div class="p-1 rounded-xl transition-colors"><i class="fas fa-calendar-alt text-xl"></i></div><span class="text-xs font-black">活動報名</span></button>
+    <button onclick="switchView('user-history')" id="nav-user-history" class="nav-btn"><div class="p-1 rounded-xl transition-colors"><i class="fas fa-history text-xl"></i></div><span class="text-xs font-black">歷史紀錄</span></button>
+    <button onclick="switchView('user-profile')" id="nav-user-profile" class="nav-btn"><div class="p-1 rounded-xl transition-colors"><i class="fas fa-user-circle text-xl"></i></div><span class="text-xs font-black">會員專區</span></button>
   </nav>
 
   <!-- 底部導覽列 (Admin) -->
   <nav id="bottom-nav-admin" class="hidden absolute bottom-0 w-full bg-white border-t border-slate-200 flex justify-around items-center px-2 py-2 z-50 pb-safe shadow-[0_-4px_15px_rgba(0,0,0,0.03)]">
-    <button onclick="switchView('admin-create')" id="nav-admin-create" class="nav-btn"><div class="p-1 rounded-xl transition-colors"><i class="fas fa-plus-circle text-xl"></i></div><span class="text-[10px] font-black">發起活動</span></button>
-    <button onclick="switchView('admin-activities')" id="nav-admin-activities" class="nav-btn"><div class="p-1 rounded-xl transition-colors"><i class="fas fa-calendar-alt text-xl"></i></div><span class="text-[10px] font-black">活動與核銷</span></button>
-    <button onclick="switchView('admin-crm')" id="nav-admin-crm" class="nav-btn"><div class="p-1 rounded-xl transition-colors"><i class="fas fa-user-check text-xl"></i></div><span class="text-[10px] font-black">會員 CRM</span></button>
+    <button onclick="switchView('admin-create')" id="nav-admin-create" class="nav-btn"><div class="p-1 rounded-xl transition-colors"><i class="fas fa-plus-circle text-xl"></i></div><span class="text-xs font-black">發起活動</span></button>
+    <button onclick="switchView('admin-activities')" id="nav-admin-activities" class="nav-btn"><div class="p-1 rounded-xl transition-colors"><i class="fas fa-calendar-alt text-xl"></i></div><span class="text-xs font-black">活動與核銷</span></button>
+    <button onclick="switchView('admin-crm')" id="nav-admin-crm" class="nav-btn"><div class="p-1 rounded-xl transition-colors"><i class="fas fa-user-check text-xl"></i></div><span class="text-xs font-black">會員 CRM</span></button>
   </nav>
 
 </div>
 
-<div id="toast" class="fixed top-10 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full text-sm shadow-2xl opacity-0 transition-all z-[10000] pointer-events-none flex items-center gap-2 font-bold transform -translate-y-4"></div>
+<div id="toast" class="fixed top-10 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full text-base shadow-2xl opacity-0 transition-all z-[10000] pointer-events-none flex items-center gap-2 font-bold transform -translate-y-4"></div>
 
 <script>
   // ==================== 參數設定區 ====================
@@ -352,7 +357,6 @@
         const btn = document.getElementById(`nav-admin-${v}`);
         if(!btn) return;
         const iconDiv = btn.querySelector('div');
-        // Edit 畫面時，維持 Activities 亮起
         let isActive = (`admin-${v}` === view) || (view === 'admin-edit' && v === 'activities');
         if (isActive) {
           btn.className = `nav-btn nav-active ${v==='crm'?'text-indigo-600':''}`;
@@ -439,25 +443,25 @@
     try {
       const data = await fetchAPI('getPublicActivities');
       if (data.length === 0) {
-         container.innerHTML = '<div class="text-center py-16 bg-white rounded-3xl border border-slate-100 shadow-sm"><i class="fas fa-box-open text-4xl text-slate-200 mb-2"></i><p class="text-slate-500 font-bold">目前無開放活動</p></div>'; return;
+         container.innerHTML = '<div class="text-center py-16 bg-white rounded-3xl border border-slate-100 shadow-sm"><i class="fas fa-box-open text-4xl text-slate-200 mb-2"></i><p class="text-base text-slate-500 font-bold">目前無開放活動</p></div>'; return;
       }
       
       container.innerHTML = data.map(act => {
-        const timeStr = act.startTime ? `<div class="mt-2 text-xs text-slate-500 font-bold"><i class="far fa-clock mr-1"></i>${formatTime(act.startTime)}</div>` : '';
-        const imgHtml = act.imageUrl ? `<img src="${act.imageUrl}" class="w-full h-32 object-cover rounded-t-3xl">` : '';
-        const feeBadge = act.feeType === '收費' ? `<span class="text-[10px] font-black tracking-widest text-orange-500 bg-orange-50 px-2 py-1 rounded-md ml-2">NT$ ${act.price}</span>` : `<span class="text-[10px] font-black tracking-widest text-green-500 bg-green-50 px-2 py-1 rounded-md ml-2">免費</span>`;
+        const timeStr = act.startTime ? `<div class="mt-2 text-sm text-slate-500 font-bold"><i class="far fa-clock mr-1"></i>${formatTime(act.startTime)}</div>` : '';
+        const imgHtml = act.imageUrl ? `<img src="${act.imageUrl}" class="w-full h-36 object-cover rounded-t-3xl">` : '';
+        const feeBadge = act.feeType === '收費' ? `<span class="text-xs font-black tracking-widest text-orange-500 bg-orange-50 px-2 py-1 rounded-md ml-2">NT$ ${act.price}</span>` : `<span class="text-xs font-black tracking-widest text-green-500 bg-green-50 px-2 py-1 rounded-md ml-2">免費</span>`;
 
         return `
         <div class="bg-white rounded-3xl shadow-sm border border-slate-100">
           ${imgHtml}
           <div class="p-5">
             <div class="flex items-center">
-              <span class="text-[10px] font-black uppercase tracking-widest text-blue-500 bg-blue-50 px-2 py-1 rounded-md">${act.type || '一般'}</span>
+              <span class="text-xs font-black uppercase tracking-widest text-blue-500 bg-blue-50 px-2 py-1 rounded-md">${act.type || '一般'}</span>
               ${feeBadge}
             </div>
             <h3 class="text-xl font-black text-slate-800 mt-2">${act.name}</h3>
             ${timeStr}
-            <button onclick="userJoinActivity(this, '${act.name}', '${act.feeType}', '${act.price}')" class="w-full mt-4 py-3 bg-blue-600 text-white rounded-xl font-black text-sm hover:bg-blue-700 active:scale-95 transition-all flex justify-center items-center gap-2">
+            <button onclick="userJoinActivity(this, '${act.name}', '${act.feeType}', '${act.price}')" class="w-full mt-4 py-3 bg-blue-600 text-white rounded-xl font-black text-base hover:bg-blue-700 active:scale-95 transition-all flex justify-center items-center gap-2">
               <i class="fas fa-paper-plane"></i> 一鍵報名
             </button>
           </div>
@@ -467,21 +471,15 @@
   }
 
   async function userJoinActivity(btn, activityName, feeType, price) {
-    let last5Digits = "";
-    if (feeType === '收費') {
-      last5Digits = prompt(`此為收費活動 (NT$ ${price})\n若已匯款，請輸入「匯款帳號後五碼」：`);
-      if (last5Digits === null) return; 
-      if (last5Digits.trim() === "") return showToast("⚠️ 請輸入後五碼以便核對", true);
-    }
+    if (!confirm(`確定要報名「${activityName}」嗎？`)) return;
 
     btn.classList.add('btn-disabled'); btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 報名中...';
     try {
-      await fetchAPI('joinActivity', { userId: userProfile.userId, activityName, last5Digits });
+      await fetchAPI('joinActivity', { userId: userProfile.userId, activityName, last5Digits: '' });
       btn.classList.replace('bg-blue-600', 'bg-green-500'); btn.innerHTML = '<i class="fas fa-check"></i> 已報名';
       
       if (feeType === '收費') {
-        showToast("✅ 報名成功！請至歷史紀錄補填匯款後五碼");
-        setTimeout(() => switchView('user-history'), 1500); 
+        showToast("✅ 報名成功！請至歷史紀錄補填匯款後五碼", false);
       } else {
         showToast("✅ 報名成功！");
       }
@@ -497,19 +495,23 @@
     try {
       const history = await fetchAPI('getUserHistory', { userId: userProfile.userId });
       if (history.length === 0) {
-        container.innerHTML = '<div class="text-center py-16 bg-white rounded-3xl border border-slate-100"><p class="text-slate-500 font-bold">尚無報名紀錄</p></div>'; return;
+        container.innerHTML = '<div class="text-center py-16 bg-white rounded-3xl border border-slate-100"><p class="text-base text-slate-500 font-bold">尚無報名紀錄</p></div>'; return;
       }
       container.innerHTML = history.map(item => {
         let statusBadge = '';
-        if(item.regStatus === '已取消') statusBadge = '<span class="text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded">已取消</span>';
-        else if(item.regStatus === '已退款') statusBadge = '<span class="text-[10px] text-red-500 bg-red-50 px-2 py-0.5 rounded">已退款</span>';
-        else statusBadge = '<span class="text-[10px] text-green-500 bg-green-50 px-2 py-0.5 rounded">報名成功</span>';
+        if(item.regStatus === '已取消') statusBadge = '<span class="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded">已取消</span>';
+        else if(item.regStatus === '已退款') statusBadge = '<span class="text-xs text-red-500 bg-red-50 px-2 py-0.5 rounded">已退款</span>';
+        else statusBadge = '<span class="text-xs text-green-500 bg-green-50 px-2 py-0.5 rounded">報名成功</span>';
 
         let payBadge = '';
         if(item.isPaidAct) {
-          payBadge = item.payStatus === '已完款' 
-            ? '<span class="text-[10px] text-blue-500 font-bold ml-2"><i class="fas fa-check-circle"></i> 已繳費</span>' 
-            : '<span class="text-[10px] text-orange-400 font-bold ml-2"><i class="fas fa-exclamation-circle"></i> 未繳費</span>';
+          if (item.payStatus === '已完款') {
+            payBadge = '<span class="text-xs text-blue-500 font-bold ml-2"><i class="fas fa-check-circle"></i> 已完款</span>';
+          } else if (item.payStatus === '匯款審核中') {
+            payBadge = '<span class="text-xs text-purple-500 font-bold ml-2"><i class="fas fa-spinner fa-spin"></i> 匯款審核中</span>';
+          } else {
+            payBadge = '<span class="text-xs text-orange-400 font-bold ml-2"><i class="fas fa-exclamation-circle"></i> 未繳費</span>';
+          }
         }
 
         let last5InputHtml = '';
@@ -518,7 +520,7 @@
             <div class="mt-3 flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
                <i class="fas fa-money-check-alt text-slate-400 ml-1"></i>
                <input type="text" id="last5-${item.name}" value="${item.last5 || ''}" placeholder="填寫匯款後五碼" maxlength="5" class="flex-1 bg-transparent text-sm font-bold outline-none text-slate-700 placeholder-slate-400">
-               <button onclick="updateUserLast5('${item.name}')" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors">儲存</button>
+               <button onclick="updateUserLast5('${item.name}')" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">送出</button>
             </div>
           `;
         }
@@ -528,21 +530,21 @@
           <div class="flex justify-between items-start">
             <div>
               <div class="flex items-center gap-2 mb-1">
-                <span class="text-[10px] font-black uppercase text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-md">${item.type}</span>
+                <span class="text-xs font-black uppercase text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-md">${item.type}</span>
                 ${statusBadge}
               </div>
               <h4 class="text-lg font-black text-slate-800">${item.name}</h4>
-              <p class="text-xs text-slate-400 mt-1"><i class="far fa-clock"></i> ${formatTime(item.startTime)} ${payBadge}</p>
+              <p class="text-sm text-slate-400 mt-1"><i class="far fa-clock"></i> ${formatTime(item.startTime)} ${payBadge}</p>
             </div>
-            <div class="flex flex-col items-center">
-               ${item.checkedIn ? '<i class="fas fa-check-circle text-green-500 text-2xl"></i><span class="text-[10px] font-bold text-green-600 mt-1">已簽到</span>' : '<i class="fas fa-clock text-slate-300 text-2xl"></i><span class="text-[10px] font-bold text-slate-400 mt-1">未簽到</span>'}
+            <div class="flex flex-col items-center shrink-0">
+               ${item.checkedIn ? '<i class="fas fa-check-circle text-green-500 text-2xl"></i><span class="text-xs font-bold text-green-600 mt-1">已簽到</span>' : '<i class="fas fa-clock text-slate-300 text-2xl"></i><span class="text-xs font-bold text-slate-400 mt-1">未簽到</span>'}
             </div>
           </div>
           
           ${last5InputHtml}
 
           ${item.regStatus === '正常' && !item.checkedIn ? `
-          <button onclick="userCancelRegistration('${item.name}')" class="mt-3 w-full py-2 bg-slate-50 text-slate-500 rounded-xl text-xs font-bold hover:bg-red-50 hover:text-red-500 transition-colors border border-slate-200">
+          <button onclick="userCancelRegistration('${item.name}')" class="mt-3 w-full py-2 bg-slate-50 text-slate-500 rounded-xl text-sm font-bold hover:bg-red-50 hover:text-red-500 transition-colors border border-slate-200">
             取消報名
           </button>` : ''}
         </div>
@@ -563,16 +565,14 @@
 
     try {
       await fetchAPI('updateLast5Digits', { userId: userProfile.userId, activityName, last5Digits: val });
-      showToast("✅ 已儲存匯款後五碼！");
-      btn.innerHTML = '已儲存';
+      showToast("✅ 已送出審核！");
+      btn.innerHTML = '已送出';
       btn.classList.replace('bg-blue-600', 'bg-green-500');
       setTimeout(() => {
-         btn.innerHTML = '儲存';
-         btn.classList.replace('bg-green-500', 'bg-blue-600');
-         btn.disabled = false;
-      }, 2000);
+         loadUserHistory();
+      }, 1000);
     } catch(err) {
-      showToast(err.message || "儲存失敗", true);
+      showToast(err.message || "送出失敗", true);
       btn.innerHTML = originalText;
       btn.disabled = false;
     }
@@ -630,10 +630,13 @@
     reader.onloadend = () => {
       const img = new Image();
       img.onload = () => {
-        let w = img.width, h = img.height; if (w > 250) { h = Math.round(h * (250/w)); w = 250; }
+        // 畫質極限操作：試算表單格上限 50k 字元
+        // 寬度設定為 450px，品質 0.65，可保證畫質大幅提升且不會突破限制
+        let w = img.width, h = img.height; if (w > 450) { h = Math.round(h * (450/w)); w = 450; }
         const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        const b64 = canvas.toDataURL('image/jpeg', 0.6);
+        const b64 = canvas.toDataURL('image/jpeg', 0.65);
+        
         document.getElementById(previewId).src = b64; 
         document.getElementById(previewId).classList.remove('hidden');
         document.getElementById(placeholderId).classList.add('hidden'); 
@@ -780,36 +783,36 @@
   function renderAdminActivities() {
     const container = document.getElementById('admin-activity-list-container');
     if (currentActivities.length === 0) {
-      container.innerHTML = `<div class="text-center py-16 bg-white rounded-3xl"><p class="text-slate-500 font-bold">目前無活動</p></div>`; return;
+      container.innerHTML = `<div class="text-center py-16 bg-white rounded-3xl"><p class="text-base text-slate-500 font-bold">目前無活動</p></div>`; return;
     }
     container.innerHTML = currentActivities.map(act => {
       const isHidden = act.status === '下架';
-      const feeBadge = act.feeType === '收費' ? `<span class="text-[10px] font-black text-orange-500 bg-orange-50 px-2 py-0.5 rounded ml-2">NT$ ${act.price}</span>` : '';
+      const feeBadge = act.feeType === '收費' ? `<span class="text-xs font-black text-orange-500 bg-orange-50 px-2 py-0.5 rounded ml-2">NT$ ${act.price}</span>` : '';
       return `
       <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 ${isHidden ? 'opacity-60' : ''}">
         <div class="flex justify-between items-start mb-4">
           <div>
             <div class="flex items-center mb-1">
-              <span class="text-[10px] font-black text-blue-500 bg-blue-50 px-2 py-1 rounded-md">${act.type}</span>
+              <span class="text-xs font-black text-blue-500 bg-blue-50 px-2 py-1 rounded-md">${act.type}</span>
               ${feeBadge}
             </div>
             <h3 class="text-lg font-black text-slate-800">${act.name}</h3>
           </div>
         </div>
         <div class="grid grid-cols-4 gap-2 bg-slate-50 rounded-2xl p-3 mb-4">
-          <div class="text-center"><p class="text-[10px] text-slate-400 font-bold">報名</p><p class="font-black">${act.total}</p></div>
-          <div class="text-center border-l border-slate-200"><p class="text-[10px] text-slate-400 font-bold">實到</p><p class="font-black text-green-600">${act.attended}</p></div>
-          <div class="text-center border-l border-slate-200"><p class="text-[10px] text-slate-400 font-bold">缺席</p><p class="font-black text-orange-500">${act.total - act.attended}</p></div>
-          <div class="text-center border-l border-slate-200"><p class="text-[10px] text-slate-400 font-bold">取消</p><p class="font-black text-slate-500">${act.cancelled || 0}</p></div>
+          <div class="text-center"><p class="text-xs text-slate-400 font-bold">報名</p><p class="font-black text-base">${act.total}</p></div>
+          <div class="text-center border-l border-slate-200"><p class="text-xs text-slate-400 font-bold">實到</p><p class="font-black text-base text-green-600">${act.attended}</p></div>
+          <div class="text-center border-l border-slate-200"><p class="text-xs text-slate-400 font-bold">缺席</p><p class="font-black text-base text-orange-500">${act.total - act.attended}</p></div>
+          <div class="text-center border-l border-slate-200"><p class="text-xs text-slate-400 font-bold">取消</p><p class="font-black text-base text-slate-500">${act.cancelled || 0}</p></div>
         </div>
         <button onclick="openAdminCheckin('${act.name}')" class="w-full py-4 mb-4 bg-blue-600 text-white rounded-2xl font-black text-sm hover:bg-blue-700 active:scale-95 transition-all shadow-md shadow-blue-200 flex justify-center items-center gap-2">
           <i class="fas fa-qrcode"></i> 👉 進入核銷 / 簽到管理
         </button>
         <div class="flex justify-between items-center border-t border-slate-100 pt-4">
-          <button onclick="togglePublish('${act.name}')" class="text-xs ${isHidden?'text-green-500':'text-orange-500'} font-bold px-3 py-2 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors"><i class="fas fa-eye${isHidden?'':'-slash'}"></i> ${isHidden?'重新上架':'設為下架'}</button>
+          <button onclick="togglePublish('${act.name}')" class="text-sm ${isHidden?'text-green-500':'text-orange-500'} font-bold px-3 py-2 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors"><i class="fas fa-eye${isHidden?'':'-slash'}"></i> ${isHidden?'重新上架':'設為下架'}</button>
           <div class="flex gap-2">
-            <button onclick="openEditActivity('${act.name}')" class="text-xs text-blue-500 font-bold px-3 py-2 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"><i class="fas fa-edit"></i> 編輯</button>
-            <button onclick="deleteAct('${act.name}')" class="text-xs text-red-500 font-bold px-3 py-2 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"><i class="fas fa-trash-alt"></i> 刪除</button>
+            <button onclick="openEditActivity('${act.name}')" class="text-sm text-blue-500 font-bold px-3 py-2 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"><i class="fas fa-edit"></i> 編輯</button>
+            <button onclick="deleteAct('${act.name}')" class="text-sm text-red-500 font-bold px-3 py-2 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"><i class="fas fa-trash-alt"></i> 刪除</button>
           </div>
         </div>
       </div>`;
@@ -828,15 +831,15 @@
     const term = document.getElementById('search-checkin').value.toLowerCase();
     const filtered = currentCheckinData.filter(r => (r.姓名||'').toLowerCase().includes(term) || (r.last5||'').includes(term));
     const container = document.getElementById('checkin-list-container');
-    if (filtered.length === 0) { container.innerHTML = '<p class="text-center text-slate-400 py-10 font-bold">查無名單</p>'; return; }
+    if (filtered.length === 0) { container.innerHTML = '<p class="text-center text-slate-400 py-10 font-bold text-base">查無名單</p>'; return; }
 
     container.innerHTML = filtered.map(p => `
       <div class="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 mb-3">
         <div class="flex justify-between items-start mb-3">
           <div class="w-2/3 pr-2">
             <h4 class="text-lg font-black text-slate-800 truncate">${p.姓名}</h4>
-            <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded uppercase font-black">${p.報名人身分 || '來賓'}</span>
-            ${p.last5 ? `<p class="text-xs text-blue-600 font-bold mt-1"><i class="fas fa-money-check-alt"></i> 後五碼: ${p.last5}</p>` : ''}
+            <span class="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded uppercase font-black">${p.報名人身分 || '來賓'}</span>
+            ${p.last5 ? `<p class="text-sm text-blue-600 font-bold mt-1"><i class="fas fa-money-check-alt"></i> 後五碼: ${p.last5}</p>` : ''}
           </div>
           <button onclick="toggleCheckinStatus(this, '${p.rowId}', ${p.checkedIn})" class="shrink-0 flex flex-col items-center justify-center gap-1 w-20 h-16 rounded-2xl text-xs font-black transition-all ${p.checkedIn ? 'bg-green-500 text-white' : 'bg-slate-100 text-slate-500'}">
             <i class="fas ${p.checkedIn ? 'fa-check-circle' : 'fa-circle'} text-lg"></i>
@@ -845,15 +848,16 @@
         </div>
         <div class="grid grid-cols-2 gap-2 bg-slate-50 p-2 rounded-xl border border-slate-100">
           <div class="flex flex-col">
-            <label class="text-[10px] text-slate-400 font-bold mb-1 ml-1">繳費狀態</label>
-            <select onchange="updateCellStatus('${p.rowId}', '繳費狀態', this.value)" class="text-xs font-bold px-2 py-2 bg-white border border-slate-200 rounded-lg outline-none text-slate-700 focus:border-blue-500">
+            <label class="text-xs text-slate-400 font-bold mb-1 ml-1">繳費狀態</label>
+            <select onchange="updateCellStatus('${p.rowId}', '繳費狀態', this.value)" class="text-sm font-bold px-2 py-2 bg-white border border-slate-200 rounded-lg outline-none text-slate-700 focus:border-blue-500">
               <option value="未繳費" ${p.payStatus === '未繳費' ? 'selected' : ''}>未繳費</option>
+              <option value="匯款審核中" ${p.payStatus === '匯款審核中' ? 'selected' : ''}>匯款審核中</option>
               <option value="已完款" ${p.payStatus === '已完款' ? 'selected' : ''}>已完款</option>
             </select>
           </div>
           <div class="flex flex-col">
-            <label class="text-[10px] text-slate-400 font-bold mb-1 ml-1">報名狀態</label>
-            <select onchange="updateCellStatus('${p.rowId}', '報名狀態', this.value)" class="text-xs font-bold px-2 py-2 bg-white border border-slate-200 rounded-lg outline-none text-slate-700 focus:border-blue-500">
+            <label class="text-xs text-slate-400 font-bold mb-1 ml-1">報名狀態</label>
+            <select onchange="updateCellStatus('${p.rowId}', '報名狀態', this.value)" class="text-sm font-bold px-2 py-2 bg-white border border-slate-200 rounded-lg outline-none text-slate-700 focus:border-blue-500">
               <option value="正常" ${p.regStatus === '正常' ? 'selected' : ''}>正常</option>
               <option value="已取消" ${p.regStatus === '已取消' ? 'selected' : ''}>已取消</option>
               <option value="已退款" ${p.regStatus === '已退款' ? 'selected' : ''}>已退款</option>
@@ -901,17 +905,17 @@
     const term = document.getElementById('search-crm').value.toLowerCase();
     const filtered = currentCrmData.filter(u => u.name.toLowerCase().includes(term));
     const container = document.getElementById('crm-list-container');
-    if (filtered.length === 0) { container.innerHTML = '<div class="text-center py-10 text-slate-400 font-bold">尚無資料</div>'; return; }
+    if (filtered.length === 0) { container.innerHTML = '<div class="text-center py-10 text-slate-400 font-bold text-base">尚無資料</div>'; return; }
 
     container.innerHTML = filtered.map(user => `
       <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden p-5 flex justify-between items-center">
         <div>
           <h4 class="text-lg font-black text-slate-800">${user.name}</h4>
-          <span class="text-[10px] bg-slate-100 px-2 py-0.5 rounded font-bold">${user.identity}</span>
+          <span class="text-xs bg-slate-100 px-2 py-0.5 rounded font-bold">${user.identity}</span>
         </div>
         <div class="text-right">
           <div class="text-3xl font-black text-indigo-600">${user.attended}</div>
-          <div class="text-[10px] text-slate-400 font-bold mt-1 tracking-widest">實到總次數</div>
+          <div class="text-xs text-slate-400 font-bold mt-1 tracking-widest">實到總次數</div>
         </div>
       </div>`).join('');
   }
@@ -925,7 +929,7 @@
     const t = document.getElementById('toast');
     if(!t) return;
     t.innerHTML = msg;
-    t.className = `fixed top-10 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full text-sm shadow-2xl transition-all z-[10000] pointer-events-none flex items-center gap-2 font-bold transform ${isError ? 'bg-red-600 text-white' : 'bg-slate-800 text-white'}`;
+    t.className = `fixed top-10 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full text-base shadow-2xl transition-all z-[10000] pointer-events-none flex items-center gap-2 font-bold transform ${isError ? 'bg-red-600 text-white' : 'bg-slate-800 text-white'}`;
     t.style.opacity = '1'; t.style.transform = 'translate(-50%, 0)';
     setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -1rem)'; }, 2500);
   }

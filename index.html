@@ -2,168 +2,143 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <title>活動大師 PRO</title>
+  <title>報名大師</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
-    body { font-family: 'Noto Sans TC', sans-serif; background-color: #f1f5f9; margin: 0; padding: 0; font-size: 16px; }
-    ::-webkit-scrollbar { width: 0px; background: transparent; }
-    .nav-btn { @apply flex flex-col items-center gap-1 p-2 transition-all w-full; }
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+    body { font-family: 'Noto Sans TC', sans-serif; background-color: #f8fafc; color: #334155; }
+    ::-webkit-scrollbar { width: 0px; }
+    .nav-btn { @apply flex flex-col items-center gap-1 p-2 transition-colors w-full text-slate-400; }
     .nav-active { @apply text-blue-600; }
-    .nav-inactive { @apply text-slate-400 hover:text-slate-600; }
-    .pb-safe { padding-bottom: env(safe-area-inset-bottom, 16px); }
-    /* 文字大字化 */
-    p, span, label, input, select, textarea, h3 { font-size: 1rem !important; }
-    .text-sm { font-size: 0.9375rem !important; }
-    .text-xs { font-size: 0.875rem !important; }
-    .text-xl { font-size: 1.25rem !important; }
-    .text-2xl { font-size: 1.5rem !important; }
-    .btn-disabled { pointer-events: none; opacity: 0.6; }
+    .card { @apply bg-white rounded-2xl shadow-sm border border-slate-200 p-5; }
+    .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1rem); }
+    input, select, textarea { @apply bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all w-full; }
+    button:active { transform: scale(0.98); }
   </style>
 </head>
 <body class="flex justify-center h-screen overflow-hidden">
 
-<div id="app-container" class="w-full max-w-md bg-slate-50 h-full relative shadow-2xl flex flex-col">
+<div id="app-container" class="w-full max-w-md bg-white h-full relative shadow-2xl flex flex-col">
   
-  <header class="bg-gradient-to-r from-blue-700 to-blue-500 text-white px-4 py-5 flex items-center justify-between shadow-md z-20 shrink-0">
+  <!-- BANNER -->
+  <header class="bg-blue-600 text-white px-5 py-4 flex items-center justify-between shrink-0 shadow-sm z-30">
     <div class="flex items-center gap-2">
-       <i class="fas fa-crown text-yellow-300 text-2xl"></i>
-       <h1 class="text-xl font-black tracking-widest uppercase">ActMaster</h1>
+       <i class="fas fa-calendar-check text-xl"></i>
+       <h1 class="text-lg font-bold tracking-wider">報名大師</h1>
     </div>
     <div class="flex items-center gap-2">
-      <div id="user-profile-badge" class="hidden flex items-center gap-2 bg-blue-800/40 px-3 py-1.5 rounded-full border border-white/20">
-        <img id="user-avatar" src="" class="w-7 h-7 rounded-full object-cover border border-white/50">
-        <span id="user-name-display" class="font-bold text-sm"></span>
+      <div id="user-profile-badge" class="hidden flex items-center gap-2 bg-black/10 px-3 py-1 rounded-full border border-white/20">
+        <img id="user-avatar" src="" class="w-6 h-6 rounded-full object-cover">
+        <span id="user-name-display" class="text-xs font-medium"></span>
       </div>
-      <button id="role-switch-btn" onclick="toggleRoleMode()" class="hidden text-xs font-bold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full border border-white/40 transition-all">
-        <i class="fas fa-sync-alt"></i> 前台
-      </button>
+      <button id="role-switch-btn" onclick="toggleRoleMode()" class="hidden text-xs font-bold bg-white/20 px-3 py-1 rounded-full border border-white/40">切換</button>
     </div>
   </header>
 
-  <main id="main-content" class="flex-1 overflow-y-auto pb-24 relative">
+  <main id="main-content" class="flex-1 overflow-y-auto pb-24 relative p-4 space-y-4">
     <div id="view-loading" class="h-full flex flex-col items-center justify-center space-y-4">
-      <i class="fas fa-circle-notch fa-spin text-4xl text-blue-500"></i>
-      <p id="loading-text" class="text-slate-500 font-bold tracking-widest animate-pulse">連線驗證中...</p>
+      <i class="fas fa-circle-notch fa-spin text-3xl text-blue-500"></i>
+      <p id="loading-text" class="text-slate-400 text-sm">連線中...</p>
     </div>
 
-    <!-- 註冊畫面 -->
-    <div id="view-user-register" class="hidden p-6 space-y-6">
-      <div class="text-center mt-4"><h2 class="text-2xl font-black text-slate-800">建立會員檔案</h2><p class="text-slate-500 mt-1">填寫一次，以後一鍵報名</p></div>
-      <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200 space-y-4">
-        <div class="space-y-1"><label class="font-bold text-slate-600">姓名</label><input type="text" id="reg-name" class="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-xl font-bold"></div>
-        <div class="space-y-1"><label class="font-bold text-slate-600">性別</label><select id="reg-gender" class="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-xl font-bold"><option value="男">男</option><option value="女">女</option></select></div>
-        <div class="space-y-1"><label class="font-bold text-slate-600">電話</label><input type="tel" id="reg-phone" class="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-xl font-bold" placeholder="09XX-XXXXXX"></div>
-        <div class="space-y-1"><label class="font-bold text-slate-600">業種</label><input type="text" id="reg-industry" class="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-xl font-bold"></div>
-        <button onclick="submitUserRegistration()" class="w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-lg shadow-lg active:scale-95 transition-all mt-4">確認註冊</button>
+    <!-- 註冊 -->
+    <div id="view-user-register" class="hidden space-y-6 pt-6">
+      <div class="text-center"><h2 class="text-xl font-bold">建立會員檔案</h2><p class="text-slate-400 text-sm mt-1">首次使用請先完善資料</p></div>
+      <div class="card space-y-4">
+        <div><label class="text-xs font-bold text-slate-500 block mb-1">姓名</label><input type="text" id="reg-name"></div>
+        <div><label class="text-xs font-bold text-slate-500 block mb-1">性別</label><select id="reg-gender"><option>男</option><option>女</option></select></div>
+        <div><label class="text-xs font-bold text-slate-500 block mb-1">電話</label><input type="tel" id="reg-phone"></div>
+        <div><label class="text-xs font-bold text-slate-500 block mb-1">業種</label><input type="text" id="reg-industry"></div>
+        <button onclick="submitUserRegistration()" class="w-full py-4 bg-blue-600 text-white rounded-xl font-bold mt-2">確認註冊</button>
       </div>
     </div>
 
-    <!-- 會員首頁: 活動列表 -->
-    <div id="view-user-activities" class="hidden p-4 space-y-4">
-      <div class="bg-blue-600 text-white p-6 rounded-3xl shadow-lg font-black text-2xl mb-4">近期活動</div>
+    <!-- 會員首頁 -->
+    <div id="view-user-activities" class="hidden space-y-4">
       <div id="user-activities-container" class="space-y-4"></div>
     </div>
 
-    <!-- 歷史紀錄 -->
-    <div id="view-user-history" class="hidden p-4 space-y-4">
-      <div class="bg-indigo-600 text-white p-6 rounded-3xl shadow-lg font-black text-2xl mb-4">報名紀錄</div>
+    <div id="view-user-history" class="hidden space-y-4">
       <div id="user-history-container" class="space-y-4"></div>
     </div>
 
-    <!-- 修改檔案 -->
-    <div id="view-user-profile" class="hidden p-6">
-      <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200 space-y-4">
-        <h2 class="text-xl font-black text-center mb-4">個人資料設定</h2>
-        <div class="space-y-1"><label class="font-bold text-slate-600">姓名</label><input type="text" id="edit-name" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold"></div>
-        <div class="space-y-1"><label class="font-bold text-slate-600">性別</label><select id="edit-gender" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold"><option value="男">男</option><option value="女">女</option></select></div>
-        <div class="space-y-1"><label class="font-bold text-slate-600">電話</label><input type="tel" id="edit-phone" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold"></div>
-        <div class="space-y-1"><label class="font-bold text-slate-600">業種</label><input type="text" id="edit-industry" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold"></div>
-        <button onclick="submitProfileUpdate()" class="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black text-lg mt-4 shadow-md">儲存修改</button>
+    <div id="view-user-profile" class="hidden">
+      <div class="card space-y-4">
+        <h3 class="font-bold text-center mb-2">修改個人資料</h3>
+        <input type="text" id="edit-name" placeholder="姓名">
+        <select id="edit-gender"><option>男</option><option>女</option></select>
+        <input type="tel" id="edit-phone" placeholder="電話">
+        <input type="text" id="edit-industry" placeholder="業種">
+        <button onclick="submitProfileUpdate()" class="w-full py-4 bg-blue-600 text-white rounded-xl font-bold">儲存變更</button>
       </div>
     </div>
 
-    <!-- 後台：活動清單 -->
-    <div id="view-admin-activities" class="hidden p-4 space-y-4">
-      <div class="bg-blue-600 text-white p-6 rounded-3xl shadow-lg font-black text-2xl">活動管理中心</div>
+    <!-- 後台 -->
+    <div id="view-admin-activities" class="hidden space-y-4">
       <div id="admin-activity-list-container" class="space-y-4"></div>
     </div>
 
-    <!-- 後台：參數設定 -->
-    <div id="view-admin-settings" class="hidden p-4 space-y-4">
-      <div class="bg-slate-800 text-white p-6 rounded-3xl shadow-lg font-black text-2xl">系統參數</div>
-      <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200 space-y-5">
-        <div class="space-y-1">
-          <label class="font-bold text-slate-500">Telegram Bot Token</label>
-          <div class="flex gap-2">
-            <input type="text" id="set-tg-token" class="flex-1 px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 outline-none font-bold" placeholder="Token">
-            <button onclick="autoFetchTgChatId()" id="btn-fetch-tg" class="bg-blue-100 text-blue-600 px-5 py-3 rounded-xl font-black whitespace-nowrap active:scale-95 transition-all"><i class="fas fa-sync-alt"></i> 轉換</button>
-          </div>
+    <div id="view-admin-settings" class="hidden card space-y-5">
+      <h3 class="font-bold border-b pb-2">參數設定</h3>
+      <div class="space-y-3">
+        <div><label class="text-xs font-bold text-slate-500">TG Bot Token</label>
+          <div class="flex gap-2"><input type="text" id="set-tg-token" class="flex-1"><button onclick="autoFetchTgChatId()" id="btn-fetch-tg" class="bg-blue-50 text-blue-600 px-4 rounded-xl text-sm font-bold whitespace-nowrap">轉換</button></div>
         </div>
-        <div class="space-y-1"><label class="font-bold text-slate-500">Telegram Chat ID</label><input type="text" id="set-tg-chat" class="w-full px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 font-bold" placeholder="轉換獲取"></div>
-        <div class="space-y-1 pt-2 border-t"><label class="font-bold text-slate-500">LINE 官方帳號加入網址</label><input type="text" id="set-line-link" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold"></div>
-        <button onclick="submitSettings()" id="btn-submit-settings" class="w-full py-5 bg-slate-800 text-white rounded-2xl font-black text-lg mt-4 shadow-xl">儲存設定</button>
+        <div><label class="text-xs font-bold text-slate-500">TG Chat ID</label><input type="text" id="set-tg-chat"></div>
+        <div><label class="text-xs font-bold text-slate-500">LINE 加入網址</label><input type="text" id="set-line-link"></div>
       </div>
+      <button onclick="submitSettings()" class="w-full py-4 bg-slate-800 text-white rounded-xl font-bold">儲存設定</button>
     </div>
 
-    <!-- 後台：建立活動 -->
-    <div id="view-admin-create" class="hidden p-4 space-y-4">
-       <div class="flex bg-slate-200 p-1 rounded-2xl mb-2">
-        <button onclick="toggleCreateMode('quick')" id="tab-quick" class="flex-1 py-4 rounded-xl font-black bg-white shadow-sm text-blue-600">⚡ 快速建檔</button>
-        <button onclick="toggleCreateMode('detailed')" id="tab-detailed" class="flex-1 py-4 rounded-xl font-black text-slate-500">🌟 完整發佈</button>
+    <div id="view-admin-create" class="hidden space-y-4">
+      <div class="flex bg-slate-100 p-1 rounded-xl">
+        <button onclick="toggleCreateMode('quick')" id="tab-quick" class="flex-1 py-3 rounded-lg text-sm font-bold bg-white text-blue-600 shadow-sm">⚡ 快速</button>
+        <button onclick="toggleCreateMode('detailed')" id="tab-detailed" class="flex-1 py-3 rounded-lg text-sm font-bold text-slate-500">🌟 完整</button>
       </div>
-      <div id="form-quick" class="bg-white p-6 rounded-[2rem] border border-slate-200 space-y-4">
-        <div class="space-y-1"><label class="font-bold text-slate-500">活動名稱 (不可重複)</label><input type="text" id="quick-name" class="w-full px-4 py-4 bg-slate-50 rounded-xl border font-bold"></div>
-        <div class="space-y-1"><label class="font-bold text-slate-500">預設身分</label><select id="quick-identity" class="w-full px-4 py-4 bg-slate-50 rounded-xl border font-bold"><option>來賓</option><option>會員</option></select></div>
-        <textarea id="quick-names" class="w-full h-48 p-4 bg-slate-50 rounded-xl border font-bold" placeholder="直接貼上名單，用換行分隔姓名..."></textarea>
-        <button onclick="handleCreateActivity('quick')" id="btn-quick-create" class="w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-lg shadow-lg">立即建立</button>
+      <div id="form-quick" class="card space-y-4">
+        <input type="text" id="quick-name" placeholder="活動名稱">
+        <textarea id="quick-names" class="h-40" placeholder="貼上名單..."></textarea>
+        <button onclick="handleCreateActivity('quick')" class="w-full py-4 bg-blue-600 text-white rounded-xl font-bold">建立活動</button>
       </div>
-      <div id="form-detailed" class="hidden bg-white p-6 rounded-[2rem] border border-slate-200 space-y-4">
-         <div class="space-y-1"><label class="font-bold text-slate-500">活動名稱</label><input type="text" id="detail-name" class="w-full px-4 py-4 bg-slate-50 rounded-xl border font-bold"></div>
-         <div class="flex gap-4 p-2"><label class="flex items-center gap-2"><input type="radio" name="fee-type" value="免費" checked onchange="toggleFeeInput('create')"> <span class="font-bold">免費</span></label><label class="flex items-center gap-2"><input type="radio" name="fee-type" value="收費" onchange="toggleFeeInput('create')"> <span class="font-bold">收費</span></label></div>
-         <input type="number" id="detail-price" class="hidden w-full px-4 py-4 bg-slate-50 rounded-xl border font-bold" placeholder="金額 (NT$)">
-         <div class="grid grid-cols-2 gap-4 border-t pt-4">
-            <div class="space-y-1"><label class="font-bold text-slate-500">開始日期</label><input type="datetime-local" id="detail-start" class="w-full px-2 py-3 bg-slate-50 border rounded-xl font-bold"></div>
-            <div class="space-y-1"><label class="font-bold text-slate-500">結束日期</label><input type="datetime-local" id="detail-end" class="w-full px-2 py-3 bg-slate-50 border rounded-xl font-bold"></div>
-         </div>
-         <div onclick="document.getElementById('file-input-create').click()" class="w-full h-56 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center bg-slate-50 cursor-pointer overflow-hidden"><div id="preview-placeholder-create" class="text-center"><i class="fas fa-image text-4xl text-slate-300"></i><p class="text-sm font-bold text-slate-400 mt-2">點擊上傳高畫質圖片</p></div><img id="image-preview-create" class="hidden w-full h-full object-contain"><input type="file" id="file-input-create" class="hidden" accept="image/*" onchange="previewFile('create')"></div>
+      <div id="form-detailed" class="hidden card space-y-4">
+         <input type="text" id="detail-name" placeholder="活動名稱">
+         <div class="flex gap-4 p-1"><label class="flex items-center gap-2"><input type="radio" name="fee-type" value="免費" checked onchange="toggleFeeInput('create')"> <span>免費</span></label><label class="flex items-center gap-2"><input type="radio" name="fee-type" value="收費" onchange="toggleFeeInput('create')"> <span>收費</span></label></div>
+         <input type="number" id="detail-price" class="hidden" placeholder="金額 (NT$)">
+         <div onclick="document.getElementById('file-input-create').click()" class="w-full h-40 border border-dashed border-slate-300 rounded-xl flex items-center justify-center bg-slate-50 cursor-pointer overflow-hidden"><div id="preview-placeholder-create" class="text-center text-slate-300"><i class="fas fa-image text-2xl"></i><p class="text-xs font-bold mt-1">點擊上傳圖片</p></div><img id="image-preview-create" class="hidden w-full h-full object-contain"><input type="file" id="file-input-create" class="hidden" accept="image/*" onchange="previewFile('create')"></div>
          <input type="hidden" id="in-image-url-create">
-         <button onclick="handleCreateActivity('detailed')" id="btn-detail-create" class="w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-lg shadow-lg mt-4">發布正式報名表</button>
+         <button onclick="handleCreateActivity('detailed')" class="w-full py-4 bg-blue-600 text-white rounded-xl font-bold">發布報名頁</button>
       </div>
     </div>
     
-    <div id="view-admin-checkin" class="hidden h-full flex flex-col bg-slate-50">
-       <div id="checkin-list-container" class="p-4 space-y-4 pb-20 overflow-y-auto"></div>
+    <div id="view-admin-checkin" class="hidden h-full flex flex-col p-0">
+       <div id="checkin-list-container" class="flex-1 space-y-3 overflow-y-auto"></div>
     </div>
-    <div id="view-admin-edit" class="hidden p-4"></div>
   </main>
 
-  <!-- 底部導覽列 (User) -->
-  <nav id="bottom-nav-user" class="hidden absolute bottom-0 w-full bg-white border-t border-slate-200 flex justify-around items-center px-2 py-3 z-50 pb-safe shadow-[0_-4px_15px_rgba(0,0,0,0.03)]">
-    <button onclick="switchView('user-activities')" id="nav-user-activities" class="nav-btn"><i class="fas fa-calendar-alt text-2xl"></i><span class="text-xs font-black">報名活動</span></button>
-    <button onclick="switchView('user-history')" id="nav-user-history" class="nav-btn"><i class="fas fa-search text-2xl"></i><span class="text-xs font-black">查詢/補填</span></button>
-    <button onclick="switchView('user-profile')" id="nav-user-profile" class="nav-btn"><i class="fas fa-user-circle text-2xl"></i><span class="text-xs font-black">個人設定</span></button>
+  <!-- BOTTOM NAV -->
+  <nav id="bottom-nav-user" class="hidden absolute bottom-0 w-full bg-white border-t flex justify-around items-center px-2 py-2 z-50 pb-safe shadow-lg">
+    <button onclick="switchView('user-activities')" id="nav-user-activities" class="nav-btn nav-active"><i class="fas fa-calendar-alt text-xl"></i><span class="text-[10px] font-bold">活動報名</span></button>
+    <button onclick="switchView('user-history')" id="nav-user-history" class="nav-btn"><i class="fas fa-history text-xl"></i><span class="text-[10px] font-bold">查詢補填</span></button>
+    <button onclick="switchView('user-profile')" id="nav-user-profile" class="nav-btn"><i class="fas fa-user-circle text-xl"></i><span class="text-[10px] font-bold">我的帳號</span></button>
   </nav>
 
-  <!-- 底部導覽列 (Admin) -->
-  <nav id="bottom-nav-admin" class="hidden absolute bottom-0 w-full bg-white border-t border-slate-200 flex justify-around items-center px-1 py-3 z-50 pb-safe shadow-[0_-4px_15px_rgba(0,0,0,0.03)]">
-    <button onclick="switchView('admin-activities')" id="nav-admin-activities" class="nav-btn"><i class="fas fa-qrcode text-xl"></i><span class="text-xs font-black">核銷簽到</span></button>
-    <button onclick="switchView('admin-create')" id="nav-admin-create" class="nav-btn"><i class="fas fa-plus-circle text-xl"></i><span class="text-xs font-black">建立活動</span></button>
-    <button onclick="switchView('admin-crm')" id="nav-admin-crm" class="nav-btn"><i class="fas fa-users text-xl"></i><span class="text-xs font-black">CRM 數據</span></button>
-    <button onclick="switchView('admin-settings')" id="nav-admin-settings" class="nav-btn"><i class="fas fa-cogs text-xl"></i><span class="text-xs font-black">參數設定</span></button>
+  <nav id="bottom-nav-admin" class="hidden absolute bottom-0 w-full bg-white border-t flex justify-around items-center px-1 py-2 z-50 pb-safe shadow-lg">
+    <button onclick="switchView('admin-activities')" id="nav-admin-activities" class="nav-btn nav-active"><i class="fas fa-list text-lg"></i><span class="text-[10px] font-bold">列表核銷</span></button>
+    <button onclick="switchView('admin-create')" id="nav-admin-create" class="nav-btn"><i class="fas fa-plus-circle text-lg"></i><span class="text-[10px] font-bold">建立活動</span></button>
+    <button onclick="switchView('admin-crm')" id="nav-admin-crm" class="nav-btn"><i class="fas fa-users text-lg"></i><span class="text-[10px] font-bold">數據</span></button>
+    <button onclick="switchView('admin-settings')" id="nav-admin-settings" class="nav-btn"><i class="fas fa-cogs text-lg"></i><span class="text-[10px] font-bold">設定</span></button>
   </nav>
 </div>
 
-<!-- 自訂彈跳視窗 -->
-<div id="custom-modal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-6">
-  <div class="bg-white w-full rounded-[2.5rem] p-8 shadow-2xl text-center">
-    <div class="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner"><i class="fas fa-info-circle text-4xl"></i></div>
-    <h3 id="modal-title" class="text-2xl font-black mb-4 text-slate-800">系統通知</h3>
-    <p id="modal-desc" class="text-lg text-slate-500 font-bold mb-8 leading-relaxed"></p>
-    <button onclick="closeModalAndGo()" class="w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-xl active:scale-95 transition-all shadow-lg">我知道了</button>
+<!-- Modal -->
+<div id="custom-modal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-6">
+  <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center">
+    <h3 id="modal-title" class="text-lg font-bold mb-2">通知</h3>
+    <p id="modal-desc" class="text-slate-500 text-sm mb-6 leading-relaxed"></p>
+    <button onclick="closeModalAndGo()" class="w-full py-4 bg-blue-600 text-white rounded-xl font-bold">確認</button>
   </div>
 </div>
 
@@ -173,7 +148,7 @@
   const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55"]; 
 
   let userProfile = null, isAdmin = false, isViewModeAdmin = false, isRegistered = false, registeredInfo = null;
-  let currentActivities = [], currentCheckinData = [], currentCrmData = [], activeActivityName = '', modalTargetView = '';
+  let currentActivities = [], currentCheckinData = [], activeActivityName = '', modalTarget = '';
 
   async function fetchAPI(action, payload = {}) {
     try {
@@ -181,17 +156,12 @@
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, payload })
       });
-      const text = await response.text();
-      try {
-        const result = JSON.parse(text);
-        if (!result.success) throw new Error(result.error);
-        return result.data;
-      } catch(e) {
-        console.error("JSON Parse Error:", text);
-        throw new Error(`伺服器回傳非 JSON 格式。請確認 GAS 權限設為「所有人」。開頭：${text.substring(0, 40)}`);
-      }
+      const resText = await response.text();
+      const result = JSON.parse(resText);
+      if (!result.success) throw new Error(result.error);
+      return result.data;
     } catch (err) {
-      showToast("錯誤: " + err.message, true); throw err;
+      showToast(err.message, true); throw err;
     }
   }
 
@@ -214,12 +184,12 @@
         if (isRegistered) switchView('user-activities');
         else { document.getElementById('reg-name').value = userProfile.displayName; switchView('user-register'); }
       }
-    } catch (err) { document.getElementById('loading-text').innerText = 'LIFF 載入失敗'; }
+    } catch (err) { document.getElementById('loading-text').innerText = 'LIFF 載入中...請用手機開啟'; }
   };
 
   function toggleRoleMode() {
     isViewModeAdmin = !isViewModeAdmin;
-    document.getElementById('role-switch-btn').innerHTML = isViewModeAdmin ? '<i class="fas fa-sync-alt"></i> 前台' : '<i class="fas fa-sync-alt"></i> 後台';
+    document.getElementById('role-switch-btn').innerHTML = isViewModeAdmin ? '切換前台' : '切換後台';
     if (isViewModeAdmin) switchView('admin-activities');
     else { if (isRegistered) switchView('user-activities'); else switchView('user-register'); }
   }
@@ -237,19 +207,16 @@
     if (isAdmin && isViewModeAdmin && view.startsWith('admin') && view !== 'admin-checkin') {
       navAdmin.classList.remove('hidden');
       ['activities', 'create', 'crm', 'settings'].forEach(k => {
-        const btn = document.getElementById('nav-admin-'+k);
-        if(btn) btn.className = `nav-btn ${view==='admin-'+k ? 'nav-active' : 'nav-inactive'}`;
+        document.getElementById('nav-admin-'+k).className = `nav-btn ${view==='admin-'+k ? 'nav-active' : ''}`;
       });
     } else if (isRegistered && (!isAdmin || !isViewModeAdmin) && view.startsWith('user')) {
       navUser.classList.remove('hidden');
       ['activities', 'history', 'profile'].forEach(k => {
-        const btn = document.getElementById('nav-user-'+k);
-        if(btn) btn.className = `nav-btn ${view==='user-'+k ? 'nav-active' : 'nav-inactive'}`;
+        document.getElementById('nav-user-'+k).className = `nav-btn ${view==='user-'+k ? 'nav-active' : ''}`;
       });
     }
 
     if (view === 'admin-activities') loadAdminActivities();
-    else if (view === 'admin-crm') loadCrmData();
     else if (view === 'admin-settings') loadAdminSettings();
     else if (view === 'user-activities') loadUserActivities();
     else if (view === 'user-profile') populateUserProfile();
@@ -264,25 +231,23 @@
   }
 
   function populateUserProfile() { if(registeredInfo) { document.getElementById('edit-name').value=registeredInfo.name; document.getElementById('edit-gender').value=registeredInfo.gender; document.getElementById('edit-phone').value=registeredInfo.phone; document.getElementById('edit-industry').value=registeredInfo.industry; } }
-  
   async function submitProfileUpdate() {
     const p = { userId: userProfile.userId, name: document.getElementById('edit-name').value.trim(), gender: document.getElementById('edit-gender').value, phone: document.getElementById('edit-phone').value.trim(), industry: document.getElementById('edit-industry').value.trim() };
-    await fetchAPI('updateUser', p); registeredInfo = p; showToast("✅ 資料已更新");
+    await fetchAPI('updateUser', p); registeredInfo = p; showToast("✅ 已儲存");
   }
 
   async function loadUserActivities() {
     const container = document.getElementById('user-activities-container');
-    container.innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-2xl"></i></div>';
+    container.innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-xl text-blue-500"></i></div>';
     const data = await fetchAPI('getPublicActivities');
-    if (data.length === 0) { container.innerHTML = '<div class="text-center py-16 bg-white rounded-3xl font-bold">目前無開放活動</div>'; return; }
+    if (data.length === 0) { container.innerHTML = '<div class="text-center py-16 bg-white rounded-2xl"><p class="text-slate-400">目前無活動</p></div>'; return; }
     container.innerHTML = data.map(act => `
-      <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-        ${act.imageUrl ? `<img src="${act.imageUrl}" class="w-full h-56 object-cover">` : ''}
-        <div class="p-6">
-          <div class="flex items-center gap-2 mb-3"><span class="text-sm font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-lg">${act.type}</span><span class="text-sm font-black text-orange-600">${act.feeType === '收費' ? 'NT$'+act.price : '免費'}</span></div>
-          <h3 class="text-2xl font-black text-slate-800">${act.name}</h3>
-          <p class="text-slate-400 mt-2 font-bold">${act.startTime ? formatTime(act.startTime) : '未設定時間'}</p>
-          <button onclick="userJoinActivity(this, '${act.name}', '${act.feeType}', '${act.price}')" class="w-full mt-5 py-5 bg-blue-600 text-white rounded-2xl font-black text-xl active:scale-95 transition-all shadow-md">一鍵報名</button>
+      <div class="card overflow-hidden p-0 border-none shadow-md">
+        ${act.imageUrl ? `<img src="${act.imageUrl}" class="w-full h-40 object-cover">` : ''}
+        <div class="p-5">
+          <div class="flex items-center gap-2 mb-2"><span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded uppercase">${act.type}</span><span class="text-[10px] font-bold text-orange-500">${act.feeType==='收費'?'NT$'+act.price:'免費'}</span></div>
+          <h3 class="font-bold text-lg text-slate-800">${act.name}</h3>
+          <button onclick="userJoinActivity(this, '${act.name}', '${act.feeType}', '${act.price}')" class="w-full mt-4 py-3 bg-blue-600 text-white rounded-xl font-bold">我要報名</button>
         </div>
       </div>`).join('');
   }
@@ -292,45 +257,36 @@
     btn.classList.add('btn-disabled');
     try {
       await fetchAPI('joinActivity', { userId: userProfile.userId, activityName: name });
-      if (feeType === '收費') showModal("報名資料處理中", `您已成功報名！此為收費活動 <b>(NT$ ${price})</b><br><br>請完成匯款後，前往「報名查詢」補填您的<strong class="text-orange-600">匯款帳號後五碼</strong>。`, "history");
+      if (feeType === '收費') showModal("報名成功", `請完成匯款後，前往「報名查詢」補填您的<strong class="text-orange-600">後五碼</strong>。`, "history");
       else showModal("報名成功", `期待您的參與！`, "activities");
     } catch(err) { btn.classList.remove('btn-disabled'); }
   }
 
-  function showModal(title, desc, target) { document.getElementById('modal-title').innerText = title; document.getElementById('modal-desc').innerHTML = desc; modalTargetView = target; document.getElementById('custom-modal').classList.remove('hidden'); }
-  function closeModalAndGo() { document.getElementById('custom-modal').classList.add('hidden'); if (modalTargetView === 'history') switchView('user-history'); else switchView('user-activities'); }
+  function showModal(title, desc, target) { document.getElementById('modal-title').innerText = title; document.getElementById('modal-desc').innerHTML = desc; modalTarget = target; document.getElementById('custom-modal').classList.remove('hidden'); }
+  function closeModalAndGo() { document.getElementById('custom-modal').classList.add('hidden'); if (modalTarget === 'history') switchView('user-history'); else switchView('user-activities'); }
 
   async function loadUserHistory() {
     const container = document.getElementById('user-history-container');
     container.innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin"></i></div>';
     const history = await fetchAPI('getUserHistory', { userId: userProfile.userId });
-    if (history.length === 0) { container.innerHTML = '<div class="text-center py-16 bg-white rounded-3xl font-bold">尚無紀錄</div>'; return; }
-    container.innerHTML = history.map(item => {
-      let payBadge = item.isPaidAct ? (item.payStatus === '已完款' ? '<span class="text-blue-600">已繳費</span>' : (item.payStatus === '匯款審核中' ? '<span class="text-purple-600 font-black animate-pulse">審核中</span>' : '<span class="text-orange-500">未繳費</span>')) : '<span class="text-green-600">成功</span>';
-      return `
-      <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 mb-4">
+    if (history.length === 0) { container.innerHTML = '<div class="text-center py-16 card text-slate-400">尚無紀錄</div>'; return; }
+    container.innerHTML = history.map(item => `
+      <div class="card space-y-4">
         <div class="flex justify-between items-start">
-          <div><h4 class="text-xl font-black">${item.name}</h4><p class="text-sm text-slate-400 mt-2 font-bold">${formatTime(item.startTime)} • ${payBadge}</p></div>
-          <div class="shrink-0">${item.checkedIn ? '<i class="fas fa-check-circle text-green-500 text-3xl"></i>' : '<i class="fas fa-clock text-slate-200 text-3xl"></i>'}</div>
+          <div><h4 class="font-bold text-lg">${item.name}</h4><p class="text-xs text-slate-400 mt-1">${item.payStatus} • ${item.regStatus}</p></div>
+          <div class="shrink-0">${item.checkedIn ? '<i class="fas fa-check-circle text-green-500 text-2xl"></i>' : '<i class="fas fa-clock text-slate-200 text-2xl"></i>'}</div>
         </div>
-        ${item.regStatus === '正常' ? `
-          <div class="mt-4 pt-4 border-t">
-            ${item.isPaidAct ? `<div class="flex items-center gap-2 bg-slate-50 p-3 rounded-2xl border mb-4 shadow-inner"><i class="fas fa-money-check text-slate-400 ml-2"></i><input type="text" id="last5-${item.name}" value="${item.last5}" placeholder="補填後五碼" maxlength="5" class="flex-1 bg-transparent font-black outline-none"></div>` : ''}
-            <div class="flex gap-3">
-              <button onclick="userCancelRegistration('${item.name}')" class="flex-1 py-4 bg-white border border-red-200 text-red-500 rounded-xl font-black shadow-sm">取消報名</button>
-              ${item.isPaidAct ? `<button onclick="updateUserLast5('${item.name}')" class="flex-1 py-4 bg-blue-600 text-white rounded-xl font-black shadow-md">送出資料</button>` : ''}
-            </div>
-          </div>
-        ` : `<div class="mt-4 text-center font-black text-slate-400 bg-slate-50 py-3 rounded-xl border border-dashed">已取消此報名</div>`}
-      </div>`;
-    }).join('');
+        ${item.isPaidAct && item.regStatus === '正常' ? `
+          <div class="flex gap-2"><input type="text" id="last5-${item.name}" value="${item.last5}" placeholder="補填後五碼" maxlength="5" class="flex-1 py-2 text-sm"><button onclick="updateUserLast5('${item.name}')" class="bg-blue-600 text-white px-5 rounded-xl font-bold text-sm">送出</button></div>
+        ` : (item.regStatus === '正常' ? `<button onclick="userCancelRegistration('${item.name}')" class="w-full py-2 bg-slate-50 text-red-500 rounded-xl font-bold text-sm">取消報名</button>` : '')}
+      </div>`).join('');
   }
 
   async function updateUserLast5(name) {
     const val = document.getElementById(`last5-${name}`).value.trim();
-    if(!val) return showToast("⚠️ 請填寫", true);
+    if(!val) return showToast("⚠️ 請輸入", true);
     await fetchAPI('updateLast5Digits', { userId: userProfile.userId, activityName: name, last5Digits: val });
-    showToast("✅ 已送出審核！"); loadUserHistory();
+    showToast("✅ 已送出審核"); loadUserHistory();
   }
 
   async function userCancelRegistration(name) { if (confirm("確定取消？")) { await fetchAPI('cancelRegistration', { userId: userProfile.userId, activityName: name }); loadUserHistory(); } }
@@ -341,43 +297,43 @@
     container.innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin"></i></div>';
     currentActivities = await fetchAPI('getActivityDashboard');
     container.innerHTML = currentActivities.map(act => `
-      <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-        <h3 class="text-2xl font-black">${act.name}</h3>
-        <div class="grid grid-cols-3 gap-2 bg-slate-50 rounded-2xl p-4 my-5 text-center border border-slate-100">
-          <div><p class="text-sm text-slate-400 font-bold">報名</p><p class="font-black text-xl">${act.total}</p></div>
-          <div><p class="text-sm text-green-600 font-bold">簽到</p><p class="font-black text-xl">${act.attended}</p></div>
-          <div><p class="text-sm text-red-400 font-bold">取消</p><p class="font-black text-xl">${act.cancelled}</p></div>
+      <div class="card space-y-3 border-none shadow-md">
+        <h3 class="font-bold text-lg">${act.name}</h3>
+        <div class="grid grid-cols-3 gap-2 bg-slate-50 rounded-xl p-3 text-center">
+          <div><p class="text-[10px] text-slate-400">報名</p><p class="font-bold">${act.total}</p></div>
+          <div><p class="text-[10px] text-green-600">簽到</p><p class="font-bold">${act.attended}</p></div>
+          <div><p class="text-[10px] text-red-400">取消</p><p class="font-bold">${act.cancelled}</p></div>
         </div>
-        <button onclick="openAdminCheckin('${act.name}')" class="w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-xl mb-4 shadow-md active:scale-95 transition-all"><i class="fas fa-qrcode"></i> 進入核銷與審核</button>
-        <div class="flex justify-between px-3 font-bold"><button onclick="toggleActStatus('${act.name}')" class="text-slate-500">${act.status==='下架'?'設為上架':'設為下架'}</button><button onclick="deleteAct('${act.name}')" class="text-red-500">刪除活動</button></div>
+        <button onclick="openAdminCheckin('${act.name}')" class="w-full py-4 bg-blue-600 text-white rounded-xl font-bold text-sm">進入核銷</button>
+        <div class="flex justify-between px-1 text-xs font-bold"><button onclick="toggleActStatus('${act.name}')" class="text-slate-400">${act.status==='下架'?'上架':'下架'}</button><button onclick="deleteAct('${act.name}')" class="text-red-400">刪除</button></div>
       </div>`).join('');
   }
 
   async function openAdminCheckin(name) {
     activeActivityName = name; switchView('admin-checkin');
     currentCheckinData = await fetchAPI('getRegistrants', { activityName: name });
-    document.getElementById('checkin-list-container').innerHTML = `<div class="bg-white p-5 sticky top-0 border-b mb-3 flex items-center gap-4 shadow-sm z-30"><button onclick="switchView('admin-activities')" class="p-3 bg-slate-100 rounded-full"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-2xl truncate">${name}</h2></div>` + currentCheckinData.map(p => `
-      <div class="bg-white p-6 rounded-3xl border border-slate-200 mb-4 shadow-sm">
-        <div class="flex justify-between items-center mb-5">
-          <div class="flex-1"><h4 class="text-2xl font-black truncate">${p.姓名}</h4><p class="text-blue-600 font-black mt-2 text-lg">${p.last5?'💰 後五碼: '+p.last5 : '⏳ 無資料'}</p></div>
-          <button onclick="toggleCheckin('${p.rowId}', ${p.checkedIn})" class="px-8 py-4 rounded-2xl font-black text-lg ${p.checkedIn?'bg-green-500 text-white shadow-md':'bg-slate-100 text-slate-500'}">${p.checkedIn?'已簽到':'未簽到'}</button>
+    document.getElementById('checkin-list-container').innerHTML = `<div class="bg-white p-4 sticky top-0 border-b mb-2 flex items-center gap-3"><button onclick="switchView('admin-activities')" class="p-2 bg-slate-100 rounded-full"><i class="fas fa-arrow-left"></i></button><h2 class="font-bold truncate">${name}</h2></div>` + currentCheckinData.map(p => `
+      <div class="card border-slate-100">
+        <div class="flex justify-between items-center mb-3">
+          <div><h4 class="font-bold">${p.姓名}</h4><p class="text-xs text-blue-600">${p.last5?'💰 後五碼: '+p.last5 : ''}</p></div>
+          <button onclick="toggleCheckin('${p.rowId}', ${p.checkedIn})" class="px-5 py-2 rounded-xl font-bold text-sm ${p.checkedIn?'bg-green-500 text-white':'bg-slate-100 text-slate-400'}">${p.checkedIn?'已簽到':'未簽到'}</button>
         </div>
-        <div class="grid grid-cols-2 gap-4"><select onchange="updateRow('${p.rowId}', '繳費狀態', this.value)" class="p-4 bg-slate-50 rounded-2xl font-black border text-lg focus:border-blue-500 outline-none"><option value="未繳費" ${p.payStatus==='未繳費'?'selected':''}>未繳費</option><option value="匯款審核中" ${p.payStatus==='匯款審核中'?'selected':''}>匯款審核</option><option value="已完款" ${p.payStatus==='已完款'?'selected':''}>已完款</option></select><select onchange="updateRow('${p.rowId}', '報名狀態', this.value)" class="p-4 bg-slate-50 rounded-2xl font-black border text-lg focus:border-blue-500 outline-none"><option value="正常" ${p.regStatus==='正常'?'selected':''}>正常</option><option value="已取消" ${p.regStatus==='已取消'?'selected':''}>已取消</option></select></div>
+        <div class="grid grid-cols-2 gap-2"><select onchange="updateRow('${p.rowId}', '繳費狀態', this.value)" class="py-2 text-sm"><option value="未繳費" ${p.payStatus==='未繳費'?'selected':''}>未繳費</option><option value="匯款審核中" ${p.payStatus==='匯款審核中'?'selected':''}>審核</option><option value="已完款" ${p.payStatus==='已完款'?'selected':''}>已完款</option></select><select onchange="updateRow('${p.rowId}', '報名狀態', this.value)" class="py-2 text-sm"><option value="正常" ${p.regStatus==='正常'?'selected':''}>正常</option><option value="已取消" ${p.regStatus==='已取消'?'selected':''}>已取消</option></select></div>
       </div>`).join('');
   }
 
   async function toggleCheckin(id, status) { await fetchAPI('toggleStatus', { activityName: activeActivityName, rowId: id, currentStatus: status }); openAdminCheckin(activeActivityName); }
-  async function updateRow(id, col, val) { await fetchAPI('updateCellStatus', { activityName: activeActivityName, rowId: id, colName: col, val: val }); showToast("✅ 資料已同步"); }
+  async function updateRow(id, col, val) { await fetchAPI('updateCellStatus', { activityName: activeActivityName, rowId: id, colName: col, val: val }); showToast("✅ 已更新"); }
 
   async function autoFetchTgChatId() {
     const token = document.getElementById('set-tg-token').value.trim();
-    if (!token) return showToast("⚠️ 請輸入 Token", true);
-    const btn = document.getElementById('btn-fetch-tg'); btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; btn.disabled = true;
+    if (!token) return showToast("⚠️ 請先輸入 Token", true);
+    const btn = document.getElementById('btn-fetch-tg'); btn.disabled = true;
     try {
       const chatId = await fetchAPI('getTgChatId', { token });
-      document.getElementById('set-tg-chat').value = chatId; showToast("✅ 成功抓取 ID！請儲存");
+      document.getElementById('set-tg-chat').value = chatId; showToast("✅ 已獲取");
     } catch(err) { showToast(err.message, true); }
-    btn.innerHTML = '<i class="fas fa-sync-alt"></i> 轉換'; btn.disabled = false;
+    btn.disabled = false;
   }
 
   async function loadAdminSettings() { const s = await fetchAPI('getSettings'); document.getElementById('set-tg-token').value = s.TG_BOT_TOKEN; document.getElementById('set-tg-chat').value = s.TG_CHAT_ID; document.getElementById('set-line-link').value = s.LINE_LINK; }
@@ -398,13 +354,13 @@
   }
 
   function toggleCreateMode(m) {
-    document.getElementById('tab-quick').className = m==='quick'?'flex-1 py-4 rounded-xl font-black bg-white shadow-sm text-blue-600':'flex-1 py-4 rounded-xl font-black text-slate-500';
-    document.getElementById('tab-detailed').className = m==='detailed'?'flex-1 py-4 rounded-xl font-black bg-white shadow-sm text-blue-600':'flex-1 py-4 rounded-xl font-black text-slate-500';
+    document.getElementById('tab-quick').className = m==='quick'?'flex-1 py-3 rounded-lg text-sm font-bold bg-white text-blue-600 shadow-sm':'flex-1 py-3 rounded-lg text-sm font-bold text-slate-500';
+    document.getElementById('tab-detailed').className = m==='detailed'?'flex-1 py-3 rounded-lg text-sm font-bold bg-white text-blue-600 shadow-sm':'flex-1 py-3 rounded-lg text-sm font-bold text-slate-500';
     document.getElementById('form-quick').classList.toggle('hidden', m!=='quick'); document.getElementById('form-detailed').classList.toggle('hidden', m!=='detailed');
   }
 
   function formatTime(t) { return t ? new Date(t).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false }) : ''; }
-  function showToast(m, e=false) { const t = document.getElementById('toast'); t.innerHTML = m; t.className = `fixed top-10 left-1/2 -translate-x-1/2 px-6 py-4 rounded-full text-lg shadow-2xl transition-all z-[10000] font-bold transform ${e ? 'bg-red-600 text-white' : 'bg-slate-800 text-white'}`; t.style.opacity = '1'; t.style.transform = 'translate(-50%, 0)'; setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -1rem)'; }, 2500); }
+  function showToast(m, e=false) { const t = document.getElementById('toast'); t.innerHTML = m; t.className = `fixed top-10 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full text-sm shadow-2xl transition-all z-[10000] font-bold transform ${e ? 'bg-red-600 text-white' : 'bg-slate-800 text-white'}`; t.style.opacity = '1'; t.style.transform = 'translate(-50%, 0)'; setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -1rem)'; }, 2500); }
 </script>
 </body>
 </html>

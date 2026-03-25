@@ -53,7 +53,6 @@
         <h2 class="text-2xl font-black text-slate-800">建立會員檔案</h2>
         <p class="text-sm text-slate-500 font-medium mt-1">填寫一次，未來即可一鍵快速報名</p>
       </div>
-
       <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-4">
         <div class="space-y-1"><label class="text-xs font-bold text-slate-500 ml-1">真實姓名</label><input type="text" id="reg-name" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none focus:ring-2 focus:ring-blue-500"></div>
         <div class="space-y-1"><label class="text-xs font-bold text-slate-500 ml-1">性別</label><select id="reg-gender" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none"><option value="男">男</option><option value="女">女</option></select></div>
@@ -140,8 +139,18 @@
       <div id="form-quick" class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-5 animate-in fade-in zoom-in-95 duration-300">
         <div class="space-y-1"><label class="text-xs font-bold text-slate-500">活動名稱 (必填)</label><input type="text" id="quick-name" class="w-full px-5 py-4 bg-slate-50 rounded-2xl font-bold outline-none border border-slate-100"></div>
         <div class="grid grid-cols-2 gap-4">
-          <div class="space-y-1"><label class="text-xs font-bold text-slate-500">活動性質</label><select id="quick-type" class="w-full px-4 py-4 bg-slate-50 rounded-2xl font-bold"><option>例會</option><option>課程</option><option>講座</option><option>其他</option></select></div>
-          <div class="space-y-1"><label class="text-xs font-bold text-slate-500">預設身份</label><select id="quick-identity" class="w-full px-4 py-4 bg-slate-50 rounded-2xl font-bold"><option>來賓</option><option>會員</option></select></div>
+          <div class="space-y-1">
+            <label class="text-xs font-bold text-slate-500">活動性質</label>
+            <select id="quick-type" class="w-full px-4 py-4 bg-slate-50 rounded-2xl font-bold">
+              <option value="例會">例會</option><option value="課程">課程</option><option value="教學">教學</option><option value="聯誼">聯誼</option><option value="參訪">參訪</option><option value="講座">講座</option><option value="工作坊">工作坊</option><option value="研討會">研討會</option><option value="說明會">說明會</option><option value="慶功宴">慶功宴</option><option value="發表會">發表會</option><option value="公益活動">公益活動</option><option value="其他">其他</option>
+            </select>
+          </div>
+          <div class="space-y-1">
+            <label class="text-xs font-bold text-slate-500">預設身份</label>
+            <select id="quick-identity" class="w-full px-4 py-4 bg-slate-50 rounded-2xl font-bold">
+              <option>來賓</option><option>會員</option>
+            </select>
+          </div>
         </div>
         <div class="space-y-1 pt-2 border-t border-slate-100">
           <label class="text-xs font-bold text-slate-500 ml-1">直接貼上名單 (用換行分隔)</label>
@@ -156,8 +165,8 @@
         <div class="space-y-2 pt-2">
           <label class="text-xs font-bold text-slate-500">收費設定</label>
           <div class="flex gap-4">
-            <label class="flex items-center gap-2"><input type="radio" name="fee-type" value="免費" checked onchange="toggleFeeInput()" class="w-4 h-4 text-blue-600"> <span class="font-bold text-slate-700">免費</span></label>
-            <label class="flex items-center gap-2"><input type="radio" name="fee-type" value="收費" onchange="toggleFeeInput()" class="w-4 h-4 text-blue-600"> <span class="font-bold text-slate-700">收費</span></label>
+            <label class="flex items-center gap-2"><input type="radio" name="fee-type" value="免費" checked onchange="toggleFeeInput('create')" class="w-4 h-4 text-blue-600"> <span class="font-bold text-slate-700">免費</span></label>
+            <label class="flex items-center gap-2"><input type="radio" name="fee-type" value="收費" onchange="toggleFeeInput('create')" class="w-4 h-4 text-blue-600"> <span class="font-bold text-slate-700">收費</span></label>
           </div>
           <input type="number" id="detail-price" class="hidden w-full px-5 py-4 bg-slate-50 rounded-2xl font-bold outline-none mt-2 border border-slate-100" placeholder="請輸入金額 (NT$)">
         </div>
@@ -167,7 +176,9 @@
         </div>
         <div class="space-y-1 pt-4 border-t border-slate-100">
           <label class="text-xs font-bold text-slate-500">活動性質</label>
-          <select id="detail-type" class="w-full px-5 py-4 bg-slate-50 rounded-2xl font-bold border border-slate-100"><option>例會</option><option>課程</option><option>講座</option><option>其他</option></select>
+          <select id="detail-type" class="w-full px-5 py-4 bg-slate-50 rounded-2xl font-bold border border-slate-100">
+            <option value="例會">例會</option><option value="課程">課程</option><option value="教學">教學</option><option value="聯誼">聯誼</option><option value="參訪">參訪</option><option value="講座">講座</option><option value="工作坊">工作坊</option><option value="研討會">研討會</option><option value="說明會">說明會</option><option value="慶功宴">慶功宴</option><option value="發表會">發表會</option><option value="公益活動">公益活動</option><option value="其他">其他</option>
+          </select>
         </div>
         <div class="space-y-3 pt-4 border-t border-slate-100">
           <label class="text-xs font-bold text-slate-500">開放線上報名填寫欄位</label>
@@ -179,15 +190,59 @@
         </div>
         <div class="space-y-1 pt-4 border-t border-slate-100">
            <label class="text-xs font-bold text-slate-500">活動宣傳圖</label>
-           <div id="image-preview-container" onclick="document.getElementById('file-input').click()" class="w-full h-32 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer">
-             <div id="preview-placeholder" class="text-center"><i class="fas fa-image text-3xl text-slate-300 mb-1"></i><p class="text-[10px] text-slate-400 font-bold uppercase">點擊上傳照片</p></div>
-             <img id="image-preview" class="hidden w-full h-full object-contain p-2">
-             <input type="file" id="file-input" class="hidden" accept="image/*" onchange="previewFile()">
+           <div id="image-preview-container" onclick="document.getElementById('file-input-create').click()" class="w-full h-32 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer">
+             <div id="preview-placeholder-create" class="text-center"><i class="fas fa-image text-3xl text-slate-300 mb-1"></i><p class="text-[10px] text-slate-400 font-bold uppercase">點擊上傳照片</p></div>
+             <img id="image-preview-create" class="hidden w-full h-full object-contain p-2">
+             <input type="file" id="file-input-create" class="hidden" accept="image/*" onchange="previewFile('create')">
            </div>
-           <input type="hidden" id="in-image-url">
+           <input type="hidden" id="in-image-url-create">
         </div>
         <div class="space-y-1 pt-2 border-t border-slate-100"><label class="text-xs font-bold text-slate-500">活動說明</label><textarea id="detail-desc" class="w-full h-24 p-5 bg-slate-50 rounded-2xl font-medium border border-slate-100 resize-none"></textarea></div>
         <button id="btn-detail-create" onclick="handleCreateActivity('detailed')" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-lg hover:bg-blue-700 shadow-xl shadow-blue-200">發佈報名頁面</button>
+      </div>
+    </div>
+
+    <!-- 後台：編輯活動內容 -->
+    <div id="view-admin-edit" class="hidden p-4 space-y-4">
+      <div class="flex items-center gap-3 mt-2 mb-4">
+        <button onclick="switchView('admin-activities')" class="p-2 bg-slate-200 rounded-full text-slate-600"><i class="fas fa-arrow-left"></i></button>
+        <h2 class="text-2xl font-black text-slate-800">編輯活動內容</h2>
+      </div>
+
+      <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-5">
+        <div class="space-y-1">
+          <label class="text-xs font-bold text-slate-500">活動名稱 (不可修改)</label>
+          <input type="text" id="edit-act-name" class="w-full px-5 py-4 bg-slate-100 text-slate-500 rounded-2xl font-bold border border-slate-200" disabled>
+        </div>
+        <div class="space-y-2 pt-2">
+          <label class="text-xs font-bold text-slate-500">收費設定</label>
+          <div class="flex gap-4">
+            <label class="flex items-center gap-2"><input type="radio" name="edit-fee-type" value="免費" onchange="toggleFeeInput('edit')" class="w-4 h-4 text-blue-600"> <span class="font-bold text-slate-700">免費</span></label>
+            <label class="flex items-center gap-2"><input type="radio" name="edit-fee-type" value="收費" onchange="toggleFeeInput('edit')" class="w-4 h-4 text-blue-600"> <span class="font-bold text-slate-700">收費</span></label>
+          </div>
+          <input type="number" id="edit-act-price" class="hidden w-full px-5 py-4 bg-slate-50 rounded-2xl font-bold outline-none mt-2 border border-slate-100" placeholder="請輸入金額 (NT$)">
+        </div>
+        <div class="grid grid-cols-2 gap-4 border-t border-slate-100 pt-4">
+          <div class="space-y-1"><label class="text-xs font-bold text-slate-500">開始時間</label><input type="datetime-local" id="edit-act-start" class="w-full px-2 py-3 bg-slate-50 rounded-2xl border border-slate-100 text-xs font-bold"></div>
+          <div class="space-y-1"><label class="text-xs font-bold text-slate-500">結束時間</label><input type="datetime-local" id="edit-act-end" class="w-full px-2 py-3 bg-slate-50 rounded-2xl border border-slate-100 text-xs font-bold"></div>
+        </div>
+        <div class="space-y-1 pt-4 border-t border-slate-100">
+          <label class="text-xs font-bold text-slate-500">活動性質</label>
+          <select id="edit-act-type" class="w-full px-5 py-4 bg-slate-50 rounded-2xl font-bold border border-slate-100">
+            <option value="例會">例會</option><option value="課程">課程</option><option value="教學">教學</option><option value="聯誼">聯誼</option><option value="參訪">參訪</option><option value="講座">講座</option><option value="工作坊">工作坊</option><option value="研討會">研討會</option><option value="說明會">說明會</option><option value="慶功宴">慶功宴</option><option value="發表會">發表會</option><option value="公益活動">公益活動</option><option value="其他">其他</option>
+          </select>
+        </div>
+        <div class="space-y-1 pt-4 border-t border-slate-100">
+           <label class="text-xs font-bold text-slate-500">活動宣傳圖</label>
+           <div id="image-preview-container-edit" onclick="document.getElementById('file-input-edit').click()" class="w-full h-32 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer">
+             <div id="preview-placeholder-edit" class="text-center hidden"><i class="fas fa-image text-3xl text-slate-300 mb-1"></i><p class="text-[10px] text-slate-400 font-bold uppercase">點擊修改照片</p></div>
+             <img id="image-preview-edit" class="w-full h-full object-contain p-2 hidden">
+             <input type="file" id="file-input-edit" class="hidden" accept="image/*" onchange="previewFile('edit')">
+           </div>
+           <input type="hidden" id="in-image-url-edit">
+        </div>
+        <div class="space-y-1 pt-2 border-t border-slate-100"><label class="text-xs font-bold text-slate-500">活動說明</label><textarea id="edit-act-desc" class="w-full h-24 p-5 bg-slate-50 rounded-2xl font-medium border border-slate-100 resize-none"></textarea></div>
+        <button id="btn-submit-edit" onclick="handleUpdateActivity()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-lg hover:bg-blue-700 shadow-xl shadow-blue-200">儲存修改</button>
       </div>
     </div>
 
@@ -277,7 +332,7 @@
   };
 
   function switchView(view) {
-    ['loading', 'user-register', 'user-activities', 'user-profile', 'user-history', 'admin-activities', 'admin-checkin', 'admin-create', 'admin-crm'].forEach(v => {
+    ['loading', 'user-register', 'user-activities', 'user-profile', 'user-history', 'admin-activities', 'admin-checkin', 'admin-create', 'admin-edit', 'admin-crm'].forEach(v => {
       const el = document.getElementById(`view-${v}`);
       if(el) el.classList.add('hidden');
     });
@@ -297,7 +352,9 @@
         const btn = document.getElementById(`nav-admin-${v}`);
         if(!btn) return;
         const iconDiv = btn.querySelector('div');
-        if (`admin-${v}` === view) {
+        // Edit 畫面時，維持 Activities 亮起
+        let isActive = (`admin-${v}` === view) || (view === 'admin-edit' && v === 'activities');
+        if (isActive) {
           btn.className = `nav-btn nav-active ${v==='crm'?'text-indigo-600':''}`;
           iconDiv.className = `p-1 rounded-xl ${v==='crm'?'bg-indigo-50':'bg-blue-50'}`;
         } else {
@@ -410,16 +467,21 @@
   }
 
   async function userJoinActivity(btn, activityName, feeType, price) {
-    if (!confirm(`確定要報名「${activityName}」嗎？`)) return;
+    let last5Digits = "";
+    if (feeType === '收費') {
+      last5Digits = prompt(`此為收費活動 (NT$ ${price})\n若已匯款，請輸入「匯款帳號後五碼」：`);
+      if (last5Digits === null) return; 
+      if (last5Digits.trim() === "") return showToast("⚠️ 請輸入後五碼以便核對", true);
+    }
 
     btn.classList.add('btn-disabled'); btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 報名中...';
     try {
-      await fetchAPI('joinActivity', { userId: userProfile.userId, activityName, last5Digits: '' });
+      await fetchAPI('joinActivity', { userId: userProfile.userId, activityName, last5Digits });
       btn.classList.replace('bg-blue-600', 'bg-green-500'); btn.innerHTML = '<i class="fas fa-check"></i> 已報名';
       
       if (feeType === '收費') {
         showToast("✅ 報名成功！請至歷史紀錄補填匯款後五碼");
-        setTimeout(() => switchView('user-history'), 1500); // 跳轉歷史紀錄讓用戶補填
+        setTimeout(() => switchView('user-history'), 1500); 
       } else {
         showToast("✅ 報名成功！");
       }
@@ -450,7 +512,6 @@
             : '<span class="text-[10px] text-orange-400 font-bold ml-2"><i class="fas fa-exclamation-circle"></i> 未繳費</span>';
         }
 
-        // 渲染後五碼輸入區塊 (針對收費課程且尚未取消)
         let last5InputHtml = '';
         if (item.isPaidAct && item.regStatus === '正常') {
           last5InputHtml = `
@@ -547,11 +608,38 @@
     }
   }
 
-  function toggleFeeInput() {
-    const feeType = document.querySelector('input[name="fee-type"]:checked').value;
-    const priceInput = document.getElementById('detail-price');
+  function toggleFeeInput(mode) {
+    const radioName = mode === 'create' ? 'fee-type' : 'edit-fee-type';
+    const priceId = mode === 'create' ? 'detail-price' : 'edit-act-price';
+    const feeType = document.querySelector(`input[name="${radioName}"]:checked`).value;
+    const priceInput = document.getElementById(priceId);
+    
     if (feeType === '收費') priceInput.classList.remove('hidden');
     else { priceInput.classList.add('hidden'); priceInput.value = ''; }
+  }
+
+  function previewFile(mode) {
+    const inputId = mode === 'create' ? 'file-input-create' : 'file-input-edit';
+    const previewId = mode === 'create' ? 'image-preview-create' : 'image-preview-edit';
+    const placeholderId = mode === 'create' ? 'preview-placeholder-create' : 'preview-placeholder-edit';
+    const hiddenId = mode === 'create' ? 'in-image-url-create' : 'in-image-url-edit';
+
+    const file = document.getElementById(inputId).files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height; if (w > 250) { h = Math.round(h * (250/w)); w = 250; }
+        const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const b64 = canvas.toDataURL('image/jpeg', 0.6);
+        document.getElementById(previewId).src = b64; 
+        document.getElementById(previewId).classList.remove('hidden');
+        document.getElementById(placeholderId).classList.add('hidden'); 
+        document.getElementById(hiddenId).value = b64;
+      }; img.src = reader.result;
+    }; reader.readAsDataURL(file);
   }
 
   async function handleCreateActivity(mode) {
@@ -588,7 +676,7 @@
         names: [], activityName: actName, activityType: document.getElementById('detail-type').value,
         defaultIdentity: '來賓', feeType, price,
         startTime: document.getElementById('detail-start').value, endTime: document.getElementById('detail-end').value,
-        description: document.getElementById('detail-desc').value, imageUrl: document.getElementById('in-image-url').value,
+        description: document.getElementById('detail-desc').value, imageUrl: document.getElementById('in-image-url-create').value,
         selectedFields: {
           gender: document.getElementById('field-gender').checked,
           phone: document.getElementById('field-phone').checked,
@@ -604,30 +692,84 @@
       await fetchAPI('bulkAddRegistrants', payload);
       showToast("✅ 活動建立成功！");
       document.getElementById('quick-name').value = ''; document.getElementById('quick-names').value = '';
-      document.getElementById('detail-name').value = ''; document.getElementById('in-image-url').value = '';
+      document.getElementById('detail-name').value = ''; document.getElementById('in-image-url-create').value = '';
       document.getElementById('detail-desc').value = ''; document.getElementById('detail-price').value = '';
-      document.getElementById('image-preview').classList.add('hidden'); document.getElementById('preview-placeholder').classList.remove('hidden');
+      document.getElementById('image-preview-create').classList.add('hidden'); document.getElementById('preview-placeholder-create').classList.remove('hidden');
       switchView('admin-activities');
     } catch(err) { showToast(err.message || "建立失敗", true); }
     btn.classList.remove('btn-disabled'); btn.innerHTML = mode==='quick'?'快速建立':'發佈報名頁面';
   }
 
-  function previewFile() {
-    const file = document.getElementById('file-input').files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const img = new Image();
-      img.onload = () => {
-        let w = img.width, h = img.height; if (w > 250) { h = Math.round(h * (250/w)); w = 250; }
-        const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        const b64 = canvas.toDataURL('image/jpeg', 0.6);
-        document.getElementById('image-preview').src = b64; document.getElementById('image-preview').classList.remove('hidden');
-        document.getElementById('preview-placeholder').classList.add('hidden'); document.getElementById('in-image-url').value = b64;
-      }; img.src = reader.result;
-    }; reader.readAsDataURL(file);
+  // ============== 管理員：編輯活動 =================
+
+  function openEditActivity(actName) {
+    const act = currentActivities.find(a => a.name === actName);
+    if (!act) return;
+    
+    document.getElementById('edit-act-name').value = act.name;
+    document.getElementById('edit-act-type').value = act.type || '例會';
+    document.getElementById('edit-act-start').value = act.startTime || '';
+    document.getElementById('edit-act-end').value = act.endTime || '';
+    document.getElementById('edit-act-desc').value = act.description || '';
+    
+    if(act.feeType === '收費') {
+      document.querySelector('input[name="edit-fee-type"][value="收費"]').checked = true;
+      document.getElementById('edit-act-price').classList.remove('hidden');
+      document.getElementById('edit-act-price').value = act.price || '';
+    } else {
+      document.querySelector('input[name="edit-fee-type"][value="免費"]').checked = true;
+      document.getElementById('edit-act-price').classList.add('hidden');
+      document.getElementById('edit-act-price').value = '';
+    }
+
+    const preview = document.getElementById('image-preview-edit');
+    const placeholder = document.getElementById('preview-placeholder-edit');
+    if (act.imageUrl) {
+      preview.src = act.imageUrl;
+      preview.classList.remove('hidden');
+      placeholder.classList.add('hidden');
+      document.getElementById('in-image-url-edit').value = act.imageUrl;
+    } else {
+      preview.src = '';
+      preview.classList.add('hidden');
+      placeholder.classList.remove('hidden');
+      document.getElementById('in-image-url-edit').value = '';
+    }
+
+    switchView('admin-edit');
   }
+
+  async function handleUpdateActivity() {
+    const actName = document.getElementById('edit-act-name').value;
+    const feeType = document.querySelector('input[name="edit-fee-type"]:checked').value;
+    const price = document.getElementById('edit-act-price').value.trim();
+    if (feeType === '收費' && !price) return showToast("⚠️ 請輸入收費金額", true);
+
+    const btn = document.getElementById('btn-submit-edit');
+    btn.classList.add('btn-disabled'); btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 儲存中...';
+
+    const payload = {
+      activityName: actName,
+      activityType: document.getElementById('edit-act-type').value,
+      feeType: feeType,
+      price: price,
+      startTime: document.getElementById('edit-act-start').value,
+      endTime: document.getElementById('edit-act-end').value,
+      description: document.getElementById('edit-act-desc').value,
+      imageUrl: document.getElementById('in-image-url-edit').value
+    };
+
+    try {
+      await fetchAPI('updateActivity', payload);
+      showToast("✅ 活動修改成功！");
+      switchView('admin-activities');
+    } catch(err) {
+      showToast(err.message || "修改失敗", true);
+    }
+    btn.classList.remove('btn-disabled'); btn.innerHTML = '儲存修改';
+  }
+
+  // =================================================
 
   async function loadAdminActivities() {
     const container = document.getElementById('admin-activity-list-container');
@@ -665,7 +807,10 @@
         </button>
         <div class="flex justify-between items-center border-t border-slate-100 pt-4">
           <button onclick="togglePublish('${act.name}')" class="text-xs ${isHidden?'text-green-500':'text-orange-500'} font-bold px-3 py-2 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors"><i class="fas fa-eye${isHidden?'':'-slash'}"></i> ${isHidden?'重新上架':'設為下架'}</button>
-          <button onclick="deleteAct('${act.name}')" class="text-xs text-red-500 font-bold px-3 py-2 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"><i class="fas fa-trash-alt"></i> 刪除</button>
+          <div class="flex gap-2">
+            <button onclick="openEditActivity('${act.name}')" class="text-xs text-blue-500 font-bold px-3 py-2 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"><i class="fas fa-edit"></i> 編輯</button>
+            <button onclick="deleteAct('${act.name}')" class="text-xs text-red-500 font-bold px-3 py-2 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"><i class="fas fa-trash-alt"></i> 刪除</button>
+          </div>
         </div>
       </div>`;
     }).join('');

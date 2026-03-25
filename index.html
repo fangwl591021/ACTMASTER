@@ -59,10 +59,7 @@
         <div class="space-y-1"><label class="text-xs font-bold text-slate-500 ml-1">性別</label><select id="reg-gender" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none"><option value="男">男</option><option value="女">女</option></select></div>
         <div class="space-y-1"><label class="text-xs font-bold text-slate-500 ml-1">手機號碼</label><input type="tel" id="reg-phone" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="09XX-XXXXXX"></div>
         <div class="space-y-1"><label class="text-xs font-bold text-slate-500 ml-1">業種 (行業別)</label><input type="text" id="reg-industry" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="請填寫行業"></div>
-        
-        <button onclick="submitUserRegistration()" id="btn-submit-user-reg" class="w-full py-4 mt-4 bg-blue-600 text-white rounded-2xl font-black text-lg hover:bg-blue-700 transition-all shadow-xl shadow-blue-200">
-          完成註冊
-        </button>
+        <button onclick="submitUserRegistration()" id="btn-submit-user-reg" class="w-full py-4 mt-4 bg-blue-600 text-white rounded-2xl font-black text-lg hover:bg-blue-700 transition-all shadow-xl shadow-blue-200">完成註冊</button>
       </div>
     </div>
 
@@ -105,23 +102,29 @@
     <!-- 後台：活動專區 -->
     <div id="view-admin-activities" class="hidden p-4 space-y-4">
       <div class="bg-blue-600 text-white p-6 rounded-3xl shadow-lg mb-6 relative overflow-hidden">
-        <div class="relative z-10"><h2 class="text-2xl font-black mb-1">活動專區</h2><p class="text-blue-100 text-sm font-medium">總覽所有活動與上下架狀態</p></div>
+        <div class="relative z-10"><h2 class="text-2xl font-black mb-1">活動與核銷</h2><p class="text-blue-100 text-sm font-medium">點擊活動進入簽到與管理名單</p></div>
         <i class="fas fa-calendar-check absolute -bottom-4 -right-4 text-7xl text-white opacity-10"></i>
       </div>
       <div id="admin-activity-list-container" class="space-y-4"></div>
     </div>
 
-    <!-- 後台：簽到內頁 -->
+    <!-- 後台：核銷與簽到管理內頁 -->
     <div id="view-admin-checkin" class="hidden h-full flex flex-col bg-slate-50">
-      <div class="bg-white px-4 pt-6 pb-4 sticky top-0 z-20 shadow-sm border-b border-slate-100">
+      <div class="bg-blue-600 text-white px-4 pt-6 pb-4 sticky top-0 z-20 shadow-md">
         <div class="flex items-center gap-3 mb-4">
-          <button onclick="switchView('admin-activities')" class="p-2 bg-slate-100 rounded-full text-slate-600"><i class="fas fa-arrow-left"></i></button>
-          <div class="flex-1 overflow-hidden"><h2 id="checkin-act-name" class="text-lg font-black text-slate-800 truncate">載入中...</h2></div>
-          <button onclick="handleQuickAdd()" class="bg-blue-100 text-blue-600 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1"><i class="fas fa-user-plus"></i> 新增</button>
+          <button onclick="switchView('admin-activities')" class="p-2 bg-blue-500 hover:bg-blue-400 rounded-full transition-colors"><i class="fas fa-arrow-left"></i></button>
+          <div class="flex-1 overflow-hidden">
+            <p class="text-xs text-blue-200 font-bold mb-1">核銷與簽到管理</p>
+            <h2 id="checkin-act-name" class="text-xl font-black truncate">載入中...</h2>
+          </div>
+          <button onclick="handleQuickAdd()" class="bg-white text-blue-600 px-3 py-2 rounded-xl text-xs font-black shadow-md flex items-center gap-1 active:scale-95 transition-transform"><i class="fas fa-user-plus"></i> 補登記</button>
         </div>
-        <div class="relative"><i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i><input type="text" id="search-checkin" oninput="renderCheckinList()" placeholder="搜尋姓名..." class="w-full pl-10 pr-4 py-3 bg-slate-100 border-none rounded-2xl text-sm font-medium outline-none"></div>
+        <div class="relative">
+          <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+          <input type="text" id="search-checkin" oninput="renderCheckinList()" placeholder="輸入姓名或後五碼搜尋..." class="w-full pl-10 pr-4 py-3 bg-white border-none rounded-2xl text-sm font-bold text-slate-700 outline-none shadow-inner">
+        </div>
       </div>
-      <div id="checkin-list-container" class="p-4 space-y-3 pb-20"></div>
+      <div id="checkin-list-container" class="p-4 space-y-4 pb-20"></div>
     </div>
 
     <!-- 後台：建立活動 -->
@@ -129,16 +132,26 @@
       <div class="text-center mt-4 mb-6"><div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-inner"><i class="fas fa-plus text-2xl"></i></div><h2 class="text-2xl font-black text-slate-800">發起新活動</h2></div>
       <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-5">
         <div class="space-y-1"><label class="text-xs font-bold text-slate-500">活動名稱 (必填)</label><input type="text" id="in-act-name" class="w-full px-5 py-4 bg-slate-50 rounded-2xl font-bold outline-none"></div>
-        <div class="grid grid-cols-2 gap-4">
+        
+        <!-- 免費 / 收費 設定 -->
+        <div class="space-y-2 pt-2">
+          <label class="text-xs font-bold text-slate-500">收費設定</label>
+          <div class="flex gap-4">
+            <label class="flex items-center gap-2"><input type="radio" name="fee-type" value="免費" checked onchange="toggleFeeInput()" class="w-4 h-4 text-blue-600"> <span class="font-bold text-slate-700">免費</span></label>
+            <label class="flex items-center gap-2"><input type="radio" name="fee-type" value="收費" onchange="toggleFeeInput()" class="w-4 h-4 text-blue-600"> <span class="font-bold text-slate-700">收費</span></label>
+          </div>
+          <input type="number" id="in-act-price" class="hidden w-full px-5 py-4 bg-slate-50 rounded-2xl font-bold outline-none mt-2" placeholder="請輸入金額 (NT$)">
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 border-t border-slate-100 pt-4">
           <div class="space-y-1"><label class="text-xs font-bold text-slate-500">活動性質</label><select id="in-act-type" class="w-full px-5 py-4 bg-slate-50 rounded-2xl font-bold"><option value="例會">例會</option><option value="課程">課程</option><option value="講座">講座</option><option value="其他">其他</option></select></div>
-          <div class="space-y-1"><label class="text-xs font-bold text-slate-500">預設身份</label><select id="in-default-identity" class="w-full px-5 py-4 bg-slate-50 rounded-2xl font-bold"><option value="來賓">來賓</option><option value="會員">會員</option></select></div>
         </div>
         <div class="grid grid-cols-2 gap-4 border-t border-slate-100 pt-4">
           <div class="space-y-1"><label class="text-xs font-bold text-slate-500">開始時間</label><input type="datetime-local" id="in-act-start" class="w-full px-3 py-3 bg-slate-50 rounded-2xl text-xs font-bold"></div>
           <div class="space-y-1"><label class="text-xs font-bold text-slate-500">結束時間</label><input type="datetime-local" id="in-act-end" class="w-full px-3 py-3 bg-slate-50 rounded-2xl text-xs font-bold"></div>
         </div>
         <div class="space-y-3 pt-4 border-t border-slate-100">
-          <label class="text-xs font-bold text-slate-500">表格欄位啟用</label>
+          <label class="text-xs font-bold text-slate-500">附加紀錄欄位 (選填)</label>
           <div class="grid grid-cols-2 gap-3">
             <label class="flex items-center gap-3 bg-slate-50 px-4 py-3 rounded-2xl"><input type="checkbox" id="field-gender" checked class="w-5 h-5 text-blue-600"> <span class="text-sm font-bold text-slate-600">性別</span></label>
             <label class="flex items-center gap-3 bg-slate-50 px-4 py-3 rounded-2xl"><input type="checkbox" id="field-phone" checked class="w-5 h-5 text-blue-600"> <span class="text-sm font-bold text-slate-600">電話</span></label>
@@ -165,15 +178,15 @@
 
   <!-- 底部導覽列 (User) -->
   <nav id="bottom-nav-user" class="hidden absolute bottom-0 w-full bg-white border-t border-slate-200 flex justify-around items-center px-2 py-2 z-50 pb-safe shadow-[0_-4px_15px_rgba(0,0,0,0.03)]">
-    <button onclick="switchView('user-activities')" id="nav-user-activities" class="nav-btn"><div class="p-1 rounded-xl transition-colors"><i class="fas fa-calendar-alt text-xl"></i></div><span class="text-[10px] font-black">活動專區</span></button>
-    <button onclick="switchView('user-history')" id="nav-user-history" class="nav-btn"><div class="p-1 rounded-xl transition-colors"><i class="fas fa-history text-xl"></i></div><span class="text-[10px] font-black">報名紀錄</span></button>
+    <button onclick="switchView('user-activities')" id="nav-user-activities" class="nav-btn"><div class="p-1 rounded-xl transition-colors"><i class="fas fa-calendar-alt text-xl"></i></div><span class="text-[10px] font-black">活動報名</span></button>
+    <button onclick="switchView('user-history')" id="nav-user-history" class="nav-btn"><div class="p-1 rounded-xl transition-colors"><i class="fas fa-history text-xl"></i></div><span class="text-[10px] font-black">歷史紀錄</span></button>
     <button onclick="switchView('user-profile')" id="nav-user-profile" class="nav-btn"><div class="p-1 rounded-xl transition-colors"><i class="fas fa-user-circle text-xl"></i></div><span class="text-[10px] font-black">會員專區</span></button>
   </nav>
 
   <!-- 底部導覽列 (Admin) -->
   <nav id="bottom-nav-admin" class="hidden absolute bottom-0 w-full bg-white border-t border-slate-200 flex justify-around items-center px-2 py-2 z-50 pb-safe shadow-[0_-4px_15px_rgba(0,0,0,0.03)]">
     <button onclick="switchView('admin-create')" id="nav-admin-create" class="nav-btn"><div class="p-1 rounded-xl transition-colors"><i class="fas fa-plus-circle text-xl"></i></div><span class="text-[10px] font-black">發起活動</span></button>
-    <button onclick="switchView('admin-activities')" id="nav-admin-activities" class="nav-btn"><div class="p-1 rounded-xl transition-colors"><i class="fas fa-calendar-alt text-xl"></i></div><span class="text-[10px] font-black">活動專區</span></button>
+    <button onclick="switchView('admin-activities')" id="nav-admin-activities" class="nav-btn"><div class="p-1 rounded-xl transition-colors"><i class="fas fa-calendar-alt text-xl"></i></div><span class="text-[10px] font-black">活動與核銷</span></button>
     <button onclick="switchView('admin-crm')" id="nav-admin-crm" class="nav-btn"><div class="p-1 rounded-xl transition-colors"><i class="fas fa-user-check text-xl"></i></div><span class="text-[10px] font-black">會員 CRM</span></button>
   </nav>
 
@@ -182,12 +195,8 @@
 <div id="toast" class="fixed top-10 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full text-sm shadow-2xl opacity-0 transition-all z-[10000] pointer-events-none flex items-center gap-2 font-bold transform -translate-y-4"></div>
 
 <script>
-  // ==================== 參數設定區 ====================
   const LIFF_ID = "2009367829-DLtYBDUm"; 
-  
-  // ✅ 已替換為您專屬的 Cloudflare Worker 網址
   const WORKER_URL = "https://actmaster.fangwl591021.workers.dev"; 
-  
   const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55"]; 
 
   let userProfile = null;
@@ -200,7 +209,6 @@
   let currentCrmData = [];
   let activeActivityName = '';
 
-  // ==================== 核心 API (串接 Cloudflare) ====================
   async function fetchAPI(action, payload = {}) {
     try {
       const response = await fetch(WORKER_URL, {
@@ -217,7 +225,6 @@
     }
   }
 
-  // ==================== 系統初始化與登入邏輯 ====================
   window.onload = async () => {
     switchView('loading');
     try {
@@ -267,7 +274,7 @@
     navUser.classList.add('hidden');
 
     if (view === 'user-register' || view === 'loading' || view === 'admin-checkin') {
-      // 隱藏底部選單
+      // 隱藏底部
     } else if (isAdmin) {
       navAdmin.classList.remove('hidden');
       ['create', 'activities', 'crm'].forEach(v => {
@@ -356,6 +363,8 @@
     } catch(err) { btn.classList.remove('btn-disabled'); btn.innerHTML = '儲存變更'; }
   }
 
+  // ==================== 前台：活動報名與歷史 ====================
+
   async function loadUserActivities() {
     const container = document.getElementById('user-activities-container');
     container.innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-2xl text-blue-500"></i></div>';
@@ -363,21 +372,25 @@
     try {
       const data = await fetchAPI('getPublicActivities');
       if (data.length === 0) {
-         container.innerHTML = '<div class="text-center py-16 bg-white rounded-3xl border border-slate-100 shadow-sm"><i class="fas fa-box-open text-4xl text-slate-200 mb-2"></i><p class="text-slate-500 font-bold">目前無活動</p></div>';
-         return;
+         container.innerHTML = '<div class="text-center py-16 bg-white rounded-3xl border border-slate-100 shadow-sm"><i class="fas fa-box-open text-4xl text-slate-200 mb-2"></i><p class="text-slate-500 font-bold">目前無活動</p></div>'; return;
       }
       
       container.innerHTML = data.map(act => {
         const timeStr = act.startTime ? `<div class="mt-2 text-xs text-slate-500 font-bold"><i class="far fa-clock mr-1"></i>${formatTime(act.startTime)}</div>` : '';
         const imgHtml = act.imageUrl ? `<img src="${act.imageUrl}" class="w-full h-32 object-cover rounded-t-3xl">` : '';
+        const feeBadge = act.feeType === '收費' ? `<span class="text-[10px] font-black tracking-widest text-orange-500 bg-orange-50 px-2 py-1 rounded-md ml-2">NT$ ${act.price}</span>` : `<span class="text-[10px] font-black tracking-widest text-green-500 bg-green-50 px-2 py-1 rounded-md ml-2">免費</span>`;
+
         return `
         <div class="bg-white rounded-3xl shadow-sm border border-slate-100">
           ${imgHtml}
           <div class="p-5">
-            <span class="text-[10px] font-black uppercase tracking-widest text-indigo-500 bg-indigo-50 px-2 py-1 rounded-md">${act.type || '一般'}</span>
+            <div class="flex items-center">
+              <span class="text-[10px] font-black uppercase tracking-widest text-blue-500 bg-blue-50 px-2 py-1 rounded-md">${act.type || '一般'}</span>
+              ${feeBadge}
+            </div>
             <h3 class="text-xl font-black text-slate-800 mt-2">${act.name}</h3>
             ${timeStr}
-            <button onclick="userJoinActivity(this, '${act.name}')" class="w-full mt-4 py-3 bg-blue-600 text-white rounded-xl font-black text-sm hover:bg-blue-700 active:scale-95 transition-all flex justify-center items-center gap-2">
+            <button onclick="userJoinActivity(this, '${act.name}', '${act.feeType}', '${act.price}')" class="w-full mt-4 py-3 bg-blue-600 text-white rounded-xl font-black text-sm hover:bg-blue-700 active:scale-95 transition-all flex justify-center items-center gap-2">
               <i class="fas fa-paper-plane"></i> 一鍵報名
             </button>
           </div>
@@ -386,11 +399,18 @@
     } catch(err) {}
   }
 
-  async function userJoinActivity(btn, activityName) {
+  async function userJoinActivity(btn, activityName, feeType, price) {
+    let last5Digits = "";
+    if (feeType === '收費') {
+      last5Digits = prompt(`此為收費活動 (NT$ ${price})\n若已匯款，請輸入「匯款帳號後五碼」：`);
+      if (last5Digits === null) return; 
+      if (last5Digits.trim() === "") return showToast("⚠️ 請輸入後五碼以便核對", true);
+    }
+
     btn.classList.add('btn-disabled');
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 報名中...';
     try {
-      await fetchAPI('joinActivity', { userId: userProfile.userId, activityName });
+      await fetchAPI('joinActivity', { userId: userProfile.userId, activityName, last5Digits });
       showToast("✅ 報名成功！");
       btn.classList.replace('bg-blue-600', 'bg-green-500');
       btn.innerHTML = '<i class="fas fa-check"></i> 已報名';
@@ -409,30 +429,111 @@
       if (history.length === 0) {
         container.innerHTML = '<div class="text-center py-16 bg-white rounded-3xl border border-slate-100"><p class="text-slate-500 font-bold">尚無報名紀錄</p></div>'; return;
       }
-      container.innerHTML = history.map(item => `
-        <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex justify-between items-center">
-          <div>
-            <span class="text-[10px] font-black uppercase text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-md">${item.type}</span>
-            <h4 class="text-lg font-black text-slate-800 mt-1">${item.name}</h4>
-            <p class="text-xs text-slate-400 mt-1"><i class="far fa-clock"></i> ${formatTime(item.startTime)}</p>
+      container.innerHTML = history.map(item => {
+        let statusBadge = '';
+        if(item.regStatus === '已取消') statusBadge = '<span class="text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded">已取消</span>';
+        else if(item.regStatus === '已退款') statusBadge = '<span class="text-[10px] text-red-500 bg-red-50 px-2 py-0.5 rounded">已退款</span>';
+        else statusBadge = '<span class="text-[10px] text-green-500 bg-green-50 px-2 py-0.5 rounded">報名成功</span>';
+
+        let payBadge = '';
+        if(item.isPaidAct) {
+          payBadge = item.payStatus === '已完款' 
+            ? '<span class="text-[10px] text-blue-500 font-bold ml-2"><i class="fas fa-check-circle"></i> 已完款</span>' 
+            : '<span class="text-[10px] text-orange-400 font-bold ml-2"><i class="fas fa-exclamation-circle"></i> 尚未完款</span>';
+        }
+
+        return `
+        <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 relative">
+          <div class="flex justify-between items-start">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-[10px] font-black uppercase text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-md">${item.type}</span>
+                ${statusBadge}
+              </div>
+              <h4 class="text-lg font-black text-slate-800">${item.name}</h4>
+              <p class="text-xs text-slate-400 mt-1"><i class="far fa-clock"></i> ${formatTime(item.startTime)} ${payBadge}</p>
+            </div>
+            <div class="flex flex-col items-center">
+               ${item.checkedIn ? '<i class="fas fa-check-circle text-green-500 text-2xl"></i><span class="text-[10px] font-bold text-green-600 mt-1">已簽到</span>' : '<i class="fas fa-clock text-slate-300 text-2xl"></i><span class="text-[10px] font-bold text-slate-400 mt-1">未簽到</span>'}
+            </div>
           </div>
-          <div class="flex flex-col items-center">
-             ${item.checkedIn ? '<i class="fas fa-check-circle text-green-500 text-2xl"></i><span class="text-[10px] font-bold text-green-600 mt-1">已簽到</span>' : '<i class="fas fa-clock text-orange-400 text-2xl"></i><span class="text-[10px] font-bold text-orange-500 mt-1">未簽到</span>'}
-          </div>
+          ${item.regStatus === '正常' && !item.checkedIn ? `
+          <button onclick="userCancelRegistration('${item.name}')" class="mt-4 w-full py-2 bg-slate-50 text-slate-500 rounded-xl text-xs font-bold hover:bg-red-50 hover:text-red-500 transition-colors border border-slate-200">
+            取消報名
+          </button>` : ''}
         </div>
-      `).join('');
+        `;
+      }).join('');
     } catch(err){}
+  }
+
+  async function userCancelRegistration(activityName) {
+    if (!confirm("確定要取消報名嗎？")) return;
+    showToast("取消中...");
+    try {
+      await fetchAPI('cancelRegistration', { userId: userProfile.userId, activityName });
+      showToast("✅ 已取消報名");
+      loadUserHistory();
+    } catch(err) { showToast(err.message, true); }
   }
 
   // ==================== 後台：管理系統 ====================
 
+  function toggleFeeInput() {
+    const feeType = document.querySelector('input[name="fee-type"]:checked').value;
+    const priceInput = document.getElementById('in-act-price');
+    if (feeType === '收費') {
+      priceInput.classList.remove('hidden');
+    } else {
+      priceInput.classList.add('hidden');
+      priceInput.value = '';
+    }
+  }
+
+  async function handleCreateActivity() {
+    const actName = document.getElementById('in-act-name').value.trim();
+    if (!actName) return showToast("⚠️ 請輸入活動名稱", true);
+    
+    const feeType = document.querySelector('input[name="fee-type"]:checked').value;
+    const price = document.getElementById('in-act-price').value.trim();
+    if (feeType === '收費' && !price) return showToast("⚠️ 請輸入收費金額", true);
+
+    const btn = document.getElementById('btn-submit-create');
+    btn.classList.add('btn-disabled'); btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 建立中...';
+
+    const payload = {
+      activityName: actName, 
+      activityType: document.getElementById('in-act-type').value,
+      feeType: feeType,
+      price: price,
+      startTime: document.getElementById('in-act-start').value,
+      endTime: document.getElementById('in-act-end').value,
+      description: document.getElementById('in-act-desc').value, 
+      imageUrl: document.getElementById('in-image-url').value,
+      selectedFields: {
+        gender: document.getElementById('field-gender').checked,
+        phone: document.getElementById('field-phone').checked,
+        industry: document.getElementById('field-industry') ? document.getElementById('field-industry').checked : false
+      }
+    };
+
+    try {
+      await fetchAPI('bulkAddRegistrants', payload);
+      showToast("✅ 活動建立成功！");
+      ['in-act-name', 'in-image-url', 'in-act-desc', 'in-act-price'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('image-preview').classList.add('hidden');
+      document.getElementById('preview-placeholder').classList.remove('hidden');
+      switchView('admin-activities');
+    } catch(err) {
+      showToast(err.message || "建立失敗", true);
+    }
+    btn.classList.remove('btn-disabled'); btn.innerHTML = '建立活動';
+  }
+
   async function loadAdminActivities() {
     const container = document.getElementById('admin-activity-list-container');
     container.innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-2xl text-blue-500"></i></div>';
-    try {
-      currentActivities = await fetchAPI('getActivityDashboard');
-      renderAdminActivities();
-    } catch(err) {}
+    try { currentActivities = await fetchAPI('getActivityDashboard'); renderAdminActivities(); } catch(err) {}
   }
 
   function renderAdminActivities() {
@@ -442,23 +543,33 @@
     }
     container.innerHTML = currentActivities.map(act => {
       const isHidden = act.status === '下架';
+      const feeBadge = act.feeType === '收費' ? `<span class="text-[10px] font-black text-orange-500 bg-orange-50 px-2 py-0.5 rounded ml-2">NT$ ${act.price}</span>` : '';
       return `
       <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 ${isHidden ? 'opacity-60' : ''}">
-        <div class="flex justify-between items-start mb-4 cursor-pointer" onclick="openAdminCheckin('${act.name}')">
+        <div class="flex justify-between items-start mb-4">
           <div>
-            <span class="text-[10px] font-black text-blue-500 bg-blue-50 px-2 py-1 rounded-md">${act.type}</span>
-            <h3 class="text-lg font-black text-slate-800 mt-1">${act.name}</h3>
+            <div class="flex items-center mb-1">
+              <span class="text-[10px] font-black text-blue-500 bg-blue-50 px-2 py-1 rounded-md">${act.type}</span>
+              ${feeBadge}
+            </div>
+            <h3 class="text-lg font-black text-slate-800">${act.name}</h3>
           </div>
-          <i class="fas fa-chevron-right text-slate-400"></i>
         </div>
-        <div class="grid grid-cols-3 gap-2 bg-slate-50 rounded-2xl p-3 mb-3">
+        <div class="grid grid-cols-4 gap-2 bg-slate-50 rounded-2xl p-3 mb-4">
           <div class="text-center"><p class="text-[10px] text-slate-400 font-bold">報名</p><p class="font-black">${act.total}</p></div>
-          <div class="text-center border-l"><p class="text-[10px] text-slate-400 font-bold">實到</p><p class="font-black text-green-600">${act.attended}</p></div>
-          <div class="text-center border-l"><p class="text-[10px] text-slate-400 font-bold">缺席</p><p class="font-black text-orange-500">${act.total - act.attended}</p></div>
+          <div class="text-center border-l border-slate-200"><p class="text-[10px] text-slate-400 font-bold">實到</p><p class="font-black text-green-600">${act.attended}</p></div>
+          <div class="text-center border-l border-slate-200"><p class="text-[10px] text-slate-400 font-bold">缺席</p><p class="font-black text-orange-500">${act.total - act.attended}</p></div>
+          <div class="text-center border-l border-slate-200"><p class="text-[10px] text-slate-400 font-bold">取消</p><p class="font-black text-slate-500">${act.cancelled || 0}</p></div>
         </div>
-        <div class="flex justify-between">
-          <button onclick="togglePublish('${act.name}')" class="text-[10px] ${isHidden?'text-green-500':'text-orange-400'} font-bold px-3 py-2 bg-slate-50 rounded-xl">${isHidden?'上架':'下架'}</button>
-          <button onclick="deleteAct('${act.name}')" class="text-[10px] text-red-400 font-bold px-2">刪除</button>
+        
+        <!-- 核心：超明顯的核銷管理按鈕 -->
+        <button onclick="openAdminCheckin('${act.name}')" class="w-full py-4 mb-4 bg-blue-600 text-white rounded-2xl font-black text-sm hover:bg-blue-700 active:scale-95 transition-all shadow-md shadow-blue-200 flex justify-center items-center gap-2">
+          <i class="fas fa-qrcode"></i> 👉 進入核銷 / 簽到管理
+        </button>
+
+        <div class="flex justify-between items-center border-t border-slate-100 pt-4">
+          <button onclick="togglePublish('${act.name}')" class="text-xs ${isHidden?'text-green-500':'text-orange-500'} font-bold px-3 py-2 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors"><i class="fas fa-eye${isHidden?'':'-slash'}"></i> ${isHidden?'重新上架':'設為下架'}</button>
+          <button onclick="deleteAct('${act.name}')" class="text-xs text-red-500 font-bold px-3 py-2 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"><i class="fas fa-trash-alt"></i> 刪除</button>
         </div>
       </div>`;
     }).join('');
@@ -477,21 +588,40 @@
 
   function renderCheckinList() {
     const term = document.getElementById('search-checkin').value.toLowerCase();
-    const filtered = currentCheckinData.filter(r => (r.姓名||'').toLowerCase().includes(term));
+    const filtered = currentCheckinData.filter(r => (r.姓名||'').toLowerCase().includes(term) || (r.last5||'').includes(term));
     const container = document.getElementById('checkin-list-container');
     if (filtered.length === 0) { container.innerHTML = '<p class="text-center text-slate-400 py-10 font-bold">查無名單</p>'; return; }
 
     container.innerHTML = filtered.map(p => `
-      <div class="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between">
-        <div class="w-2/3 pr-2">
-          <h4 class="text-lg font-black text-slate-800 truncate">${p.姓名}</h4>
-          <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded uppercase font-black">${p.報名人身分 || '來賓'}</span>
-          <p class="text-xs text-slate-400 mt-1">${p.電話 || ''}</p>
+      <div class="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 mb-3">
+        <div class="flex justify-between items-start mb-3">
+          <div class="w-2/3 pr-2">
+            <h4 class="text-lg font-black text-slate-800 truncate">${p.姓名}</h4>
+            <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded uppercase font-black">${p.報名人身分 || '來賓'}</span>
+            ${p.last5 ? `<p class="text-xs text-blue-600 font-bold mt-1"><i class="fas fa-money-check-alt"></i> 後五碼: ${p.last5}</p>` : ''}
+          </div>
+          <button onclick="toggleCheckinStatus(this, '${p.rowId}', ${p.checkedIn})" class="shrink-0 flex flex-col items-center justify-center gap-1 w-20 h-16 rounded-2xl text-xs font-black transition-all ${p.checkedIn ? 'bg-green-500 text-white' : 'bg-slate-100 text-slate-500'}">
+            <i class="fas ${p.checkedIn ? 'fa-check-circle' : 'fa-circle'} text-lg"></i>
+            ${p.checkedIn ? '已簽到' : '未簽到'}
+          </button>
         </div>
-        <button onclick="toggleCheckinStatus(this, '${p.rowId}', ${p.checkedIn})" class="shrink-0 flex flex-col items-center justify-center gap-1 w-20 h-16 rounded-2xl text-xs font-black transition-all ${p.checkedIn ? 'bg-green-500 text-white' : 'bg-slate-100 text-slate-500'}">
-          <i class="fas ${p.checkedIn ? 'fa-check-circle' : 'fa-circle'} text-lg"></i>
-          ${p.checkedIn ? '已簽到' : '未簽到'}
-        </button>
+        <div class="grid grid-cols-2 gap-2 bg-slate-50 p-2 rounded-xl border border-slate-100">
+          <div class="flex flex-col">
+            <label class="text-[10px] text-slate-400 font-bold mb-1 ml-1">繳費狀態</label>
+            <select onchange="updateCellStatus('${p.rowId}', '繳費狀態', this.value)" class="text-xs font-bold px-2 py-2 bg-white border border-slate-200 rounded-lg outline-none text-slate-700 focus:border-blue-500">
+              <option value="未繳費" ${p.payStatus === '未繳費' ? 'selected' : ''}>未繳費</option>
+              <option value="已完款" ${p.payStatus === '已完款' ? 'selected' : ''}>已完款</option>
+            </select>
+          </div>
+          <div class="flex flex-col">
+            <label class="text-[10px] text-slate-400 font-bold mb-1 ml-1">報名狀態</label>
+            <select onchange="updateCellStatus('${p.rowId}', '報名狀態', this.value)" class="text-xs font-bold px-2 py-2 bg-white border border-slate-200 rounded-lg outline-none text-slate-700 focus:border-blue-500">
+              <option value="正常" ${p.regStatus === '正常' ? 'selected' : ''}>正常</option>
+              <option value="已取消" ${p.regStatus === '已取消' ? 'selected' : ''}>已取消</option>
+              <option value="已退款" ${p.regStatus === '已退款' ? 'selected' : ''}>已退款</option>
+            </select>
+          </div>
+        </div>
       </div>`).join('');
   }
 
@@ -499,6 +629,19 @@
     btn.classList.add('btn-disabled');
     await fetchAPI('toggleStatus', { activityName: activeActivityName, rowId, currentStatus });
     openAdminCheckin(activeActivityName);
+  }
+
+  async function updateCellStatus(rowId, colName, val) {
+    showToast("更新中...");
+    try {
+      await fetchAPI('updateCellStatus', { activityName: activeActivityName, rowId, colName, val });
+      showToast(`✅ ${colName} 已更新`);
+      const item = currentCheckinData.find(x => x.rowId === parseInt(rowId));
+      if(item) {
+        if(colName === '繳費狀態') item.payStatus = val;
+        if(colName === '報名狀態') item.regStatus = val;
+      }
+    } catch(err){}
   }
 
   function previewFile() {
@@ -524,35 +667,8 @@
     reader.readAsDataURL(file);
   }
 
-  async function handleCreateActivity() {
-    const actName = document.getElementById('in-act-name').value.trim();
-    if (!actName) return showToast("⚠️ 請輸入活動名稱", true);
-    
-    const btn = document.getElementById('btn-submit-create');
-    btn.classList.add('btn-disabled'); btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 建立中...';
-
-    const payload = {
-      activityName: actName, 
-      activityType: document.getElementById('in-act-type').value,
-      startTime: document.getElementById('in-act-start').value,
-      endTime: document.getElementById('in-act-end').value,
-      description: document.getElementById('in-act-desc').value, 
-      imageUrl: document.getElementById('in-image-url').value,
-    };
-
-    try {
-      await fetchAPI('bulkAddRegistrants', payload);
-      showToast("✅ 活動建立成功！");
-      ['in-act-name', 'in-image-url', 'in-act-desc'].forEach(id => document.getElementById(id).value = '');
-      document.getElementById('image-preview').classList.add('hidden');
-      document.getElementById('preview-placeholder').classList.remove('hidden');
-      switchView('admin-activities');
-    } catch(err) {}
-    btn.classList.remove('btn-disabled'); btn.innerHTML = '建立活動';
-  }
-
   async function togglePublish(name) { showToast("更新中..."); await fetchAPI('toggleActivityStatus', {activityName: name}); loadAdminActivities(); }
-  async function deleteAct(name) { if(confirm("確定刪除？")) { await fetchAPI('deleteActivity', {activityName: name}); loadAdminActivities(); } }
+  async function deleteAct(name) { if(confirm("確定刪除？此動作無法復原！")) { await fetchAPI('deleteActivity', {activityName: name}); loadAdminActivities(); } }
 
   async function loadCrmData() {
     document.getElementById('crm-list-container').innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-2xl text-indigo-500"></i></div>';
@@ -569,16 +685,15 @@
       <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden p-5 flex justify-between items-center">
         <div>
           <h4 class="text-lg font-black text-slate-800">${user.name}</h4>
-          <span class="text-[10px] bg-slate-100 px-2 py-0.5 rounded">${user.identity}</span>
+          <span class="text-[10px] bg-slate-100 px-2 py-0.5 rounded font-bold">${user.identity}</span>
         </div>
         <div class="text-right">
-          <div class="text-2xl font-black text-indigo-600">${user.attended}</div>
-          <div class="text-[10px] text-slate-400">實到次數</div>
+          <div class="text-3xl font-black text-indigo-600">${user.attended}</div>
+          <div class="text-[10px] text-slate-400 font-bold mt-1 tracking-widest">實到總次數</div>
         </div>
       </div>`).join('');
   }
 
-  // --- Utils ---
   function formatTime(isoStr) {
     if (!isoStr) return ''; const d = new Date(isoStr);
     return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;

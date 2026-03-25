@@ -280,17 +280,17 @@
         
         <div class="space-y-1">
           <label class="text-sm font-bold text-slate-500">TG_BOT_TOKEN</label>
-          <input type="text" id="set-tg-token" class="w-full px-4 py-3 bg-slate-50 rounded-xl text-sm font-bold outline-none border border-slate-100" placeholder="輸入您的 Bot Token">
-        </div>
-        
-        <div class="space-y-1">
-          <label class="text-sm font-bold text-slate-500">TG_CHAT_ID (可自動轉換)</label>
           <div class="flex gap-2">
-            <input type="text" id="set-tg-chat" class="flex-1 px-4 py-3 bg-slate-50 rounded-xl text-sm font-bold outline-none border border-slate-100 placeholder-slate-300" placeholder="點擊轉換按鈕自動獲取">
+            <input type="text" id="set-tg-token" class="flex-1 px-4 py-3 bg-slate-50 rounded-xl text-sm font-bold outline-none border border-slate-100" placeholder="輸入您的 Bot Token">
             <button onclick="autoFetchTgChatId()" id="btn-fetch-tg" class="bg-blue-100 text-blue-600 px-4 py-3 rounded-xl text-sm font-bold hover:bg-blue-200 transition-colors whitespace-nowrap active:scale-95 shadow-sm">
               <i class="fas fa-sync-alt"></i> 轉換
             </button>
           </div>
+        </div>
+        
+        <div class="space-y-1">
+          <label class="text-sm font-bold text-slate-500">TG_CHAT_ID (可自動轉換)</label>
+          <input type="text" id="set-tg-chat" class="w-full px-4 py-3 bg-slate-50 rounded-xl text-sm font-bold outline-none border border-slate-100 placeholder-slate-300" placeholder="請先填寫 Token 後點擊轉換">
           <p class="text-[11px] text-slate-400 font-bold mt-1">※ 轉換前，請務必先在 Telegram 傳送任意訊息給機器人</p>
         </div>
 
@@ -396,7 +396,14 @@
           switchView('user-register');
         }
       }
-    } catch (err) { document.getElementById('loading-text').innerText = 'LIFF 載入失敗，請在 LINE 內開啟'; }
+    } catch (err) {
+      console.error(err);
+      document.getElementById('loading-text').innerHTML = `
+        <span class="text-red-500">LIFF 載入失敗</span><br>
+        <span class="text-[10px] text-slate-400 mt-2 block break-all px-4">錯誤資訊: ${err.message}</span>
+        <span class="text-[10px] text-slate-400 mt-1 block">請使用手機 LINE 開啟</span>
+      `;
+    }
   };
 
   function toggleRoleMode() {

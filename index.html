@@ -79,14 +79,16 @@
     </div>
   </nav>
 
-  <main id="main-content" class="flex-1 overflow-y-auto pb-32 pt-20 px-4 space-y-6">
+  <!-- ⭐ 將原本的 pt-20 改為 pt-16，大幅縮小全域的頂部留白 -->
+  <main id="main-content" class="flex-1 overflow-y-auto pb-32 pt-16 px-4 space-y-6">
     
     <div id="view-loading" class="h-full flex flex-col items-center justify-center space-y-4 pb-20">
       <img src="https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExdXpzNDRvN3BpNjZhZmZ1djh6ZDV4N2ZucjQ5MHJidjhoOGNrZWp6byZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/uOlsQMZSTU6Ff55OnQ/giphy.gif" alt="Loading" class="loading-gif mb-2">
       <p id="loading-text" class="text-primary font-bold tracking-widest text-sm">資料載入中</p>
     </div>
 
-    <div id="view-user-register" class="hidden animate-in fade-in duration-500 pt-8">
+    <!-- ⭐ 將原本的 pt-8 改為 pt-4 -->
+    <div id="view-user-register" class="hidden animate-in fade-in duration-500 pt-4">
       <div class="text-center mb-8 space-y-3">
         <h1 class="text-3xl font-black font-headline text-text-main tracking-tight">建立會員檔案</h1>
         <p class="text-text-muted text-sm font-medium">只需填寫一次，以後報名只需一秒</p>
@@ -100,7 +102,8 @@
       </div>
     </div>
 
-    <div id="view-user-activities" class="hidden animate-in fade-in duration-500 pt-4">
+    <!-- ⭐ 將原本的 pt-4 改為 pt-0，移除探索活動本身的頂部多餘間隙 -->
+    <div id="view-user-activities" class="hidden animate-in fade-in duration-500 pt-0">
       <div class="flex justify-between items-end px-2 mb-2">
         <div>
           <h2 class="text-2xl font-black font-headline text-text-main">探索活動</h2>

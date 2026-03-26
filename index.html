@@ -62,7 +62,7 @@
     .refresh-spin { animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-    /* ⭐ 名片產生器預覽區專用樣式 (加入動態寬度切換的過渡效果) */
+    /* 名片產生器預覽區專用樣式 */
     .flex-preview-bubble { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #edf2f7; position: relative; transition: max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1); width: 100%; }
     .flex-preview-img { width: 100%; object-fit: cover; background-color: #f1f5f9; transition: aspect-ratio 0.3s ease, object-fit 0.3s ease; }
     .flex-badge { position: absolute; top: 10px; left: 10px; background-color: #FF0000; color: white; font-size: 14px; font-weight: bold; padding: 4px 12px; border-radius: 9999px; z-index: 10; }
@@ -170,7 +170,7 @@
       <div id="admin-crm-list-container" class="space-y-4 px-1"></div>
     </div>
 
-    <!-- View: Admin Card Contacts -->
+    <!-- ⭐ View: Admin Card Contacts (名片通訊錄清單) -->
     <div id="view-admin-cards" class="hidden space-y-5 animate-in fade-in pt-4">
       <div class="px-2 mb-2 flex justify-between items-end">
         <div>
@@ -319,7 +319,7 @@
   </nav>
 
   <!-- 底部導覽：管理員 -->
-  <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-between items-center px-1 py-2 z-40 pb-safe shadow-app-nav left-1/2 -translate-x-1/2">
+  <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-around items-center px-1 py-2 z-40 pb-safe shadow-app-nav left-1/2 -translate-x-1/2">
     <button onclick="switchView('admin-activities')" id="nav-admin-activities" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">fact_check</span></div><span class="text-[10px] font-bold mt-1">核銷</span></button>
     <button onclick="switchView('admin-create')" id="nav-admin-create" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">add_circle</span></div><span class="text-[10px] font-bold mt-1">建立</span></button>
     <button onclick="switchView('admin-crm')" id="nav-admin-crm" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">groups</span></div><span class="text-[10px] font-bold mt-1">CRM</span></button>
@@ -450,6 +450,7 @@
           <h2 id="preview-ec-title" class="text-xl font-bold text-slate-800 leading-tight mb-2">標準版分頁標題</h2>
           <p id="preview-ec-desc" class="text-xs text-slate-500 whitespace-pre-wrap leading-relaxed text-left">內容描述文字預覽大小為 xs，質感細膩呈現。</p>
         </div>
+        <!-- 動態按鈕容器 -->
         <div id="preview-ec-buttons" class="p-4 pt-0 space-y-2"></div>
       </div>
     </div>
@@ -486,6 +487,12 @@
             <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">expand_more</span>
           </div>
         </div>
+      </div>
+      
+      <!-- ⭐ 新增：點圖預設連結 -->
+      <div>
+        <label class="input-label text-[#ff751f]">點圖預設連結 (點擊圖片的跳轉網址)</label>
+        <input type="text" id="ec-img-action-url" class="custom-input !py-3 text-sm text-blue-600" value="https://liff.line.me/2009367829-DLtYBDUm" oninput="updateECardPreview()">
       </div>
       
       <div>
@@ -1065,11 +1072,13 @@
     return url;
   }
 
+  // ⭐ 嚴格防呆的 JSON 組裝引擎 (包含圖片 action)
   function buildFlexMessageFromCard(card, config, dynamicAr = null) {
-    let imgUrl, imgSize, aspectMode, ar, title, desc, buttons = [];
+    let imgUrl, imgActionUrl, imgSize, aspectMode, ar, title, desc, buttons = [];
     
     if (config) {
         imgUrl = getDirectImageUrl(config.imgUrl) || getDirectImageUrl(card['名片圖檔']) || 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
+        imgActionUrl = config.imgActionUrl || 'https://liff.line.me/2009367829-DLtYBDUm';
         imgSize = config.imgSize || 'mega';
         aspectMode = config.aspectMode || 'cover';
         ar = dynamicAr || config.ar || '20:13';
@@ -1078,6 +1087,7 @@
         buttons = config.buttons || [];
     } else {
         imgUrl = getDirectImageUrl(card['名片圖檔']) || 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
+        imgActionUrl = 'https://liff.line.me/2009367829-DLtYBDUm';
         imgSize = 'mega';
         aspectMode = 'cover';
         ar = dynamicAr || '20:13';
@@ -1089,6 +1099,9 @@
         if (card['服務項目/品牌標語']) descArr.push(`\n【關於我們】\n${card['服務項目/品牌標語']}`); 
         desc = descArr.join('\n') || '點擊下方按鈕與我聯繫';
 
+        const safeUrl = (url) => url && url.startsWith('http') ? url : '';
+        const safeTel = (tel) => tel ? `tel:${tel.replace(/\D/g,'')}` : '';
+
         if (card['手機號碼']) buttons.push({ l: '撥打手機', u: card['手機號碼'] });
         else if (card['公司電話']) buttons.push({ l: '撥打電話', u: card['公司電話'] });
         if (card['電子郵件']) buttons.push({ l: '發送信箱', u: card['電子郵件'] });
@@ -1097,16 +1110,18 @@
         else if (card['公司網址']) buttons.push({ l: '公司網站', u: card['公司網址'] });
     }
 
-    // ⭐ 保護機制 1：尺寸防呆與合規驗證
     const validSizes = ['nano', 'micro', 'kilo', 'mega', 'giga'];
     if (!validSizes.includes(imgSize) || imgSize === 'full') imgSize = 'mega';
     if (!/^\d+:\d+$/.test(ar)) ar = '20:13';
     
-    // ⭐ 保護機制 2：文字絕對不能是空字串，LINE 會直接報錯
     title = (title || '').trim() || '-';
     desc = (desc || '').trim() || '-';
 
-    // ⭐ 保護機制 3：URI 嚴格過濾器
+    let safeImgActionUrl = imgActionUrl ? String(imgActionUrl).trim() : 'https://liff.line.me/2009367829-DLtYBDUm';
+    if (!safeImgActionUrl.match(/^(http|https|tel|mailto|line):/i)) {
+        safeImgActionUrl = 'https://' + safeImgActionUrl;
+    }
+
     const btnContents = [];
     for (let i=0; i<buttons.length; i++) {
         let label = buttons[i].l ? String(buttons[i].l).trim() : '查看';
@@ -1138,7 +1153,18 @@
             "layout": "vertical",
             "paddingAll": "0px",
             "contents": [
-                { "type": "image", "url": imgUrl, "size": "full", "aspectRatio": ar, "aspectMode": aspectMode, "animated": true },
+                { 
+                  "type": "image", 
+                  "url": imgUrl, 
+                  "size": "full", 
+                  "aspectRatio": ar, 
+                  "aspectMode": aspectMode, 
+                  "animated": true,
+                  "action": {
+                    "type": "uri",
+                    "uri": safeImgActionUrl.substring(0, 1000)
+                  }
+                },
                 {
                     "type": "box", "layout": "vertical", "paddingAll": "15px",
                     "contents": [
@@ -1177,6 +1203,7 @@
 
     if (savedConfig) {
       document.getElementById('ec-img-input').value = savedConfig.imgUrl || '';
+      document.getElementById('ec-img-action-url').value = savedConfig.imgActionUrl || 'https://liff.line.me/2009367829-DLtYBDUm';
       document.getElementById('ec-img-size').value = savedConfig.imgSize || 'mega';
       document.getElementById('ec-img-aspect').value = savedConfig.aspectMode || 'cover';
       dynamicAspectRatio = savedConfig.ar || '20:13';
@@ -1191,6 +1218,7 @@
     } else {
       const defaultFlex = buildFlexMessageFromCard(c, null);
       document.getElementById('ec-img-input').value = defaultFlex.body.contents[0].url;
+      document.getElementById('ec-img-action-url').value = 'https://liff.line.me/2009367829-DLtYBDUm';
       document.getElementById('ec-img-size').value = defaultFlex.size;
       document.getElementById('ec-img-aspect').value = 'cover';
       dynamicAspectRatio = defaultFlex.body.contents[0].aspectRatio;
@@ -1220,13 +1248,11 @@
     const imgEl = document.getElementById('preview-ec-img');
     const bubbleEl = document.getElementById('preview-ec-bubble');
     
-    // ⭐ 動態套用尺寸預覽
     const imgSize = document.getElementById('ec-img-size').value;
     if (imgSize === 'giga') bubbleEl.style.maxWidth = '360px';
     else if (imgSize === 'kilo') bubbleEl.style.maxWidth = '260px';
-    else bubbleEl.style.maxWidth = '300px'; // mega
+    else bubbleEl.style.maxWidth = '300px'; 
     
-    // ⭐ 動態套用圖片顯示模式
     const aspectMode = document.getElementById('ec-img-aspect').value || 'cover';
     imgEl.style.objectFit = aspectMode === 'cover' ? 'cover' : 'contain';
 
@@ -1267,7 +1293,6 @@
     }
   }
 
-  // ⭐ 靜默儲存設定
   async function saveECardConfig(isSilent = false) {
     if(!currentActiveCard) return;
     const btn = document.getElementById('btn-save-ecard');
@@ -1279,8 +1304,9 @@
 
     const config = {
       imgUrl: document.getElementById('ec-img-input').value,
+      imgActionUrl: document.getElementById('ec-img-action-url').value,
       imgSize: document.getElementById('ec-img-size').value,
-      aspectMode: document.getElementById('ec-img-aspect').value, // ⭐ 儲存顯示模式
+      aspectMode: document.getElementById('ec-img-aspect').value,
       ar: dynamicAspectRatio,
       title: document.getElementById('ec-title-input').value,
       desc: document.getElementById('ec-desc-input').value,
@@ -1309,7 +1335,6 @@
     return config;
   }
 
-  // ⭐ 發送前自動儲存並帶出正確格式
   async function shareECardToLine() {
     const btnShare = document.getElementById('btn-share-line');
     btnShare.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> 處理中...';

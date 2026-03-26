@@ -35,14 +35,35 @@
     }
   </script>
   <style>
-    /* ... existing styles ... */
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
+    .icon-filled { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    
+    body { background-color: #f8f9fc; -webkit-tap-highlight-color: transparent; }
+    ::-webkit-scrollbar { width: 0px; }
+    .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1.5rem); }
+    
+    /* 專業 App 輸入框風格 */
+    .input-label { @apply block text-[13px] font-bold text-text-main mb-2 ml-1; }
+    .custom-input { @apply w-full py-4 pl-5 pr-12 bg-input-bg border-none rounded-2xl outline-none focus:ring-2 focus:ring-primary/30 transition-all font-medium text-text-main appearance-none; }
+    .custom-input::placeholder { @apply text-slate-400 font-normal; }
+    
+    /* 按鈕樣式 */
+    .btn-primary { @apply w-full py-4 bg-primary text-white rounded-full font-bold text-[17px] shadow-lg shadow-blue-500/30 active:scale-95 transition-all flex items-center justify-center gap-2; }
+    .btn-disabled { pointer-events: none; opacity: 0.5; filter: grayscale(100%); }
+    
+    /* 底部導覽列 Active 狀態 */
+    .nav-btn { @apply flex flex-col items-center gap-1.5 transition-all flex-1 text-slate-400; }
+    .nav-btn .icon-box { @apply px-4 py-1.5 rounded-full transition-all; }
+    .nav-active { @apply text-primary font-bold; }
+    .nav-active .icon-box { @apply bg-primary-light text-primary; }
+    .nav-active .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
+
     .loading-gif { width: 100px; height: auto; }
     .refresh-spin { animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
     /* 名片產生器預覽區專用樣式 */
     .flex-preview-bubble { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #edf2f7; position: relative; }
-    /* ⭐ 移除固定的 aspect-ratio: 20/13，加入過渡動畫 */
     .flex-preview-img { width: 100%; object-fit: cover; background-color: #f1f5f9; transition: aspect-ratio 0.3s ease; }
     .flex-badge { position: absolute; top: 10px; right: 10px; background-color: #FF0000; color: white; font-size: 10px; font-weight: bold; padding: 4px 12px; border-radius: 9999px; }
   </style>
@@ -451,8 +472,7 @@
           </div>
           <div class="relative w-28 shrink-0">
             <select id="ec-img-size" class="custom-input !py-3 text-sm w-full appearance-none" onchange="updateECardPreview()">
-              <option value="full">full (滿版)</option>
-              <option value="mega">mega (巨大)</option>
+              <option value="mega">mega (標準)</option>
               <option value="giga">giga (超大)</option>
             </select>
             <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">expand_more</span>
@@ -529,7 +549,7 @@
   let globalCardContacts = []; 
   let currentActiveCard = null; 
   let isProcessing = false;
-  let dynamicAspectRatio = "20:13"; // ⭐ 新增：用於儲存動態偵測的圖片比例
+  let dynamicAspectRatio = "20:13"; // ⭐ 用於儲存動態偵測的圖片比例
 
   // 💡 [極速載入] 骨架屏
   function renderActivitiesSkeleton() {
@@ -866,7 +886,7 @@
     container.innerHTML = data.map((card, idx) => `
       <div onclick="openCardDetail(${idx})" class="bg-white rounded-[1.5rem] shadow-sm border border-slate-100 p-5 flex items-center gap-4 animate-in fade-in slide-in-from-bottom-2 cursor-pointer active:scale-95 transition-all" style="animation-delay: ${Math.min(idx * 50, 500)}ms">
         <div class="w-12 h-12 shrink-0 rounded-full overflow-hidden bg-slate-50 flex items-center justify-center border border-slate-100">
-          ${card['名片圖檔'] && card['名片圖檔'] !== '圖片儲存失敗' ? `<img src="${card['名片圖檔']}" class="w-full h-full object-cover">` : `<span class="material-symbols-outlined text-slate-300 text-[28px]">person</span>`}
+          ${card['名片圖檔'] && card['名片圖檔'] !== '圖片儲存失敗' ? `<img src="${getDirectImageUrl(card['名片圖檔'])}" class="w-full h-full object-cover">` : `<span class="material-symbols-outlined text-slate-300 text-[28px]">person</span>`}
         </div>
         <div class="flex-1 overflow-hidden">
           <h4 class="text-[17px] font-extrabold text-text-main truncate">${card['姓名'] || '未知姓名'}</h4>
@@ -922,7 +942,7 @@
     const imgEl = document.getElementById('cd-image');
     const noImgEl = document.getElementById('cd-no-image');
     if (card['名片圖檔'] && card['名片圖檔'] !== '圖片儲存失敗') {
-      imgEl.src = card['名片圖檔'];
+      imgEl.src = getDirectImageUrl(card['名片圖檔']);
       imgEl.classList.remove('hidden');
       noImgEl.classList.add('hidden');
     } else {
@@ -940,10 +960,19 @@
 
   // ==================== ⭐ 數位名片產生器核心邏輯 ====================
 
+  // ⭐ Google Drive 圖片直連轉換器 (讓 LINE 能正確抓到圖片)
+  function getDirectImageUrl(url) {
+    if (!url) return url;
+    const driveMatch = url.match(/id=([a-zA-Z0-9_-]+)/) || url.match(/d\/([a-zA-Z0-9_-]+)/);
+    if (driveMatch && url.includes('drive.google.com')) {
+      return `https://lh3.googleusercontent.com/d/${driveMatch[1]}`;
+    }
+    return url;
+  }
+
   function openECardGenerator() {
     if (!currentActiveCard) return;
     const c = currentActiveCard;
-    // ⭐ 統一採用指定的預設名片圖
     const fallbackImg = "https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png";
 
     const title = [c['公司名稱'], c['姓名']].filter(Boolean).join(' - ') || '商務名片';
@@ -960,7 +989,7 @@
 
     // 初始化表單資料
     document.getElementById('ec-img-input').value = fallbackImg;
-    document.getElementById('ec-img-size').value = 'full'; // 預設滿版
+    document.getElementById('ec-img-size').value = 'mega'; // 預設標準視窗
     document.getElementById('ec-title-input').value = title;
     document.getElementById('ec-desc-input').value = desc;
     
@@ -984,7 +1013,7 @@
     
     document.getElementById('ec-badge-url').value = 'https://line.me';
 
-    // ⭐ 重置預覽圖片的資料屬性，強制重新偵測比例
+    // 強制重置圖片預覽屬性，以觸發全新的比例偵測
     document.getElementById('preview-ec-img').removeAttribute('data-current-src');
 
     updateECardPreview();
@@ -996,9 +1025,12 @@
   }
 
   function updateECardPreview() {
-    const imgUrl = document.getElementById('ec-img-input').value || 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
-    const imgEl = document.getElementById('preview-ec-img');
+    let rawUrl = document.getElementById('ec-img-input').value || 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
+    // ⭐ 將可能導致破圖的 Google Drive 網址無縫轉換為直連網址
+    let imgUrl = getDirectImageUrl(rawUrl);
     
+    const imgEl = document.getElementById('preview-ec-img');
+
     // ⭐ 動態偵測圖片真實長寬比例
     if (imgEl.getAttribute('data-current-src') !== imgUrl) {
         imgEl.setAttribute('data-current-src', imgUrl);
@@ -1038,13 +1070,11 @@
     if (!liff.isLoggedIn()) { return showToast('⚠️ 請先在 LINE 中登入才能使用轉發功能', true); }
     if (!liff.isApiAvailable('shareTargetPicker')) { return showToast('⚠️ 您目前的裝置或版本不支援分享功能', true); }
 
-    const imgUrl = document.getElementById('ec-img-input').value || 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
-    const imgSize = document.getElementById('ec-img-size').value || 'full'; // 取得選擇的尺寸
+    let rawUrl = document.getElementById('ec-img-input').value || 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
+    let imgUrl = getDirectImageUrl(rawUrl);
     
-    // ⭐ 判斷 LINE Bubble 視窗的尺寸
-    let bubbleSize = 'mega';
-    if (imgSize === 'giga') bubbleSize = 'giga';
-    else if (imgSize === 'mega') bubbleSize = 'mega';
+    // 取得 LINE Bubble 視窗的尺寸
+    const bubbleSize = document.getElementById('ec-img-size').value || 'mega';
 
     const title = document.getElementById('ec-title-input').value || '-';
     const desc = document.getElementById('ec-desc-input').value || '-';
@@ -1072,7 +1102,7 @@
         "layout": "vertical",
         "paddingAll": "0px",
         "contents": [
-          // ⭐ 圖片尺寸固定填滿，比例採用自動偵測出來的 dynamicAspectRatio
+          // ⭐ 圖片尺寸固定為 full 以填滿視窗，比例採用自動偵測出來的 dynamicAspectRatio
           { "type": "image", "url": imgUrl, "size": "full", "aspectRatio": dynamicAspectRatio, "aspectMode": "cover", "animated": true },
           {
             "type": "box",

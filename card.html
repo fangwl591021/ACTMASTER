@@ -212,7 +212,7 @@
 <!-- ================= 名片明細 Modal ================= -->
 <div id="card-detail-modal" class="hidden fixed inset-0 z-[60] bg-background flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl overflow-hidden">
   
-  <!-- ⭐ 新增：右上角加入「編輯」按鈕 -->
+  <!-- 右上角加入「編輯」按鈕 -->
   <div class="absolute top-5 right-5 z-50 flex gap-2">
     <button onclick="openCardEdit()" class="w-10 h-10 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-blue-600 shadow-md active:scale-90 transition-transform border border-slate-100" title="編輯補登資料">
       <span class="material-symbols-outlined font-bold">edit</span>
@@ -259,7 +259,7 @@
   </div>
 </div>
 
-<!-- ================= ⭐ 名片事後補登/編輯 Modal ================= -->
+<!-- ================= 名片事後補登/編輯 Modal ================= -->
 <div id="card-edit-modal" class="hidden fixed inset-0 z-[110] bg-slate-50 flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl overflow-hidden">
   <div class="bg-white px-5 py-4 flex justify-between items-center border-b border-slate-200 z-10 shrink-0 shadow-sm">
     <h3 class="text-lg font-black text-slate-800">編輯名片資料</h3>
@@ -313,6 +313,7 @@
   </div>
 
   <div class="flex-1 overflow-y-auto pb-24">
+    <!-- 即時預覽區 -->
     <div class="p-6 bg-slate-200 flex justify-center items-center">
       <div class="flex-preview-bubble w-[85%] max-w-[300px]" id="preview-ec-bubble">
         <img id="preview-ec-img" src="https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png" class="flex-preview-img">
@@ -325,6 +326,7 @@
       </div>
     </div>
 
+    <!-- 編輯表單區 -->
     <div class="p-6 bg-white space-y-5">
       <p class="text-xs font-bold text-[#ff751f] uppercase tracking-widest border-b border-orange-100 pb-2">編輯區 (即時連動)</p>
       
@@ -959,7 +961,10 @@
       document.getElementById('ec-img-input').value = savedConfig.imgUrl || '';
       document.getElementById('ec-img-action-url').value = savedConfig.imgActionUrl || 'https://liff.line.me/2009367829-DLtYBDUm';
       document.getElementById('ec-img-size').value = savedConfig.imgSize || 'mega';
-      document.getElementById('ec-img-aspect').value = savedConfig.aspectMode || 'cover';
+      
+      const aspectEl = document.getElementById('ec-img-aspect');
+      if (aspectEl) aspectEl.value = savedConfig.aspectMode || 'cover';
+      
       dynamicAspectRatio = savedConfig.ar || '20:13';
       document.getElementById('ec-title-input').value = savedConfig.title || '';
       document.getElementById('ec-desc-input').value = savedConfig.desc || '';
@@ -974,7 +979,10 @@
       document.getElementById('ec-img-input').value = defaultFlex.body.contents[0].url;
       document.getElementById('ec-img-action-url').value = 'https://liff.line.me/2009367829-DLtYBDUm';
       document.getElementById('ec-img-size').value = defaultFlex.size;
-      document.getElementById('ec-img-aspect').value = 'cover';
+      
+      const aspectEl = document.getElementById('ec-img-aspect');
+      if (aspectEl) aspectEl.value = 'cover';
+      
       dynamicAspectRatio = defaultFlex.body.contents[0].aspectRatio;
       document.getElementById('ec-title-input').value = defaultFlex.body.contents[1].contents[0].text;
       document.getElementById('ec-desc-input').value = defaultFlex.body.contents[1].contents[1].text;
@@ -1007,7 +1015,8 @@
     else if (imgSize === 'kilo') bubbleEl.style.maxWidth = '260px';
     else bubbleEl.style.maxWidth = '300px'; 
     
-    const aspectMode = document.getElementById('ec-img-aspect').value || 'cover';
+    const aspectEl = document.getElementById('ec-img-aspect');
+    const aspectMode = aspectEl ? aspectEl.value : 'cover';
     imgEl.style.objectFit = aspectMode === 'cover' ? 'cover' : 'contain';
 
     if (imgEl.getAttribute('data-current-src') !== imgUrl) {
@@ -1053,11 +1062,14 @@
         btn.classList.add('pointer-events-none', 'opacity-50');
     }
 
+    const aspectEl = document.getElementById('ec-img-aspect');
+    const aspectMode = aspectEl ? aspectEl.value : 'cover';
+
     const config = {
       imgUrl: document.getElementById('ec-img-input').value,
       imgActionUrl: document.getElementById('ec-img-action-url').value,
       imgSize: document.getElementById('ec-img-size').value,
-      aspectMode: document.getElementById('ec-img-aspect').value,
+      aspectMode: aspectMode,
       ar: dynamicAspectRatio,
       title: document.getElementById('ec-title-input').value,
       desc: document.getElementById('ec-desc-input').value,

@@ -840,8 +840,9 @@
               alert("⚠️ 系統權限已更新！即將為您重新登入以獲取最新權限。");
               liff.logout(); window.location.reload(); 
           } else {
-              alert('發送取消或發生未知錯誤: ' + error.message);
-              liff.closeWindow();
+              // 加入錯誤日誌提示，方便後續除錯
+              alert('格式錯誤: LINE 阻擋了此名片格式，請檢查圖片或電話是否正確。\n' + error.message);
+              console.error(JSON.stringify(flexContents));
           }
       }
   };
@@ -849,8 +850,14 @@
   function buildFlexMessageFromCard(card, config, dynamicAr = null) {
     let imgUrl, imgActionUrl, imgSize, aspectMode, ar, title, desc, buttons = [];
     
+    // ⭐ 嚴格防呆 1：確保圖片絕對是有效網址，若為「圖片儲存失敗」會直接破壞 LINE Flex 導致無法發送
+    let rawImg = (config && config.imgUrl) ? config.imgUrl : (card && card['名片圖檔'] ? card['名片圖檔'] : '');
+    if (!rawImg || typeof rawImg !== 'string' || !rawImg.startsWith('http')) {
+        rawImg = 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
+    }
+    imgUrl = getDirectImageUrl(rawImg);
+    
     if (config) {
-        imgUrl = getDirectImageUrl(config.imgUrl) || getDirectImageUrl(card['名片圖檔']) || 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
         imgActionUrl = config.imgActionUrl || 'https://liff.line.me/2009367829-DLtYBDUm';
         imgSize = config.imgSize || 'mega';
         aspectMode = config.aspectMode || 'cover';
@@ -859,16 +866,12 @@
         desc = config.desc || '-'; 
         buttons = config.buttons || [];
     } else {
-        imgUrl = getDirectImageUrl(card['名片圖檔']) || 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
         imgActionUrl = 'https://liff.line.me/2009367829-DLtYBDUm';
         imgSize = 'mega';
         aspectMode = 'cover';
         ar = dynamicAr || '20:13';
         title = [card['公司名稱'], card['姓名']].filter(Boolean).join(' - ') || '商務名片';
         desc = card['服務項目/品牌標語'] || '點擊下方按鈕與我聯繫';
-
-        const safeUrl = (url) => url && url.startsWith('http') ? url : '';
-        const safeTel = (tel) => tel ? `tel:${tel.replace(/[^\d+]/g,'')}` : '';
 
         if (card['手機號碼']) buttons.push({ l: '撥打手機', u: card['手機號碼'] });
         else if (card['公司電話']) buttons.push({ l: '撥打電話', u: card['公司電話'] });
@@ -880,7 +883,12 @@
 
     const validSizes = ['nano', 'micro', 'kilo', 'mega', 'giga'];
     if (!validSizes.includes(imgSize) || imgSize === 'full') imgSize = 'mega';
+    
+    // ⭐ 嚴格防呆 2：確保比例格式正確 (若非數字會導致發送失敗)
     if (!/^\d+:\d+$/.test(ar)) ar = '20:13';
+    const [w, h] = ar.split(':').map(Number);
+    if (!w || !h || isNaN(w) || isNaN(h)) ar = '20:13';
+
     title = (title || '').trim() || '-';
     desc = (desc || '').trim() || '-';
 
@@ -893,7 +901,11 @@
         let safeU = buttons[i].u ? String(buttons[i].u).trim() : '';
         if (!safeU) { safeU = 'https://line.me'; } 
         else if (!safeU.match(/^(http|https|tel|mailto|line):/i)) {
-            if (/^[\d\-\+\s()]+$/.test(safeU)) safeU = 'tel:' + safeU.replace(/[^\d+]/g, ''); 
+            // ⭐ 嚴格防呆 3：確保 tel: 連結絕對有數字，否則退回預設連結
+            if (/^[\d\-\+\s()]+$/.test(safeU)) {
+                const pureNum = safeU.replace(/[^\d+]/g, '');
+                safeU = pureNum ? 'tel:' + pureNum : 'https://line.me';
+            }
             else if (safeU.includes('@')) safeU = 'mailto:' + safeU;
             else safeU = 'https://' + safeU;
         }
@@ -920,7 +932,7 @@
                   "size": "full", 
                   "aspectRatio": ar, 
                   "aspectMode": aspectMode, 
-                  "animated": true,
+                  // ⭐ 嚴格防呆 4：移除 animated: true，以免靜態圖片被 LINE 阻擋
                   "action": { "type": "uri", "uri": safeImgActionUrl.substring(0, 1000) }
                 },
                 {

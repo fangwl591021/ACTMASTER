@@ -52,8 +52,8 @@
     .btn-disabled { pointer-events: none; opacity: 0.5; filter: grayscale(100%); }
     
     /* 底部導覽列 Active 狀態 */
-    .nav-btn { @apply flex flex-col items-center gap-1.5 transition-all w-20 text-slate-400; }
-    .nav-btn .icon-box { @apply px-5 py-1.5 rounded-full transition-all; }
+    .nav-btn { @apply flex flex-col items-center gap-1.5 transition-all flex-1 text-slate-400; }
+    .nav-btn .icon-box { @apply px-4 py-1.5 rounded-full transition-all; }
     .nav-active { @apply text-primary font-bold; }
     .nav-active .icon-box { @apply bg-primary-light text-primary; }
     .nav-active .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
@@ -75,7 +75,7 @@
       <span id="header-admin-badge" class="hidden bg-primary-light text-primary text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-bold ml-1">Admin</span>
     </div>
     <div class="flex items-center gap-3">
-      <!-- ⭐ 新增：管理員專屬的頂部名片快捷按鈕 -->
+      <!-- 管理員專屬的名片掃描快捷按鈕 -->
       <button id="admin-card-btn" onclick="window.location.href='card.html'" class="hidden w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center active:scale-95 transition-all shadow-sm" title="掃描名片">
         <span class="material-symbols-outlined text-[18px]">add_card</span>
       </button>
@@ -190,10 +190,6 @@
           <h2 class="text-3xl font-black font-headline text-text-main tracking-tight">會員 CRM</h2>
           <p class="text-text-muted text-[13px] font-medium mt-1">追蹤並管理所有來賓與會員的活動活躍度。</p>
         </div>
-        <!-- ⭐ 新增：CRM 儀表板內的大顆名片按鈕 -->
-        <button onclick="window.location.href='card.html'" class="shrink-0 w-11 h-11 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30 active:scale-90 transition-all">
-          <span class="material-symbols-outlined text-[22px]">document_scanner</span>
-        </button>
       </div>
       <div class="relative px-2">
         <span class="material-symbols-outlined absolute left-6 top-1/2 -translate-y-1/2 text-slate-400">search</span>
@@ -201,6 +197,25 @@
       </div>
 
       <div id="admin-crm-list-container" class="space-y-4 px-1"></div>
+    </div>
+
+    <!-- ⭐ View: Admin Card Contacts (名片通訊錄清單) -->
+    <div id="view-admin-cards" class="hidden space-y-5 animate-in fade-in pt-4">
+      <div class="px-2 mb-2 flex justify-between items-end">
+        <div>
+          <h2 class="text-3xl font-black font-headline text-text-main tracking-tight">名片通訊錄</h2>
+          <p class="text-text-muted text-[13px] font-medium mt-1">數位化管理您的商務人脈。</p>
+        </div>
+        <button onclick="window.location.href='card.html'" class="shrink-0 w-11 h-11 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30 active:scale-90 transition-all">
+          <span class="material-symbols-outlined text-[22px]">add_card</span>
+        </button>
+      </div>
+      <div class="relative px-2">
+        <span class="material-symbols-outlined absolute left-6 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+        <input type="text" id="card-search-input" onkeyup="filterCardList()" class="custom-input !pl-12 bg-white shadow-sm border border-slate-100" placeholder="搜尋姓名或公司...">
+      </div>
+
+      <div id="admin-card-list-container" class="space-y-4 px-1"></div>
     </div>
 
     <!-- View: Admin Settings -->
@@ -338,16 +353,17 @@
     <button onclick="switchView('user-profile')" id="nav-user-profile" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">person</span></div><span class="text-[10px] font-bold mt-1">設定</span></button>
   </nav>
 
-  <!-- 底部導覽：管理員 -->
-  <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-around items-center px-1 py-2 z-40 pb-safe shadow-app-nav left-1/2 -translate-x-1/2">
+  <!-- 底部導覽：管理員 (包含新名片按鈕) -->
+  <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-between items-center px-1 py-2 z-40 pb-safe shadow-app-nav left-1/2 -translate-x-1/2">
     <button onclick="switchView('admin-activities')" id="nav-admin-activities" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">fact_check</span></div><span class="text-[10px] font-bold mt-1">核銷</span></button>
     <button onclick="switchView('admin-create')" id="nav-admin-create" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">add_circle</span></div><span class="text-[10px] font-bold mt-1">建立</span></button>
     <button onclick="switchView('admin-crm')" id="nav-admin-crm" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">groups</span></div><span class="text-[10px] font-bold mt-1">CRM</span></button>
+    <button onclick="switchView('admin-cards')" id="nav-admin-cards" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">recent_patient</span></div><span class="text-[10px] font-bold mt-1">名片</span></button>
     <button onclick="switchView('admin-settings')" id="nav-admin-settings" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">settings</span></div><span class="text-[10px] font-bold mt-1">參數</span></button>
   </nav>
 </div>
 
-<!-- ================= 活動詳細說明 Modal (滿版) ================= -->
+<!-- ================= 活動詳細說明 Modal ================= -->
 <div id="activity-detail-modal" class="hidden fixed inset-0 z-[100] bg-background flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl overflow-hidden">
   
   <div class="absolute top-5 right-5 z-50">
@@ -406,7 +422,45 @@
     </button>
   </div>
 </div>
-<!-- ================= 結束：詳細說明 Modal ================= -->
+
+<!-- ⭐ 新增：名片詳細說明 Modal (滿版) -->
+<div id="card-detail-modal" class="hidden fixed inset-0 z-[100] bg-background flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl overflow-hidden">
+  <div class="absolute top-5 right-5 z-50">
+    <button onclick="closeCardDetail()" class="w-10 h-10 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-slate-800 shadow-md active:scale-90 transition-transform border border-slate-100">
+      <span class="material-symbols-outlined font-bold">close</span>
+    </button>
+  </div>
+
+  <div class="flex-1 overflow-y-auto pb-10">
+    <div class="w-full h-64 bg-slate-200 relative flex items-center justify-center overflow-hidden">
+      <img id="cd-image" src="" class="w-full h-full object-cover hidden">
+      <div id="cd-no-image" class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-50">
+        <span class="material-symbols-outlined text-6xl text-emerald-200">contact_mail</span>
+      </div>
+    </div>
+    
+    <div class="bg-white -mt-8 relative z-10 rounded-t-[2rem] p-7 space-y-6 shadow-[0_-10px_20px_rgba(0,0,0,0.05)] min-h-[60vh]">
+      <div>
+        <h2 id="cd-name" class="text-[24px] font-black text-text-main leading-tight font-headline">姓名</h2>
+        <p id="cd-title" class="text-[15px] font-bold text-emerald-600 mt-1">職稱 / 部門</p>
+      </div>
+      
+      <div class="space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-100">
+        <div class="flex items-center gap-3"><span class="material-symbols-outlined text-slate-400">apartment</span><span id="cd-company" class="font-bold text-slate-700 text-[14px]"></span></div>
+        <div class="flex items-center gap-3"><span class="material-symbols-outlined text-slate-400">tag</span><span id="cd-taxid" class="font-bold text-slate-700 text-[14px]"></span></div>
+        <div class="flex items-center gap-3"><span class="material-symbols-outlined text-slate-400">smartphone</span><a href="" id="cd-mobile-link" class="font-bold text-blue-600 text-[14px]"></a></div>
+        <div class="flex items-center gap-3"><span class="material-symbols-outlined text-slate-400">call</span><span id="cd-tel" class="font-bold text-slate-700 text-[14px]"></span></div>
+        <div class="flex items-center gap-3"><span class="material-symbols-outlined text-slate-400">email</span><a href="" id="cd-email-link" class="font-bold text-blue-600 text-[14px] truncate"></a></div>
+        <div class="flex items-start gap-3"><span class="material-symbols-outlined text-slate-400 mt-0.5">location_on</span><span id="cd-address" class="font-bold text-slate-700 text-[14px] leading-snug"></span></div>
+      </div>
+      
+      <div>
+        <h3 class="text-[15px] font-black text-slate-800 mb-2 flex items-center gap-1"><span class="material-symbols-outlined text-emerald-500 text-[18px]">info</span> 備註與其他資訊</h3>
+        <p id="cd-notes" class="text-[14px] text-slate-600 leading-relaxed whitespace-pre-wrap font-medium bg-slate-50 p-4 rounded-xl border border-slate-100"></p>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Toast 通知容器 -->
 <div id="toast" class="fixed top-14 left-1/2 -translate-x-1/2 px-6 py-3.5 rounded-full text-[15px] shadow-app-card transition-all z-[10000] font-bold transform translate-y-0 opacity-0 pointer-events-none flex items-center gap-2 w-max max-w-[90vw]"></div>
@@ -428,10 +482,11 @@
 
   let userProfile = null, isAdmin = false, isViewModeAdmin = false, isRegistered = false, registeredInfo = null;
   let globalPublicActivities = [], currentCheckinData = [], activeActivityName = '', modalTargetView = '';
-  let globalCrmData = []; // ⭐ CRM 全域變數
+  let globalCrmData = []; 
+  let globalCardContacts = []; // ⭐ 名片通訊錄全域變數
   let isProcessing = false;
 
-  // 💡 [極速載入] 骨架屏 (Skeleton)
+  // 💡 [極速載入] 骨架屏
   function renderActivitiesSkeleton() {
     const skeletonHTML = Array(3).fill(0).map(() => `
       <div class="bg-white rounded-[2rem] overflow-hidden border border-slate-100 shadow-[0_12px_30px_rgba(0,0,0,0.04)] animate-pulse">
@@ -484,7 +539,7 @@
       if (isAdmin) {
         document.getElementById('role-switch-btn').classList.remove('hidden');
         document.getElementById('header-admin-badge').classList.remove('hidden');
-        document.getElementById('admin-card-btn').classList.remove('hidden'); // ⭐ 顯示名片按鈕
+        document.getElementById('admin-card-btn').classList.remove('hidden');
         isViewModeAdmin = true; switchView('admin-activities');
       } else {
         if (isRegistered) {
@@ -505,17 +560,17 @@
     isViewModeAdmin = !isViewModeAdmin;
     if (isViewModeAdmin) {
       document.getElementById('header-admin-badge').classList.remove('hidden');
-      document.getElementById('admin-card-btn').classList.remove('hidden'); // ⭐ 顯示名片按鈕
+      document.getElementById('admin-card-btn').classList.remove('hidden');
       switchView('admin-activities');
     } else { 
       document.getElementById('header-admin-badge').classList.add('hidden');
-      document.getElementById('admin-card-btn').classList.add('hidden'); // ⭐ 隱藏名片按鈕
+      document.getElementById('admin-card-btn').classList.add('hidden');
       if (isRegistered) switchView('user-activities'); else switchView('user-register'); 
     }
   }
 
   function switchView(view) {
-    ['view-loading', 'view-user-register', 'view-user-activities', 'view-user-profile', 'view-user-history', 'view-admin-activities', 'view-admin-checkin', 'view-admin-create', 'view-admin-settings', 'view-admin-edit', 'view-admin-crm'].forEach(v => {
+    ['view-loading', 'view-user-register', 'view-user-activities', 'view-user-profile', 'view-user-history', 'view-admin-activities', 'view-admin-checkin', 'view-admin-create', 'view-admin-settings', 'view-admin-edit', 'view-admin-crm', 'view-admin-cards'].forEach(v => {
       const el = document.getElementById(v); if(el) el.classList.add('hidden');
     });
     const activeEl = document.getElementById(`view-${view}`); if (activeEl) activeEl.classList.remove('hidden');
@@ -526,7 +581,7 @@
     
     if (isAdmin && isViewModeAdmin && (view.startsWith('admin') || view === 'admin-activities')) {
       navAdmin.classList.remove('hidden');
-      ['activities', 'create', 'crm', 'settings'].forEach(k => {
+      ['activities', 'create', 'crm', 'cards', 'settings'].forEach(k => {
         const btn = document.getElementById('nav-admin-'+k);
         if(btn) btn.className = `nav-btn ${view==='admin-'+k ? 'nav-active' : ''}`;
       });
@@ -541,6 +596,7 @@
     if (view === 'admin-activities') loadAdminActivities();
     else if (view === 'admin-settings') loadAdminSettings();
     else if (view === 'admin-crm') loadCrmData();
+    else if (view === 'admin-cards') loadCardContacts(); // ⭐ 載入名片清單
     else if (view === 'user-activities') loadUserActivities();
     else if (view === 'user-profile') populateUserProfile();
     else if (view === 'user-history') loadUserHistory();
@@ -595,7 +651,6 @@
       </div>`).join('');
   }
 
-  // ⭐ 打開滿版詳細說明 Modal
   function openActivityDetail(index) {
     const act = globalPublicActivities[index];
     if (!act) return;
@@ -656,6 +711,8 @@
       await fetchAPI('joinActivity', { userId: userProfile.userId, activityName: name });
       if (feeType === '收費') showModal("報名成功", `此為收費活動，請完成匯款 \nNT$ ${price} 後，至「報名查詢」填寫帳號後五碼。`, "history");
       else showModal("報名成功", `您已成功報名！期待現場見到您。`, "activities");
+    } catch(e) {
+      console.error(e);
     } finally { 
       isProcessing = false; 
       btn.classList.remove('btn-disabled'); 
@@ -701,7 +758,7 @@
       await fetchAPI('updateLast5Digits', { userId: userProfile.userId, activityName: name, last5Digits: val });
       showToast("✅ 已送出審核");
       setTimeout(() => { loadUserHistory(); }, 500);
-    } finally { isProcessing = false; }
+    } catch(e) { console.error(e); } finally { isProcessing = false; }
   }
 
   // ⭐ CRM 資料讀取與渲染
@@ -743,6 +800,98 @@
     const term = document.getElementById('crm-search-input').value.toLowerCase();
     const filtered = globalCrmData.filter(u => u.name.toLowerCase().includes(term));
     renderCrmList(filtered);
+  }
+
+  // ⭐ 名片通訊錄讀取與渲染
+  async function loadCardContacts() {
+    const container = document.getElementById('admin-card-list-container');
+    container.innerHTML = '<div class="text-center py-10"><span class="material-symbols-outlined animate-spin text-emerald-500 text-3xl">refresh</span></div>';
+    try {
+      globalCardContacts = await fetchAPI('getCardContacts');
+      renderCardList(globalCardContacts);
+    } catch(e) {
+      container.innerHTML = `<div class="text-center py-10 text-error font-bold">${e.message}</div>`;
+    }
+  }
+
+  function renderCardList(data) {
+    const container = document.getElementById('admin-card-list-container');
+    if (!data || data.length === 0) {
+      container.innerHTML = '<div class="text-center py-16 bg-white rounded-[2rem] shadow-app-card text-slate-400 font-bold">目前尚無名片資料</div>';
+      return;
+    }
+    container.innerHTML = data.map((card, idx) => `
+      <div onclick="openCardDetail(${idx})" class="bg-white rounded-[1.5rem] shadow-sm border border-slate-100 p-5 flex items-center gap-4 animate-in fade-in slide-in-from-bottom-2 cursor-pointer active:scale-95 transition-all" style="animation-delay: ${Math.min(idx * 50, 500)}ms">
+        <div class="w-12 h-12 shrink-0 rounded-full overflow-hidden bg-slate-50 flex items-center justify-center border border-slate-100">
+          ${card['名片圖檔'] && card['名片圖檔'] !== '圖片儲存失敗' ? `<img src="${card['名片圖檔']}" class="w-full h-full object-cover">` : `<span class="material-symbols-outlined text-slate-300 text-[28px]">person</span>`}
+        </div>
+        <div class="flex-1 overflow-hidden">
+          <h4 class="text-[17px] font-extrabold text-text-main truncate">${card['姓名'] || '未知姓名'}</h4>
+          <p class="text-[13px] text-text-muted font-medium truncate mt-0.5">${card['公司名稱'] || card['職稱'] || '無公司資訊'}</p>
+        </div>
+        <div class="shrink-0 text-slate-300">
+          <span class="material-symbols-outlined">chevron_right</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function filterCardList() {
+    const term = document.getElementById('card-search-input').value.toLowerCase();
+    const filtered = globalCardContacts.filter(c => 
+      (c['姓名'] || '').toLowerCase().includes(term) || 
+      (c['公司名稱'] || '').toLowerCase().includes(term)
+    );
+    renderCardList(filtered);
+  }
+
+  function openCardDetail(idx) {
+    const card = globalCardContacts[idx];
+    if(!card) return;
+    
+    document.getElementById('cd-name').innerText = card['姓名'] || '未知姓名';
+    document.getElementById('cd-title').innerText = [card['職稱'], card['部門']].filter(Boolean).join(' / ') || '無職稱資訊';
+    document.getElementById('cd-company').innerText = [card['公司名稱'], card['英文名/別名']].filter(Boolean).join(' - ') || '未提供';
+    document.getElementById('cd-taxid').innerText = card['統一編號'] || '未提供';
+    
+    const mobileLink = document.getElementById('cd-mobile-link');
+    mobileLink.innerText = card['手機號碼'] || '未提供';
+    mobileLink.href = card['手機號碼'] ? `tel:${card['手機號碼']}` : '#';
+    
+    document.getElementById('cd-tel').innerText = [card['公司電話'], card['分機'] ? `ext.${card['分機']}` : ''].filter(Boolean).join(' ') || '未提供';
+    
+    const emailLink = document.getElementById('cd-email-link');
+    emailLink.innerText = card['電子郵件'] || '未提供';
+    emailLink.href = card['電子郵件'] ? `mailto:${card['電子郵件']}` : '#';
+    
+    document.getElementById('cd-address').innerText = card['公司地址'] || '未提供';
+    
+    const notesArr = [];
+    if(card['服務項目/品牌標語']) notesArr.push(`【品牌標語】\n${card['服務項目/品牌標語']}`);
+    if(card['傳真']) notesArr.push(`【傳真】${card['傳真']}`);
+    if(card['公司網址']) notesArr.push(`【網址】${card['公司網址']}`);
+    if(card['社群帳號']) notesArr.push(`【社群】${card['社群帳號']}`);
+    if(card['建檔人/備註']) notesArr.push(`【備註】\n${card['建檔人/備註']}`);
+    
+    document.getElementById('cd-notes').innerText = notesArr.join('\n\n') || '無其他資訊';
+
+    const imgEl = document.getElementById('cd-image');
+    const noImgEl = document.getElementById('cd-no-image');
+    if (card['名片圖檔'] && card['名片圖檔'] !== '圖片儲存失敗') {
+      imgEl.src = card['名片圖檔'];
+      imgEl.classList.remove('hidden');
+      noImgEl.classList.add('hidden');
+    } else {
+      imgEl.src = '';
+      imgEl.classList.add('hidden');
+      noImgEl.classList.remove('hidden');
+    }
+
+    document.getElementById('card-detail-modal').classList.remove('hidden');
+  }
+
+  function closeCardDetail() {
+    document.getElementById('card-detail-modal').classList.add('hidden');
   }
 
   function showToast(m, e=false) { 

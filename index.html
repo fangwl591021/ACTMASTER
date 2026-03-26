@@ -388,7 +388,7 @@
   </div>
 </div>
 
-<!-- ================= ⭐ 新增：名片明細 Modal ================= -->
+<!-- ================= 名片明細 Modal ================= -->
 <div id="card-detail-modal" class="hidden fixed inset-0 z-[60] bg-background flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl overflow-hidden">
   <div class="absolute top-5 right-5 z-50">
     <button onclick="closeCardDetail()" class="w-10 h-10 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-slate-800 shadow-md active:scale-90 transition-transform border border-slate-100">
@@ -433,7 +433,7 @@
   </div>
 </div>
 
-<!-- ================= ⭐ 新增：數位電子名片產生器 (WYSIWYG) ================= -->
+<!-- ================= ⭐ 數位電子名片產生器 (WYSIWYG) ================= -->
 <div id="ecard-generator-modal" class="hidden fixed inset-0 z-[70] bg-slate-100 flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl">
   <div class="bg-white px-5 py-4 flex justify-between items-center border-b border-slate-200 z-10 shrink-0">
     <h3 class="text-lg font-black text-slate-800">數位名片產生器</h3>
@@ -450,7 +450,7 @@
           <h2 id="preview-ec-title" class="text-xl font-bold text-slate-800 leading-tight mb-2">標準版分頁標題</h2>
           <p id="preview-ec-desc" class="text-xs text-slate-500 whitespace-pre-wrap leading-relaxed text-left">內容描述文字預覽大小為 xs，質感細膩呈現。</p>
         </div>
-        <!-- ⭐ 動態按鈕容器 -->
+        <!-- 動態按鈕容器 -->
         <div id="preview-ec-buttons" class="p-4 pt-0 space-y-2">
         </div>
       </div>
@@ -461,9 +461,20 @@
       <p class="text-xs font-bold text-[#ff751f] uppercase tracking-widest border-b border-orange-100 pb-2">編輯區 (即時連動)</p>
       
       <div>
-        <label class="input-label">圖片網址 (Image URL)</label>
-        <input type="text" id="ec-img-input" class="custom-input !py-3 text-sm" oninput="updateECardPreview()">
+        <label class="input-label">圖片網址與尺寸</label>
+        <div class="flex gap-2">
+          <input type="text" id="ec-img-input" class="custom-input !py-3 text-sm flex-1" placeholder="Image URL" oninput="updateECardPreview()">
+          <div class="relative w-28 shrink-0">
+            <select id="ec-img-size" class="custom-input !py-3 text-sm w-full appearance-none" onchange="updateECardPreview()">
+              <option value="full">滿版</option>
+              <option value="mega">巨大</option>
+              <option value="giga">超大</option>
+            </select>
+            <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">expand_more</span>
+          </div>
+        </div>
       </div>
+      
       <div>
         <label class="input-label">主標題 (Title)</label>
         <input type="text" id="ec-title-input" class="custom-input !py-3 text-sm font-bold" oninput="updateECardPreview()">
@@ -473,7 +484,7 @@
         <textarea id="ec-desc-input" class="custom-input h-32 resize-none text-sm leading-relaxed" oninput="updateECardPreview()"></textarea>
       </div>
 
-      <!-- ⭐ 智慧動態按鈕編輯區 -->
+      <!-- 智慧動態按鈕編輯區 -->
       <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-3">
         <div class="font-bold text-[13px] text-slate-800 border-b border-slate-200 pb-2">動作按鈕 (最多 4 個，系統已自動擷取)</div>
         
@@ -946,45 +957,38 @@
   function openECardGenerator() {
     if (!currentActiveCard) return;
     const c = currentActiveCard;
-    // ⭐ 統一採用指定的預設名片圖
     const fallbackImg = "https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png";
 
     const title = [c['公司名稱'], c['姓名']].filter(Boolean).join(' - ') || '商務名片';
     
-    // ⭐ 智慧帶入內容：包含 AI 生成的公司介紹 (服務項目/品牌標語)
     const descArr = [];
     if (c['職稱'] || c['部門']) descArr.push(`👤 ${[c['職稱'], c['部門']].filter(Boolean).join(' / ')}`);
     if (c['手機號碼']) descArr.push(`📱 ${c['手機號碼']}`);
     if (c['電子郵件']) descArr.push(`✉️ ${c['電子郵件']}`);
-    if (c['服務項目/品牌標語']) descArr.push(`\n【關於我們】\n${c['服務項目/品牌標語']}`); // 放入 AI 擴寫的介紹
+    if (c['服務項目/品牌標語']) descArr.push(`\n【關於我們】\n${c['服務項目/品牌標語']}`); 
     const desc = descArr.join('\n') || '點擊下方按鈕與我聯繫';
 
     const safeUrl = (url) => url && url.startsWith('http') ? url : '';
     const safeTel = (tel) => tel ? `tel:${tel.replace(/\D/g,'')}` : '';
 
-    // 圖片預設統一放這張
+    // 初始化表單資料
     document.getElementById('ec-img-input').value = fallbackImg;
+    document.getElementById('ec-img-size').value = 'full'; // 預設滿版
     document.getElementById('ec-title-input').value = title;
     document.getElementById('ec-desc-input').value = desc;
     
-    // ⭐ 智慧判斷名片內容，自動生成按鈕
     const availableButtons = [];
     
-    // 1. 電話按鈕
     if (c['手機號碼']) availableButtons.push({ label: '撥打手機', url: safeTel(c['手機號碼']) });
     else if (c['公司電話']) availableButtons.push({ label: '撥打電話', url: safeTel(c['公司電話']) });
     
-    // 2. 信箱按鈕
     if (c['電子郵件']) availableButtons.push({ label: '發送信箱', url: `mailto:${c['電子郵件']}` });
     
-    // 3. 地址轉 Google Maps 按鈕
     if (c['公司地址']) availableButtons.push({ label: 'Google 導航', url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c['公司地址'])}` });
     
-    // 4. 網站或社群按鈕
     if (c['社群帳號'] && c['社群帳號'].startsWith('http')) availableButtons.push({ label: '社群連結', url: safeUrl(c['社群帳號']) });
     else if (c['公司網址']) availableButtons.push({ label: '公司網站', url: safeUrl(c['公司網址']) });
 
-    // 清空並填入按鈕
     for(let i=1; i<=4; i++) {
       const btn = availableButtons[i-1];
       document.getElementById(`ec-btn${i}-label`).value = btn ? btn.label : '';
@@ -1007,16 +1011,15 @@
     document.getElementById('preview-ec-title').innerText = document.getElementById('ec-title-input').value || '未命名的標題';
     document.getElementById('preview-ec-desc').innerText = document.getElementById('ec-desc-input').value || '請輸入描述內容...';
     
-    // ⭐ 動態更新預覽按鈕 (主按鈕顏色變更為 #ff751f)
+    // 動態更新預覽按鈕，統一使用 #ff751f
     const btnContainer = document.getElementById('preview-ec-buttons');
     btnContainer.innerHTML = '';
     for(let i=1; i<=4; i++) {
       const label = document.getElementById(`ec-btn${i}-label`).value;
       const url = document.getElementById(`ec-btn${i}-url`).value;
       if(label && url) {
-        // 第一顆主按鈕預設橘色 #ff751f，其餘為黑色
-        const colorClass = i === 1 ? 'bg-[#ff751f] text-white' : 'bg-slate-800 text-white';
-        btnContainer.innerHTML += `<div class="w-full ${colorClass} text-sm font-bold text-center py-2.5 rounded-lg">${label}</div>`;
+        const colorClass = 'bg-[#ff751f] text-white';
+        btnContainer.innerHTML += `<div class="w-full ${colorClass} text-sm font-bold text-center py-2.5 rounded-lg mb-2 shadow-sm">${label}</div>`;
       }
     }
   }
@@ -1026,17 +1029,18 @@
     if (!liff.isApiAvailable('shareTargetPicker')) { return showToast('⚠️ 您目前的裝置或版本不支援分享功能', true); }
 
     const imgUrl = document.getElementById('ec-img-input').value || 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
+    const imgSize = document.getElementById('ec-img-size').value || 'full'; // 取得選擇的尺寸
     const title = document.getElementById('ec-title-input').value || '-';
     const desc = document.getElementById('ec-desc-input').value || '-';
     const badgeUrl = document.getElementById('ec-badge-url').value || 'https://line.me';
 
-    // ⭐ 抓取有效按鈕組裝 JSON (主按鈕顏色變更為 #ff751f)
+    // 抓取有效按鈕組裝 JSON，統一顏色為 #ff751f
     const btnContents = [];
     for(let i=1; i<=4; i++) {
       const label = document.getElementById(`ec-btn${i}-label`).value;
       const url = document.getElementById(`ec-btn${i}-url`).value;
       if(label && url) {
-        const color = i === 1 ? '#ff751f' : '#000000';
+        const color = '#ff751f';
         btnContents.push({
           "type": "button", "style": "primary", "color": color, "height": "sm", "margin": "sm",
           "action": { "type": "uri", "label": label, "uri": url }
@@ -1051,7 +1055,7 @@
         "layout": "vertical",
         "paddingAll": "0px",
         "contents": [
-          { "type": "image", "url": imgUrl, "size": "full", "aspectRatio": "20:13", "aspectMode": "cover", "animated": true },
+          { "type": "image", "url": imgUrl, "size": imgSize, "aspectRatio": "20:13", "aspectMode": "cover", "animated": true },
           {
             "type": "box",
             "layout": "vertical",

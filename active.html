@@ -16,10 +16,10 @@
         extend: {
           colors: {
             primary: "#2563eb",
-            "primary-light": "#dbeafe",
-            background: "#f8f9fc",
-            "input-bg": "#f0f2f8",
-            "text-main": "#1e293b",
+            "primary-light": "#eff6ff",
+            background: "#ffffff",
+            "input-bg": "#f3f4f6", /* 更柔和的輸入框底色 */
+            "text-main": "#0f172a",
             "text-muted": "#64748b",
             error: "#ef4444"
           },
@@ -28,8 +28,9 @@
             body: ["Inter", "Noto Sans TC", "sans-serif"],
           },
           boxShadow: {
-            'app-card': '0 10px 40px -10px rgba(0,0,0,0.08)',
-            'app-nav': '0 -4px 20px rgba(0,0,0,0.04)',
+            'app-card': '0 12px 40px -12px rgba(0,0,0,0.06)',
+            'app-nav': '0 -4px 24px rgba(0,0,0,0.04)',
+            'tab-active': '0 2px 10px rgba(0,0,0,0.05)',
           }
         },
       },
@@ -39,35 +40,40 @@
     .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
     .icon-filled { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
     
-    body { background-color: #f8f9fc; -webkit-tap-highlight-color: transparent; }
+    /* 整體背景加上淡淡的漸層，營造高級感 */
+    body { background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); background-attachment: fixed; -webkit-tap-highlight-color: transparent; }
     ::-webkit-scrollbar { width: 0px; }
     .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1.5rem); }
     
-    .input-label { @apply block text-[13px] font-bold text-text-main mb-2 ml-1; }
-    .custom-input { @apply w-full py-4 pl-5 pr-12 bg-input-bg border-none rounded-2xl outline-none focus:ring-2 focus:ring-primary/30 transition-all font-medium text-text-main appearance-none; }
-    .custom-input::placeholder { @apply text-slate-400 font-normal; }
+    /* ⭐ 優化輸入框樣式：無邊框、大圓角、獲取焦點時的柔和光暈 */
+    .input-label { @apply block text-[13px] font-bold text-slate-700 mb-2 ml-1 tracking-wide; }
+    .custom-input { @apply w-full py-4 pl-5 pr-12 bg-input-bg border-2 border-transparent rounded-[1.25rem] outline-none focus:border-blue-500/20 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all duration-300 font-bold text-text-main appearance-none; }
+    .custom-input::placeholder { @apply text-slate-400 font-medium; }
     
-    .btn-primary { @apply w-full py-4 bg-primary text-white rounded-full font-bold text-[17px] shadow-lg shadow-blue-500/30 active:scale-95 transition-all flex items-center justify-center gap-2; }
-    .btn-disabled { pointer-events: none; opacity: 0.5; filter: grayscale(100%); }
+    /* ⭐ 優化按鈕樣式 */
+    .btn-primary { @apply w-full py-4 bg-primary text-white rounded-full font-black text-[17px] shadow-xl shadow-blue-600/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2; }
+    .btn-disabled { pointer-events: none; opacity: 0.6; filter: grayscale(50%); }
     
-    .nav-btn { @apply flex flex-col items-center gap-1.5 transition-all flex-1 text-slate-400; }
-    .nav-btn .icon-box { @apply px-4 py-1.5 rounded-full transition-all; }
+    /* ⭐ 優化底部導覽列 */
+    .nav-btn { @apply flex flex-col items-center gap-1 transition-all flex-1 text-slate-400; }
+    .nav-btn .icon-box { @apply px-5 py-1.5 rounded-2xl transition-all duration-300 flex justify-center items-center; }
     .nav-active { @apply text-primary font-bold; }
     .nav-active .icon-box { @apply bg-primary-light text-primary; }
     .nav-active .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
     
-    .loading-gif { width: 100px; height: auto; }
+    .loading-gif { width: 90px; height: auto; }
   </style>
 </head>
 <body class="font-body text-text-main min-h-screen flex flex-col items-center">
 
-<div id="app-container" class="w-full max-w-md bg-background h-screen relative flex flex-col shadow-2xl overflow-hidden">
+<div id="app-container" class="w-full max-w-md h-screen relative flex flex-col overflow-hidden bg-transparent">
   
-  <!-- 頂部 Header -->
-  <nav id="top-nav" class="fixed top-0 w-full max-w-md z-40 bg-background/90 backdrop-blur-xl px-6 py-4 flex justify-between items-center left-1/2 -translate-x-1/2 border-b border-slate-200/50">
-    <div class="text-[22px] font-black text-primary flex items-center gap-2 font-headline tracking-tight">
-      <span class="material-symbols-outlined text-2xl icon-filled">event_note</span>
-      建立活動
+  <!-- 頂部 Header (改為更簡潔的透明毛玻璃) -->
+  <nav id="top-nav" class="fixed top-0 w-full max-w-md z-40 bg-white/80 backdrop-blur-xl px-6 py-4 flex justify-between items-center left-1/2 -translate-x-1/2 border-b border-slate-100">
+    <div class="text-[20px] font-black text-primary flex items-center gap-2 font-headline tracking-tight">
+      <span class="material-symbols-outlined text-[24px] icon-filled text-primary">event_note</span>
+      報名大師
+      <span class="bg-blue-100 text-blue-700 text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider font-black ml-1">Admin</span>
     </div>
     <div class="flex items-center gap-3">
       <div id="user-profile-badge" class="hidden flex items-center gap-2">
@@ -76,7 +82,7 @@
     </div>
   </nav>
 
-  <main id="main-content" class="flex-1 overflow-y-auto pb-32 pt-24 px-4 space-y-6">
+  <main id="main-content" class="flex-1 overflow-y-auto pb-32 pt-24 px-5 space-y-6">
     
     <!-- View: Loading -->
     <div id="view-loading" class="h-full flex flex-col items-center justify-center space-y-4 pb-20">
@@ -85,42 +91,59 @@
     </div>
 
     <!-- View: Admin Create -->
-    <div id="view-admin-create" class="hidden space-y-6 animate-in fade-in">
+    <div id="view-admin-create" class="hidden space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
-      <div class="px-2 mb-4 pt-2">
-        <h2 class="text-[32px] font-black font-headline text-text-main tracking-tight leading-tight">建立新活動</h2>
-        <p class="text-text-muted text-[14px] font-medium mt-2 leading-relaxed">快速部署您的活動報名流程，支援批次匯入或完整圖文發佈。</p>
+      <!-- 標題區 (對齊截圖的簡約大氣風格) -->
+      <div class="px-1 pt-2">
+        <h2 class="text-[34px] font-black font-headline text-slate-800 tracking-tight leading-tight">建立新活動</h2>
+        <p class="text-slate-500 text-[14px] font-medium mt-2 leading-relaxed">快速部署您的活動報名流程，只需幾個步驟。</p>
       </div>
 
-      <!-- 模式切換 Tabs -->
-      <div class="flex p-1.5 rounded-full mx-2 border border-slate-200 bg-slate-50 shadow-inner">
-        <button onclick="toggleCreateMode('quick')" id="tab-quick" class="flex-1 py-3 rounded-full text-[15px] font-bold bg-white text-primary shadow-sm transition-all ring-1 ring-slate-900/5">快速匯入</button>
-        <button onclick="toggleCreateMode('detailed')" id="tab-detailed" class="flex-1 py-3 rounded-full text-[15px] font-bold text-slate-500 transition-all hover:text-slate-800">完整發佈</button>
+      <!-- ⭐ 模式切換 Tabs (還原截圖的精緻膠囊感) -->
+      <div class="flex p-1.5 rounded-[1.5rem] mx-1 border border-slate-100 bg-slate-100/70 shadow-inner">
+        <button onclick="toggleCreateMode('quick')" id="tab-quick" class="flex-1 py-3.5 rounded-[1.25rem] text-[15px] font-bold bg-white text-primary shadow-tab-active transition-all">快速匯入</button>
+        <button onclick="toggleCreateMode('detailed')" id="tab-detailed" class="flex-1 py-3.5 rounded-[1.25rem] text-[15px] font-bold text-slate-500 transition-all hover:text-slate-700">完整發佈</button>
       </div>
       
-      <!-- ⭐ 快速模式 (已補上說明與圖片) -->
-      <div id="form-quick" class="space-y-6 px-2 mt-8 animate-in fade-in">
-        <div><label class="input-label">活動名稱</label><input type="text" id="quick-name" class="custom-input !pr-5" placeholder="輸入活動標題..."></div>
+      <!-- ================= 快速模式 ================= -->
+      <div id="form-quick" class="space-y-6 px-1 animate-in fade-in">
         
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-              <label class="input-label">活動類型</label>
-              <div class="relative"><select id="quick-type" class="custom-input text-slate-700"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option></select><span class="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span></div>
+        <div>
+          <label class="input-label">活動名稱</label>
+          <input type="text" id="quick-name" class="custom-input !pr-5" placeholder="輸入活動標題...">
+        </div>
+        
+        <div>
+          <label class="input-label">活動類型</label>
+          <div class="relative">
+            <select id="quick-type" class="custom-input text-slate-700 cursor-pointer">
+              <option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option>
+            </select>
+            <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none transition-transform">expand_more</span>
           </div>
-          <div>
-              <label class="input-label">預設身份</label>
-              <div class="relative"><select id="quick-identity" class="custom-input text-slate-700"><option>會員</option><option>來賓</option></select><span class="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span></div>
+        </div>
+        
+        <div>
+          <label class="input-label">預設身份</label>
+          <div class="relative">
+            <select id="quick-identity" class="custom-input text-slate-700 cursor-pointer">
+              <option>會員</option><option>來賓</option>
+            </select>
+            <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none transition-transform">expand_more</span>
           </div>
         </div>
 
-        <div><label class="input-label">活動說明</label><textarea id="quick-desc" class="custom-input h-32 !pr-5 py-4 resize-none leading-relaxed text-[15px]" placeholder="輸入詳盡說明..."></textarea></div>
+        <div>
+          <label class="input-label">活動說明</label>
+          <textarea id="quick-desc" class="custom-input h-32 !pr-5 py-4 resize-none leading-relaxed text-[15px]" placeholder="輸入詳盡說明..."></textarea>
+        </div>
         
         <div>
           <label class="input-label">宣傳大圖</label>
-          <div onclick="document.getElementById('file-input-quick').click()" class="w-full h-44 border-2 border-dashed border-slate-300 rounded-[1.5rem] flex flex-col items-center justify-center bg-white cursor-pointer overflow-hidden transition-all hover:bg-slate-50 relative group">
-            <div id="preview-placeholder-quick" class="text-center text-slate-400 flex flex-col items-center group-hover:scale-110 transition-transform">
-              <span class="material-symbols-outlined text-4xl mb-2">add_photo_alternate</span>
-              <p class="text-[12px] font-bold">點擊上傳圖片</p>
+          <div onclick="document.getElementById('file-input-quick').click()" class="w-full h-44 border-2 border-dashed border-blue-200 rounded-[1.25rem] flex flex-col items-center justify-center bg-blue-50/50 cursor-pointer overflow-hidden transition-all hover:bg-blue-50 relative group">
+            <div id="preview-placeholder-quick" class="text-center text-blue-500 flex flex-col items-center group-hover:scale-105 transition-transform duration-300">
+              <span class="material-symbols-outlined text-4xl mb-2 icon-filled">add_photo_alternate</span>
+              <p class="text-[13px] font-bold">點擊上傳宣傳圖片</p>
             </div>
             <img id="image-preview-quick" class="hidden w-full h-full object-cover absolute inset-0">
             <input type="file" id="file-input-quick" class="hidden" accept="image/*" onchange="previewFile('quick')">
@@ -129,60 +152,119 @@
         </div>
 
         <div>
-          <div class="flex justify-between items-center mb-2"><label class="text-[13px] font-bold text-text-main ml-1">名單內容</label><span class="text-[10px] font-bold text-primary bg-primary-light px-2 py-0.5 rounded">支援批次輸入</span></div>
-          <textarea id="quick-names" class="custom-input h-48 !pr-5 py-5 resize-none leading-relaxed text-[15px]" placeholder="請貼上參與者姓名，每行一位..."></textarea>
+          <div class="flex justify-between items-center mb-2">
+            <label class="text-[13px] font-bold text-slate-700 ml-1">名單內容</label>
+            <span class="text-[10px] font-bold text-primary bg-primary-light px-2.5 py-1 rounded-full">支援批次輸入</span>
+          </div>
+          <div class="relative">
+            <textarea id="quick-names" class="custom-input h-48 !pr-5 py-5 resize-none leading-relaxed text-[15px]" placeholder="請貼上參與者姓名或電子郵件，每行一位..."></textarea>
+            <span class="material-symbols-outlined absolute right-4 top-4 text-slate-300">assignment</span>
+          </div>
         </div>
-        <button onclick="handleCreateActivity('quick')" id="btn-quick-create" class="btn-primary mt-4">
-            建立活動 <span class="material-symbols-outlined text-[20px]">add_circle</span>
-        </button>
+
+        <div class="pt-4">
+          <button onclick="handleCreateActivity('quick')" id="btn-quick-create" class="btn-primary">
+              建立活動 <span class="material-symbols-outlined text-[20px]">rocket_launch</span>
+          </button>
+        </div>
       </div>
       
-      <!-- 完整模式 -->
-      <div id="form-detailed" class="hidden space-y-6 px-2 mt-8 animate-in fade-in">
-         <div><label class="input-label">正式標題</label><input type="text" id="detail-name" class="custom-input !pr-5" placeholder="輸入活動標題..."></div>
+      <!-- ================= 完整模式 ================= -->
+      <div id="form-detailed" class="hidden space-y-6 px-1 animate-in fade-in">
+         
+         <div>
+           <label class="input-label">正式標題</label>
+           <input type="text" id="detail-name" class="custom-input !pr-5" placeholder="輸入活動標題...">
+         </div>
+         
          <div class="grid grid-cols-2 gap-4">
-           <div><label class="input-label">活動類型</label><div class="relative"><select id="detail-type" class="custom-input text-slate-700 !pr-10"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option></select><span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span></div></div>
+           <div>
+             <label class="input-label">活動類型</label>
+             <div class="relative">
+               <select id="detail-type" class="custom-input text-slate-700 !pr-10 cursor-pointer">
+                 <option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option>
+               </select>
+               <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
+             </div>
+           </div>
            <div>
              <label class="input-label">收費方式</label>
-             <div class="flex gap-4 items-center h-[56px] px-2">
-               <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="fee-type" value="免費" checked onchange="toggleFeeInput()" class="w-4 h-4 text-primary focus:ring-primary"><span class="font-bold text-[15px] text-text-main">免費</span></label>
-               <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="fee-type" value="收費" onchange="toggleFeeInput()" class="w-4 h-4 text-primary focus:ring-primary"><span class="font-bold text-[15px] text-text-main">收費</span></label>
+             <div class="flex gap-4 items-center h-[52px] px-3 bg-input-bg rounded-[1.25rem]">
+               <label class="flex items-center gap-2 cursor-pointer">
+                 <input type="radio" name="fee-type" value="免費" checked onchange="toggleFeeInput()" class="w-4 h-4 text-primary bg-white border-slate-300 focus:ring-primary focus:ring-2">
+                 <span class="font-bold text-[14px] text-slate-700">免費</span>
+               </label>
+               <label class="flex items-center gap-2 cursor-pointer">
+                 <input type="radio" name="fee-type" value="收費" onchange="toggleFeeInput()" class="w-4 h-4 text-primary bg-white border-slate-300 focus:ring-primary focus:ring-2">
+                 <span class="font-bold text-[14px] text-slate-700">收費</span>
+               </label>
              </div>
            </div>
          </div>
-         <input type="number" id="detail-price" class="custom-input !pr-5 hidden animate-in fade-in" placeholder="金額 (NT$)">
-         <div class="grid grid-cols-2 gap-4 border-t border-slate-100 pt-5 mt-2">
-           <div><label class="input-label">開始時間</label><input type="datetime-local" id="detail-start" class="custom-input !px-4 text-[13px] font-bold text-slate-600"></div>
-           <div><label class="input-label">結束時間</label><input type="datetime-local" id="detail-end" class="custom-input !px-4 text-[13px] font-bold text-slate-600"></div>
+         
+         <input type="number" id="detail-price" class="custom-input !pr-5 hidden animate-in fade-in" placeholder="請輸入金額 (NT$)">
+         
+         <div class="grid grid-cols-2 gap-4 border-t border-slate-100 pt-6 mt-2">
+           <div>
+             <label class="input-label">開始時間</label>
+             <input type="datetime-local" id="detail-start" class="custom-input !px-4 text-[13px] font-bold text-slate-600">
+           </div>
+           <div>
+             <label class="input-label">結束時間</label>
+             <input type="datetime-local" id="detail-end" class="custom-input !px-4 text-[13px] font-bold text-slate-600">
+           </div>
          </div>
-         <div><label class="input-label">活動說明</label><textarea id="detail-desc" class="custom-input h-32 !pr-5 py-4 resize-none leading-relaxed text-[15px]" placeholder="輸入詳盡說明..."></textarea></div>
+         
+         <div>
+           <label class="input-label">活動說明</label>
+           <textarea id="detail-desc" class="custom-input h-32 !pr-5 py-4 resize-none leading-relaxed text-[15px]" placeholder="輸入詳盡說明..."></textarea>
+         </div>
+         
          <div>
            <label class="input-label">宣傳大圖</label>
-           <div onclick="document.getElementById('file-input-create').click()" class="w-full h-44 border-2 border-dashed border-slate-300 rounded-[1.5rem] flex flex-col items-center justify-center bg-white cursor-pointer overflow-hidden transition-all hover:bg-slate-50 relative group">
-             <div id="preview-placeholder-create" class="text-center text-slate-400 flex flex-col items-center group-hover:scale-110 transition-transform">
-               <span class="material-symbols-outlined text-4xl mb-2">add_photo_alternate</span>
-               <p class="text-[12px] font-bold">點擊上傳圖片</p>
+           <div onclick="document.getElementById('file-input-create').click()" class="w-full h-44 border-2 border-dashed border-blue-200 rounded-[1.25rem] flex flex-col items-center justify-center bg-blue-50/50 cursor-pointer overflow-hidden transition-all hover:bg-blue-50 relative group">
+             <div id="preview-placeholder-create" class="text-center text-blue-500 flex flex-col items-center group-hover:scale-105 transition-transform duration-300">
+               <span class="material-symbols-outlined text-4xl mb-2 icon-filled">add_photo_alternate</span>
+               <p class="text-[13px] font-bold">點擊上傳宣傳圖片</p>
              </div>
              <img id="image-preview-create" class="hidden w-full h-full object-cover absolute inset-0">
              <input type="file" id="file-input-create" class="hidden" accept="image/*" onchange="previewFile('create')">
            </div>
            <input type="hidden" id="in-image-url-create">
          </div>
-         <button onclick="handleCreateActivity('detailed')" id="btn-detail-create" class="btn-primary mt-4">
-            發布活動頁面 <span class="material-symbols-outlined text-[20px]">rocket_launch</span>
-         </button>
+         
+         <div class="pt-4">
+           <button onclick="handleCreateActivity('detailed')" id="btn-detail-create" class="btn-primary">
+              發布活動頁面 <span class="material-symbols-outlined text-[20px]">rocket_launch</span>
+           </button>
+         </div>
       </div>
     </div>
 
   </main>
 
-  <!-- 底部導覽：管理員 -->
-  <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-between items-center px-1 py-2 z-40 pb-safe shadow-app-nav left-1/2 -translate-x-1/2">
-    <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">fact_check</span></div><span class="text-[10px] font-bold mt-1">核銷</span></button>
-    <button class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">add_circle</span></div><span class="text-[10px] font-bold mt-1">建立</span></button>
-    <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">groups</span></div><span class="text-[10px] font-bold mt-1">CRM</span></button>
-    <button onclick="window.location.href='card.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">recent_patient</span></div><span class="text-[10px] font-bold mt-1">名片</span></button>
-    <button onclick="window.location.href='index.html?view=admin-settings'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">settings</span></div><span class="text-[10px] font-bold mt-1">參數</span></button>
+  <!-- ⭐ 底部導覽：管理員 (精準還原截圖中的浮動選單感) -->
+  <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-2xl border-t border-slate-100 flex justify-around items-center px-2 py-2 z-40 pb-safe shadow-app-nav left-1/2 -translate-x-1/2 rounded-t-[1.5rem]">
+    <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn group">
+      <div class="icon-box group-hover:bg-slate-50"><span class="material-symbols-outlined text-[24px]">fact_check</span></div>
+      <span class="text-[10px] font-bold mt-0.5">列表核銷</span>
+    </button>
+    <button class="nav-btn nav-active">
+      <div class="icon-box"><span class="material-symbols-outlined text-[24px]">search</span></div>
+      <span class="text-[10px] font-bold mt-0.5">建立活動</span>
+    </button>
+    <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn group">
+      <div class="icon-box group-hover:bg-slate-50"><span class="material-symbols-outlined text-[24px]">groups</span></div>
+      <span class="text-[10px] font-bold mt-0.5">CRM</span>
+    </button>
+    <button onclick="window.location.href='card.html'" class="nav-btn group">
+      <div class="icon-box group-hover:bg-slate-50"><span class="material-symbols-outlined text-[24px]">recent_patient</span></div>
+      <span class="text-[10px] font-bold mt-0.5">名片</span>
+    </button>
+    <button onclick="window.location.href='index.html?view=admin-settings'" class="nav-btn group">
+      <div class="icon-box group-hover:bg-slate-50"><span class="material-symbols-outlined text-[24px]">settings</span></div>
+      <span class="text-[10px] font-bold mt-0.5">參數設定</span>
+    </button>
   </nav>
 </div>
 
@@ -220,16 +302,14 @@
       if (!liff.isLoggedIn()) { liff.login(); return; }
 
       userProfile = await liff.getProfile();
-      document.getElementById('user-avatar').src = userProfile.pictureUrl || '';
-      document.getElementById('user-profile-badge').classList.remove('hidden');
       isAdmin = ADMIN_IDS.includes(userProfile.userId);
 
-      document.getElementById('view-loading').classList.add('hidden');
-
       if (isAdmin) {
-        document.getElementById('bottom-nav-admin').classList.remove('hidden');
+        document.getElementById('view-loading').classList.add('hidden');
         document.getElementById('view-admin-create').classList.remove('hidden');
+        document.getElementById('bottom-nav-admin').classList.remove('hidden');
       } else {
+        // 如果不是管理員，強制導回首頁
         window.location.replace('index.html');
       }
 
@@ -258,13 +338,13 @@
     const formDetailed = document.getElementById('form-detailed');
 
     if (mode === 'quick') {
-      tabQuick.className = 'flex-1 py-3 rounded-full text-[15px] font-bold bg-white text-primary shadow-sm transition-all ring-1 ring-slate-900/5';
-      tabDetailed.className = 'flex-1 py-3 rounded-full text-[15px] font-bold text-slate-500 transition-all hover:text-slate-800';
+      tabQuick.className = 'flex-1 py-3.5 rounded-[1.25rem] text-[15px] font-bold bg-white text-primary shadow-tab-active transition-all';
+      tabDetailed.className = 'flex-1 py-3.5 rounded-[1.25rem] text-[15px] font-bold text-slate-500 transition-all hover:text-slate-700';
       formQuick.classList.remove('hidden');
       formDetailed.classList.add('hidden');
     } else {
-      tabQuick.className = 'flex-1 py-3 rounded-full text-[15px] font-bold text-slate-500 transition-all hover:text-slate-800';
-      tabDetailed.className = 'flex-1 py-3 rounded-full text-[15px] font-bold bg-white text-primary shadow-sm transition-all ring-1 ring-slate-900/5';
+      tabQuick.className = 'flex-1 py-3.5 rounded-[1.25rem] text-[15px] font-bold text-slate-500 transition-all hover:text-slate-700';
+      tabDetailed.className = 'flex-1 py-3.5 rounded-[1.25rem] text-[15px] font-bold bg-white text-primary shadow-tab-active transition-all';
       formQuick.classList.add('hidden');
       formDetailed.classList.remove('hidden');
     }
@@ -282,7 +362,7 @@
       img.onload = () => { 
         let w = img.width; 
         let h = img.height; 
-        let maxWidth = 300; 
+        let maxWidth = 400; // 稍微提升預覽解析度 
         if (w > maxWidth) { h = Math.round(h * (maxWidth/w)); w = maxWidth; } 
         
         const cvs = document.createElement('canvas'); 
@@ -293,7 +373,7 @@
         ctx.fillRect(0, 0, w, h);
         ctx.drawImage(img, 0, 0, w, h); 
         
-        let quality = 0.5; 
+        let quality = 0.6; 
         let b64 = cvs.toDataURL('image/jpeg', quality); 
         
         while (b64.length > 40000 && quality > 0.1) {
@@ -398,7 +478,7 @@
       
       // 自動跳轉回首頁的活動管理
       setTimeout(() => {
-        window.location.href = 'index.html?view=admin-activities';
+        window.location.replace('index.html?view=admin-activities');
       }, 1000);
       
     } catch(e) { 

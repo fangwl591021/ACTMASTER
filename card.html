@@ -7,7 +7,7 @@
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-  <!-- ⭐ 引入 LIFF SDK -->
+  <!-- 引入 LIFF SDK -->
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   
   <script id="tailwind-config">
@@ -43,6 +43,11 @@
     .custom-input { @apply w-full py-3.5 px-4 bg-input-bg border-none rounded-xl outline-none focus:ring-2 focus:ring-primary/30 transition-all font-medium text-text-main; }
     .btn-primary { @apply w-full py-4 bg-primary text-white rounded-2xl font-bold text-[17px] shadow-lg shadow-emerald-500/30 active:scale-95 transition-all flex items-center justify-center gap-2; }
     .btn-disabled { pointer-events: none; opacity: 0.6; filter: grayscale(100%); }
+    
+    /* 預覽區 Flex Message 模擬樣式 */
+    .flex-preview-bubble { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #edf2f7; position: relative; }
+    .flex-preview-img { width: 100%; aspect-ratio: 20/13; object-fit: cover; background-color: #f1f5f9; }
+    .flex-badge { position: absolute; top: 10px; right: 10px; background-color: #FF0000; color: white; font-size: 10px; font-weight: bold; padding: 4px 12px; border-radius: 9999px; }
   </style>
 </head>
 <body class="font-body text-text-main min-h-screen flex flex-col items-center">
@@ -50,12 +55,15 @@
 <div class="w-full max-w-md bg-background h-screen relative flex flex-col shadow-2xl overflow-hidden">
   
   <!-- 頂部 Header -->
-  <nav class="shrink-0 bg-background/90 backdrop-blur-xl px-6 py-4 flex justify-between items-center border-b border-slate-200/50">
+  <nav class="shrink-0 bg-background/90 backdrop-blur-xl px-6 py-4 flex justify-between items-center border-b border-slate-200/50 relative z-40">
     <div class="text-[20px] font-black text-primary flex items-center gap-2 font-headline tracking-tight">
       <span class="material-symbols-outlined text-[24px] icon-filled">contact_mail</span>
       AI 名片通訊錄
       <span class="bg-primary-light text-primary text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-bold ml-1">Beta</span>
     </div>
+    <button onclick="window.history.back()" class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center active:scale-95 transition-all">
+      <span class="material-symbols-outlined text-[18px]">close</span>
+    </button>
   </nav>
 
   <main class="flex-1 overflow-y-auto pb-8 pt-6 px-4 space-y-6">
@@ -131,18 +139,132 @@
   </main>
 </div>
 
+<!-- ================= 名片明細與分享入口 Modal ================= -->
+<div id="card-detail-modal" class="hidden fixed inset-0 z-[60] bg-background flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl overflow-hidden">
+  <div class="absolute top-5 right-5 z-50">
+    <button onclick="closeCardDetail()" class="w-10 h-10 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-slate-800 shadow-md active:scale-90 transition-transform border border-slate-100">
+      <span class="material-symbols-outlined font-bold">close</span>
+    </button>
+  </div>
+
+  <div class="flex-1 overflow-y-auto pb-24">
+    <div class="w-full h-64 bg-slate-200 relative flex items-center justify-center overflow-hidden">
+      <img id="cd-image" src="" class="w-full h-full object-cover hidden">
+      <div id="cd-no-image" class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-50">
+        <span class="material-symbols-outlined text-6xl text-emerald-200">contact_mail</span>
+      </div>
+    </div>
+    
+    <div class="bg-white -mt-8 relative z-10 rounded-t-[2rem] p-7 space-y-6 shadow-[0_-10px_20px_rgba(0,0,0,0.05)] min-h-[60vh]">
+      <div>
+        <h2 id="cd-name" class="text-[24px] font-black text-text-main leading-tight font-headline">姓名</h2>
+        <p id="cd-title" class="text-[15px] font-bold text-emerald-600 mt-1">職稱 / 部門</p>
+      </div>
+      
+      <div class="space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-100">
+        <div class="flex items-center gap-3"><span class="material-symbols-outlined text-slate-400">apartment</span><span id="cd-company" class="font-bold text-slate-700 text-[14px]"></span></div>
+        <div class="flex items-center gap-3"><span class="material-symbols-outlined text-slate-400">tag</span><span id="cd-taxid" class="font-bold text-slate-700 text-[14px]"></span></div>
+        <div class="flex items-center gap-3"><span class="material-symbols-outlined text-slate-400">smartphone</span><a href="" id="cd-mobile-link" class="font-bold text-blue-600 text-[14px]"></a></div>
+        <div class="flex items-center gap-3"><span class="material-symbols-outlined text-slate-400">call</span><span id="cd-tel" class="font-bold text-slate-700 text-[14px]"></span></div>
+        <div class="flex items-center gap-3"><span class="material-symbols-outlined text-slate-400">email</span><a href="" id="cd-email-link" class="font-bold text-blue-600 text-[14px] truncate"></a></div>
+        <div class="flex items-start gap-3"><span class="material-symbols-outlined text-slate-400 mt-0.5">location_on</span><span id="cd-address" class="font-bold text-slate-700 text-[14px] leading-snug"></span></div>
+      </div>
+      
+      <div>
+        <h3 class="text-[15px] font-black text-slate-800 mb-2 flex items-center gap-1"><span class="material-symbols-outlined text-emerald-500 text-[18px]">info</span> 備註與其他資訊</h3>
+        <p id="cd-notes" class="text-[14px] text-slate-600 leading-relaxed whitespace-pre-wrap font-medium bg-slate-50 p-4 rounded-xl border border-slate-100"></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-100 p-4 pb-safe z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] flex justify-center">
+    <button onclick="openECardGenerator()" class="w-[90%] py-4 bg-emerald-500 text-white rounded-2xl font-bold text-[17px] shadow-lg shadow-emerald-500/30 active:scale-95 transition-all flex items-center justify-center gap-2">
+      ✨ 產生數位電子名片
+    </button>
+  </div>
+</div>
+
+<!-- ================= ⭐ 數位電子名片產生器 (WYSIWYG) ================= -->
+<div id="ecard-generator-modal" class="hidden fixed inset-0 z-[70] bg-slate-100 flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl">
+  <div class="bg-white px-5 py-4 flex justify-between items-center border-b border-slate-200 z-10 shrink-0">
+    <h3 class="text-lg font-black text-slate-800">數位名片產生器</h3>
+    <button onclick="closeECardGenerator()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-90"><span class="material-symbols-outlined">close</span></button>
+  </div>
+
+  <div class="flex-1 overflow-y-auto pb-24">
+    <!-- 即時預覽區 (模擬 LINE 聊天室) -->
+    <div class="p-6 bg-slate-200 flex justify-center items-center">
+      <div class="flex-preview-bubble w-[85%] max-w-[320px]">
+        <img id="preview-ec-img" src="https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png" class="flex-preview-img" onerror="this.src='https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=600&auto=format&fit=crop'">
+        <div class="flex-badge" id="preview-ec-badge">儲存</div>
+        <div class="p-4 text-center">
+          <h2 id="preview-ec-title" class="text-xl font-bold text-slate-800 leading-tight mb-2">標準版分頁標題</h2>
+          <p id="preview-ec-desc" class="text-xs text-slate-500 whitespace-pre-wrap leading-relaxed">內容描述文字預覽大小為 xs，質感細膩呈現。</p>
+        </div>
+        <div class="p-4 pt-0 space-y-2">
+          <div id="preview-ec-btn1" class="w-full bg-[#00B900] text-white text-sm font-bold text-center py-2.5 rounded-lg">了解更多</div>
+          <div id="preview-ec-btn2" class="w-full bg-black text-white text-sm font-bold text-center py-2.5 rounded-lg">立即購買</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 編輯表單區 -->
+    <div class="p-6 bg-white space-y-5">
+      <p class="text-xs font-bold text-emerald-500 uppercase tracking-widest border-b border-emerald-100 pb-2">編輯區 (即時連動)</p>
+      
+      <div>
+        <label class="input-label">圖片網址 (Image URL)</label>
+        <input type="text" id="ec-img-input" class="custom-input !py-3 text-sm" oninput="updateECardPreview()">
+      </div>
+      <div>
+        <label class="input-label">主標題 (Title)</label>
+        <input type="text" id="ec-title-input" class="custom-input !py-3 text-sm font-bold" oninput="updateECardPreview()">
+      </div>
+      <div>
+        <label class="input-label">內容描述 (Description)</label>
+        <textarea id="ec-desc-input" class="custom-input h-24 resize-none text-sm leading-relaxed" oninput="updateECardPreview()"></textarea>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+        <div class="space-y-3">
+          <div class="font-bold text-[13px] text-green-600">綠色按鈕設定</div>
+          <div><label class="text-[11px] font-bold text-slate-400">文字</label><input type="text" id="ec-btn1-label" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none" value="了解更多" oninput="updateECardPreview()"></div>
+          <div><label class="text-[11px] font-bold text-slate-400">連結 (URI)</label><input type="text" id="ec-btn1-url" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none" placeholder="https://" value="https://line.me"></div>
+        </div>
+        <div class="space-y-3">
+          <div class="font-bold text-[13px] text-slate-800">黑色按鈕設定</div>
+          <div><label class="text-[11px] font-bold text-slate-400">文字</label><input type="text" id="ec-btn2-label" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none" value="撥打電話" oninput="updateECardPreview()"></div>
+          <div><label class="text-[11px] font-bold text-slate-400">連結 (URI)</label><input type="text" id="ec-btn2-url" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none" placeholder="tel: 或 https://"></div>
+        </div>
+      </div>
+      
+      <div class="bg-red-50 p-4 rounded-2xl border border-red-100">
+        <div class="font-bold text-[13px] text-red-600 mb-2">紅色右上角標籤設定</div>
+        <div><label class="text-[11px] font-bold text-slate-400">點擊後連結 (URI)</label><input type="text" id="ec-badge-url" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none" value="https://line.me"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-200 p-4 pb-safe z-[80] shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
+    <button onclick="shareECardToLine()" class="w-full py-4 bg-[#00B900] text-white rounded-2xl font-bold text-[17px] shadow-lg shadow-green-500/30 active:scale-95 transition-all flex items-center justify-center gap-2">
+      🚀 轉發至 LINE 聊天室
+    </button>
+  </div>
+</div>
+
 <!-- Toast 通知 -->
 <div id="toast" class="fixed top-14 left-1/2 -translate-x-1/2 px-6 py-3.5 rounded-full text-[15px] shadow-app-card transition-all z-[10000] font-bold transform translate-y-0 opacity-0 pointer-events-none flex items-center gap-2 w-max max-w-[90vw] bg-slate-800 text-white"></div>
 
 <script>
-  // ⭐ 確保此處的 LIFF_ID 和 WORKER_URL 與您的專案一致
+  // ⭐ 請確定此處的 WORKER_URL 與您首頁的相同
   const LIFF_ID = "2009367829-DLtYBDUm"; 
   const WORKER_URL = "https://actmaster.fangwl591021.workers.dev"; 
   
   let compressedBase64 = "";
   let userProfile = null;
+  let currentActiveCard = null; // 用來儲存目前打開的那張名片資料
 
-  // ⭐ 初始化 LIFF，抓取登入者的 UID
+  // ⭐ 初始化 LIFF
   window.onload = async () => {
     try {
       await liff.init({ liffId: LIFF_ID });
@@ -154,7 +276,7 @@
       }
     } catch (err) {
       console.error("LIFF Init Error:", err);
-      showToast("⚠️ LIFF 初始化失敗，無法自動帶入您的身分");
+      showToast("⚠️ LIFF 初始化失敗，功能可能受限");
     }
   };
 
@@ -171,14 +293,14 @@
     switchSection('section-upload');
   }
 
-  function showToast(msg) {
+  function showToast(msg, isError = false) {
     const t = document.getElementById('toast');
-    t.innerHTML = `<span class="material-symbols-outlined icon-filled">info</span> ${msg}`;
-    t.style.opacity = '1'; t.style.transform = 'translate(-50%, 0)';
+    t.innerHTML = `<span class="material-symbols-outlined icon-filled">${isError ? 'error' : 'check_circle'}</span> ${msg}`;
+    t.className = `fixed top-14 left-1/2 -translate-x-1/2 px-6 py-3.5 rounded-full text-[15px] shadow-app-card transition-all z-[10000] font-bold transform translate-y-0 opacity-100 ${isError ? 'bg-red-500' : 'bg-slate-800'} text-white flex items-center gap-2 w-max max-w-[90vw]`;
     setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -1rem)'; }, 3000);
   }
 
-  // 1. 圖片前端壓縮
+  // ==== 1. 圖片前端壓縮 ====
   function processCardImage(input) {
     const file = input.files[0];
     if (!file) return;
@@ -203,7 +325,6 @@
         compressedBase64 = cvs.toDataURL('image/jpeg', 0.8);
         document.getElementById('preview-image').src = compressedBase64;
         
-        // 呼叫 AI 辨識
         await recognizeCardData();
       };
       img.src = r.result;
@@ -211,7 +332,7 @@
     r.readAsDataURL(file);
   }
 
-  // 2. 呼叫 Worker 進行 OpenAI 辨識
+  // ==== 2. 呼叫 Worker 進行 OpenAI 辨識 ====
   async function recognizeCardData() {
     try {
       const response = await fetch(WORKER_URL, {
@@ -227,8 +348,8 @@
       if (!res.success) throw new Error(res.error);
       
       const data = res.data;
+      currentActiveCard = data; // 暫存資料
       
-      // 自動填入表單
       const fields = ['Name', 'EnglishName', 'Title', 'Department', 'CompanyName', 'TaxID', 'Mobile', 'Tel', 'Ext', 'Fax', 'Address', 'Email', 'Website', 'SocialMedia', 'Slogan'];
       fields.forEach(f => {
         const el = document.getElementById(`f-${f}`);
@@ -239,18 +360,17 @@
       showToast("✅ AI 辨識完成，請核對資料");
       
     } catch(err) {
-      showToast("⚠️ 辨識失敗：" + err.message);
+      showToast("⚠️ 辨識失敗：" + err.message, true);
       resetUI();
     }
   }
 
-  // 3. 將確認後的資料連同 UID 傳給 GAS
+  // ==== 3. 將確認後的資料連同 UID 傳給 GAS ====
   async function saveToCloud() {
     const btn = document.getElementById('btn-save');
     btn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> 上傳中...';
     btn.classList.add('btn-disabled');
     
-    // ⭐ 將抓取到的 userId 包裝進 payload
     const payload = {
       base64Image: compressedBase64,
       Notes: document.getElementById('f-Notes').value,
@@ -263,7 +383,7 @@
     if (!payload.Name && !payload.CompanyName) {
       btn.innerHTML = '確認並存入雲端 <span class="material-symbols-outlined">cloud_upload</span>';
       btn.classList.remove('btn-disabled');
-      return showToast("⚠️ 請至少輸入姓名或公司名稱");
+      return showToast("⚠️ 請至少輸入姓名或公司名稱", true);
     }
 
     try {
@@ -279,12 +399,221 @@
       setTimeout(() => resetUI(), 1500);
       
     } catch(err) {
-      showToast("⚠️ 儲存失敗：" + err.message);
+      showToast("⚠️ 儲存失敗：" + err.message, true);
     } finally {
       btn.innerHTML = '確認並存入雲端 <span class="material-symbols-outlined">cloud_upload</span>';
       btn.classList.remove('btn-disabled');
     }
   }
+
+  // ==================== ⭐ 數位名片產生器核心邏輯 ====================
+
+  // 打開產生器並帶入預設值
+  function openECardGenerator() {
+    if (!currentActiveCard) {
+      // 假設是從已經存在的名單點進來的 (為了讓日後可以在列表直接呼叫)
+      currentActiveCard = {
+        'CompanyName': document.getElementById('f-CompanyName')?.value || '',
+        'Name': document.getElementById('f-Name')?.value || '',
+        'Title': document.getElementById('f-Title')?.value || '',
+        'Mobile': document.getElementById('f-Mobile')?.value || '',
+        'Email': document.getElementById('f-Email')?.value || '',
+        'Website': document.getElementById('f-Website')?.value || ''
+      };
+    }
+    
+    const c = currentActiveCard;
+    const fallbackImg = "https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=600&auto=format&fit=crop";
+
+    // 智能組裝標題與內文
+    const title = [c.CompanyName || c.CompanyName, c.Name || c.Name].filter(Boolean).join(' - ') || '商務名片';
+    const descArr = [];
+    if (c.Title || c.Title) descArr.push(`職稱：${c.Title || c.Title}`);
+    if (c.Mobile || c.Mobile) descArr.push(`手機：${c.Mobile || c.Mobile}`);
+    if (c.Email || c.Email) descArr.push(`信箱：${c.Email || c.Email}`);
+    const desc = descArr.join('\n') || '點擊下方按鈕與我聯繫';
+
+    // 填入表單
+    document.getElementById('ec-img-input').value = fallbackImg;
+    document.getElementById('ec-title-input').value = title;
+    document.getElementById('ec-desc-input').value = desc;
+    
+    // 預設按鈕連結防呆 (LIFF 遇到空 uri 或非網址會報錯)
+    const safeUrl = (url) => url && url.startsWith('http') ? url : 'https://line.me';
+    const safeTel = (tel) => tel ? `tel:${tel.replace(/\D/g,'')}` : 'https://line.me';
+
+    document.getElementById('ec-btn1-label').value = "了解更多";
+    document.getElementById('ec-btn1-url').value = safeUrl(c.Website || c.Website);
+    
+    document.getElementById('ec-btn2-label').value = "撥打電話";
+    document.getElementById('ec-btn2-url').value = safeTel(c.Mobile || c.Mobile);
+    
+    document.getElementById('ec-badge-url').value = 'https://line.me'; // 預設分享導向首頁
+
+    updateECardPreview();
+    document.getElementById('ecard-generator-modal').classList.remove('hidden');
+  }
+
+  function closeECardGenerator() {
+    document.getElementById('ecard-generator-modal').classList.add('hidden');
+  }
+
+  // 即時更新預覽畫面
+  function updateECardPreview() {
+    const imgUrl = document.getElementById('ec-img-input').value;
+    document.getElementById('preview-ec-img').src = imgUrl;
+    
+    document.getElementById('preview-ec-title').innerText = document.getElementById('ec-title-input').value || '未命名的標題';
+    document.getElementById('preview-ec-desc').innerText = document.getElementById('ec-desc-input').value || '請輸入描述內容...';
+    
+    document.getElementById('preview-ec-btn1').innerText = document.getElementById('ec-btn1-label').value || '按鈕 1';
+    document.getElementById('preview-ec-btn2').innerText = document.getElementById('ec-btn2-label').value || '按鈕 2';
+  }
+
+  // 將組合好的 Flex Message 透過 LIFF 送出
+  function shareECardToLine() {
+    if (!liff.isLoggedIn()) {
+      showToast('⚠️ 請先在 LINE 中登入才能使用轉發功能', true);
+      return;
+    }
+    if (!liff.isApiAvailable('shareTargetPicker')) {
+      showToast('⚠️ 您目前的裝置或版本不支援分享功能', true);
+      return;
+    }
+
+    // 取得使用者填寫的防呆資料
+    const imgUrl = document.getElementById('ec-img-input').value || 'https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=600';
+    const title = document.getElementById('ec-title-input').value || '-';
+    const desc = document.getElementById('ec-desc-input').value || '-';
+    const btn1Label = document.getElementById('ec-btn1-label').value || '查看';
+    const btn1Url = document.getElementById('ec-btn1-url').value || 'https://line.me';
+    const btn2Label = document.getElementById('ec-btn2-label').value || '聯絡';
+    const btn2Url = document.getElementById('ec-btn2-url').value || 'https://line.me';
+    const badgeUrl = document.getElementById('ec-badge-url').value || 'https://line.me';
+
+    // 嚴格按照提供的 JSON 格式組裝
+    const flexMessageObj = {
+      "type": "bubble",
+      "body": {
+        "type": "box",
+        "layout": "vertical",
+        "paddingAll": "0px",
+        "contents": [
+          {
+            "type": "image",
+            "url": imgUrl,
+            "size": "full",
+            "aspectRatio": "20:13",
+            "aspectMode": "cover",
+            "animated": true
+          },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "paddingAll": "15px",
+            "contents": [
+              {
+                "type": "text",
+                "text": title,
+                "weight": "bold",
+                "size": "xl",
+                "align": "center",
+                "wrap": true
+              },
+              {
+                "type": "text",
+                "text": desc,
+                "size": "xs",
+                "margin": "sm",
+                "color": "#666666",
+                "wrap": true
+              }
+            ]
+          },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "position": "absolute",
+            "backgroundColor": "#FF0000",
+            "cornerRadius": "xl",
+            "paddingTop": "4px",
+            "paddingBottom": "4px",
+            "paddingStart": "12px",
+            "paddingEnd": "12px",
+            "offsetTop": "10px",
+            "action": {
+              "type": "uri",
+              "label": "badge",
+              "uri": badgeUrl
+            },
+            "contents": [
+              {
+                "type": "text",
+                "text": "儲存",
+                "color": "#ffffff",
+                "size": "10px",
+                "weight": "bold"
+              }
+            ],
+            "offsetEnd": "10px"
+          }
+        ]
+      },
+      "footer": {
+        "type": "box",
+        "layout": "vertical",
+        "spacing": "sm",
+        "paddingAll": "15px",
+        "backgroundColor": "#FFFFFF",
+        "contents": [
+          {
+            "type": "button",
+            "style": "primary",
+            "color": "#00B900",
+            "height": "sm",
+            "margin": "sm",
+            "action": {
+              "type": "uri",
+              "label": btn1Label,
+              "uri": btn1Url
+            }
+          },
+          {
+            "type": "button",
+            "style": "primary",
+            "color": "#000000",
+            "height": "sm",
+            "margin": "sm",
+            "action": {
+              "type": "uri",
+              "label": btn2Label,
+              "uri": btn2Url
+            }
+          }
+        ]
+      }
+    };
+
+    // 呼叫 LINE 原生選單
+    liff.shareTargetPicker([{
+      type: "flex",
+      altText: `您收到一張數位名片：${title}`,
+      contents: flexMessageObj
+    }])
+    .then((res) => {
+      if (res) {
+        showToast('🚀 數位名片已成功送出！');
+        closeECardGenerator();
+      } else {
+        showToast('取消傳送');
+      }
+    })
+    .catch((err) => {
+      console.error(err);
+      showToast('⚠️ 轉發失敗，請確認連結格式正確', true);
+    });
+  }
+
 </script>
 </body>
 </html>

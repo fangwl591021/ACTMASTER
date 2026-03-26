@@ -170,7 +170,7 @@
       <div id="admin-crm-list-container" class="space-y-4 px-1"></div>
     </div>
 
-    <!-- ⭐ View: Admin Card Contacts (名片通訊錄清單) -->
+    <!-- View: Admin Card Contacts -->
     <div id="view-admin-cards" class="hidden space-y-5 animate-in fade-in pt-4">
       <div class="px-2 mb-2 flex justify-between items-end">
         <div>
@@ -319,7 +319,7 @@
   </nav>
 
   <!-- 底部導覽：管理員 -->
-  <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-around items-center px-1 py-2 z-40 pb-safe shadow-app-nav left-1/2 -translate-x-1/2">
+  <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-between items-center px-1 py-2 z-40 pb-safe shadow-app-nav left-1/2 -translate-x-1/2">
     <button onclick="switchView('admin-activities')" id="nav-admin-activities" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">fact_check</span></div><span class="text-[10px] font-bold mt-1">核銷</span></button>
     <button onclick="switchView('admin-create')" id="nav-admin-create" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">add_circle</span></div><span class="text-[10px] font-bold mt-1">建立</span></button>
     <button onclick="switchView('admin-crm')" id="nav-admin-crm" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">groups</span></div><span class="text-[10px] font-bold mt-1">CRM</span></button>
@@ -489,7 +489,6 @@
         </div>
       </div>
       
-      <!-- ⭐ 新增：點圖預設連結 -->
       <div>
         <label class="input-label text-[#ff751f]">點圖預設連結 (點擊圖片的跳轉網址)</label>
         <input type="text" id="ec-img-action-url" class="custom-input !py-3 text-sm text-blue-600" value="https://liff.line.me/2009367829-DLtYBDUm" oninput="updateECardPreview()">
@@ -633,7 +632,26 @@
     const el = document.getElementById('user-activities-container');
     if (el) el.innerHTML = skeletonHTML;
   }
-  renderActivitiesSkeleton();
+  
+  function renderAdminActivitiesSkeleton() {
+    const skeletonHTML = Array(3).fill(0).map(() => `
+      <div class="bg-white rounded-[2rem] shadow-app-card p-7 space-y-5 animate-pulse border border-slate-100">
+        <div class="h-6 w-1/3 bg-slate-200 rounded mb-2"></div>
+        <div class="h-8 w-2/3 bg-slate-200 rounded"></div>
+        <div class="grid grid-cols-3 gap-3 mt-4">
+          <div class="h-16 bg-slate-200 rounded-[1.5rem]"></div>
+          <div class="h-16 bg-slate-200 rounded-[1.5rem]"></div>
+          <div class="h-16 bg-slate-200 rounded-[1.5rem]"></div>
+        </div>
+        <div class="flex gap-3 mt-4">
+          <div class="h-12 flex-[1] bg-slate-200 rounded-2xl"></div>
+          <div class="h-12 flex-[2] bg-slate-200 rounded-2xl"></div>
+        </div>
+      </div>
+    `).join('');
+    const el = document.getElementById('admin-activity-list-container');
+    if (el) el.innerHTML = skeletonHTML;
+  }
 
   async function fetchAPI(action, payload = {}, silent = false) {
     try {
@@ -695,30 +713,45 @@
         return;
       }
 
-      // ==================== 原本的系統初始化模式 ====================
+      // ==================== 🚀 速度優化：非同步渲染模式 ====================
       if (!liff.isLoggedIn()) { liff.login(); return; }
+
       userProfile = await liff.getProfile();
       document.getElementById('user-avatar').src = userProfile.pictureUrl || '';
       document.getElementById('user-profile-badge').classList.remove('hidden');
       isAdmin = ADMIN_IDS.includes(userProfile.userId);
 
-      const res = await fetchAPI('checkUser', { userId: userProfile.userId });
-      isRegistered = res.isRegistered; registeredInfo = res.info;
-      
+      // 1. 隱藏全螢幕載入動畫，立即秀出外框與導覽列
+      document.getElementById('view-loading').classList.add('hidden');
+
+      // 2. 根據身分「預先」切換畫面，觸發背景資料抓取 (這時會顯示骨架屏，使用者體感瞬間變快)
       if (isAdmin) {
         document.getElementById('role-switch-btn').classList.remove('hidden');
         document.getElementById('header-admin-badge').classList.remove('hidden');
         document.getElementById('admin-card-btn').classList.remove('hidden');
-        isViewModeAdmin = true; switchView('admin-activities');
+        isViewModeAdmin = true;
+        switchView('admin-activities');
       } else {
-        if (isRegistered) {
-          switchView('user-activities'); 
-        } else { 
-          document.getElementById('bottom-nav-user').classList.add('hidden');
-          document.getElementById('reg-name').value = userProfile.displayName; 
-          switchView('user-register'); 
-        }
+        switchView('user-activities');
       }
+
+      // 3. 背景同步驗證會員狀態 (不卡住 UI 渲染)
+      fetchAPI('checkUser', { userId: userProfile.userId }, true)
+        .then(res => {
+          isRegistered = res.isRegistered;
+          registeredInfo = res.info;
+
+          // 如果是非管理員且未註冊，將畫面強制導向註冊頁
+          if (!isAdmin && !isRegistered) {
+            document.getElementById('bottom-nav-user').classList.add('hidden');
+            document.getElementById('reg-name').value = userProfile.displayName;
+            switchView('user-register');
+          }
+        })
+        .catch(err => {
+          console.error("驗證使用者狀態失敗:", err);
+        });
+
     } catch (err) { 
       const container = document.getElementById('user-activities-container');
       if (container) container.innerHTML = `<div class="text-center py-20"><span class="text-error font-bold text-lg">載入中斷</span><p class="text-sm text-slate-400 mt-2 px-6">${err.toString()}</p></div>`;
@@ -787,9 +820,10 @@
   }
 
   async function loadUserActivities() {
-    const container = document.getElementById('user-activities-container');
+    renderActivitiesSkeleton(); // 顯示骨架屏
     const data = await fetchAPI('getPublicActivities');
     globalPublicActivities = data || [];
+    const container = document.getElementById('user-activities-container');
     
     if (globalPublicActivities.length === 0) { container.innerHTML = '<div class="text-center py-16 bg-white rounded-[2rem] shadow-app-card text-slate-400 font-bold">目前暫無開放的活動</div>'; return; }
     
@@ -869,6 +903,11 @@
   }
 
   async function userJoinActivity(btn, name, feeType, price) {
+    if (!isRegistered) {
+        showToast("⚠️ 請先完成會員資料註冊", true);
+        switchView('user-register');
+        return;
+    }
     if (isProcessing) return;
     if (!confirm(`確定報名「${name}」？`)) return;
     isProcessing = true; 
@@ -1072,7 +1111,6 @@
     return url;
   }
 
-  // ⭐ 嚴格防呆的 JSON 組裝引擎 (包含圖片 action)
   function buildFlexMessageFromCard(card, config, dynamicAr = null) {
     let imgUrl, imgActionUrl, imgSize, aspectMode, ar, title, desc, buttons = [];
     
@@ -1504,7 +1542,7 @@
     } catch(e) { console.error(e); } finally { isProcessing=false; btn.classList.remove('btn-disabled'); } 
   }
   
-  async function loadAdminActivities() { const container = document.getElementById('admin-activity-list-container'); container.innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-primary text-xl"></i></div>'; currentActivities = await fetchAPI('getActivityDashboard'); container.innerHTML = currentActivities.map(act => `<div class="bg-white rounded-[2rem] shadow-app-card p-7 space-y-5"><div class="flex justify-between items-start"><div><span class="badge bg-primary-light text-primary mb-2 block w-fit">${act.type}</span><h3 class="text-[19px] font-black text-text-main leading-tight font-headline">${act.name}</h3></div></div><div class="grid grid-cols-3 gap-3 bg-slate-50 border border-slate-100 rounded-[1.5rem] p-4 text-center"><div><p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">報名</p><p class="font-black text-xl text-slate-700">${act.total}</p></div><div><p class="text-[10px] text-green-500 font-bold uppercase tracking-widest mb-1">實到</p><p class="font-black text-xl text-green-600">${act.attended}</p></div><div><p class="text-[10px] text-error/70 font-bold uppercase tracking-widest mb-1">取消</p><p class="font-black text-xl text-error">${act.cancelled}</p></div></div><div class="flex gap-3"><button onclick="openEditActivity('${act.name}')" class="flex-[1] py-4 bg-input-bg text-text-main rounded-2xl font-bold text-[15px] active:scale-95 transition-all hover:bg-slate-200">編輯</button><button onclick="openAdminCheckin('${act.name}')" class="flex-[2] py-4 bg-slate-800 text-white rounded-2xl font-bold text-[15px] shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1">核銷簽到 <span class="material-symbols-outlined text-[18px]">fact_check</span></button></div><div class="flex justify-between px-2 text-[11px] font-bold tracking-widest uppercase mt-2"><button onclick="toggleActStatus('${act.name}')" class="text-slate-400 hover:text-slate-600 transition-colors">${act.status==='下架'?'設為上架':'設為下架'}</button><button onclick="deleteAct('${act.name}')" class="text-error/80 hover:text-error transition-colors">刪除活動</button></div></div>`).join(''); }
+  async function loadAdminActivities() { const container = document.getElementById('admin-activity-list-container'); renderAdminActivitiesSkeleton(); currentActivities = await fetchAPI('getActivityDashboard'); container.innerHTML = currentActivities.map(act => `<div class="bg-white rounded-[2rem] shadow-app-card p-7 space-y-5"><div class="flex justify-between items-start"><div><span class="badge bg-primary-light text-primary mb-2 block w-fit">${act.type}</span><h3 class="text-[19px] font-black text-text-main leading-tight font-headline">${act.name}</h3></div></div><div class="grid grid-cols-3 gap-3 bg-slate-50 border border-slate-100 rounded-[1.5rem] p-4 text-center"><div><p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">報名</p><p class="font-black text-xl text-slate-700">${act.total}</p></div><div><p class="text-[10px] text-green-500 font-bold uppercase tracking-widest mb-1">實到</p><p class="font-black text-xl text-green-600">${act.attended}</p></div><div><p class="text-[10px] text-error/70 font-bold uppercase tracking-widest mb-1">取消</p><p class="font-black text-xl text-error">${act.cancelled}</p></div></div><div class="flex gap-3"><button onclick="openEditActivity('${act.name}')" class="flex-[1] py-4 bg-input-bg text-text-main rounded-2xl font-bold text-[15px] active:scale-95 transition-all hover:bg-slate-200">編輯</button><button onclick="openAdminCheckin('${act.name}')" class="flex-[2] py-4 bg-slate-800 text-white rounded-2xl font-bold text-[15px] shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1">核銷簽到 <span class="material-symbols-outlined text-[18px]">fact_check</span></button></div><div class="flex justify-between px-2 text-[11px] font-bold tracking-widest uppercase mt-2"><button onclick="toggleActStatus('${act.name}')" class="text-slate-400 hover:text-slate-600 transition-colors">${act.status==='下架'?'設為上架':'設為下架'}</button><button onclick="deleteAct('${act.name}')" class="text-error/80 hover:text-error transition-colors">刪除活動</button></div></div>`).join(''); }
   
   function openEditActivity(name) {
     const act = currentActivities.find(a => a.name === name);

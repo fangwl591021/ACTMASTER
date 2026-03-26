@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html class="light" lang="zh-TW">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+  <title>AI 名片通訊錄</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#10b981", // 名片系統改用綠色系以做區別
+            "primary-light": "#d1fae5",
+            background: "#f8f9fc",
+            "input-bg": "#f0f2f8",
+            "text-main": "#1e293b",
+            "text-muted": "#64748b",
+          },
+          fontFamily: {
+            headline: ["Manrope", "Noto Sans TC", "sans-serif"],
+            body: ["Inter", "Noto Sans TC", "sans-serif"],
+          },
+          boxShadow: {
+            'app-card': '0 10px 40px -10px rgba(0,0,0,0.08)',
+          }
+        },
+      },
+    }
+  </script>
+  <style>
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
+    .icon-filled { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    body { background-color: #f8f9fc; -webkit-tap-highlight-color: transparent; }
+    .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1.5rem); }
+    .input-label { @apply block text-[13px] font-bold text-text-main mb-1.5 ml-1; }
+    .custom-input { @apply w-full py-3.5 px-4 bg-input-bg border-none rounded-xl outline-none focus:ring-2 focus:ring-primary/30 transition-all font-medium text-text-main; }
+    .btn-primary { @apply w-full py-4 bg-primary text-white rounded-2xl font-bold text-[17px] shadow-lg shadow-emerald-500/30 active:scale-95 transition-all flex items-center justify-center gap-2; }
+    .btn-disabled { pointer-events: none; opacity: 0.6; filter: grayscale(100%); }
+  </style>
+</head>
+<body class="font-body text-text-main min-h-screen flex flex-col items-center">
+
+<div class="w-full max-w-md bg-background h-screen relative flex flex-col shadow-2xl overflow-hidden">
+  
+  <!-- 頂部 Header -->
+  <nav class="shrink-0 bg-background/90 backdrop-blur-xl px-6 py-4 flex justify-between items-center border-b border-slate-200/50">
+    <div class="text-[20px] font-black text-primary flex items-center gap-2 font-headline tracking-tight">
+      <span class="material-symbols-outlined text-[24px] icon-filled">contact_mail</span>
+      AI 名片通訊錄
+      <span class="bg-primary-light text-primary text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-bold ml-1">Beta</span>
+    </div>
+  </nav>
+
+  <main class="flex-1 overflow-y-auto pb-8 pt-6 px-4 space-y-6">
+    
+    <!-- 1. 拍照上傳區 -->
+    <div id="section-upload" class="bg-white rounded-[2rem] shadow-app-card p-6 text-center animate-in fade-in">
+      <div class="w-20 h-20 bg-primary-light text-primary rounded-full flex items-center justify-center mx-auto mb-4">
+        <span class="material-symbols-outlined text-4xl">document_scanner</span>
+      </div>
+      <h2 class="text-2xl font-black font-headline mb-2 text-text-main">AI 智慧名片辨識</h2>
+      <p class="text-sm text-text-muted font-medium mb-6 px-4">請對準名片拍照或上傳圖檔，系統將自動擷取 16 項聯絡資訊並建檔。</p>
+      
+      <button onclick="document.getElementById('card-input').click()" class="btn-primary">
+        拍攝 / 上傳名片 <span class="material-symbols-outlined">photo_camera</span>
+      </button>
+      <input type="file" id="card-input" accept="image/*" capture="environment" class="hidden" onchange="processCardImage(this)">
+    </div>
+
+    <!-- 2. 處理中畫面 -->
+    <div id="section-loading" class="hidden bg-white rounded-[2rem] shadow-app-card p-10 text-center animate-in zoom-in-95">
+      <span class="material-symbols-outlined text-5xl text-primary animate-spin mb-4">autorenew</span>
+      <h3 class="text-xl font-black text-text-main mb-2">AI 辨識中...</h3>
+      <p class="text-sm text-text-muted">正在萃取名片資訊，這可能需要幾秒鐘。</p>
+    </div>
+
+    <!-- 3. 結果確認表單 -->
+    <div id="section-form" class="hidden space-y-6 animate-in slide-in-from-bottom-8">
+      <div class="bg-white rounded-[2rem] shadow-app-card p-6">
+        <h3 class="text-lg font-black text-text-main mb-4 flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary icon-filled">edit_document</span> 預覽與修改
+        </h3>
+        
+        <div class="mb-5 rounded-2xl overflow-hidden border border-slate-200">
+          <img id="preview-image" src="" class="w-full h-auto object-contain bg-slate-50">
+        </div>
+
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="input-label">姓名</label><input type="text" id="f-Name" class="custom-input"></div>
+            <div><label class="input-label">英文名</label><input type="text" id="f-EnglishName" class="custom-input"></div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="input-label">職稱</label><input type="text" id="f-Title" class="custom-input"></div>
+            <div><label class="input-label">部門</label><input type="text" id="f-Department" class="custom-input"></div>
+          </div>
+          <div><label class="input-label">公司名稱</label><input type="text" id="f-CompanyName" class="custom-input"></div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="input-label">統一編號</label><input type="text" id="f-TaxID" class="custom-input"></div>
+            <div><label class="input-label">手機號碼</label><input type="tel" id="f-Mobile" class="custom-input"></div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="input-label">公司電話</label><input type="text" id="f-Tel" class="custom-input"></div>
+            <div><label class="input-label">分機</label><input type="text" id="f-Ext" class="custom-input"></div>
+          </div>
+          <div><label class="input-label">傳真</label><input type="text" id="f-Fax" class="custom-input"></div>
+          <div><label class="input-label">公司地址</label><input type="text" id="f-Address" class="custom-input"></div>
+          <div><label class="input-label">電子信箱</label><input type="email" id="f-Email" class="custom-input"></div>
+          <div><label class="input-label">公司網址</label><input type="url" id="f-Website" class="custom-input"></div>
+          <div><label class="input-label">社群帳號 / ID</label><input type="text" id="f-SocialMedia" class="custom-input"></div>
+          <div><label class="input-label">品牌標語 / 服務項目</label><textarea id="f-Slogan" class="custom-input h-20 resize-none"></textarea></div>
+          <div class="border-t border-slate-100 pt-4 mt-2">
+            <label class="input-label text-primary">建檔備註 (手動輸入)</label>
+            <input type="text" id="f-Notes" class="custom-input bg-primary-light/30" placeholder="例如：2026 AI展會認識">
+          </div>
+        </div>
+
+        <button id="btn-save" onclick="saveToCloud()" class="btn-primary mt-6">
+          確認並存入雲端 <span class="material-symbols-outlined">cloud_upload</span>
+        </button>
+        <button onclick="resetUI()" class="w-full mt-3 py-3 text-slate-400 font-bold text-sm hover:text-slate-600 transition-colors">重新拍攝</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Toast 通知 -->
+<div id="toast" class="fixed top-14 left-1/2 -translate-x-1/2 px-6 py-3.5 rounded-full text-[15px] shadow-app-card transition-all z-[10000] font-bold transform translate-y-0 opacity-0 pointer-events-none flex items-center gap-2 w-max max-w-[90vw] bg-slate-800 text-white"></div>
+
+<script>
+  // ⭐ 請確定此處的 WORKER_URL 與您首頁的相同
+  const WORKER_URL = "https://actmaster.fangwl591021.workers.dev"; 
+  let compressedBase64 = "";
+
+  function switchSection(id) {
+    ['section-upload', 'section-loading', 'section-form'].forEach(v => {
+      document.getElementById(v).classList.add('hidden');
+    });
+    document.getElementById(id).classList.remove('hidden');
+  }
+
+  function resetUI() {
+    document.getElementById('card-input').value = "";
+    compressedBase64 = "";
+    switchSection('section-upload');
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.innerHTML = `<span class="material-symbols-outlined icon-filled">info</span> ${msg}`;
+    t.style.opacity = '1'; t.style.transform = 'translate(-50%, 0)';
+    setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -1rem)'; }, 3000);
+  }
+
+  // 1. 圖片前端壓縮 (確保 OCR 清晰度，但體積不過大)
+  function processCardImage(input) {
+    const file = input.files[0];
+    if (!file) return;
+    
+    switchSection('section-loading');
+    
+    const r = new FileReader();
+    r.onloadend = () => {
+      const img = new Image();
+      img.onload = async () => {
+        let w = img.width, h = img.height;
+        let maxWidth = 1200; // OCR 需要一定解析度，設為 1200
+        if (w > maxWidth) { h = Math.round(h * (maxWidth/w)); w = maxWidth; }
+        
+        const cvs = document.createElement('canvas');
+        cvs.width = w; cvs.height = h;
+        const ctx = cvs.getContext('2d');
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        
+        compressedBase64 = cvs.toDataURL('image/jpeg', 0.8);
+        document.getElementById('preview-image').src = compressedBase64;
+        
+        // 呼叫 AI 辨識
+        await recognizeCardData();
+      };
+      img.src = r.result;
+    };
+    r.readAsDataURL(file);
+  }
+
+  // 2. 呼叫 Worker 進行 OpenAI 辨識
+  async function recognizeCardData() {
+    try {
+      const response = await fetch(WORKER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'recognizeCard',
+          payload: { base64Image: compressedBase64 }
+        })
+      });
+      
+      const res = await response.json();
+      if (!res.success) throw new Error(res.error);
+      
+      const data = res.data;
+      
+      // 自動填入表單
+      const fields = ['Name', 'EnglishName', 'Title', 'Department', 'CompanyName', 'TaxID', 'Mobile', 'Tel', 'Ext', 'Fax', 'Address', 'Email', 'Website', 'SocialMedia', 'Slogan'];
+      fields.forEach(f => {
+        const el = document.getElementById(`f-${f}`);
+        if(el) el.value = data[f] || '';
+      });
+      
+      switchSection('section-form');
+      showToast("✅ AI 辨識完成，請核對資料");
+      
+    } catch(err) {
+      showToast("⚠️ 辨識失敗：" + err.message);
+      resetUI();
+    }
+  }
+
+  // 3. 將確認後的資料連同圖片傳給 GAS
+  async function saveToCloud() {
+    const btn = document.getElementById('btn-save');
+    btn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> 上傳中...';
+    btn.classList.add('btn-disabled');
+    
+    const payload = {
+      base64Image: compressedBase64,
+      Notes: document.getElementById('f-Notes').value
+    };
+    const fields = ['Name', 'EnglishName', 'Title', 'Department', 'CompanyName', 'TaxID', 'Mobile', 'Tel', 'Ext', 'Fax', 'Address', 'Email', 'Website', 'SocialMedia', 'Slogan'];
+    fields.forEach(f => { payload[f] = document.getElementById(`f-${f}`).value; });
+    
+    if (!payload.Name && !payload.CompanyName) {
+      btn.innerHTML = '確認並存入雲端 <span class="material-symbols-outlined">cloud_upload</span>';
+      btn.classList.remove('btn-disabled');
+      return showToast("⚠️ 請至少輸入姓名或公司名稱");
+    }
+
+    try {
+      const response = await fetch(WORKER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'saveCard', payload: payload })
+      });
+      const res = await response.json();
+      if (!res.success) throw new Error(res.error);
+      
+      showToast("🎉 已成功建立至雲端通訊錄！");
+      setTimeout(() => resetUI(), 1500);
+      
+    } catch(err) {
+      showToast("⚠️ 儲存失敗：" + err.message);
+    } finally {
+      btn.innerHTML = '確認並存入雲端 <span class="material-symbols-outlined">cloud_upload</span>';
+      btn.classList.remove('btn-disabled');
+    }
+  }
+</script>
+</body>
+</html>

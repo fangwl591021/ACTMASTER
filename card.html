@@ -732,7 +732,7 @@
         desc = card['服務項目/品牌標語'] || '點擊下方按鈕與我聯繫';
 
         const safeUrl = (url) => url && url.startsWith('http') ? url : '';
-        const safeTel = (tel) => tel ? `tel:${tel.replace(/\D/g,'')}` : '';
+        const safeTel = (tel) => tel ? `tel:${tel.replace(/[^\d+]/g,'')}` : '';
 
         if (card['手機號碼']) buttons.push({ l: '撥打手機', u: card['手機號碼'] });
         else if (card['公司電話']) buttons.push({ l: '撥打電話', u: card['公司電話'] });
@@ -757,7 +757,7 @@
         let safeU = buttons[i].u ? String(buttons[i].u).trim() : '';
         if (!safeU) { safeU = 'https://line.me'; } 
         else if (!safeU.match(/^(http|https|tel|mailto|line):/i)) {
-            if (/^[\d\-\+\s]+$/.test(safeU)) safeU = 'tel:' + safeU.replace(/\D/g, ''); 
+            if (/^[\d\-\+\s()]+$/.test(safeU)) safeU = 'tel:' + safeU.replace(/[^\d+]/g, ''); 
             else if (safeU.includes('@')) safeU = 'mailto:' + safeU;
             else safeU = 'https://' + safeU;
         }

@@ -85,6 +85,12 @@
   </nav>
 
   <main id="main-content" class="flex-1 overflow-y-auto pb-32 pt-20 px-4 space-y-6">
+    
+    <!-- View: Loading -->
+    <div id="view-loading" class="h-full flex flex-col items-center justify-center space-y-4 pb-20">
+      <img src="https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExdXpzNDRvN3BpNjZhZmZ1djh6ZDV4N2ZucjQ5MHJidjhoOGNrZWp6byZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/uOlsQMZSTU6Ff55OnQ/giphy.gif" alt="Loading" class="loading-gif mb-2">
+      <p id="loading-text" class="text-primary font-bold tracking-widest text-sm">資料載入中</p>
+    </div>
 
     <!-- View: User Register -->
     <div id="view-user-register" class="hidden animate-in fade-in duration-500 pt-8">
@@ -135,13 +141,13 @@
     </div>
 
     <!-- View: User Activities -->
-    <div id="view-user-activities" class="space-y-5 animate-in fade-in duration-500 pt-4">
+    <div id="view-user-activities" class="hidden space-y-5 animate-in fade-in duration-500 pt-4">
       <div class="flex justify-between items-end px-2">
         <div>
           <h2 class="text-2xl font-black font-headline text-text-main">探索活動</h2>
           <p class="text-text-muted text-[13px] font-medium mt-1">為您精選的最新場次</p>
         </div>
-        <button onclick="reloadActivities()" id="btn-refresh-activities" class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-primary active:scale-90 transition-all">
+        <button onclick="reloadActivities()" id="btn-refresh-activities" class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-primary active:scale-90 transition-all border border-slate-100">
           <span class="material-symbols-outlined text-[20px]">refresh</span>
         </button>
       </div>
@@ -170,6 +176,24 @@
     <div id="view-admin-activities" class="hidden space-y-5 animate-in fade-in pt-4">
       <h2 class="text-2xl font-black font-headline px-2 text-text-main">管理核銷</h2>
       <div id="admin-activity-list-container" class="space-y-5"></div>
+    </div>
+
+    <!-- View: Admin CRM Dashboard (✨ 恢復與美化的 CRM 儀表板) -->
+    <div id="view-admin-crm" class="hidden space-y-5 animate-in fade-in pt-4">
+      <div class="px-2 mb-2 flex justify-between items-end">
+        <div>
+          <h2 class="text-3xl font-black font-headline text-text-main tracking-tight">會員 CRM</h2>
+          <p class="text-text-muted text-[13px] font-medium mt-1">追蹤並管理所有來賓與會員的活動活躍度。</p>
+        </div>
+      </div>
+      
+      <!-- 搜尋列 -->
+      <div class="relative px-2">
+        <span class="material-symbols-outlined absolute left-6 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+        <input type="text" id="crm-search-input" onkeyup="filterCrmList()" class="custom-input !pl-12 bg-white shadow-sm border border-slate-100" placeholder="搜尋參與者姓名...">
+      </div>
+
+      <div id="admin-crm-list-container" class="space-y-4 px-1"></div>
     </div>
 
     <!-- View: Admin Settings -->
@@ -294,7 +318,7 @@
       </div>
     </div>
     
-    <!-- 後台：單一活動簽到 (包含現場報名) -->
+    <!-- 後台：單一活動簽到 -->
     <div id="view-admin-checkin" class="hidden h-full flex flex-col p-0 overflow-y-auto pb-24 space-y-4 pt-2">
        <div id="checkin-list-container" class="space-y-4"></div>
     </div>
@@ -311,6 +335,7 @@
   <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-around items-center px-1 py-2 z-40 pb-safe shadow-app-nav left-1/2 -translate-x-1/2">
     <button onclick="switchView('admin-activities')" id="nav-admin-activities" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">fact_check</span></div><span class="text-[10px] font-bold mt-1">核銷</span></button>
     <button onclick="switchView('admin-create')" id="nav-admin-create" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">add_circle</span></div><span class="text-[10px] font-bold mt-1">建立</span></button>
+    <button onclick="switchView('admin-crm')" id="nav-admin-crm" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">groups</span></div><span class="text-[10px] font-bold mt-1">CRM</span></button>
     <button onclick="switchView('admin-settings')" id="nav-admin-settings" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">settings</span></div><span class="text-[10px] font-bold mt-1">參數</span></button>
   </nav>
 </div>
@@ -396,9 +421,10 @@
 
   let userProfile = null, isAdmin = false, isViewModeAdmin = false, isRegistered = false, registeredInfo = null;
   let globalPublicActivities = [], currentCheckinData = [], activeActivityName = '', modalTargetView = '';
+  let globalCrmData = []; // ⭐ CRM 全域變數
   let isProcessing = false;
 
-  // 💡 [極速載入] 一開啟網頁就先渲染骨架屏 (Skeleton)
+  // 💡 [極速載入] 骨架屏 (Skeleton)
   function renderActivitiesSkeleton() {
     const skeletonHTML = Array(3).fill(0).map(() => `
       <div class="bg-white rounded-[2rem] overflow-hidden border border-slate-100 shadow-[0_12px_30px_rgba(0,0,0,0.04)] animate-pulse">
@@ -411,7 +437,8 @@
         </div>
       </div>
     `).join('');
-    document.getElementById('user-activities-container').innerHTML = skeletonHTML;
+    const el = document.getElementById('user-activities-container');
+    if (el) el.innerHTML = skeletonHTML;
   }
   renderActivitiesSkeleton();
 
@@ -461,7 +488,8 @@
         }
       }
     } catch (err) { 
-      document.getElementById('user-activities-container').innerHTML = `<div class="text-center py-20"><span class="text-error font-bold text-lg">載入中斷</span><p class="text-sm text-slate-400 mt-2 px-6">${err.toString()}</p></div>`;
+      const container = document.getElementById('user-activities-container');
+      if (container) container.innerHTML = `<div class="text-center py-20"><span class="text-error font-bold text-lg">載入中斷</span><p class="text-sm text-slate-400 mt-2 px-6">${err.toString()}</p></div>`;
     }
   };
 
@@ -477,7 +505,7 @@
   }
 
   function switchView(view) {
-    ['view-loading', 'view-user-register', 'view-user-activities', 'view-user-profile', 'view-user-history', 'view-admin-activities', 'view-admin-checkin', 'view-admin-create', 'view-admin-settings', 'view-admin-edit'].forEach(v => {
+    ['view-loading', 'view-user-register', 'view-user-activities', 'view-user-profile', 'view-user-history', 'view-admin-activities', 'view-admin-checkin', 'view-admin-create', 'view-admin-settings', 'view-admin-edit', 'view-admin-crm'].forEach(v => {
       const el = document.getElementById(v); if(el) el.classList.add('hidden');
     });
     const activeEl = document.getElementById(`view-${view}`); if (activeEl) activeEl.classList.remove('hidden');
@@ -488,7 +516,7 @@
     
     if (isAdmin && isViewModeAdmin && (view.startsWith('admin') || view === 'admin-activities')) {
       navAdmin.classList.remove('hidden');
-      ['activities', 'create', 'settings'].forEach(k => {
+      ['activities', 'create', 'crm', 'settings'].forEach(k => {
         const btn = document.getElementById('nav-admin-'+k);
         if(btn) btn.className = `nav-btn ${view==='admin-'+k ? 'nav-active' : ''}`;
       });
@@ -502,6 +530,7 @@
 
     if (view === 'admin-activities') loadAdminActivities();
     else if (view === 'admin-settings') loadAdminSettings();
+    else if (view === 'admin-crm') loadCrmData();
     else if (view === 'user-activities') loadUserActivities();
     else if (view === 'user-profile') populateUserProfile();
     else if (view === 'user-history') loadUserHistory();
@@ -617,8 +646,6 @@
       await fetchAPI('joinActivity', { userId: userProfile.userId, activityName: name });
       if (feeType === '收費') showModal("報名成功", `此為收費活動，請完成匯款 \nNT$ ${price} 後，至「報名查詢」填寫帳號後五碼。`, "history");
       else showModal("報名成功", `您已成功報名！期待現場見到您。`, "activities");
-    } catch(err) {
-      console.error(err);
     } finally { 
       isProcessing = false; 
       btn.classList.remove('btn-disabled'); 
@@ -665,6 +692,47 @@
       showToast("✅ 已送出審核");
       setTimeout(() => { loadUserHistory(); }, 500);
     } finally { isProcessing = false; }
+  }
+
+  // ⭐ CRM 資料讀取與渲染
+  async function loadCrmData() {
+    const container = document.getElementById('admin-crm-list-container');
+    container.innerHTML = '<div class="text-center py-10"><span class="material-symbols-outlined animate-spin text-primary text-3xl">refresh</span></div>';
+    try {
+      globalCrmData = await fetchAPI('getAllCrmData');
+      renderCrmList(globalCrmData);
+    } catch(e) {
+      container.innerHTML = `<div class="text-center py-10 text-error font-bold">${e.message}</div>`;
+    }
+  }
+
+  function renderCrmList(data) {
+    const container = document.getElementById('admin-crm-list-container');
+    if (!data || data.length === 0) {
+      container.innerHTML = '<div class="text-center py-16 bg-white rounded-[2rem] shadow-app-card text-slate-400 font-bold">目前尚無名單資料</div>';
+      return;
+    }
+    container.innerHTML = data.map((user, idx) => `
+      <div class="bg-white rounded-[1.5rem] shadow-sm border border-slate-100 p-5 flex items-center justify-between animate-in fade-in slide-in-from-bottom-2" style="animation-delay: ${Math.min(idx * 50, 500)}ms">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 bg-primary-light text-primary rounded-full flex items-center justify-center font-black text-lg">${user.name.charAt(0)}</div>
+          <div>
+            <h4 class="text-[17px] font-extrabold text-text-main">${user.name}</h4>
+            <p class="text-[12px] text-text-muted font-bold mt-0.5">總參與次數</p>
+          </div>
+        </div>
+        <div class="text-right pr-2">
+          <span class="text-2xl font-black text-primary">${user.attended}</span>
+          <span class="text-xs font-bold text-slate-400 ml-1">次</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function filterCrmList() {
+    const term = document.getElementById('crm-search-input').value.toLowerCase();
+    const filtered = globalCrmData.filter(u => u.name.toLowerCase().includes(term));
+    renderCrmList(filtered);
   }
 
   function showToast(m, e=false) { 
@@ -737,7 +805,7 @@
     r.readAsDataURL(f); 
   }
 
-  async function submitUserRegistration() { const p = { userId: userProfile.userId, name: document.getElementById('reg-name').value.trim(), gender: document.getElementById('reg-gender').value, phone: document.getElementById('reg-phone').value.trim(), industry: document.getElementById('reg-industry').value.trim(), referrerId: document.getElementById('reg-referrer') ? document.getElementById('reg-referrer').value.trim() : '' }; if (!p.name || !p.phone) return showToast("⚠️ 請完整填寫資料", true); await fetchAPI('registerUser', p); isRegistered = true; registeredInfo = p; switchView('user-activities'); }
+  async function submitUserRegistration() { const p = { userId: userProfile.userId, name: document.getElementById('reg-name').value.trim(), gender: document.getElementById('reg-gender').value, phone: document.getElementById('reg-phone').value.trim(), industry: document.getElementById('reg-industry').value.trim(), referrerId: document.getElementById('reg-referrer') ? document.getElementById('reg-referrer').value.trim() : '' }; if (!p.name || !p.phone) return showToast("⚠️ 請完整填寫資料", true); await fetchAPI('registerUser', p); isRegistered = true; registeredInfo = p; document.getElementById('bottom-nav-user').classList.remove('hidden'); switchView('user-activities'); }
   function populateUserProfile() { if(registeredInfo) { document.getElementById('edit-name').value=registeredInfo.name; document.getElementById('edit-gender').value=registeredInfo.gender; document.getElementById('edit-phone').value=registeredInfo.phone; document.getElementById('edit-industry').value=registeredInfo.industry; } }
   async function submitProfileUpdate() { const p = { userId: userProfile.userId, name: document.getElementById('edit-name').value.trim(), gender: document.getElementById('edit-gender').value, phone: document.getElementById('edit-phone').value.trim(), industry: document.getElementById('edit-industry').value.trim() }; await fetchAPI('updateUser', p); registeredInfo = p; showToast("✅ 資料儲存成功"); }
   async function userCancelRegistration(name) { if (confirm("確定取消報名？")) { await fetchAPI('cancelRegistration', { userId: userProfile.userId, activityName: name }); loadUserHistory(); } }
@@ -778,7 +846,6 @@
     document.getElementById('edit-act-name').value = act.name;
     document.getElementById('edit-act-type').value = act.type || '例會';
     
-    // ⭐ 安全設定 feeType radio button
     const feeTypeVal = (act.feeType === '收費') ? '收費' : '免費';
     const feeRadio = document.querySelector(`input[name="edit-act-fee-type"][value="${feeTypeVal}"]`);
     if(feeRadio) feeRadio.checked = true;
@@ -836,7 +903,7 @@
       await fetchAPI('updateActivity', payload);
       showToast("✅ 活動更新成功");
       switchView('admin-activities');
-    } finally {
+    } catch(e) { console.error(e); } finally {
       isProcessing = false;
       btn.classList.remove('btn-disabled');
     }
@@ -881,7 +948,7 @@
 
   async function autoFetchTgChatId() { const token = document.getElementById('set-tg-token').value.trim(); if (!token) return showToast("⚠️ 請先輸入 Token", true); const btn = document.getElementById('btn-fetch-tg'); btn.disabled = true; try { const chatId = await fetchAPI('getTgChatId', { token }); document.getElementById('set-tg-chat').value = chatId; showToast("✅ 獲取成功！記得儲存"); } catch(err) { showToast(err.message, true); } btn.disabled = false; }
   async function loadAdminSettings() { const s = await fetchAPI('getSettings'); document.getElementById('set-tg-token').value = s.TG_BOT_TOKEN; document.getElementById('set-tg-chat').value = s.TG_CHAT_ID; document.getElementById('set-line-link').value = s.LINE_LINK; }
-  async function submitSettings() { if (isProcessing) return; isProcessing = true; try { await fetchAPI('saveSettings', { TG_BOT_TOKEN: document.getElementById('set-tg-token').value.trim(), TG_CHAT_ID: document.getElementById('set-tg-chat').value.trim(), LINE_LINK: document.getElementById('set-line-link').value.trim() }); showToast("✅ 設定已儲存"); } finally { isProcessing = false; } }
+  async function submitSettings() { if (isProcessing) return; isProcessing = true; try { await fetchAPI('saveSettings', { TG_BOT_TOKEN: document.getElementById('set-tg-token').value.trim(), TG_CHAT_ID: document.getElementById('set-tg-chat').value.trim(), LINE_LINK: document.getElementById('set-line-link').value.trim() }); showToast("✅ 設定已儲存"); } catch(e) { console.error(e); } finally { isProcessing = false; } }
   async function toggleActStatus(n) { await fetchAPI('toggleActivityStatus', { activityName: n }); loadAdminActivities(); }
   async function deleteAct(n) { if (confirm("確定永久刪除此活動及所有名單？")) { await fetchAPI('deleteActivity', { activityName: n }); loadAdminActivities(); } }
   async function toggleCheckin(id, status) { await fetchAPI('toggleStatus', { activityName: activeActivityName, rowId: id, currentStatus: status }); openAdminCheckin(activeActivityName); }

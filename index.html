@@ -435,13 +435,20 @@
 
 <!-- ================= ⭐ 數位電子名片產生器 (WYSIWYG) ================= -->
 <div id="ecard-generator-modal" class="hidden fixed inset-0 z-[70] bg-slate-100 flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl">
-  <div class="bg-white px-5 py-4 flex justify-between items-center border-b border-slate-200 z-10 shrink-0">
+  
+  <!-- ⭐ 新增：儲存按鈕 -->
+  <div class="bg-white px-5 py-4 flex justify-between items-center border-b border-slate-200 z-10 shrink-0 shadow-sm">
     <h3 class="text-lg font-black text-slate-800">數位名片產生器</h3>
-    <button onclick="closeECardGenerator()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-90"><span class="material-symbols-outlined">close</span></button>
+    <div class="flex items-center gap-3">
+      <button onclick="saveECardConfig()" id="btn-save-ecard" class="px-4 py-1.5 bg-[#ff751f]/10 text-[#ff751f] text-sm font-bold rounded-full hover:bg-[#ff751f]/20 transition-colors shadow-sm flex items-center gap-1">
+        <span class="material-symbols-outlined text-[16px]">save</span> 儲存設定
+      </button>
+      <button onclick="closeECardGenerator()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-90"><span class="material-symbols-outlined">close</span></button>
+    </div>
   </div>
 
   <div class="flex-1 overflow-y-auto pb-24">
-    <!-- 即時預覽區 (模擬 LINE 聊天室) -->
+    <!-- 即時預覽區 -->
     <div class="p-6 bg-slate-200 flex justify-center items-center">
       <div class="flex-preview-bubble w-[85%] max-w-[320px]">
         <img id="preview-ec-img" src="https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png" class="flex-preview-img">
@@ -511,20 +518,11 @@
           <input type="text" id="ec-btn4-url" class="col-span-2 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none" placeholder="https:// 或 tel:" oninput="updateECardPreview()">
         </div>
       </div>
-      
-      <!-- ⭐ 顯示自動生成的病毒擴散網址 -->
-      <div class="bg-red-50 p-4 rounded-2xl border border-red-100">
-        <div class="font-bold text-[13px] text-red-600 mb-2">左上角分享標籤設定</div>
-        <div>
-          <label class="text-[11px] font-bold text-slate-400">專屬分享網址 (系統自動生成)</label>
-          <input type="text" id="ec-badge-url" class="w-full bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none text-slate-500 mt-1" readonly>
-        </div>
-      </div>
     </div>
   </div>
 
   <div class="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-200 p-4 pb-safe z-[80] shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
-    <button onclick="shareECardToLine()" class="w-full py-4 bg-[#ff751f] text-white rounded-2xl font-bold text-[17px] shadow-lg shadow-orange-500/30 active:scale-95 transition-all flex items-center justify-center gap-2">
+    <button onclick="shareECardToLine()" id="btn-share-line" class="w-full py-4 bg-[#ff751f] text-white rounded-2xl font-bold text-[17px] shadow-lg shadow-orange-500/30 active:scale-95 transition-all flex items-center justify-center gap-2">
       🚀 轉發至 LINE 聊天室
     </button>
   </div>
@@ -554,9 +552,8 @@
   let globalCardContacts = []; 
   let currentActiveCard = null; 
   let isProcessing = false;
-  let dynamicAspectRatio = "20:13"; // ⭐ 用於儲存動態偵測的圖片比例
+  let dynamicAspectRatio = "20:13"; 
 
-  // 💡 [極速載入] 骨架屏
   function renderActivitiesSkeleton() {
     const skeletonHTML = Array(3).fill(0).map(() => `
       <div class="bg-white rounded-[2rem] overflow-hidden border border-slate-100 shadow-[0_12px_30px_rgba(0,0,0,0.04)] animate-pulse">
@@ -598,10 +595,11 @@
     try {
       await liff.init({ liffId: LIFF_ID });
       const params = new URLSearchParams(window.location.search);
-      const shareData = params.get('share');
+      const shareCardId = params.get('shareCardId');
       
-      // ==================== ⭐ 自我轉發 (Viral Sharing) 模式 ====================
-      if (shareData) {
+      // ==================== ⭐ 自我轉發 (Viral Sharing ID) 模式 ====================
+      // 若網址帶有 shareCardId，代表這是收到名片的客戶點擊左上角分享按鈕進來的
+      if (shareCardId) {
         if (!liff.isLoggedIn()) {
             liff.login({ redirectUri: window.location.href });
             return;
@@ -611,81 +609,31 @@
         document.getElementById('loading-text').innerText = '準備轉發數位名片...';
         
         try {
-            const decoded = JSON.parse(decodeURIComponent(escape(atob(shareData))));
-            
-            // 重建按鈕區塊
-            const btnContents = decoded.b.map((btn, idx) => ({
-                "type": "button", 
-                "style": "primary", 
-                "color": idx === 0 ? "#ff751f" : "#000000", 
-                "height": "sm", 
-                "margin": "sm",
-                "action": { "type": "uri", "label": btn.l, "uri": btn.u }
-            }));
+            // 從後台抓取該名片的完整資料
+            const contacts = await fetchAPI('getCardContacts');
+            const card = contacts.find(c => String(c.rowId) === String(shareCardId));
 
-            // 重建 Flex Message
-            const flexMsg = {
-              "type": "bubble",
-              "size": decoded.s || "mega",
-              "body": {
-                "type": "box",
-                "layout": "vertical",
-                "paddingAll": "0px",
-                "contents": [
-                  { "type": "image", "url": decoded.i, "size": "full", "aspectRatio": decoded.ar || "20:13", "aspectMode": "cover", "animated": true },
-                  {
-                    "type": "box",
-                    "layout": "vertical",
-                    "paddingAll": "15px",
-                    "contents": [
-                      { "type": "text", "text": decoded.t, "weight": "bold", "size": "xl", "align": "center", "wrap": true },
-                      { "type": "text", "text": decoded.d, "size": "xs", "margin": "sm", "color": "#666666", "wrap": true }
-                    ]
-                  },
-                  {
-                    "type": "box",
-                    "layout": "vertical",
-                    "position": "absolute",
-                    "backgroundColor": "#FF0000",
-                    "cornerRadius": "xl",
-                    "paddingTop": "4px",
-                    "paddingBottom": "4px",
-                    "paddingStart": "12px",
-                    "paddingEnd": "12px",
-                    "offsetTop": "10px",
-                    "action": { "type": "uri", "label": "badge", "uri": window.location.href }, // 保持一樣的分享連結
-                    "contents": [
-                      { "type": "text", "text": "分享好友", "color": "#ffffff", "size": "sm", "weight": "bold" }
-                    ],
-                    "offsetStart": "10px"
-                  }
-                ]
-              }
-            };
+            if (!card) throw new Error('找不到該名片資料');
 
-            if (btnContents.length > 0) {
-              flexMsg.footer = {
-                "type": "box",
-                "layout": "vertical",
-                "spacing": "sm",
-                "paddingAll": "15px",
-                "backgroundColor": "#FFFFFF",
-                "contents": btnContents
-              };
+            // 抓取是否有客製化的設定 (即管理員編輯過儲存的)
+            let config = null;
+            if (card['自訂名片設定']) {
+                try { config = JSON.parse(card['自訂名片設定']); } catch(e){}
             }
 
+            // 利用共用函式組裝要轉發的 Flex Message
+            const flexMsg = buildFlexMessageFromCard(card, config);
+
             if (liff.isApiAvailable('shareTargetPicker')) {
-                const res = await liff.shareTargetPicker([{ type: "flex", altText: `您收到一張數位名片：${decoded.t}`, contents: flexMsg }]);
-                if (res) {
-                    showToast('分享成功！即將關閉視窗...');
-                }
+                const res = await liff.shareTargetPicker([{ type: "flex", altText: `您收到一張數位名片`, contents: flexMsg }]);
+                if (res) showToast('分享成功！即將關閉視窗...');
             } else {
                 alert('您的裝置不支援分享功能，請於手機版 LINE 開啟');
             }
             setTimeout(() => liff.closeWindow(), 1500);
         } catch (e) {
             console.error(e);
-            alert('名片資料解析失敗');
+            alert('名片資料讀取失敗: ' + e.message);
             liff.closeWindow();
         }
         return; // 終止正常初始化，停留在分享模式
@@ -1060,7 +1008,7 @@
 
   // ==================== ⭐ 數位名片產生器核心邏輯 ====================
 
-  // ⭐ Google Drive 圖片直連轉換器 (讓 LINE 能正確抓到圖片)
+  // Google Drive 圖片直連轉換器
   function getDirectImageUrl(url) {
     if (!url) return url;
     const driveMatch = url.match(/id=([a-zA-Z0-9_-]+)/) || url.match(/d\/([a-zA-Z0-9_-]+)/);
@@ -1070,74 +1018,128 @@
     return url;
   }
 
-  // ⭐ 自動組裝能觸發分享好友機制的 URI
-  function generateShareUrl() {
-    const payload = {
-      i: document.getElementById('ec-img-input').value || 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png',
-      s: document.getElementById('ec-img-size').value || 'mega',
-      ar: dynamicAspectRatio || '20:13',
-      t: document.getElementById('ec-title-input').value || '商務名片',
-      d: document.getElementById('ec-desc-input').value || '',
-      b: []
-    };
-    for(let i=1; i<=4; i++) {
-      const l = document.getElementById(`ec-btn${i}-label`).value;
-      const u = document.getElementById(`ec-btn${i}-url`).value;
-      if(l && u) {
-         let safeU = u;
-         if (!u.startsWith('http') && !u.startsWith('tel:') && !u.startsWith('mailto:')) {
-             safeU = 'https://line.me';
-         }
-         payload.b.push({ l, u: safeU });
-      }
-    }
+  // ⭐ 從資料庫與設定組裝 Flex Message JSON (供預覽與發送共用)
+  function buildFlexMessageFromCard(card, config) {
+    let imgUrl, imgSize, ar, title, desc, buttons = [];
     
-    // 將資料 Base64 編碼，安全放入網址中
-    const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
-    return `https://liff.line.me/${LIFF_ID}?share=${b64}`;
+    // 如果有自訂設定就套用，否則從 18 個欄位自動推算
+    if (config) {
+        imgUrl = config.imgUrl || getDirectImageUrl(card['名片圖檔']) || 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
+        imgSize = config.imgSize || 'mega';
+        ar = config.ar || '20:13';
+        title = config.title || '-';
+        desc = config.desc || '';
+        buttons = config.buttons || [];
+    } else {
+        imgUrl = getDirectImageUrl(card['名片圖檔']) || 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
+        imgSize = 'mega';
+        ar = '20:13';
+        title = [card['公司名稱'], card['姓名']].filter(Boolean).join(' - ') || '商務名片';
+        const descArr = [];
+        if (card['職稱'] || card['部門']) descArr.push(`👤 ${[card['職稱'], card['部門']].filter(Boolean).join(' / ')}`);
+        if (card['手機號碼']) descArr.push(`📱 ${card['手機號碼']}`);
+        if (card['電子郵件']) descArr.push(`✉️ ${card['電子郵件']}`);
+        if (card['服務項目/品牌標語']) descArr.push(`\n【關於我們】\n${card['服務項目/品牌標語']}`); 
+        desc = descArr.join('\n') || '點擊下方按鈕與我聯繫';
+
+        const safeUrl = (url) => url && url.startsWith('http') ? url : '';
+        const safeTel = (tel) => tel ? `tel:${tel.replace(/\D/g,'')}` : '';
+
+        if (card['手機號碼']) buttons.push({ l: '撥打手機', u: safeTel(card['手機號碼']) });
+        else if (card['公司電話']) buttons.push({ l: '撥打電話', u: safeTel(card['公司電話']) });
+        if (card['電子郵件']) buttons.push({ l: '發送信箱', u: `mailto:${card['電子郵件']}` });
+        if (card['公司地址']) buttons.push({ l: 'Google 導航', u: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(card['公司地址'])}` });
+        if (card['社群帳號'] && card['社群帳號'].startsWith('http')) buttons.push({ l: '社群連結', u: safeUrl(card['社群帳號']) });
+        else if (card['公司網址']) buttons.push({ l: '公司網站', u: safeUrl(card['公司網址']) });
+    }
+
+    const btnContents = [];
+    for (let i=0; i<buttons.length; i++) {
+        const color = '#ff751f';
+        btnContents.push({
+            "type": "button", "style": "primary", "color": color, "height": "sm", "margin": "sm",
+            "action": { "type": "uri", "label": buttons[i].l, "uri": buttons[i].u }
+        });
+    }
+
+    // ⭐ 永遠帶上極短的 Row ID 作為分享網址，徹底解決字元限制問題
+    const badgeUrl = `https://liff.line.me/${LIFF_ID}?shareCardId=${card.rowId}`;
+
+    const flexMsg = {
+        "type": "bubble",
+        "size": imgSize === 'giga' ? 'giga' : 'mega',
+        "body": {
+            "type": "box",
+            "layout": "vertical",
+            "paddingAll": "0px",
+            "contents": [
+                { "type": "image", "url": imgUrl, "size": "full", "aspectRatio": ar, "aspectMode": "cover", "animated": true },
+                {
+                    "type": "box", "layout": "vertical", "paddingAll": "15px",
+                    "contents": [
+                        { "type": "text", "text": title, "weight": "bold", "size": "xl", "align": "center", "wrap": true },
+                        { "type": "text", "text": desc, "size": "xs", "margin": "sm", "color": "#666666", "wrap": true }
+                    ]
+                },
+                {
+                    "type": "box", "layout": "vertical", "position": "absolute", "backgroundColor": "#FF0000",
+                    "cornerRadius": "xl", "paddingTop": "4px", "paddingBottom": "4px", "paddingStart": "12px", "paddingEnd": "12px",
+                    "offsetTop": "10px", "offsetStart": "10px",
+                    "action": { "type": "uri", "label": "badge", "uri": badgeUrl },
+                    "contents": [{ "type": "text", "text": "分享好友", "color": "#ffffff", "size": "sm", "weight": "bold" }]
+                }
+            ]
+        }
+    };
+
+    if (btnContents.length > 0) {
+        flexMsg.footer = {
+            "type": "box", "layout": "vertical", "spacing": "sm", "paddingAll": "15px",
+            "backgroundColor": "#FFFFFF", "contents": btnContents
+        };
+    }
+    return flexMsg;
   }
 
   function openECardGenerator() {
     if (!currentActiveCard) return;
     const c = currentActiveCard;
-    const fallbackImg = "https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png";
 
-    const title = [c['公司名稱'], c['姓名']].filter(Boolean).join(' - ') || '商務名片';
-    
-    const descArr = [];
-    if (c['職稱'] || c['部門']) descArr.push(`👤 ${[c['職稱'], c['部門']].filter(Boolean).join(' / ')}`);
-    if (c['手機號碼']) descArr.push(`📱 ${c['手機號碼']}`);
-    if (c['電子郵件']) descArr.push(`✉️ ${c['電子郵件']}`);
-    if (c['服務項目/品牌標語']) descArr.push(`\n【關於我們】\n${c['服務項目/品牌標語']}`); 
-    const desc = descArr.join('\n') || '點擊下方按鈕與我聯繫';
-
-    const safeUrl = (url) => url && url.startsWith('http') ? url : '';
-    const safeTel = (tel) => tel ? `tel:${tel.replace(/\D/g,'')}` : '';
-
-    // 初始化表單資料
-    document.getElementById('ec-img-input').value = fallbackImg;
-    document.getElementById('ec-img-size').value = 'mega'; // 預設標準視窗
-    document.getElementById('ec-title-input').value = title;
-    document.getElementById('ec-desc-input').value = desc;
-    
-    const availableButtons = [];
-    
-    if (c['手機號碼']) availableButtons.push({ label: '撥打手機', url: safeTel(c['手機號碼']) });
-    else if (c['公司電話']) availableButtons.push({ label: '撥打電話', url: safeTel(c['公司電話']) });
-    
-    if (c['電子郵件']) availableButtons.push({ label: '發送信箱', url: `mailto:${c['電子郵件']}` });
-    
-    if (c['公司地址']) availableButtons.push({ label: 'Google 導航', url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c['公司地址'])}` });
-    
-    if (c['社群帳號'] && c['社群帳號'].startsWith('http')) availableButtons.push({ label: '社群連結', url: safeUrl(c['社群帳號']) });
-    else if (c['公司網址']) availableButtons.push({ label: '公司網站', url: safeUrl(c['公司網址']) });
-
-    for(let i=1; i<=4; i++) {
-      const btn = availableButtons[i-1];
-      document.getElementById(`ec-btn${i}-label`).value = btn ? btn.label : '';
-      document.getElementById(`ec-btn${i}-url`).value = btn ? btn.url : '';
+    // 檢查是否有儲存過的版型
+    let savedConfig = null;
+    if (c['自訂名片設定']) {
+      try { savedConfig = JSON.parse(c['自訂名片設定']); } catch(e){}
     }
-    
+
+    if (savedConfig) {
+      document.getElementById('ec-img-input').value = savedConfig.imgUrl || '';
+      document.getElementById('ec-img-size').value = savedConfig.imgSize || 'mega';
+      dynamicAspectRatio = savedConfig.ar || '20:13';
+      document.getElementById('ec-title-input').value = savedConfig.title || '';
+      document.getElementById('ec-desc-input').value = savedConfig.desc || '';
+
+      for(let i=1; i<=4; i++) {
+        const btn = savedConfig.buttons[i-1];
+        document.getElementById(`ec-btn${i}-label`).value = btn ? btn.l : '';
+        document.getElementById(`ec-btn${i}-url`).value = btn ? btn.u : '';
+      }
+    } else {
+      // 若無，自動帶入預設值
+      const defaultFlex = buildFlexMessageFromCard(c, null);
+      document.getElementById('ec-img-input').value = defaultFlex.body.contents[0].url;
+      document.getElementById('ec-img-size').value = defaultFlex.size;
+      dynamicAspectRatio = defaultFlex.body.contents[0].aspectRatio;
+      document.getElementById('ec-title-input').value = defaultFlex.body.contents[1].contents[0].text;
+      document.getElementById('ec-desc-input').value = defaultFlex.body.contents[1].contents[1].text;
+      
+      const buttons = defaultFlex.footer ? defaultFlex.footer.contents : [];
+      for(let i=1; i<=4; i++) {
+        const btn = buttons[i-1];
+        document.getElementById(`ec-btn${i}-label`).value = btn ? btn.action.label : '';
+        document.getElementById(`ec-btn${i}-url`).value = btn ? btn.action.uri : '';
+      }
+    }
+
     // 強制重置圖片預覽屬性，以觸發全新的比例偵測
     document.getElementById('preview-ec-img').removeAttribute('data-current-src');
 
@@ -1151,40 +1153,29 @@
 
   function updateECardPreview() {
     let rawUrl = document.getElementById('ec-img-input').value || 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
-    // 將可能導致破圖的 Google Drive 網址無縫轉換為直連網址
     let imgUrl = getDirectImageUrl(rawUrl);
-    
     const imgEl = document.getElementById('preview-ec-img');
 
-    // ⭐ 動態偵測圖片真實長寬比例
+    // 動態偵測圖片真實長寬比例
     if (imgEl.getAttribute('data-current-src') !== imgUrl) {
         imgEl.setAttribute('data-current-src', imgUrl);
         const tempImg = new Image();
         tempImg.onload = function() {
-            // 將真實寬高寫入變數，供送出時使用
             dynamicAspectRatio = `${this.width}:${this.height}`;
             imgEl.style.aspectRatio = `${this.width} / ${this.height}`;
             imgEl.src = imgUrl;
-            // 比例計算完成後，重新產生專屬分享網址
-            document.getElementById('ec-badge-url').value = generateShareUrl();
         };
         tempImg.onerror = function() {
-            // 防呆：如果圖片讀取失敗，預設回 20:13
             dynamicAspectRatio = "20:13";
             imgEl.style.aspectRatio = "20 / 13";
             imgEl.src = imgUrl;
-            document.getElementById('ec-badge-url').value = generateShareUrl();
         };
         tempImg.src = imgUrl;
-    } else {
-        // 如果圖片沒換，直接更新網址
-        document.getElementById('ec-badge-url').value = generateShareUrl();
     }
 
     document.getElementById('preview-ec-title').innerText = document.getElementById('ec-title-input').value || '未命名的標題';
     document.getElementById('preview-ec-desc').innerText = document.getElementById('ec-desc-input').value || '請輸入描述內容...';
     
-    // 動態更新預覽按鈕，統一使用 #ff751f
     const btnContainer = document.getElementById('preview-ec-buttons');
     btnContainer.innerHTML = '';
     for(let i=1; i<=4; i++) {
@@ -1197,92 +1188,85 @@
     }
   }
 
-  function shareECardToLine() {
+  // ⭐ 新增：將名片設定存入雲端試算表
+  async function saveECardConfig() {
+    if(!currentActiveCard) return;
+    const btn = document.getElementById('btn-save-ecard');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin">refresh</span> 儲存中...';
+    btn.classList.add('pointer-events-none', 'opacity-50');
+
+    const config = {
+      imgUrl: document.getElementById('ec-img-input').value,
+      imgSize: document.getElementById('ec-img-size').value,
+      ar: dynamicAspectRatio,
+      title: document.getElementById('ec-title-input').value,
+      desc: document.getElementById('ec-desc-input').value,
+      buttons: []
+    };
+    for(let i=1; i<=4; i++) {
+      const l = document.getElementById(`ec-btn${i}-label`).value;
+      const u = document.getElementById(`ec-btn${i}-url`).value;
+      if(l && u) config.buttons.push({l, u});
+    }
+
+    try {
+      await fetchAPI('updateECardConfig', { rowId: currentActiveCard.rowId, config: config });
+      currentActiveCard['自訂名片設定'] = JSON.stringify(config); // 更新快取
+      showToast('✅ 名片設定已儲存');
+    } catch(e) {
+      showToast('⚠️ 儲存失敗', true);
+    } finally {
+      btn.innerHTML = originalText;
+      btn.classList.remove('pointer-events-none', 'opacity-50');
+    }
+  }
+
+  // ⭐ 強化發送邏輯：先靜默儲存再發送
+  async function shareECardToLine() {
     if (!liff.isLoggedIn()) { return showToast('⚠️ 請先在 LINE 中登入才能使用轉發功能', true); }
     if (!liff.isApiAvailable('shareTargetPicker')) { return showToast('⚠️ 您目前的裝置或版本不支援分享功能', true); }
 
-    let rawUrl = document.getElementById('ec-img-input').value || 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
-    let imgUrl = getDirectImageUrl(rawUrl);
-    
-    // 取得 LINE Bubble 視窗的尺寸
-    const bubbleSize = document.getElementById('ec-img-size').value || 'mega';
+    const btnShare = document.getElementById('btn-share-line');
+    btnShare.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> 處理中...';
+    btnShare.classList.add('pointer-events-none');
 
-    const title = document.getElementById('ec-title-input').value || '-';
-    const desc = document.getElementById('ec-desc-input').value || '-';
-    // 取得已自動生成的分享網址
-    const badgeUrl = document.getElementById('ec-badge-url').value || `https://liff.line.me/${LIFF_ID}`;
-
-    // 抓取有效按鈕組裝 JSON，統一顏色為 #ff751f
-    const btnContents = [];
-    for(let i=1; i<=4; i++) {
-      const label = document.getElementById(`ec-btn${i}-label`).value;
-      const url = document.getElementById(`ec-btn${i}-url`).value;
-      if(label && url) {
-        const color = '#ff751f';
-        btnContents.push({
-          "type": "button", "style": "primary", "color": color, "height": "sm", "margin": "sm",
-          "action": { "type": "uri", "label": label, "uri": url }
-        });
-      }
-    }
-
-    const flexMessageObj = {
-      "type": "bubble",
-      "size": bubbleSize, // 套用使用者選取的視窗尺寸
-      "body": {
-        "type": "box",
-        "layout": "vertical",
-        "paddingAll": "0px",
-        "contents": [
-          // 圖片尺寸固定為 full 以填滿視窗，比例採用自動偵測出來的 dynamicAspectRatio
-          { "type": "image", "url": imgUrl, "size": "full", "aspectRatio": dynamicAspectRatio, "aspectMode": "cover", "animated": true },
-          {
-            "type": "box",
-            "layout": "vertical",
-            "paddingAll": "15px",
-            "contents": [
-              { "type": "text", "text": title, "weight": "bold", "size": "xl", "align": "center", "wrap": true },
-              { "type": "text", "text": desc, "size": "xs", "margin": "sm", "color": "#666666", "wrap": true }
-            ]
-          },
-          {
-            "type": "box",
-            "layout": "vertical",
-            "position": "absolute",
-            "backgroundColor": "#FF0000",
-            "cornerRadius": "xl",
-            "paddingTop": "4px",
-            "paddingBottom": "4px",
-            "paddingStart": "12px",
-            "paddingEnd": "12px",
-            "offsetTop": "10px",
-            "action": { "type": "uri", "label": "badge", "uri": badgeUrl },
-            "contents": [
-              { "type": "text", "text": "分享好友", "color": "#ffffff", "size": "sm", "weight": "bold" } // ⭐ 左上角、分享好友、sm
-            ],
-            "offsetStart": "10px"
-          }
-        ]
-      }
+    // 1. 自動背景儲存最新設定
+    const config = {
+      imgUrl: document.getElementById('ec-img-input').value,
+      imgSize: document.getElementById('ec-img-size').value,
+      ar: dynamicAspectRatio,
+      title: document.getElementById('ec-title-input').value,
+      desc: document.getElementById('ec-desc-input').value,
+      buttons: []
     };
-
-    if (btnContents.length > 0) {
-      flexMessageObj.footer = {
-        "type": "box",
-        "layout": "vertical",
-        "spacing": "sm",
-        "paddingAll": "15px",
-        "backgroundColor": "#FFFFFF",
-        "contents": btnContents
-      };
+    for(let i=1; i<=4; i++) {
+      const l = document.getElementById(`ec-btn${i}-label`).value;
+      const u = document.getElementById(`ec-btn${i}-url`).value;
+      if(l && u) config.buttons.push({l, u});
+    }
+    
+    try {
+      await fetchAPI('updateECardConfig', { rowId: currentActiveCard.rowId, config: config });
+      currentActiveCard['自訂名片設定'] = JSON.stringify(config);
+    } catch(e) {
+      console.warn("自動儲存失敗，直接以當前預覽傳送");
     }
 
-    liff.shareTargetPicker([{ type: "flex", altText: `您收到一張數位名片：${title}`, contents: flexMessageObj }])
+    // 2. 利用共用函式組裝要發送的 JSON
+    const flexMessageObj = buildFlexMessageFromCard(currentActiveCard, config);
+
+    // 3. 呼叫 LINE 分享
+    liff.shareTargetPicker([{ type: "flex", altText: `您收到一張數位名片：${config.title}`, contents: flexMessageObj }])
     .then((res) => {
       if (res) { showToast('🚀 數位名片已成功送出！'); closeECardGenerator(); } 
       else { showToast('取消傳送'); }
     })
-    .catch((err) => { console.error(err); showToast('⚠️ 轉發失敗，請確認連結格式正確', true); });
+    .catch((err) => { console.error(err); showToast('⚠️ 轉發失敗，請確認連結格式正確', true); })
+    .finally(() => {
+      btnShare.innerHTML = '🚀 轉發至 LINE 聊天室';
+      btnShare.classList.remove('pointer-events-none');
+    });
   }
 
   function showToast(m, e=false) { 

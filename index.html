@@ -463,12 +463,18 @@
       <div>
         <label class="input-label">圖片網址與尺寸</label>
         <div class="flex gap-2">
-          <input type="text" id="ec-img-input" class="custom-input !py-3 text-sm flex-1" placeholder="Image URL" oninput="updateECardPreview()">
+          <div class="relative flex-1">
+            <input type="text" id="ec-img-input" class="custom-input !py-3 pr-10 text-sm w-full" placeholder="Image URL" oninput="updateECardPreview()">
+            <button id="btn-ec-upload" onclick="document.getElementById('ec-upload-input').click()" class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:text-emerald-500 hover:bg-emerald-50 transition-colors shadow-sm" title="上傳新圖片">
+              <span class="material-symbols-outlined text-[18px]">upload</span>
+            </button>
+            <input type="file" id="ec-upload-input" accept="image/*" class="hidden" onchange="handleECardImageUpload(this)">
+          </div>
           <div class="relative w-28 shrink-0">
             <select id="ec-img-size" class="custom-input !py-3 text-sm w-full appearance-none" onchange="updateECardPreview()">
-              <option value="full">滿版</option>
-              <option value="mega">巨大</option>
-              <option value="giga">超大</option>
+              <option value="full">full</option>
+              <option value="mega">mega</option>
+              <option value="giga">giga</option>
             </select>
             <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">expand_more</span>
           </div>
@@ -1118,6 +1124,55 @@
   function toggleEditFeeInput() { document.getElementById('edit-act-price').classList.toggle('hidden', document.querySelector('input[name="edit-act-fee-type"]:checked').value !== '收費'); }
   function toggleCreateMode(m) { document.getElementById('tab-quick').className = `flex-1 py-3 rounded-full text-[15px] font-bold transition-all ${m==='quick'?'bg-white text-primary shadow':'text-slate-500 hover:text-slate-800'}`; document.getElementById('tab-detailed').className = `flex-1 py-3 rounded-full text-[15px] font-bold transition-all ${m==='detailed'?'bg-white text-primary shadow':'text-slate-500 hover:text-slate-800'}`; document.getElementById('form-quick').classList.toggle('hidden', m!=='quick'); document.getElementById('form-detailed').classList.toggle('hidden', m!=='detailed'); }
   
+  // ⭐ 新增：處理電子名片專屬的圖片上傳
+  async function handleECardImageUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const btn = document.getElementById('btn-ec-upload');
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<span class="material-symbols-outlined text-[18px] animate-spin text-[#ff751f]">refresh</span>';
+    btn.classList.add('pointer-events-none');
+    
+    try {
+      showToast("圖片上傳中，請稍候...", false);
+      const base64 = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onloadend = () => {
+          const img = new Image();
+          img.onload = () => {
+            let w = img.width, h = img.height;
+            let maxWidth = 1000; // 適配 LINE 的畫質
+            if (w > maxWidth) { h = Math.round(h * (maxWidth/w)); w = maxWidth; }
+            const cvs = document.createElement('canvas');
+            cvs.width = w; cvs.height = h;
+            const ctx = cvs.getContext('2d');
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, w, h);
+            ctx.drawImage(img, 0, 0, w, h);
+            resolve(cvs.toDataURL('image/jpeg', 0.8));
+          };
+          img.onerror = reject;
+          img.src = r.result;
+        };
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+      
+      // 呼叫 GAS 的 uploadImage 路由
+      const url = await fetchAPI('uploadImage', { base64Image: base64 });
+      document.getElementById('ec-img-input').value = url;
+      updateECardPreview();
+      showToast("✅ 圖片上傳成功");
+    } catch (err) {
+      showToast("⚠️ 上傳失敗：" + err.message, true);
+    } finally {
+      btn.innerHTML = originalHtml;
+      btn.classList.remove('pointer-events-none');
+      input.value = ""; 
+    }
+  }
+
   function previewFile(mode) { 
     const f = document.getElementById(`file-input-${mode}`).files[0]; 
     if(!f) return; 

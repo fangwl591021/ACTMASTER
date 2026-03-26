@@ -80,6 +80,7 @@
       <span id="header-admin-badge" class="hidden bg-primary-light text-primary text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-bold ml-1">Admin</span>
     </div>
     <div class="flex items-center gap-3">
+      <!-- 快捷掃描名片按鈕 -->
       <button id="admin-card-btn" onclick="window.location.href='card.html'" class="hidden w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center active:scale-95 transition-all shadow-sm" title="掃描名片">
         <span class="material-symbols-outlined text-[18px]">add_card</span>
       </button>
@@ -449,6 +450,7 @@
           <h2 id="preview-ec-title" class="text-xl font-bold text-slate-800 leading-tight mb-2">標準版分頁標題</h2>
           <p id="preview-ec-desc" class="text-xs text-slate-500 whitespace-pre-wrap leading-relaxed text-left">內容描述文字預覽大小為 xs，質感細膩呈現。</p>
         </div>
+        <!-- 動態按鈕容器 -->
         <div id="preview-ec-buttons" class="p-4 pt-0 space-y-2"></div>
       </div>
     </div>
@@ -488,7 +490,8 @@
 
       <!-- 智慧動態按鈕編輯區 -->
       <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-3">
-        <div class="font-bold text-[13px] text-slate-800 border-b border-slate-200 pb-2">動作按鈕 (最多 4 個，系統已自動擷取)</div>
+        <div class="font-bold text-[13px] text-slate-800 border-b border-slate-200 pb-2">動作按鈕 (最多 4 個)</div>
+        
         <div class="grid grid-cols-3 gap-2 items-center">
           <input type="text" id="ec-btn1-label" class="col-span-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none" placeholder="按鈕1 文字" oninput="updateECardPreview()">
           <input type="text" id="ec-btn1-url" class="col-span-2 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none" placeholder="https:// 或 tel:" oninput="updateECardPreview()">
@@ -567,14 +570,20 @@
       img.src = url;
   });
 
-  // ⭐ 終極防呆轉發引擎 (依照您的指南實作)
-  const triggerFlexSharing = async (flexMsg) => {
+  // ⭐ 終極防呆轉發引擎：修復了遺失的 type: "flex" 包裝
+  const triggerFlexSharing = async (flexContents, altText) => {
       if (!liff.isLoggedIn()) {
           liff.login({ redirectUri: window.location.href });
           return;
       }
       try {
-          const res = await liff.shareTargetPicker([flexMsg]);
+          // 必須在此將 bubble 包裝進 message container 內，否則 LINE 會拒絕解析
+          const message = {
+              type: "flex",
+              altText: altText || "您收到一張數位名片",
+              contents: flexContents
+          };
+          const res = await liff.shareTargetPicker([message]);
           if (res) {
               showToast('🚀 數位名片已成功轉發！');
           } else {
@@ -658,8 +667,11 @@
             const imgUrlForAr = config && config.imgUrl ? config.imgUrl : getDirectImageUrl(card['名片圖檔']);
             const detectedAr = await getTrueAspectRatio(imgUrlForAr);
 
-            const flexMsg = buildFlexMessageFromCard(card, config, detectedAr);
-            await triggerFlexSharing(flexMsg);
+            const flexContents = buildFlexMessageFromCard(card, config, detectedAr);
+            const title = config ? config.title : card['姓名'];
+            const altText = `您收到一張數位名片：${title || '商務名片'}`;
+            
+            await triggerFlexSharing(flexContents, altText);
 
         } catch (e) {
             console.error(e);
@@ -1046,6 +1058,7 @@
     return url;
   }
 
+  // ⭐ 嚴格防呆的 JSON 組裝引擎
   function buildFlexMessageFromCard(card, config, dynamicAr = null) {
     let imgUrl, imgSize, ar, title, desc, buttons = [];
     
@@ -1054,7 +1067,7 @@
         imgSize = config.imgSize || 'mega';
         ar = dynamicAr || config.ar || '20:13';
         title = config.title || '-';
-        desc = config.desc || ' '; 
+        desc = config.desc || '-'; 
         buttons = config.buttons || [];
     } else {
         imgUrl = getDirectImageUrl(card['名片圖檔']) || 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
@@ -1068,36 +1081,54 @@
         if (card['服務項目/品牌標語']) descArr.push(`\n【關於我們】\n${card['服務項目/品牌標語']}`); 
         desc = descArr.join('\n') || '點擊下方按鈕與我聯繫';
 
-        const safeUrl = (url) => url && url.startsWith('http') ? url : '';
-        const safeTel = (tel) => tel ? `tel:${tel.replace(/\D/g,'')}` : '';
-
-        if (card['手機號碼']) buttons.push({ l: '撥打手機', u: safeTel(card['手機號碼']) });
-        else if (card['公司電話']) buttons.push({ l: '撥打電話', u: safeTel(card['公司電話']) });
-        if (card['電子郵件']) buttons.push({ l: '發送信箱', u: `mailto:${card['電子郵件']}` });
+        if (card['手機號碼']) buttons.push({ l: '撥打手機', u: card['手機號碼'] });
+        else if (card['公司電話']) buttons.push({ l: '撥打電話', u: card['公司電話'] });
+        if (card['電子郵件']) buttons.push({ l: '發送信箱', u: card['電子郵件'] });
         if (card['公司地址']) buttons.push({ l: 'Google 導航', u: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(card['公司地址'])}` });
-        if (card['社群帳號'] && card['社群帳號'].startsWith('http')) buttons.push({ l: '社群連結', u: safeUrl(card['社群帳號']) });
-        else if (card['公司網址']) buttons.push({ l: '公司網站', u: safeUrl(card['公司網址']) });
+        if (card['社群帳號']) buttons.push({ l: '社群連結', u: card['社群帳號'] });
+        else if (card['公司網址']) buttons.push({ l: '公司網站', u: card['公司網址'] });
     }
 
-    // ⭐ 保護機制 1：尺寸防呆
+    // 1. 防呆：尺寸如果是 full 必須轉為 mega
     if (imgSize === 'full') imgSize = 'mega';
     if (!/^\d+:\d+$/.test(ar)) ar = '20:13';
     
-    // ⭐ 保護機制 2：文字不能為空字串，否則 LINE 解析 400 錯誤
-    title = title.trim() || '商務名片';
-    desc = desc.trim() || ' ';
+    // 2. 防呆：文字絕對不能是空字串，LINE 會直接報錯
+    title = (title || '').trim() || '-';
+    desc = (desc || '').trim() || '-';
 
+    // 3. 防呆：URI 嚴格過濾器
     const btnContents = [];
     for (let i=0; i<buttons.length; i++) {
+        let label = buttons[i].l ? String(buttons[i].l).trim() : '查看';
+        let safeU = buttons[i].u ? String(buttons[i].u).trim() : '';
+        
+        if (!safeU) {
+            safeU = 'https://line.me';
+        } else if (!safeU.match(/^(http|https|tel|mailto|line):/i)) {
+            // 自動偵測並補上正確的前綴
+            if (/^[\d\-\+\s]+$/.test(safeU)) {
+                safeU = 'tel:' + safeU.replace(/\D/g, ''); // 只保留數字
+            } else if (safeU.includes('@')) {
+                safeU = 'mailto:' + safeU;
+            } else {
+                safeU = 'https://' + safeU;
+            }
+        }
+
         btnContents.push({
             "type": "button", "style": "primary", "color": '#ff751f', "height": "sm", "margin": "sm",
-            "action": { "type": "uri", "label": buttons[i].l, "uri": buttons[i].u }
+            "action": { 
+              "type": "uri", 
+              "label": label.substring(0, 20), // LINE 限制 label 最長 20 字
+              "uri": safeU.substring(0, 1000)  // LINE 限制 URI 最長 1000 字
+            }
         });
     }
 
     const badgeUrl = `https://liff.line.me/${LIFF_ID}?shareCardId=${card.rowId}`;
 
-    const flexMsg = {
+    const flexContents = {
         "type": "bubble",
         "size": imgSize === 'giga' ? 'giga' : 'mega',
         "body": {
@@ -1125,12 +1156,12 @@
     };
 
     if (btnContents.length > 0) {
-        flexMsg.footer = {
+        flexContents.footer = {
             "type": "box", "layout": "vertical", "spacing": "sm", "paddingAll": "15px",
             "backgroundColor": "#FFFFFF", "contents": btnContents
         };
     }
-    return flexMsg;
+    return flexContents;
   }
 
   function openECardGenerator() {
@@ -1166,7 +1197,8 @@
       for(let i=1; i<=4; i++) {
         const btn = buttons[i-1];
         document.getElementById(`ec-btn${i}-label`).value = btn ? btn.action.label : '';
-        document.getElementById(`ec-btn${i}-url`).value = btn ? btn.action.uri : '';
+        // 這裡回填原本從資料庫取出的原生值，不強制加前綴，讓使用者看原本的值
+        document.getElementById(`ec-btn${i}-url`).value = btn ? btn.action.uri.replace(/^(tel|mailto|https):\/\//, '').replace(/^(tel|mailto):/, '') : '';
       }
     }
 
@@ -1221,7 +1253,7 @@
     }
   }
 
-  // ⭐ 靜默儲存設定 (如果 GAS 沒更新，只會顯示警告，不會阻擋發送)
+  // ⭐ 靜默儲存設定
   async function saveECardConfig(isSilent = false) {
     if(!currentActiveCard) return;
     const btn = document.getElementById('btn-save-ecard');
@@ -1246,7 +1278,6 @@
     }
 
     try {
-      // 傳入 true 開啟靜默模式，錯誤不會拋出 Toast
       await fetchAPI('updateECardConfig', { rowId: currentActiveCard.rowId, config: config }, true);
       currentActiveCard['自訂名片設定'] = JSON.stringify(config); 
       if(!isSilent) showToast('✅ 名片設定已儲存');
@@ -1262,7 +1293,7 @@
     return config;
   }
 
-  // ⭐ 發送前確保比例運算完畢並靜默儲存
+  // ⭐ 發送前自動儲存並帶出正確格式
   async function shareECardToLine() {
     const btnShare = document.getElementById('btn-share-line');
     btnShare.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> 處理中...';
@@ -1270,17 +1301,20 @@
 
     const currentImgUrl = getDirectImageUrl(document.getElementById('ec-img-input').value) || getDirectImageUrl(currentActiveCard['名片圖檔']);
     const detectedAr = await getTrueAspectRatio(currentImgUrl);
-    dynamicAspectRatio = detectedAr; // 確保取得最新的安全比例
+    dynamicAspectRatio = detectedAr; 
 
-    // 背景儲存設定，失敗也無妨
     const config = await saveECardConfig(true); 
 
-    const flexMessageObj = buildFlexMessageFromCard(currentActiveCard, config, detectedAr);
+    // 組裝出泡泡內部結構
+    const flexContents = buildFlexMessageFromCard(currentActiveCard, config, detectedAr);
+    // 供外層預覽文字使用
+    const altText = `您收到一張數位名片：${config.title || currentActiveCard['姓名'] || '商務名片'}`;
 
     btnShare.innerHTML = '🚀 轉發至 LINE 聊天室';
     btnShare.classList.remove('pointer-events-none');
 
-    await triggerFlexSharing(flexMessageObj);
+    // 呼叫終極防呆轉發引擎，把 Bubble 放進 Flex Message 容器
+    await triggerFlexSharing(flexContents, altText);
   }
 
   function showToast(m, e=false) { 

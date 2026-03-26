@@ -111,6 +111,7 @@
         <h2 class="text-2xl font-black font-headline mb-2 text-text-main">AI 智慧名片辨識</h2>
         <p class="text-sm text-text-muted font-medium mb-6 px-4">請對準名片拍照或上傳圖檔，系統將自動擷取 16 項聯絡資訊並建檔。</p>
         
+        <!-- ⭐ 拆分為拍照與上傳兩顆按鈕 -->
         <div class="flex gap-3 px-1">
           <button onclick="document.getElementById('card-camera').click()" class="flex-[1.2] py-4 bg-primary text-white rounded-2xl font-bold text-[16px] shadow-lg shadow-emerald-500/30 active:scale-95 transition-all flex flex-col items-center justify-center gap-1">
             <span class="material-symbols-outlined text-[26px]">photo_camera</span>
@@ -122,7 +123,9 @@
           </button>
         </div>
 
+        <!-- 相機專用 (capture="environment") -->
         <input type="file" id="card-camera" accept="image/*" capture="environment" class="hidden" onchange="openCropper(this)">
+        <!-- 檔案/相簿專用 (無 capture) -->
         <input type="file" id="card-upload" accept="image/*" class="hidden" onchange="openCropper(this)">
       </div>
 
@@ -185,6 +188,7 @@
 
   <!-- ⭐ 滿版裁切器 Modal -->
   <div id="section-cropper" class="hidden fixed inset-0 z-[100] bg-black flex flex-col animate-in fade-in duration-300 w-full max-w-md mx-auto">
+    <!-- 工具列 -->
     <div class="flex justify-between items-center p-5 bg-black text-white shrink-0 z-10 shadow-md">
       <button onclick="cancelCrop()" class="px-4 py-2 font-bold text-slate-300 active:scale-90 transition-transform">取消</button>
       <span class="font-black text-lg tracking-widest text-emerald-400 flex items-center gap-2">
@@ -193,6 +197,7 @@
       <button onclick="confirmCrop()" class="px-5 py-2 font-bold text-black bg-emerald-400 rounded-full active:scale-95 transition-transform shadow-[0_0_15px_rgba(16,185,129,0.5)]">辨識</button>
     </div>
     
+    <!-- 裁切區 -->
     <div class="flex-1 relative bg-[#111] overflow-hidden flex items-center justify-center">
       <img id="cropper-image" src="" class="max-w-full max-h-full block opacity-0 transition-opacity duration-300">
     </div>
@@ -205,7 +210,7 @@
   <!-- 底部導覽列 (與 index.html 連動跳轉) -->
   <nav id="bottom-nav-admin" class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-around items-center px-1 py-2 z-40 pb-safe shadow-[0_-4px_15px_rgba(0,0,0,0.03)]">
     <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">fact_check</span></div><span class="text-[10px] font-bold mt-1">核銷</span></button>
-    <button onclick="window.location.href='index.html?view=admin-create'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">add_circle</span></div><span class="text-[10px] font-bold mt-1">建立</span></button>
+    <button onclick="window.location.href='active.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">add_circle</span></div><span class="text-[10px] font-bold mt-1">建立</span></button>
     <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">groups</span></div><span class="text-[10px] font-bold mt-1">CRM</span></button>
     <!-- 當前頁面啟動狀態 -->
     <button onclick="switchView('list')" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">recent_patient</span></div><span class="text-[10px] font-bold mt-1">名片</span></button>
@@ -304,7 +309,7 @@
             <select id="ec-img-size" class="custom-input !py-3 text-sm w-full appearance-none" onchange="updateECardPreview()">
               <option value="kilo">kilo (小巧)</option>
               <option value="mega" selected>mega (標準推薦)</option>
-              <option value="giga">giga (滿版/超大)</option>
+              <option value="giga">giga (滿版/超大-小螢幕可能超出)</option>
             </select>
             <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">expand_more</span>
           </div>
@@ -318,8 +323,9 @@
         </div>
       </div>
       
+      <!-- ⭐ 新增：點圖預設連結 -->
       <div>
-        <label class="input-label text-[#ff751f]">點圖預設連結</label>
+        <label class="input-label text-[#ff751f]">點圖預設連結 (點擊圖片的跳轉網址)</label>
         <input type="text" id="ec-img-action-url" class="custom-input !py-3 text-sm text-blue-600" value="https://liff.line.me/2009367829-DLtYBDUm" oninput="updateECardPreview()">
       </div>
       
@@ -369,8 +375,18 @@
   </div>
 </div>
 
-<!-- Toast 通知 -->
-<div id="toast" class="fixed top-14 left-1/2 -translate-x-1/2 px-6 py-3.5 rounded-full text-[15px] shadow-app-card transition-all z-[10000] font-bold transform translate-y-0 opacity-0 pointer-events-none flex items-center gap-2 w-max max-w-[90vw] bg-slate-800 text-white"></div>
+<!-- Toast 通知容器 -->
+<div id="toast" class="fixed top-14 left-1/2 -translate-x-1/2 px-6 py-3.5 rounded-full text-[15px] shadow-app-card transition-all z-[10000] font-bold transform translate-y-0 opacity-0 pointer-events-none flex items-center gap-2 w-max max-w-[90vw]"></div>
+
+<!-- 提示 Modal -->
+<div id="custom-modal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-6">
+  <div class="bg-white w-full max-w-[320px] rounded-[2rem] p-7 shadow-2xl text-center scale-95 transition-all duration-200">
+    <div class="w-16 h-16 bg-blue-50 text-primary rounded-full flex items-center justify-center mx-auto mb-5"><span class="material-symbols-outlined text-3xl icon-filled">info</span></div>
+    <h3 id="modal-title" class="text-2xl font-black mb-3 text-text-main tracking-tight font-headline">系統通知</h3>
+    <p id="modal-desc" class="text-slate-500 font-medium mb-8 leading-relaxed text-[15px]"></p>
+    <button onclick="closeModalAndGo()" class="w-full py-4 bg-primary text-white rounded-2xl font-bold text-[17px] shadow-lg active:scale-95 transition-all">我知道了</button>
+  </div>
+</div>
 
 <script>
   const LIFF_ID = "2009367829-DLtYBDUm"; 
@@ -383,6 +399,17 @@
   let currentActiveCard = null; 
   let isProcessing = false;
   let dynamicAspectRatio = "20:13"; 
+
+  // ⭐ 智慧電話號碼修復函式：將遺失的 0 補回
+  function formatPhoneStr(val) {
+    if (val === null || val === undefined) return '';
+    let s = String(val).trim();
+    // 手機：開頭是9且剛好9碼 (例如 912345678 -> 0912345678)
+    if (/^9\d{8}$/.test(s)) return '0' + s;
+    // 市話：開頭是 2~8 且總長度為 8 或 9 碼
+    if (/^[2-8]\d{7,8}$/.test(s)) return '0' + s;
+    return s;
+  }
 
   // ==================== 初始化 ====================
   window.onload = async () => {
@@ -397,6 +424,11 @@
         document.getElementById('loading-text').innerText = '準備轉發數位名片...';
         try {
             const contacts = await fetchAPI('getCardContacts');
+            // ⭐ 讀取時自動修復缺 0 問題
+            contacts.forEach(c => {
+                if (c['手機號碼']) c['手機號碼'] = formatPhoneStr(c['手機號碼']);
+                if (c['公司電話']) c['公司電話'] = formatPhoneStr(c['公司電話']);
+            });
             const card = contacts.find(c => String(c.rowId) === String(shareCardId));
             if (!card) throw new Error('找不到該名片資料');
 
@@ -455,7 +487,6 @@
       document.getElementById(v).classList.add('hidden');
     });
     
-    // 如果是回到掃描，需要重置相關畫面
     if (view === 'scan') {
       document.getElementById('view-scan').classList.remove('hidden');
       switchSection('section-upload');
@@ -582,6 +613,11 @@
     container.innerHTML = '<div class="text-center py-10"><span class="material-symbols-outlined animate-spin text-emerald-500 text-3xl">refresh</span></div>';
     try {
       globalCardContacts = await fetchAPI('getCardContacts');
+      // ⭐ 讀取清單時自動修復缺 0 的號碼
+      globalCardContacts.forEach(c => {
+          if (c['手機號碼']) c['手機號碼'] = formatPhoneStr(c['手機號碼']);
+          if (c['公司電話']) c['公司電話'] = formatPhoneStr(c['公司電話']);
+      });
       renderCardList(globalCardContacts);
     } catch(e) {
       container.innerHTML = `<div class="text-center py-10 text-error font-bold">讀取失敗</div>`;
@@ -647,6 +683,7 @@
     if(card['公司網址']) notesArr.push(`【網址】${card['公司網址']}`);
     if(card['社群帳號']) notesArr.push(`【社群】${card['社群帳號']}`);
     if(card['建檔人/備註']) notesArr.push(`【備註】\n${card['建檔人/備註']}`);
+    
     document.getElementById('cd-notes').innerText = notesArr.join('\n\n') || '無其他資訊';
 
     const imgEl = document.getElementById('cd-image');
@@ -660,6 +697,7 @@
       imgEl.classList.add('hidden');
       noImgEl.classList.remove('hidden');
     }
+
     document.getElementById('card-detail-modal').classList.remove('hidden');
   }
 
@@ -667,7 +705,7 @@
     document.getElementById('card-detail-modal').classList.add('hidden');
   }
 
-  // ==================== ⭐ 數位電子名片產生器 ====================
+  // ==================== ⭐ 數位名片產生器核心邏輯 ====================
 
   function getDirectImageUrl(url) {
     if (!url) return url;
@@ -731,9 +769,6 @@
         title = [card['公司名稱'], card['姓名']].filter(Boolean).join(' - ') || '商務名片';
         desc = card['服務項目/品牌標語'] || '點擊下方按鈕與我聯繫';
 
-        const safeUrl = (url) => url && url.startsWith('http') ? url : '';
-        const safeTel = (tel) => tel ? `tel:${tel.replace(/[^\d+]/g,'')}` : '';
-
         if (card['手機號碼']) buttons.push({ l: '撥打手機', u: card['手機號碼'] });
         else if (card['公司電話']) buttons.push({ l: '撥打電話', u: card['公司電話'] });
         if (card['電子郵件']) buttons.push({ l: '發送信箱', u: card['電子郵件'] });
@@ -756,6 +791,7 @@
         let label = buttons[i].l ? String(buttons[i].l).trim() : '查看';
         let safeU = buttons[i].u ? String(buttons[i].u).trim() : '';
         if (!safeU) { safeU = 'https://line.me'; } 
+        // ⭐ 保留 + 號與數字，修復轉發時國際碼撥打失敗
         else if (!safeU.match(/^(http|https|tel|mailto|line):/i)) {
             if (/^[\d\-\+\s()]+$/.test(safeU)) safeU = 'tel:' + safeU.replace(/[^\d+]/g, ''); 
             else if (safeU.includes('@')) safeU = 'mailto:' + safeU;

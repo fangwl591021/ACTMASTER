@@ -444,15 +444,14 @@
     <!-- 即時預覽區 (模擬 LINE 聊天室) -->
     <div class="p-6 bg-slate-200 flex justify-center items-center">
       <div class="flex-preview-bubble w-[85%] max-w-[320px]">
-        <img id="preview-ec-img" src="https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png" class="flex-preview-img" onerror="this.src='https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=600&auto=format&fit=crop'">
+        <img id="preview-ec-img" src="https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png" class="flex-preview-img">
         <div class="flex-badge" id="preview-ec-badge">儲存</div>
         <div class="p-4 text-center">
           <h2 id="preview-ec-title" class="text-xl font-bold text-slate-800 leading-tight mb-2">標準版分頁標題</h2>
           <p id="preview-ec-desc" class="text-xs text-slate-500 whitespace-pre-wrap leading-relaxed">內容描述文字預覽大小為 xs，質感細膩呈現。</p>
         </div>
-        <div class="p-4 pt-0 space-y-2">
-          <div id="preview-ec-btn1" class="w-full bg-[#00B900] text-white text-sm font-bold text-center py-2.5 rounded-lg">了解更多</div>
-          <div id="preview-ec-btn2" class="w-full bg-black text-white text-sm font-bold text-center py-2.5 rounded-lg">立即購買</div>
+        <!-- ⭐ 改為動態按鈕容器 -->
+        <div id="preview-ec-buttons" class="p-4 pt-0 space-y-2">
         </div>
       </div>
     </div>
@@ -474,16 +473,25 @@
         <textarea id="ec-desc-input" class="custom-input h-24 resize-none text-sm leading-relaxed" oninput="updateECardPreview()"></textarea>
       </div>
 
-      <div class="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-        <div class="space-y-3">
-          <div class="font-bold text-[13px] text-green-600">綠色按鈕設定</div>
-          <div><label class="text-[11px] font-bold text-slate-400">文字</label><input type="text" id="ec-btn1-label" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none" value="了解更多" oninput="updateECardPreview()"></div>
-          <div><label class="text-[11px] font-bold text-slate-400">連結 (URI)</label><input type="text" id="ec-btn1-url" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none" placeholder="https://" value="https://line.me"></div>
+      <!-- ⭐ 智慧動態按鈕編輯區 -->
+      <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-3">
+        <div class="font-bold text-[13px] text-slate-800 border-b border-slate-200 pb-2">動作按鈕 (最多 4 個，系統已自動擷取)</div>
+        
+        <div class="grid grid-cols-3 gap-2 items-center">
+          <input type="text" id="ec-btn1-label" class="col-span-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none" placeholder="按鈕1 文字" oninput="updateECardPreview()">
+          <input type="text" id="ec-btn1-url" class="col-span-2 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none" placeholder="https:// 或 tel:" oninput="updateECardPreview()">
         </div>
-        <div class="space-y-3">
-          <div class="font-bold text-[13px] text-slate-800">黑色按鈕設定</div>
-          <div><label class="text-[11px] font-bold text-slate-400">文字</label><input type="text" id="ec-btn2-label" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none" value="撥打電話" oninput="updateECardPreview()"></div>
-          <div><label class="text-[11px] font-bold text-slate-400">連結 (URI)</label><input type="text" id="ec-btn2-url" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none" placeholder="tel: 或 https://"></div>
+        <div class="grid grid-cols-3 gap-2 items-center">
+          <input type="text" id="ec-btn2-label" class="col-span-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none" placeholder="按鈕2 文字" oninput="updateECardPreview()">
+          <input type="text" id="ec-btn2-url" class="col-span-2 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none" placeholder="https:// 或 tel:" oninput="updateECardPreview()">
+        </div>
+        <div class="grid grid-cols-3 gap-2 items-center">
+          <input type="text" id="ec-btn3-label" class="col-span-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none" placeholder="按鈕3 文字" oninput="updateECardPreview()">
+          <input type="text" id="ec-btn3-url" class="col-span-2 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none" placeholder="https:// 或 tel:" oninput="updateECardPreview()">
+        </div>
+        <div class="grid grid-cols-3 gap-2 items-center">
+          <input type="text" id="ec-btn4-label" class="col-span-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none" placeholder="按鈕4 文字" oninput="updateECardPreview()">
+          <input type="text" id="ec-btn4-url" class="col-span-2 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none" placeholder="https:// 或 tel:" oninput="updateECardPreview()">
         </div>
       </div>
       
@@ -938,7 +946,8 @@
   function openECardGenerator() {
     if (!currentActiveCard) return;
     const c = currentActiveCard;
-    const fallbackImg = "https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=600&auto=format&fit=crop";
+    // ⭐ 統一採用指定的預設名片圖
+    const fallbackImg = "https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png";
 
     const title = [c['公司名稱'], c['姓名']].filter(Boolean).join(' - ') || '商務名片';
     const descArr = [];
@@ -947,18 +956,37 @@
     if (c['電子郵件']) descArr.push(`信箱：${c['電子郵件']}`);
     const desc = descArr.join('\n') || '點擊下方按鈕與我聯繫';
 
-    const safeUrl = (url) => url && url.startsWith('http') ? url : 'https://line.me';
-    const safeTel = (tel) => tel ? `tel:${tel.replace(/\D/g,'')}` : 'https://line.me';
+    const safeUrl = (url) => url && url.startsWith('http') ? url : '';
+    const safeTel = (tel) => tel ? `tel:${tel.replace(/\D/g,'')}` : '';
 
-    document.getElementById('ec-img-input').value = c['名片圖檔'] && c['名片圖檔'] !== '圖片儲存失敗' ? c['名片圖檔'] : fallbackImg;
+    // 圖片預設統一放這張
+    document.getElementById('ec-img-input').value = fallbackImg;
     document.getElementById('ec-title-input').value = title;
     document.getElementById('ec-desc-input').value = desc;
     
-    document.getElementById('ec-btn1-label').value = "了解更多";
-    document.getElementById('ec-btn1-url').value = safeUrl(c['公司網址']);
+    // ⭐ 智慧判斷名片內容，自動生成按鈕
+    const availableButtons = [];
     
-    document.getElementById('ec-btn2-label').value = "撥打電話";
-    document.getElementById('ec-btn2-url').value = safeTel(c['手機號碼']);
+    // 1. 電話按鈕
+    if (c['手機號碼']) availableButtons.push({ label: '撥打手機', url: safeTel(c['手機號碼']) });
+    else if (c['公司電話']) availableButtons.push({ label: '撥打電話', url: safeTel(c['公司電話']) });
+    
+    // 2. 信箱按鈕
+    if (c['電子郵件']) availableButtons.push({ label: '發送信箱', url: `mailto:${c['電子郵件']}` });
+    
+    // 3. 地址轉 Google Maps 按鈕
+    if (c['公司地址']) availableButtons.push({ label: 'Google 導航', url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c['公司地址'])}` });
+    
+    // 4. 網站或社群按鈕
+    if (c['社群帳號'] && c['社群帳號'].startsWith('http')) availableButtons.push({ label: '社群連結', url: safeUrl(c['社群帳號']) });
+    else if (c['公司網址']) availableButtons.push({ label: '公司網站', url: safeUrl(c['公司網址']) });
+
+    // 清空並填入按鈕
+    for(let i=1; i<=4; i++) {
+      const btn = availableButtons[i-1];
+      document.getElementById(`ec-btn${i}-label`).value = btn ? btn.label : '';
+      document.getElementById(`ec-btn${i}-url`).value = btn ? btn.url : '';
+    }
     
     document.getElementById('ec-badge-url').value = 'https://line.me';
 
@@ -975,22 +1003,43 @@
     document.getElementById('preview-ec-img').src = imgUrl;
     document.getElementById('preview-ec-title').innerText = document.getElementById('ec-title-input').value || '未命名的標題';
     document.getElementById('preview-ec-desc').innerText = document.getElementById('ec-desc-input').value || '請輸入描述內容...';
-    document.getElementById('preview-ec-btn1').innerText = document.getElementById('ec-btn1-label').value || '按鈕 1';
-    document.getElementById('preview-ec-btn2').innerText = document.getElementById('ec-btn2-label').value || '按鈕 2';
+    
+    // ⭐ 動態更新預覽按鈕
+    const btnContainer = document.getElementById('preview-ec-buttons');
+    btnContainer.innerHTML = '';
+    for(let i=1; i<=4; i++) {
+      const label = document.getElementById(`ec-btn${i}-label`).value;
+      const url = document.getElementById(`ec-btn${i}-url`).value;
+      if(label && url) {
+        // 第一顆按鈕預設綠色，其餘為黑色
+        const colorClass = i === 1 ? 'bg-[#00B900] text-white' : 'bg-slate-800 text-white';
+        btnContainer.innerHTML += `<div class="w-full ${colorClass} text-sm font-bold text-center py-2.5 rounded-lg">${label}</div>`;
+      }
+    }
   }
 
   function shareECardToLine() {
     if (!liff.isLoggedIn()) { return showToast('⚠️ 請先在 LINE 中登入才能使用轉發功能', true); }
     if (!liff.isApiAvailable('shareTargetPicker')) { return showToast('⚠️ 您目前的裝置或版本不支援分享功能', true); }
 
-    const imgUrl = document.getElementById('ec-img-input').value || 'https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=600';
+    const imgUrl = document.getElementById('ec-img-input').value || 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
     const title = document.getElementById('ec-title-input').value || '-';
     const desc = document.getElementById('ec-desc-input').value || '-';
-    const btn1Label = document.getElementById('ec-btn1-label').value || '查看';
-    const btn1Url = document.getElementById('ec-btn1-url').value || 'https://line.me';
-    const btn2Label = document.getElementById('ec-btn2-label').value || '聯絡';
-    const btn2Url = document.getElementById('ec-btn2-url').value || 'https://line.me';
     const badgeUrl = document.getElementById('ec-badge-url').value || 'https://line.me';
+
+    // ⭐ 抓取有效按鈕組裝 JSON
+    const btnContents = [];
+    for(let i=1; i<=4; i++) {
+      const label = document.getElementById(`ec-btn${i}-label`).value;
+      const url = document.getElementById(`ec-btn${i}-url`).value;
+      if(label && url) {
+        const color = i === 1 ? '#00B900' : '#000000';
+        btnContents.push({
+          "type": "button", "style": "primary", "color": color, "height": "sm", "margin": "sm",
+          "action": { "type": "uri", "label": label, "uri": url }
+        });
+      }
+    }
 
     const flexMessageObj = {
       "type": "bubble",
@@ -1027,25 +1076,20 @@
             "offsetEnd": "10px"
           }
         ]
-      },
-      "footer": {
+      }
+    };
+
+    // 如果有按鈕才加入 footer (避免全空時導致 LINE Flex 解析錯誤)
+    if (btnContents.length > 0) {
+      flexMessageObj.footer = {
         "type": "box",
         "layout": "vertical",
         "spacing": "sm",
         "paddingAll": "15px",
         "backgroundColor": "#FFFFFF",
-        "contents": [
-          {
-            "type": "button", "style": "primary", "color": "#00B900", "height": "sm", "margin": "sm",
-            "action": { "type": "uri", "label": btn1Label, "uri": btn1Url }
-          },
-          {
-            "type": "button", "style": "primary", "color": "#000000", "height": "sm", "margin": "sm",
-            "action": { "type": "uri", "label": btn2Label, "uri": btn2Url }
-          }
-        ]
-      }
-    };
+        "contents": btnContents
+      };
+    }
 
     liff.shareTargetPicker([{ type: "flex", altText: `您收到一張數位名片：${title}`, contents: flexMessageObj }])
     .then((res) => {

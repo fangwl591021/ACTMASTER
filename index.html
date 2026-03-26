@@ -79,7 +79,6 @@
     </div>
   </nav>
 
-  <!-- ⭐ 將原本的 pt-20 改為 pt-16，大幅縮小全域的頂部留白 -->
   <main id="main-content" class="flex-1 overflow-y-auto pb-32 pt-16 px-4 space-y-6">
     
     <div id="view-loading" class="h-full flex flex-col items-center justify-center space-y-4 pb-20">
@@ -87,7 +86,6 @@
       <p id="loading-text" class="text-primary font-bold tracking-widest text-sm">資料載入中</p>
     </div>
 
-    <!-- ⭐ 將原本的 pt-8 改為 pt-4 -->
     <div id="view-user-register" class="hidden animate-in fade-in duration-500 pt-4">
       <div class="text-center mb-8 space-y-3">
         <h1 class="text-3xl font-black font-headline text-text-main tracking-tight">建立會員檔案</h1>
@@ -102,7 +100,6 @@
       </div>
     </div>
 
-    <!-- ⭐ 將原本的 pt-4 改為 pt-0，移除探索活動本身的頂部多餘間隙 -->
     <div id="view-user-activities" class="hidden animate-in fade-in duration-500 pt-0">
       <div class="flex justify-between items-end px-2 mb-2">
         <div>
@@ -269,6 +266,17 @@
   let isProcessing = false;
   let currentActivityFilter = '全部';
 
+  // ⭐ 智慧電話號碼修復函式：將遺失的 0 補回
+  function formatPhoneStr(val) {
+    if (val === null || val === undefined) return '';
+    let s = String(val).trim();
+    // 手機：開頭是9且剛好9碼 (例如 912345678 -> 0912345678)
+    if (/^9\d{8}$/.test(s)) return '0' + s;
+    // 市話：開頭是 2~8 且總長度為 8 或 9 碼
+    if (/^[2-8]\d{7,8}$/.test(s)) return '0' + s;
+    return s;
+  }
+
   function renderActivitiesSkeleton() {
     const skeletonHTML = Array(3).fill(0).map(() => `
       <div class="bg-white rounded-[2rem] overflow-hidden border border-slate-100 shadow-[0_12px_30px_rgba(0,0,0,0.04)] animate-pulse">
@@ -333,7 +341,6 @@
       document.getElementById('user-profile-badge').classList.remove('hidden');
       isAdmin = ADMIN_IDS.includes(userProfile.userId);
 
-      // ⭐ 瞬間隱藏 Loading，無須等待背景驗證
       document.getElementById('view-loading').classList.add('hidden');
 
       if (isAdmin) {
@@ -348,17 +355,20 @@
             switchView('admin-activities');
         }
       } else {
-        // ⭐ 訪客免等待，瞬間進入探索活動與秀出導覽列 (櫥窗購物模式)
         document.getElementById('bottom-nav-user').classList.remove('hidden');
         switchView('user-activities');
       }
 
-      // 背景靜默驗證會員身分
       fetchAPI('checkUser', { userId: userProfile.userId }, true)
         .then(res => {
           isRegistered = res.isRegistered;
           registeredInfo = res.info;
-          // 若未註冊，我們不強制跳轉，而是等他點擊「設定」或「報名」時再攔截
+          
+          // ⭐ 自動將被試算表閹割的 0 給補回來，顯示在個人資料編輯上
+          if (registeredInfo && registeredInfo.phone) {
+              registeredInfo.phone = formatPhoneStr(registeredInfo.phone);
+          }
+
           if (!isRegistered) {
               document.getElementById('reg-name').value = userProfile.displayName;
           }
@@ -379,12 +389,11 @@
       switchView('admin-activities');
     } else { 
       document.getElementById('header-admin-badge').classList.add('hidden');
-      switchView('user-activities'); // 無論是否註冊，都讓管理員切換回探索介面
+      switchView('user-activities'); 
     }
   }
 
   function switchView(view) {
-    // ⭐ 若訪客未註冊卻點擊「設定(profile)」或「紀錄(history)」，直接導向「註冊頁面」
     if ((view === 'user-profile' || view === 'user-history') && !isRegistered && !isAdmin) {
       view = 'user-register';
     }
@@ -408,7 +417,6 @@
       navUser.classList.remove('hidden');
       ['activities', 'history', 'profile'].forEach(k => {
         const btn = document.getElementById('nav-user-'+k);
-        // 如果畫面是被強制導引到註冊，我們還是讓使用者知道他點了哪個按鈕
         const isActive = view === `user-${k}` || (view === 'user-register' && k === 'profile');
         if(btn) btn.className = `nav-btn ${isActive ? 'nav-active' : ''}`;
       });
@@ -691,60 +699,8 @@
     return t ? new Date(t).toLocaleString('zh-TW', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false }) : ''; 
   }
 
-  function toggleEditFeeInput() { 
-    const isFee = document.querySelector('input[name="edit-act-fee-type"]:checked').value === '收費';
-    document.getElementById('edit-act-price').classList.toggle('hidden', !isFee); 
-  }
-
-  function previewFile(mode) { 
-    const f = document.getElementById(`file-input-${mode}`).files[0]; 
-    if(!f) return; 
-    
-    showToast("圖片處理壓縮中...", false);
-    
-    const r = new FileReader(); 
-    r.onloadend = () => { 
-      const img = new Image(); 
-      img.onload = () => { 
-        let w = img.width; 
-        let h = img.height; 
-        let maxWidth = 300; 
-        if (w > maxWidth) { h = Math.round(h * (maxWidth/w)); w = maxWidth; } 
-        
-        const cvs = document.createElement('canvas'); 
-        cvs.width = w; cvs.height = h; 
-        const ctx = cvs.getContext('2d'); 
-        
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, w, h);
-        ctx.drawImage(img, 0, 0, w, h); 
-        
-        let quality = 0.5; 
-        let b64 = cvs.toDataURL('image/jpeg', quality); 
-        
-        while (b64.length > 40000 && quality > 0.1) {
-          quality -= 0.1;
-          b64 = cvs.toDataURL('image/jpeg', quality);
-        }
-        
-        if (b64.length > 49000) {
-          showToast("⚠️ 圖片過於複雜無法壓縮至系統限制", true);
-          return;
-        }
-        
-        document.getElementById(`image-preview-${mode}`).src = b64; 
-        document.getElementById(`image-preview-${mode}`).classList.remove('hidden'); 
-        document.getElementById(`preview-placeholder-${mode}`).classList.add('hidden'); 
-        document.getElementById(`in-image-url-${mode}`).value = b64; 
-        showToast("✅ 圖片上傳並壓縮成功");
-      }; 
-      img.src = r.result; 
-    }; 
-    r.readAsDataURL(f); 
-  }
-
   async function submitUserRegistration() { 
-      const p = { userId: userProfile.userId, name: document.getElementById('reg-name').value.trim(), gender: document.getElementById('reg-gender').value, phone: document.getElementById('reg-phone').value.trim(), industry: document.getElementById('reg-industry').value.trim(), referrerId: document.getElementById('reg-referrer') ? document.getElementById('reg-referrer').value.trim() : '' }; 
+      const p = { userId: userProfile.userId, name: document.getElementById('reg-name').value.trim(), gender: document.getElementById('reg-gender').value, phone: document.getElementById('reg-phone').value.trim(), industry: document.getElementById('reg-industry').value.trim(), referrerId: '' }; 
       if (!p.name || !p.phone) return showToast("⚠️ 請完整填寫資料", true); 
       await fetchAPI('registerUser', p); 
       isRegistered = true; 
@@ -754,7 +710,7 @@
       switchView('user-activities'); 
   }
   
-  function populateUserProfile() { if(registeredInfo) { document.getElementById('edit-name').value=registeredInfo.name; document.getElementById('edit-gender').value=registeredInfo.gender; document.getElementById('edit-phone').value=registeredInfo.phone; document.getElementById('edit-industry').value=registeredInfo.industry; } }
+  function populateUserProfile() { if(registeredInfo) { document.getElementById('edit-name').value=registeredInfo.name; document.getElementById('edit-gender').value=registeredInfo.gender; document.getElementById('edit-phone').value=formatPhoneStr(registeredInfo.phone); document.getElementById('edit-industry').value=registeredInfo.industry; } }
   async function submitProfileUpdate() { const p = { userId: userProfile.userId, name: document.getElementById('edit-name').value.trim(), gender: document.getElementById('edit-gender').value, phone: document.getElementById('edit-phone').value.trim(), industry: document.getElementById('edit-industry').value.trim() }; await fetchAPI('updateUser', p); registeredInfo = p; showToast("✅ 資料儲存成功"); }
   async function userCancelRegistration(name) { if (confirm("確定取消報名？")) { await fetchAPI('cancelRegistration', { userId: userProfile.userId, activityName: name }); loadUserHistory(); } }
   
@@ -777,7 +733,7 @@
           <div><p class="text-[10px] text-error/70 font-bold uppercase tracking-widest mb-1">取消</p><p class="font-black text-xl text-error">${act.cancelled}</p></div>
         </div>
         <div class="flex gap-3">
-          <button onclick="openEditActivity('${act.name}')" class="flex-[1] py-4 bg-input-bg text-text-main rounded-2xl font-bold text-[15px] active:scale-95 transition-all hover:bg-slate-200">編輯</button>
+          <button onclick="window.location.href='active.html'" class="flex-[1] py-4 bg-input-bg text-text-main rounded-2xl font-bold text-[15px] active:scale-95 transition-all hover:bg-slate-200">編輯</button>
           <button onclick="openAdminCheckin('${act.name}')" class="flex-[2] py-4 bg-slate-800 text-white rounded-2xl font-bold text-[15px] shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1">核銷簽到 <span class="material-symbols-outlined text-[18px]">fact_check</span></button>
         </div>
         <div class="flex justify-between px-2 text-[11px] font-bold tracking-widest uppercase mt-2">
@@ -785,76 +741,6 @@
           <button onclick="deleteAct('${act.name}')" class="text-error/80 hover:text-error transition-colors">刪除活動</button>
         </div>
       </div>`).join(''); 
-  }
-  
-  function openEditActivity(name) {
-    const act = currentActivities.find(a => a.name === name);
-    if(!act) return;
-    
-    document.getElementById('edit-act-name').value = act.name;
-    document.getElementById('edit-act-type').value = act.type || '例會';
-    
-    const feeTypeVal = (act.feeType === '收費') ? '收費' : '免費';
-    const feeRadio = document.querySelector(`input[name="edit-act-fee-type"][value="${feeTypeVal}"]`);
-    if(feeRadio) feeRadio.checked = true;
-    
-    document.getElementById('edit-act-price').value = act.price || '';
-    toggleEditFeeInput();
-    
-    const formatForInput = (dStr) => {
-      if(!dStr) return '';
-      const d = new Date(dStr);
-      const pad = (n) => n.toString().padStart(2, '0');
-      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    };
-    
-    document.getElementById('edit-act-start').value = formatForInput(act.startTime);
-    document.getElementById('edit-act-end').value = formatForInput(act.endTime);
-    document.getElementById('edit-act-desc').value = act.description || '';
-    
-    const imgEl = document.getElementById('image-preview-edit');
-    const noImgEl = document.getElementById('preview-placeholder-edit');
-    const inUrlEl = document.getElementById('in-image-url-edit');
-    
-    if(act.imageUrl) {
-      imgEl.src = act.imageUrl;
-      inUrlEl.value = act.imageUrl;
-      imgEl.classList.remove('hidden');
-      noImgEl.classList.add('hidden');
-    } else {
-      imgEl.src = '';
-      inUrlEl.value = '';
-      imgEl.classList.add('hidden');
-      noImgEl.classList.remove('hidden');
-    }
-    
-    switchView('admin-edit');
-  }
-
-  async function handleSaveEdit() {
-    if(isProcessing) return; 
-    const btn = document.getElementById('btn-save-edit');
-    isProcessing = true; btn.classList.add('btn-disabled');
-    
-    let payload = {
-      activityName: document.getElementById('edit-act-name').value,
-      activityType: document.getElementById('edit-act-type').value,
-      feeType: document.querySelector('input[name="edit-act-fee-type"]:checked').value,
-      price: document.getElementById('edit-act-price').value,
-      startTime: document.getElementById('edit-act-start').value,
-      endTime: document.getElementById('edit-act-end').value,
-      description: document.getElementById('edit-act-desc').value,
-      imageUrl: document.getElementById('in-image-url-edit').value
-    };
-    
-    try {
-      await fetchAPI('updateActivity', payload);
-      showToast("✅ 活動更新成功");
-      switchView('admin-activities');
-    } catch(e) { console.error(e); } finally {
-      isProcessing = false;
-      btn.classList.remove('btn-disabled');
-    }
   }
 
   async function openAdminCheckin(name) { 

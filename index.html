@@ -788,14 +788,27 @@
   async function handleCreateActivity(mode) { 
     if(isProcessing) return; 
     const btn = document.getElementById(mode === 'quick' ? 'btn-quick-create' : 'btn-detail-create'); 
-    isProcessing=true; btn.classList.add('btn-disabled'); 
+    isProcessing = true; 
+    
+    // ⭐ 防呆：加入處理中的按鈕視覺回饋
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> 處理中...';
+    btn.classList.add('btn-disabled'); 
+    
     let payload = { 
       activityName: document.getElementById(mode === 'quick' ? 'quick-name' : 'detail-name').value.trim(), 
       activityType: document.getElementById(mode === 'quick' ? 'quick-type' : 'detail-type').value, 
       feeType: '免費', price: '', startTime: '', endTime: '', description: '', imageUrl: '', names: [], 
       defaultIdentity: mode === 'quick' ? document.getElementById('quick-identity').value : '來賓' 
     }; 
-    if (!payload.activityName) { isProcessing=false; btn.classList.remove('btn-disabled'); return showToast("⚠️ 活動標題必填", true); } 
+    
+    if (!payload.activityName) { 
+      isProcessing = false; 
+      btn.innerHTML = originalText;
+      btn.classList.remove('btn-disabled'); 
+      return showToast("⚠️ 活動標題必填", true); 
+    } 
+    
     if (mode === 'quick') { 
       const raw = document.getElementById('quick-names').value.trim(); payload.names = raw.split('\n').filter(n => n.trim()); 
     } else { 
@@ -806,10 +819,34 @@
       payload.description = document.getElementById('detail-desc').value; 
       payload.imageUrl = document.getElementById('in-image-url-create').value; 
     } 
+    
     try { 
       await fetchAPI('bulkAddRegistrants', payload); 
-      showToast("✅ 活動建立成功"); switchView('admin-activities'); 
-    } catch(e) { console.error(e); } finally { isProcessing=false; btn.classList.remove('btn-disabled'); } 
+      showToast("✅ 活動建立成功"); 
+      
+      // ⭐ 防呆：成功後徹底清空表單，避免重複點擊建立同名活動報錯
+      if (mode === 'quick') {
+        document.getElementById('quick-name').value = '';
+        document.getElementById('quick-names').value = '';
+      } else {
+        document.getElementById('detail-name').value = '';
+        document.getElementById('detail-price').value = '';
+        document.getElementById('detail-start').value = '';
+        document.getElementById('detail-end').value = '';
+        document.getElementById('detail-desc').value = '';
+        document.getElementById('in-image-url-create').value = '';
+        document.getElementById('image-preview-create').classList.add('hidden');
+        document.getElementById('preview-placeholder-create').classList.remove('hidden');
+      }
+      
+      switchView('admin-activities'); 
+    } catch(e) { 
+      console.error(e); 
+    } finally { 
+      isProcessing = false; 
+      btn.innerHTML = originalText;
+      btn.classList.remove('btn-disabled'); 
+    } 
   }
   
   async function loadAdminActivities() { const container = document.getElementById('admin-activity-list-container'); renderAdminActivitiesSkeleton(); currentActivities = await fetchAPI('getActivityDashboard'); container.innerHTML = currentActivities.map(act => `<div class="bg-white rounded-[2rem] shadow-app-card p-7 space-y-5"><div class="flex justify-between items-start"><div><span class="badge bg-primary-light text-primary mb-2 block w-fit">${act.type}</span><h3 class="text-[19px] font-black text-text-main leading-tight font-headline">${act.name}</h3></div></div><div class="grid grid-cols-3 gap-3 bg-slate-50 border border-slate-100 rounded-[1.5rem] p-4 text-center"><div><p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">報名</p><p class="font-black text-xl text-slate-700">${act.total}</p></div><div><p class="text-[10px] text-green-500 font-bold uppercase tracking-widest mb-1">實到</p><p class="font-black text-xl text-green-600">${act.attended}</p></div><div><p class="text-[10px] text-error/70 font-bold uppercase tracking-widest mb-1">取消</p><p class="font-black text-xl text-error">${act.cancelled}</p></div></div><div class="flex gap-3"><button onclick="openEditActivity('${act.name}')" class="flex-[1] py-4 bg-input-bg text-text-main rounded-2xl font-bold text-[15px] active:scale-95 transition-all hover:bg-slate-200">編輯</button><button onclick="openAdminCheckin('${act.name}')" class="flex-[2] py-4 bg-slate-800 text-white rounded-2xl font-bold text-[15px] shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1">核銷簽到 <span class="material-symbols-outlined text-[18px]">fact_check</span></button></div><div class="flex justify-between px-2 text-[11px] font-bold tracking-widest uppercase mt-2"><button onclick="toggleActStatus('${act.name}')" class="text-slate-400 hover:text-slate-600 transition-colors">${act.status==='下架'?'設為上架':'設為下架'}</button><button onclick="deleteAct('${act.name}')" class="text-error/80 hover:text-error transition-colors">刪除活動</button></div></div>`).join(''); }

@@ -87,34 +87,49 @@
     <!-- View: Admin Create -->
     <div id="view-admin-create" class="hidden space-y-6 animate-in fade-in">
       
-      <!-- ⭐ UI 優化：加強標題與間距 -->
       <div class="px-2 mb-4 pt-2">
         <h2 class="text-[32px] font-black font-headline text-text-main tracking-tight leading-tight">建立新活動</h2>
         <p class="text-text-muted text-[14px] font-medium mt-2 leading-relaxed">快速部署您的活動報名流程，支援批次匯入或完整圖文發佈。</p>
       </div>
 
-      <!-- ⭐ UI 優化：切換按鈕 (Segmented Control) 質感提升 -->
+      <!-- 模式切換 Tabs -->
       <div class="flex p-1.5 rounded-full mx-2 border border-slate-200 bg-slate-50 shadow-inner">
         <button onclick="toggleCreateMode('quick')" id="tab-quick" class="flex-1 py-3 rounded-full text-[15px] font-bold bg-white text-primary shadow-sm transition-all ring-1 ring-slate-900/5">快速匯入</button>
         <button onclick="toggleCreateMode('detailed')" id="tab-detailed" class="flex-1 py-3 rounded-full text-[15px] font-bold text-slate-500 transition-all hover:text-slate-800">完整發佈</button>
       </div>
       
-      <!-- 快速模式 -->
+      <!-- ⭐ 快速模式 (已補上說明與圖片) -->
       <div id="form-quick" class="space-y-6 px-2 mt-8 animate-in fade-in">
         <div><label class="input-label">活動名稱</label><input type="text" id="quick-name" class="custom-input !pr-5" placeholder="輸入活動標題..."></div>
-        <div>
-            <label class="input-label">活動類型</label>
-            <div class="relative"><select id="quick-type" class="custom-input text-slate-700"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option></select><span class="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span></div>
-        </div>
-        <div>
-            <label class="input-label">預設身份</label>
-            <div class="relative"><select id="quick-identity" class="custom-input text-slate-700"><option>會員</option><option>來賓</option></select><span class="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span></div>
-        </div>
-        <div>
-          <div class="flex justify-between items-center mb-2">
-            <label class="text-[13px] font-bold text-text-main ml-1">名單內容</label>
-            <span class="text-[10px] font-bold text-primary bg-primary-light px-2 py-0.5 rounded">支援批次輸入</span>
+        
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+              <label class="input-label">活動類型</label>
+              <div class="relative"><select id="quick-type" class="custom-input text-slate-700"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option></select><span class="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span></div>
           </div>
+          <div>
+              <label class="input-label">預設身份</label>
+              <div class="relative"><select id="quick-identity" class="custom-input text-slate-700"><option>會員</option><option>來賓</option></select><span class="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span></div>
+          </div>
+        </div>
+
+        <div><label class="input-label">活動說明</label><textarea id="quick-desc" class="custom-input h-32 !pr-5 py-4 resize-none leading-relaxed text-[15px]" placeholder="輸入詳盡說明..."></textarea></div>
+        
+        <div>
+          <label class="input-label">宣傳大圖</label>
+          <div onclick="document.getElementById('file-input-quick').click()" class="w-full h-44 border-2 border-dashed border-slate-300 rounded-[1.5rem] flex flex-col items-center justify-center bg-white cursor-pointer overflow-hidden transition-all hover:bg-slate-50 relative group">
+            <div id="preview-placeholder-quick" class="text-center text-slate-400 flex flex-col items-center group-hover:scale-110 transition-transform">
+              <span class="material-symbols-outlined text-4xl mb-2">add_photo_alternate</span>
+              <p class="text-[12px] font-bold">點擊上傳圖片</p>
+            </div>
+            <img id="image-preview-quick" class="hidden w-full h-full object-cover absolute inset-0">
+            <input type="file" id="file-input-quick" class="hidden" accept="image/*" onchange="previewFile('quick')">
+          </div>
+          <input type="hidden" id="in-image-url-quick">
+        </div>
+
+        <div>
+          <div class="flex justify-between items-center mb-2"><label class="text-[13px] font-bold text-text-main ml-1">名單內容</label><span class="text-[10px] font-bold text-primary bg-primary-light px-2 py-0.5 rounded">支援批次輸入</span></div>
           <textarea id="quick-names" class="custom-input h-48 !pr-5 py-5 resize-none leading-relaxed text-[15px]" placeholder="請貼上參與者姓名，每行一位..."></textarea>
         </div>
         <button onclick="handleCreateActivity('quick')" id="btn-quick-create" class="btn-primary mt-4">
@@ -215,7 +230,6 @@
         document.getElementById('bottom-nav-admin').classList.remove('hidden');
         document.getElementById('view-admin-create').classList.remove('hidden');
       } else {
-        // 如果不是管理員，強制導回首頁
         window.location.replace('index.html');
       }
 
@@ -292,9 +306,17 @@
           return;
         }
         
-        document.getElementById(`image-preview-${mode}`).src = b64; 
-        document.getElementById(`image-preview-${mode}`).classList.remove('hidden'); 
-        document.getElementById(`preview-placeholder-${mode}`).classList.add('hidden'); 
+        const previewImg = document.getElementById(`image-preview-${mode}`);
+        const placeholder = document.getElementById(`preview-placeholder-${mode}`);
+        
+        if (previewImg) {
+            previewImg.src = b64; 
+            previewImg.classList.remove('hidden'); 
+        }
+        if (placeholder) {
+            placeholder.classList.add('hidden'); 
+        }
+        
         document.getElementById(`in-image-url-${mode}`).value = b64; 
         showToast("✅ 圖片預覽成功");
       }; 
@@ -329,6 +351,8 @@
     if (mode === 'quick') { 
       const raw = document.getElementById('quick-names').value.trim(); 
       payload.names = raw.split('\n').filter(n => n.trim()); 
+      payload.description = document.getElementById('quick-desc').value;
+      payload.imageUrl = document.getElementById('in-image-url-quick').value;
     } else { 
       const feeCheck = document.querySelector('input[name="fee-type"]:checked');
       payload.feeType = feeCheck ? feeCheck.value : '免費'; 
@@ -343,7 +367,36 @@
       await fetchAPI('bulkAddRegistrants', payload); 
       showToast("✅ 活動建立成功"); 
       
-      // ⭐ 建立成功後，自動跳轉回首頁的活動管理列表
+      // 成功後清空表單
+      if (mode === 'quick') {
+        document.getElementById('quick-name').value = '';
+        document.getElementById('quick-desc').value = '';
+        document.getElementById('in-image-url-quick').value = '';
+        document.getElementById('quick-names').value = '';
+        const imgPreviewQuick = document.getElementById('image-preview-quick');
+        if (imgPreviewQuick) {
+            imgPreviewQuick.classList.add('hidden');
+            imgPreviewQuick.src = '';
+        }
+        const placeholderQuick = document.getElementById('preview-placeholder-quick');
+        if (placeholderQuick) placeholderQuick.classList.remove('hidden');
+      } else {
+        document.getElementById('detail-name').value = '';
+        document.getElementById('detail-price').value = '';
+        document.getElementById('detail-start').value = '';
+        document.getElementById('detail-end').value = '';
+        document.getElementById('detail-desc').value = '';
+        document.getElementById('in-image-url-create').value = '';
+        const imgPreview = document.getElementById('image-preview-create');
+        if (imgPreview) {
+            imgPreview.classList.add('hidden');
+            imgPreview.src = '';
+        }
+        const placeholder = document.getElementById('preview-placeholder-create');
+        if (placeholder) placeholder.classList.remove('hidden');
+      }
+      
+      // 自動跳轉回首頁的活動管理
       setTimeout(() => {
         window.location.href = 'index.html?view=admin-activities';
       }, 1000);

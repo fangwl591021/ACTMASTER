@@ -61,6 +61,11 @@
     .loading-gif { width: 100px; height: auto; }
     .refresh-spin { animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    /* 名片產生器預覽區專用樣式 */
+    .flex-preview-bubble { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #edf2f7; position: relative; }
+    .flex-preview-img { width: 100%; aspect-ratio: 20/13; object-fit: cover; background-color: #f1f5f9; }
+    .flex-badge { position: absolute; top: 10px; right: 10px; background-color: #FF0000; color: white; font-size: 10px; font-weight: bold; padding: 4px 12px; border-radius: 9999px; }
   </style>
 </head>
 <body class="font-body text-text-main min-h-screen flex flex-col items-center">
@@ -75,7 +80,7 @@
       <span id="header-admin-badge" class="hidden bg-primary-light text-primary text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-bold ml-1">Admin</span>
     </div>
     <div class="flex items-center gap-3">
-      <!-- 管理員專屬的名片掃描快捷按鈕 -->
+      <!-- 快捷掃描名片按鈕 -->
       <button id="admin-card-btn" onclick="window.location.href='card.html'" class="hidden w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center active:scale-95 transition-all shadow-sm" title="掃描名片">
         <span class="material-symbols-outlined text-[18px]">add_card</span>
       </button>
@@ -103,45 +108,12 @@
         <h1 class="text-3xl font-black font-headline text-text-main tracking-tight">建立會員檔案</h1>
         <p class="text-text-muted text-sm font-medium">只需填寫一次，以後報名只需一秒</p>
       </div>
-      
       <div class="bg-white rounded-[2rem] shadow-app-card p-8 space-y-6">
-        <div>
-          <label class="input-label">真實姓名</label>
-          <div class="relative">
-            <input id="reg-name" class="custom-input" placeholder="請輸入完整姓名" type="text"/>
-            <span class="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-slate-300">badge</span>
-          </div>
-        </div>
-        <div>
-          <label class="input-label">性別</label>
-          <div class="relative">
-            <select id="reg-gender" class="custom-input text-slate-500">
-              <option value="" disabled selected>選擇性別</option>
-              <option value="男">男</option>
-              <option value="女">女</option>
-            </select>
-            <span class="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
-          </div>
-        </div>
-        <div>
-          <label class="input-label">手機號碼</label>
-          <div class="relative">
-            <input id="reg-phone" class="custom-input" placeholder="0912-345-678" type="tel"/>
-            <span class="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-slate-300">smartphone</span>
-          </div>
-        </div>
-        <div>
-          <label class="input-label">所屬業種</label>
-          <div class="relative">
-            <input id="reg-industry" class="custom-input" placeholder="請輸入您目前的產業" type="text"/>
-            <span class="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-slate-300">work</span>
-          </div>
-        </div>
-        <div class="pt-6">
-          <button onclick="submitUserRegistration()" class="btn-primary">
-            確認完成註冊 <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
-          </button>
-        </div>
+        <div><label class="input-label">真實姓名</label><div class="relative"><input id="reg-name" class="custom-input" placeholder="請輸入完整姓名" type="text"/><span class="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-slate-300">badge</span></div></div>
+        <div><label class="input-label">性別</label><div class="relative"><select id="reg-gender" class="custom-input text-slate-500"><option value="" disabled selected>選擇性別</option><option value="男">男</option><option value="女">女</option></select><span class="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span></div></div>
+        <div><label class="input-label">手機號碼</label><div class="relative"><input id="reg-phone" class="custom-input" placeholder="0912-345-678" type="tel"/><span class="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-slate-300">smartphone</span></div></div>
+        <div><label class="input-label">所屬業種</label><div class="relative"><input id="reg-industry" class="custom-input" placeholder="請輸入您目前的產業" type="text"/><span class="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-slate-300">work</span></div></div>
+        <div class="pt-6"><button onclick="submitUserRegistration()" class="btn-primary">確認完成註冊 <span class="material-symbols-outlined text-[20px]">arrow_forward</span></button></div>
       </div>
     </div>
 
@@ -195,7 +167,6 @@
         <span class="material-symbols-outlined absolute left-6 top-1/2 -translate-y-1/2 text-slate-400">search</span>
         <input type="text" id="crm-search-input" onkeyup="filterCrmList()" class="custom-input !pl-12 bg-white shadow-sm border border-slate-100" placeholder="搜尋參與者姓名...">
       </div>
-
       <div id="admin-crm-list-container" class="space-y-4 px-1"></div>
     </div>
 
@@ -214,7 +185,6 @@
         <span class="material-symbols-outlined absolute left-6 top-1/2 -translate-y-1/2 text-slate-400">search</span>
         <input type="text" id="card-search-input" onkeyup="filterCardList()" class="custom-input !pl-12 bg-white shadow-sm border border-slate-100" placeholder="搜尋姓名或公司...">
       </div>
-
       <div id="admin-card-list-container" class="space-y-4 px-1"></div>
     </div>
 
@@ -237,11 +207,12 @@
 
     <!-- View: Admin Create -->
     <div id="view-admin-create" class="hidden space-y-5 animate-in fade-in pt-4">
-      <div class="px-2 mb-2">
-        <h2 class="text-3xl font-black font-headline text-text-main tracking-tight">建立新活動</h2>
-        <p class="text-text-muted text-[13px] font-medium mt-1">快速部署您的活動報名流程，只需幾個步驟。</p>
+      <div class="px-2 mb-2 flex justify-between items-end">
+        <div>
+          <h2 class="text-3xl font-black font-headline text-text-main tracking-tight">建立新活動</h2>
+          <p class="text-text-muted text-[13px] font-medium mt-1">快速部署您的活動報名流程。</p>
+        </div>
       </div>
-
       <div class="flex p-1.5 rounded-full mx-2 border border-slate-200 bg-white shadow-sm">
         <button onclick="toggleCreateMode('quick')" id="tab-quick" class="flex-1 py-3 rounded-full text-[15px] font-bold bg-white text-primary shadow transition-all">快速匯入</button>
         <button onclick="toggleCreateMode('detailed')" id="tab-detailed" class="flex-1 py-3 rounded-full text-[15px] font-bold text-slate-500 transition-all hover:text-slate-800">完整發佈</button>
@@ -250,14 +221,8 @@
       <!-- 快速模式 -->
       <div id="form-quick" class="space-y-6 px-2 mt-6">
         <div><label class="input-label">活動名稱</label><input type="text" id="quick-name" class="custom-input !pr-5" placeholder="輸入活動標題..."></div>
-        <div>
-          <label class="input-label">活動類型</label>
-          <div class="relative"><select id="quick-type" class="custom-input text-slate-700"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option></select><span class="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span></div>
-        </div>
-        <div>
-          <label class="input-label">預設身份</label>
-          <div class="relative"><select id="quick-identity" class="custom-input text-slate-700"><option>會員</option><option>來賓</option></select><span class="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span></div>
-        </div>
+        <div><label class="input-label">活動類型</label><div class="relative"><select id="quick-type" class="custom-input text-slate-700"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option></select><span class="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span></div></div>
+        <div><label class="input-label">預設身份</label><div class="relative"><select id="quick-identity" class="custom-input text-slate-700"><option>會員</option><option>來賓</option></select><span class="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span></div></div>
         <div>
           <div class="flex justify-between items-center mb-2"><label class="text-[13px] font-bold text-text-main ml-1">名單內容</label><span class="text-[10px] font-bold text-primary bg-primary-light px-2 py-0.5 rounded">支援批次輸入</span></div>
           <textarea id="quick-names" class="custom-input h-48 !pr-5 py-5 resize-none leading-relaxed text-[15px]" placeholder="請貼上參與者姓名，每行一位..."></textarea>
@@ -353,7 +318,7 @@
     <button onclick="switchView('user-profile')" id="nav-user-profile" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">person</span></div><span class="text-[10px] font-bold mt-1">設定</span></button>
   </nav>
 
-  <!-- 底部導覽：管理員 (包含新名片按鈕) -->
+  <!-- 底部導覽：管理員 -->
   <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-between items-center px-1 py-2 z-40 pb-safe shadow-app-nav left-1/2 -translate-x-1/2">
     <button onclick="switchView('admin-activities')" id="nav-admin-activities" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">fact_check</span></div><span class="text-[10px] font-bold mt-1">核銷</span></button>
     <button onclick="switchView('admin-create')" id="nav-admin-create" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">add_circle</span></div><span class="text-[10px] font-bold mt-1">建立</span></button>
@@ -423,15 +388,15 @@
   </div>
 </div>
 
-<!-- ⭐ 新增：名片詳細說明 Modal (滿版) -->
-<div id="card-detail-modal" class="hidden fixed inset-0 z-[100] bg-background flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl overflow-hidden">
+<!-- ================= ⭐ 新增：名片明細 Modal ================= -->
+<div id="card-detail-modal" class="hidden fixed inset-0 z-[60] bg-background flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl overflow-hidden">
   <div class="absolute top-5 right-5 z-50">
     <button onclick="closeCardDetail()" class="w-10 h-10 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-slate-800 shadow-md active:scale-90 transition-transform border border-slate-100">
       <span class="material-symbols-outlined font-bold">close</span>
     </button>
   </div>
 
-  <div class="flex-1 overflow-y-auto pb-10">
+  <div class="flex-1 overflow-y-auto pb-24">
     <div class="w-full h-64 bg-slate-200 relative flex items-center justify-center overflow-hidden">
       <img id="cd-image" src="" class="w-full h-full object-cover hidden">
       <div id="cd-no-image" class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-50">
@@ -460,6 +425,80 @@
       </div>
     </div>
   </div>
+
+  <div class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-100 p-4 pb-safe z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] flex justify-center">
+    <button onclick="openECardGenerator()" class="w-[90%] py-4 bg-emerald-500 text-white rounded-2xl font-bold text-[17px] shadow-lg shadow-emerald-500/30 active:scale-95 transition-all flex items-center justify-center gap-2">
+      ✨ 產生數位電子名片
+    </button>
+  </div>
+</div>
+
+<!-- ================= ⭐ 新增：數位電子名片產生器 (WYSIWYG) ================= -->
+<div id="ecard-generator-modal" class="hidden fixed inset-0 z-[70] bg-slate-100 flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl">
+  <div class="bg-white px-5 py-4 flex justify-between items-center border-b border-slate-200 z-10 shrink-0">
+    <h3 class="text-lg font-black text-slate-800">數位名片產生器</h3>
+    <button onclick="closeECardGenerator()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-90"><span class="material-symbols-outlined">close</span></button>
+  </div>
+
+  <div class="flex-1 overflow-y-auto pb-24">
+    <!-- 即時預覽區 (模擬 LINE 聊天室) -->
+    <div class="p-6 bg-slate-200 flex justify-center items-center">
+      <div class="flex-preview-bubble w-[85%] max-w-[320px]">
+        <img id="preview-ec-img" src="https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png" class="flex-preview-img" onerror="this.src='https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=600&auto=format&fit=crop'">
+        <div class="flex-badge" id="preview-ec-badge">儲存</div>
+        <div class="p-4 text-center">
+          <h2 id="preview-ec-title" class="text-xl font-bold text-slate-800 leading-tight mb-2">標準版分頁標題</h2>
+          <p id="preview-ec-desc" class="text-xs text-slate-500 whitespace-pre-wrap leading-relaxed">內容描述文字預覽大小為 xs，質感細膩呈現。</p>
+        </div>
+        <div class="p-4 pt-0 space-y-2">
+          <div id="preview-ec-btn1" class="w-full bg-[#00B900] text-white text-sm font-bold text-center py-2.5 rounded-lg">了解更多</div>
+          <div id="preview-ec-btn2" class="w-full bg-black text-white text-sm font-bold text-center py-2.5 rounded-lg">立即購買</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 編輯表單區 -->
+    <div class="p-6 bg-white space-y-5">
+      <p class="text-xs font-bold text-emerald-500 uppercase tracking-widest border-b border-emerald-100 pb-2">編輯區 (即時連動)</p>
+      
+      <div>
+        <label class="input-label">圖片網址 (Image URL)</label>
+        <input type="text" id="ec-img-input" class="custom-input !py-3 text-sm" oninput="updateECardPreview()">
+      </div>
+      <div>
+        <label class="input-label">主標題 (Title)</label>
+        <input type="text" id="ec-title-input" class="custom-input !py-3 text-sm font-bold" oninput="updateECardPreview()">
+      </div>
+      <div>
+        <label class="input-label">內容描述 (Description)</label>
+        <textarea id="ec-desc-input" class="custom-input h-24 resize-none text-sm leading-relaxed" oninput="updateECardPreview()"></textarea>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+        <div class="space-y-3">
+          <div class="font-bold text-[13px] text-green-600">綠色按鈕設定</div>
+          <div><label class="text-[11px] font-bold text-slate-400">文字</label><input type="text" id="ec-btn1-label" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none" value="了解更多" oninput="updateECardPreview()"></div>
+          <div><label class="text-[11px] font-bold text-slate-400">連結 (URI)</label><input type="text" id="ec-btn1-url" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none" placeholder="https://" value="https://line.me"></div>
+        </div>
+        <div class="space-y-3">
+          <div class="font-bold text-[13px] text-slate-800">黑色按鈕設定</div>
+          <div><label class="text-[11px] font-bold text-slate-400">文字</label><input type="text" id="ec-btn2-label" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none" value="撥打電話" oninput="updateECardPreview()"></div>
+          <div><label class="text-[11px] font-bold text-slate-400">連結 (URI)</label><input type="text" id="ec-btn2-url" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none" placeholder="tel: 或 https://"></div>
+        </div>
+      </div>
+      
+      <div class="bg-red-50 p-4 rounded-2xl border border-red-100">
+        <div class="font-bold text-[13px] text-red-600 mb-2">紅色右上角標籤設定</div>
+        <div><label class="text-[11px] font-bold text-slate-400">點擊後連結 (URI)</label><input type="text" id="ec-badge-url" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none" value="https://line.me"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-200 p-4 pb-safe z-[80] shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
+    <button onclick="shareECardToLine()" class="w-full py-4 bg-[#00B900] text-white rounded-2xl font-bold text-[17px] shadow-lg shadow-green-500/30 active:scale-95 transition-all flex items-center justify-center gap-2">
+      🚀 轉發至 LINE 聊天室
+    </button>
+  </div>
 </div>
 
 <!-- Toast 通知容器 -->
@@ -483,7 +522,8 @@
   let userProfile = null, isAdmin = false, isViewModeAdmin = false, isRegistered = false, registeredInfo = null;
   let globalPublicActivities = [], currentCheckinData = [], activeActivityName = '', modalTargetView = '';
   let globalCrmData = []; 
-  let globalCardContacts = []; // ⭐ 名片通訊錄全域變數
+  let globalCardContacts = []; 
+  let currentActiveCard = null; 
   let isProcessing = false;
 
   // 💡 [極速載入] 骨架屏
@@ -596,7 +636,7 @@
     if (view === 'admin-activities') loadAdminActivities();
     else if (view === 'admin-settings') loadAdminSettings();
     else if (view === 'admin-crm') loadCrmData();
-    else if (view === 'admin-cards') loadCardContacts(); // ⭐ 載入名片清單
+    else if (view === 'admin-cards') loadCardContacts(); 
     else if (view === 'user-activities') loadUserActivities();
     else if (view === 'user-profile') populateUserProfile();
     else if (view === 'user-history') loadUserHistory();
@@ -617,7 +657,6 @@
     }
   }
 
-  // ⭐ 首頁活動列表
   async function loadUserActivities() {
     const container = document.getElementById('user-activities-container');
     const data = await fetchAPI('getPublicActivities');
@@ -761,7 +800,6 @@
     } catch(e) { console.error(e); } finally { isProcessing = false; }
   }
 
-  // ⭐ CRM 資料讀取與渲染
   async function loadCrmData() {
     const container = document.getElementById('admin-crm-list-container');
     container.innerHTML = '<div class="text-center py-10"><span class="material-symbols-outlined animate-spin text-primary text-3xl">refresh</span></div>';
@@ -848,6 +886,7 @@
   function openCardDetail(idx) {
     const card = globalCardContacts[idx];
     if(!card) return;
+    currentActiveCard = card; // 儲存供名片產生器使用
     
     document.getElementById('cd-name').innerText = card['姓名'] || '未知姓名';
     document.getElementById('cd-title').innerText = [card['職稱'], card['部門']].filter(Boolean).join(' / ') || '無職稱資訊';
@@ -894,10 +933,132 @@
     document.getElementById('card-detail-modal').classList.add('hidden');
   }
 
+  // ==================== ⭐ 數位名片產生器核心邏輯 ====================
+
+  function openECardGenerator() {
+    if (!currentActiveCard) return;
+    const c = currentActiveCard;
+    const fallbackImg = "https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=600&auto=format&fit=crop";
+
+    const title = [c['公司名稱'], c['姓名']].filter(Boolean).join(' - ') || '商務名片';
+    const descArr = [];
+    if (c['職稱']) descArr.push(`職稱：${c['職稱']}`);
+    if (c['手機號碼']) descArr.push(`手機：${c['手機號碼']}`);
+    if (c['電子郵件']) descArr.push(`信箱：${c['電子郵件']}`);
+    const desc = descArr.join('\n') || '點擊下方按鈕與我聯繫';
+
+    const safeUrl = (url) => url && url.startsWith('http') ? url : 'https://line.me';
+    const safeTel = (tel) => tel ? `tel:${tel.replace(/\D/g,'')}` : 'https://line.me';
+
+    document.getElementById('ec-img-input').value = c['名片圖檔'] && c['名片圖檔'] !== '圖片儲存失敗' ? c['名片圖檔'] : fallbackImg;
+    document.getElementById('ec-title-input').value = title;
+    document.getElementById('ec-desc-input').value = desc;
+    
+    document.getElementById('ec-btn1-label').value = "了解更多";
+    document.getElementById('ec-btn1-url').value = safeUrl(c['公司網址']);
+    
+    document.getElementById('ec-btn2-label').value = "撥打電話";
+    document.getElementById('ec-btn2-url').value = safeTel(c['手機號碼']);
+    
+    document.getElementById('ec-badge-url').value = 'https://line.me';
+
+    updateECardPreview();
+    document.getElementById('ecard-generator-modal').classList.remove('hidden');
+  }
+
+  function closeECardGenerator() {
+    document.getElementById('ecard-generator-modal').classList.add('hidden');
+  }
+
+  function updateECardPreview() {
+    const imgUrl = document.getElementById('ec-img-input').value;
+    document.getElementById('preview-ec-img').src = imgUrl;
+    document.getElementById('preview-ec-title').innerText = document.getElementById('ec-title-input').value || '未命名的標題';
+    document.getElementById('preview-ec-desc').innerText = document.getElementById('ec-desc-input').value || '請輸入描述內容...';
+    document.getElementById('preview-ec-btn1').innerText = document.getElementById('ec-btn1-label').value || '按鈕 1';
+    document.getElementById('preview-ec-btn2').innerText = document.getElementById('ec-btn2-label').value || '按鈕 2';
+  }
+
+  function shareECardToLine() {
+    if (!liff.isLoggedIn()) { return showToast('⚠️ 請先在 LINE 中登入才能使用轉發功能', true); }
+    if (!liff.isApiAvailable('shareTargetPicker')) { return showToast('⚠️ 您目前的裝置或版本不支援分享功能', true); }
+
+    const imgUrl = document.getElementById('ec-img-input').value || 'https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=600';
+    const title = document.getElementById('ec-title-input').value || '-';
+    const desc = document.getElementById('ec-desc-input').value || '-';
+    const btn1Label = document.getElementById('ec-btn1-label').value || '查看';
+    const btn1Url = document.getElementById('ec-btn1-url').value || 'https://line.me';
+    const btn2Label = document.getElementById('ec-btn2-label').value || '聯絡';
+    const btn2Url = document.getElementById('ec-btn2-url').value || 'https://line.me';
+    const badgeUrl = document.getElementById('ec-badge-url').value || 'https://line.me';
+
+    const flexMessageObj = {
+      "type": "bubble",
+      "body": {
+        "type": "box",
+        "layout": "vertical",
+        "paddingAll": "0px",
+        "contents": [
+          { "type": "image", "url": imgUrl, "size": "full", "aspectRatio": "20:13", "aspectMode": "cover", "animated": true },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "paddingAll": "15px",
+            "contents": [
+              { "type": "text", "text": title, "weight": "bold", "size": "xl", "align": "center", "wrap": true },
+              { "type": "text", "text": desc, "size": "xs", "margin": "sm", "color": "#666666", "wrap": true }
+            ]
+          },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "position": "absolute",
+            "backgroundColor": "#FF0000",
+            "cornerRadius": "xl",
+            "paddingTop": "4px",
+            "paddingBottom": "4px",
+            "paddingStart": "12px",
+            "paddingEnd": "12px",
+            "offsetTop": "10px",
+            "action": { "type": "uri", "label": "badge", "uri": badgeUrl },
+            "contents": [
+              { "type": "text", "text": "儲存", "color": "#ffffff", "size": "10px", "weight": "bold" }
+            ],
+            "offsetEnd": "10px"
+          }
+        ]
+      },
+      "footer": {
+        "type": "box",
+        "layout": "vertical",
+        "spacing": "sm",
+        "paddingAll": "15px",
+        "backgroundColor": "#FFFFFF",
+        "contents": [
+          {
+            "type": "button", "style": "primary", "color": "#00B900", "height": "sm", "margin": "sm",
+            "action": { "type": "uri", "label": btn1Label, "uri": btn1Url }
+          },
+          {
+            "type": "button", "style": "primary", "color": "#000000", "height": "sm", "margin": "sm",
+            "action": { "type": "uri", "label": btn2Label, "uri": btn2Url }
+          }
+        ]
+      }
+    };
+
+    liff.shareTargetPicker([{ type: "flex", altText: `您收到一張數位名片：${title}`, contents: flexMessageObj }])
+    .then((res) => {
+      if (res) { showToast('🚀 數位名片已成功送出！'); closeECardGenerator(); } 
+      else { showToast('取消傳送'); }
+    })
+    .catch((err) => { console.error(err); showToast('⚠️ 轉發失敗，請確認連結格式正確', true); });
+  }
+
   function showToast(m, e=false) { 
     const t = document.getElementById('toast'); if(!t) return; 
     t.innerHTML = `<span class="material-symbols-outlined icon-filled">${e?'error':'check_circle'}</span>` + m; 
-    t.className = `fixed top-14 left-1/2 -translate-x-1/2 px-6 py-3.5 rounded-full text-[15px] shadow-app-card transition-all z-[10000] font-bold transform translate-y-0 opacity-100 ${e ? 'bg-error text-white' : 'bg-slate-800 text-white'} flex items-center gap-2 w-max max-w-[90vw]`; 
+    t.className = `fixed top-14 left-1/2 -translate-x-1/2 px-6 py-3.5 rounded-full text-[15px] shadow-app-card transition-all z-[10000] font-bold transform translate-y-0 opacity-100 ${e ? 'bg-red-500 text-white' : 'bg-slate-800 text-white'} flex items-center gap-2 w-max max-w-[90vw]`; 
     setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -1rem)'; }, 3000); 
   }
   function showModal(title, desc, target) { document.getElementById('modal-title').innerText = title; document.getElementById('modal-desc').innerHTML = desc; modalTargetView = target; document.getElementById('custom-modal').classList.remove('hidden'); }
@@ -1085,7 +1246,6 @@
       currentCheckinData.map(p => `<div class="bg-white rounded-[2rem] shadow-app-card p-6 mb-4 mx-4"><div class="flex justify-between items-center mb-5"><div class="flex-1"><h4 class="text-[17px] font-extrabold text-slate-800">${p.姓名}</h4><p class="text-[13px] text-primary font-bold mt-1.5 flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">payments</span> ${p.last5?p.last5 : '尚未填寫'}</p></div><button onclick="toggleCheckin('${p.rowId}', ${p.checkedIn})" class="px-6 py-3.5 rounded-full font-bold text-sm transition-all flex items-center gap-1.5 active:scale-95 shadow-sm ${p.checkedIn?'bg-green-500 text-white':'bg-slate-50 text-slate-500 border border-slate-200'}"><span class="material-symbols-outlined text-[18px] icon-filled">${p.checkedIn?'check_circle':'radio_button_unchecked'}</span> ${p.checkedIn?'已簽到':'未簽到'}</button></div><div class="grid grid-cols-2 gap-3 pt-5 border-t border-slate-100"><select onchange="updateRow('${p.rowId}', '繳費狀態', this.value)" class="custom-input !py-3 text-[13px] !px-4 shadow-none"><option value="未繳費" ${p.payStatus==='未繳費'?'selected':''}>未繳費</option><option value="匯款審核中" ${p.payStatus==='匯款審核中'?'selected':''}>匯款審核</option><option value="已完款" ${p.payStatus==='已完款'?'selected':''}>已完款</option></select><select onchange="updateRow('${p.rowId}', '報名狀態', this.value)" class="custom-input !py-3 text-[13px] !px-4 shadow-none"><option value="正常" ${p.regStatus==='正常'?'selected':''}>正常</option><option value="已取消" ${p.regStatus==='已取消'?'selected':''}>已取消</option></select></div></div>`).join(''); 
   }
 
-  // ⭐ 現場新增報名 (Walk-in)
   async function submitWalkIn() {
     if (isProcessing) return;
     const nameInput = document.getElementById('walkin-name');

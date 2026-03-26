@@ -436,7 +436,7 @@
 <!-- ================= ⭐ 數位電子名片產生器 (WYSIWYG) ================= -->
 <div id="ecard-generator-modal" class="hidden fixed inset-0 z-[70] bg-slate-100 flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl">
   
-  <!-- ⭐ 新增：儲存按鈕 -->
+  <!-- 儲存按鈕 -->
   <div class="bg-white px-5 py-4 flex justify-between items-center border-b border-slate-200 z-10 shrink-0 shadow-sm">
     <h3 class="text-lg font-black text-slate-800">數位名片產生器</h3>
     <div class="flex items-center gap-3">
@@ -458,8 +458,7 @@
           <p id="preview-ec-desc" class="text-xs text-slate-500 whitespace-pre-wrap leading-relaxed text-left">內容描述文字預覽大小為 xs，質感細膩呈現。</p>
         </div>
         <!-- 動態按鈕容器 -->
-        <div id="preview-ec-buttons" class="p-4 pt-0 space-y-2">
-        </div>
+        <div id="preview-ec-buttons" class="p-4 pt-0 space-y-2"></div>
       </div>
     </div>
 
@@ -554,6 +553,42 @@
   let isProcessing = false;
   let dynamicAspectRatio = "20:13"; 
 
+  // ⭐ 動態取得圖片真實比例
+  const getTrueAspectRatio = (url) => new Promise((resolve) => {
+      if (!url) return resolve('20:13');
+      const img = new Image();
+      img.onload = function() { resolve(`${this.width}:${this.height}`); };
+      img.onerror = function() { resolve('20:13'); };
+      img.src = url;
+  });
+
+  // ⭐ 終極防呆轉發引擎 (依據實戰指南實作)
+  const triggerFlexSharing = async (flexMsg) => {
+      if (!liff.isLoggedIn()) {
+          liff.login({ redirectUri: window.location.href });
+          return;
+      }
+      try {
+          const res = await liff.shareTargetPicker([flexMsg]);
+          if (res) {
+              showToast('🚀 數位名片已成功轉發！');
+          } else {
+              showToast('取消傳送');
+          }
+          setTimeout(() => liff.closeWindow(), 1500);
+      } catch (error) {
+          console.error("LIFF SDK Share Error:", error);
+          if (error.message && error.message.includes('not allowed')) {
+              alert("⚠️ 系統權限已更新！即將為您重新登入以獲取最新權限。");
+              liff.logout(); 
+              window.location.reload(); 
+          } else {
+              alert('發送取消或發生未知錯誤: ' + error.message);
+              liff.closeWindow();
+          }
+      }
+  };
+
   function renderActivitiesSkeleton() {
     const skeletonHTML = Array(3).fill(0).map(() => `
       <div class="bg-white rounded-[2rem] overflow-hidden border border-slate-100 shadow-[0_12px_30px_rgba(0,0,0,0.04)] animate-pulse">
@@ -579,11 +614,7 @@
       });
       const resText = await response.text();
       let result;
-      try { 
-        result = JSON.parse(resText); 
-      } catch(e) { 
-        throw new Error(`系統連線錯誤，請確認 GAS 已發佈為「所有人」。`); 
-      }
+      try { result = JSON.parse(resText); } catch(e) { throw new Error(`系統連線錯誤，請確認 GAS 已發佈為「所有人」。`); }
       if (!result.success) throw new Error(result.error);
       return result.data;
     } catch (err) {
@@ -598,7 +629,6 @@
       const shareCardId = params.get('shareCardId');
       
       // ==================== ⭐ 自我轉發 (Viral Sharing ID) 模式 ====================
-      // 若網址帶有 shareCardId，代表這是收到名片的客戶點擊左上角分享按鈕進來的
       if (shareCardId) {
         if (!liff.isLoggedIn()) {
             liff.login({ redirectUri: window.location.href });
@@ -609,34 +639,28 @@
         document.getElementById('loading-text').innerText = '準備轉發數位名片...';
         
         try {
-            // 從後台抓取該名片的完整資料
             const contacts = await fetchAPI('getCardContacts');
             const card = contacts.find(c => String(c.rowId) === String(shareCardId));
-
             if (!card) throw new Error('找不到該名片資料');
 
-            // 抓取是否有客製化的設定 (即管理員編輯過儲存的)
             let config = null;
             if (card['自訂名片設定']) {
                 try { config = JSON.parse(card['自訂名片設定']); } catch(e){}
             }
 
-            // 利用共用函式組裝要轉發的 Flex Message
-            const flexMsg = buildFlexMessageFromCard(card, config);
+            // ⭐ 動態確保抓取真實比例
+            const imgUrlForAr = config && config.imgUrl ? config.imgUrl : getDirectImageUrl(card['名片圖檔']);
+            const detectedAr = await getTrueAspectRatio(imgUrlForAr);
 
-            if (liff.isApiAvailable('shareTargetPicker')) {
-                const res = await liff.shareTargetPicker([{ type: "flex", altText: `您收到一張數位名片`, contents: flexMsg }]);
-                if (res) showToast('分享成功！即將關閉視窗...');
-            } else {
-                alert('您的裝置不支援分享功能，請於手機版 LINE 開啟');
-            }
-            setTimeout(() => liff.closeWindow(), 1500);
+            const flexMsg = buildFlexMessageFromCard(card, config, detectedAr);
+            await triggerFlexSharing(flexMsg);
+
         } catch (e) {
             console.error(e);
             alert('名片資料讀取失敗: ' + e.message);
             liff.closeWindow();
         }
-        return; // 終止正常初始化，停留在分享模式
+        return;
       }
 
       // ==================== 原本的系統初始化模式 ====================
@@ -1019,21 +1043,20 @@
   }
 
   // ⭐ 從資料庫與設定組裝 Flex Message JSON (供預覽與發送共用)
-  function buildFlexMessageFromCard(card, config) {
+  function buildFlexMessageFromCard(card, config, dynamicAr = null) {
     let imgUrl, imgSize, ar, title, desc, buttons = [];
     
-    // 如果有自訂設定就套用，否則從 18 個欄位自動推算
     if (config) {
         imgUrl = config.imgUrl || getDirectImageUrl(card['名片圖檔']) || 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
         imgSize = config.imgSize || 'mega';
-        ar = config.ar || '20:13';
+        ar = dynamicAr || config.ar || '20:13';
         title = config.title || '-';
         desc = config.desc || '';
         buttons = config.buttons || [];
     } else {
         imgUrl = getDirectImageUrl(card['名片圖檔']) || 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
         imgSize = 'mega';
-        ar = '20:13';
+        ar = dynamicAr || '20:13';
         title = [card['公司名稱'], card['姓名']].filter(Boolean).join(' - ') || '商務名片';
         const descArr = [];
         if (card['職稱'] || card['部門']) descArr.push(`👤 ${[card['職稱'], card['部門']].filter(Boolean).join(' / ')}`);
@@ -1052,6 +1075,11 @@
         if (card['社群帳號'] && card['社群帳號'].startsWith('http')) buttons.push({ l: '社群連結', u: safeUrl(card['社群帳號']) });
         else if (card['公司網址']) buttons.push({ l: '公司網站', u: safeUrl(card['公司網址']) });
     }
+
+    // ⭐ 保護機制：若尺寸為 full，必須轉成 mega，因為 LINE Bubble 不支援 full
+    if (imgSize === 'full') imgSize = 'mega';
+    // 確保比例格式正確
+    if (!/^\d+:\d+$/.test(ar)) ar = '20:13';
 
     const btnContents = [];
     for (let i=0; i<buttons.length; i++) {
@@ -1188,7 +1216,7 @@
     }
   }
 
-  // ⭐ 新增：將名片設定存入雲端試算表
+  // ⭐ 將名片設定存入雲端試算表
   async function saveECardConfig() {
     if(!currentActiveCard) return;
     const btn = document.getElementById('btn-save-ecard');
@@ -1224,18 +1252,18 @@
 
   // ⭐ 強化發送邏輯：先靜默儲存再發送
   async function shareECardToLine() {
-    if (!liff.isLoggedIn()) { return showToast('⚠️ 請先在 LINE 中登入才能使用轉發功能', true); }
-    if (!liff.isApiAvailable('shareTargetPicker')) { return showToast('⚠️ 您目前的裝置或版本不支援分享功能', true); }
-
     const btnShare = document.getElementById('btn-share-line');
     btnShare.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> 處理中...';
     btnShare.classList.add('pointer-events-none');
 
-    // 1. 自動背景儲存最新設定
+    // 自動背景儲存最新設定前，確保有最新的 AR 比例
+    const currentImgUrl = getDirectImageUrl(document.getElementById('ec-img-input').value) || getDirectImageUrl(currentActiveCard['名片圖檔']);
+    const detectedAr = await getTrueAspectRatio(currentImgUrl);
+
     const config = {
       imgUrl: document.getElementById('ec-img-input').value,
       imgSize: document.getElementById('ec-img-size').value,
-      ar: dynamicAspectRatio,
+      ar: detectedAr,
       title: document.getElementById('ec-title-input').value,
       desc: document.getElementById('ec-desc-input').value,
       buttons: []
@@ -1253,20 +1281,14 @@
       console.warn("自動儲存失敗，直接以當前預覽傳送");
     }
 
-    // 2. 利用共用函式組裝要發送的 JSON
-    const flexMessageObj = buildFlexMessageFromCard(currentActiveCard, config);
+    // 利用共用函式組裝要發送的 JSON
+    const flexMessageObj = buildFlexMessageFromCard(currentActiveCard, config, detectedAr);
 
-    // 3. 呼叫 LINE 分享
-    liff.shareTargetPicker([{ type: "flex", altText: `您收到一張數位名片：${config.title}`, contents: flexMessageObj }])
-    .then((res) => {
-      if (res) { showToast('🚀 數位名片已成功送出！'); closeECardGenerator(); } 
-      else { showToast('取消傳送'); }
-    })
-    .catch((err) => { console.error(err); showToast('⚠️ 轉發失敗，請確認連結格式正確', true); })
-    .finally(() => {
-      btnShare.innerHTML = '🚀 轉發至 LINE 聊天室';
-      btnShare.classList.remove('pointer-events-none');
-    });
+    btnShare.innerHTML = '🚀 轉發至 LINE 聊天室';
+    btnShare.classList.remove('pointer-events-none');
+
+    // 呼叫終極防呆轉發引擎
+    await triggerFlexSharing(flexMessageObj);
   }
 
   function showToast(m, e=false) { 

@@ -65,7 +65,7 @@
     /* 名片產生器預覽區專用樣式 */
     .flex-preview-bubble { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #edf2f7; position: relative; }
     .flex-preview-img { width: 100%; object-fit: cover; background-color: #f1f5f9; transition: aspect-ratio 0.3s ease; }
-    .flex-badge { position: absolute; top: 10px; right: 10px; background-color: #FF0000; color: white; font-size: 10px; font-weight: bold; padding: 4px 12px; border-radius: 9999px; }
+    .flex-badge { position: absolute; top: 10px; left: 10px; background-color: #FF0000; color: white; font-size: 14px; font-weight: bold; padding: 4px 12px; border-radius: 9999px; }
   </style>
 </head>
 <body class="font-body text-text-main min-h-screen flex flex-col items-center">
@@ -445,7 +445,7 @@
     <div class="p-6 bg-slate-200 flex justify-center items-center">
       <div class="flex-preview-bubble w-[85%] max-w-[320px]">
         <img id="preview-ec-img" src="https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png" class="flex-preview-img">
-        <div class="flex-badge" id="preview-ec-badge">儲存</div>
+        <div class="flex-badge" id="preview-ec-badge">分享好友</div>
         <div class="p-4 text-center">
           <h2 id="preview-ec-title" class="text-xl font-bold text-slate-800 leading-tight mb-2">標準版分頁標題</h2>
           <p id="preview-ec-desc" class="text-xs text-slate-500 whitespace-pre-wrap leading-relaxed text-left">內容描述文字預覽大小為 xs，質感細膩呈現。</p>
@@ -472,7 +472,8 @@
           </div>
           <div class="relative w-28 shrink-0">
             <select id="ec-img-size" class="custom-input !py-3 text-sm w-full appearance-none" onchange="updateECardPreview()">
-              <option value="mega">mega (標準)</option>
+              <option value="full">full (滿版)</option>
+              <option value="mega">mega (巨大)</option>
               <option value="giga">giga (超大)</option>
             </select>
             <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">expand_more</span>
@@ -512,7 +513,7 @@
       </div>
       
       <div class="bg-red-50 p-4 rounded-2xl border border-red-100">
-        <div class="font-bold text-[13px] text-red-600 mb-2">紅色右上角標籤設定</div>
+        <div class="font-bold text-[13px] text-red-600 mb-2">紅色左上角標籤設定</div>
         <div><label class="text-[11px] font-bold text-slate-400">點擊後連結 (URI)</label><input type="text" id="ec-badge-url" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none" value="https://line.me"></div>
       </div>
     </div>
@@ -1011,7 +1012,8 @@
       document.getElementById(`ec-btn${i}-url`).value = btn ? btn.url : '';
     }
     
-    document.getElementById('ec-badge-url').value = 'https://line.me';
+    // ⭐ 將標籤預設設為 LIFF 首頁網址 (點擊後開啟系統)
+    document.getElementById('ec-badge-url').value = `https://liff.line.me/${LIFF_ID}`;
 
     // 強制重置圖片預覽屬性，以觸發全新的比例偵測
     document.getElementById('preview-ec-img').removeAttribute('data-current-src');
@@ -1078,7 +1080,7 @@
 
     const title = document.getElementById('ec-title-input').value || '-';
     const desc = document.getElementById('ec-desc-input').value || '-';
-    const badgeUrl = document.getElementById('ec-badge-url').value || 'https://line.me';
+    const badgeUrl = document.getElementById('ec-badge-url').value || `https://liff.line.me/${LIFF_ID}`;
 
     // 抓取有效按鈕組裝 JSON，統一顏色為 #ff751f
     const btnContents = [];
@@ -1126,9 +1128,9 @@
             "offsetTop": "10px",
             "action": { "type": "uri", "label": "badge", "uri": badgeUrl },
             "contents": [
-              { "type": "text", "text": "儲存", "color": "#ffffff", "size": "10px", "weight": "bold" }
+              { "type": "text", "text": "分享好友", "color": "#ffffff", "size": "sm", "weight": "bold" } // ⭐ 修改名稱與大小
             ],
-            "offsetEnd": "10px"
+            "offsetStart": "10px" // ⭐ 調整到左上角
           }
         ]
       }

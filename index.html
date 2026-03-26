@@ -75,6 +75,11 @@
       <span id="header-admin-badge" class="hidden bg-primary-light text-primary text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-bold ml-1">Admin</span>
     </div>
     <div class="flex items-center gap-3">
+      <!-- ⭐ 新增：管理員專屬的頂部名片快捷按鈕 -->
+      <button id="admin-card-btn" onclick="window.location.href='card.html'" class="hidden w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center active:scale-95 transition-all shadow-sm" title="掃描名片">
+        <span class="material-symbols-outlined text-[18px]">add_card</span>
+      </button>
+
       <div id="user-profile-badge" class="hidden flex items-center gap-2">
         <img id="user-avatar" src="" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm">
       </div>
@@ -178,16 +183,18 @@
       <div id="admin-activity-list-container" class="space-y-5"></div>
     </div>
 
-    <!-- View: Admin CRM Dashboard (✨ 恢復與美化的 CRM 儀表板) -->
+    <!-- View: Admin CRM Dashboard -->
     <div id="view-admin-crm" class="hidden space-y-5 animate-in fade-in pt-4">
       <div class="px-2 mb-2 flex justify-between items-end">
         <div>
           <h2 class="text-3xl font-black font-headline text-text-main tracking-tight">會員 CRM</h2>
           <p class="text-text-muted text-[13px] font-medium mt-1">追蹤並管理所有來賓與會員的活動活躍度。</p>
         </div>
+        <!-- ⭐ 新增：CRM 儀表板內的大顆名片按鈕 -->
+        <button onclick="window.location.href='card.html'" class="shrink-0 w-11 h-11 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30 active:scale-90 transition-all">
+          <span class="material-symbols-outlined text-[22px]">document_scanner</span>
+        </button>
       </div>
-      
-      <!-- 搜尋列 -->
       <div class="relative px-2">
         <span class="material-symbols-outlined absolute left-6 top-1/2 -translate-y-1/2 text-slate-400">search</span>
         <input type="text" id="crm-search-input" onkeyup="filterCrmList()" class="custom-input !pl-12 bg-white shadow-sm border border-slate-100" placeholder="搜尋參與者姓名...">
@@ -477,6 +484,7 @@
       if (isAdmin) {
         document.getElementById('role-switch-btn').classList.remove('hidden');
         document.getElementById('header-admin-badge').classList.remove('hidden');
+        document.getElementById('admin-card-btn').classList.remove('hidden'); // ⭐ 顯示名片按鈕
         isViewModeAdmin = true; switchView('admin-activities');
       } else {
         if (isRegistered) {
@@ -497,9 +505,11 @@
     isViewModeAdmin = !isViewModeAdmin;
     if (isViewModeAdmin) {
       document.getElementById('header-admin-badge').classList.remove('hidden');
+      document.getElementById('admin-card-btn').classList.remove('hidden'); // ⭐ 顯示名片按鈕
       switchView('admin-activities');
     } else { 
       document.getElementById('header-admin-badge').classList.add('hidden');
+      document.getElementById('admin-card-btn').classList.add('hidden'); // ⭐ 隱藏名片按鈕
       if (isRegistered) switchView('user-activities'); else switchView('user-register'); 
     }
   }

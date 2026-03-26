@@ -7,6 +7,8 @@
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <!-- ⭐ 引入 LIFF SDK -->
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   
   <script id="tailwind-config">
     tailwind.config = {
@@ -14,7 +16,7 @@
       theme: {
         extend: {
           colors: {
-            primary: "#10b981", // 名片系統改用綠色系以做區別
+            primary: "#10b981", 
             "primary-light": "#d1fae5",
             background: "#f8f9fc",
             "input-bg": "#f0f2f8",
@@ -133,9 +135,28 @@
 <div id="toast" class="fixed top-14 left-1/2 -translate-x-1/2 px-6 py-3.5 rounded-full text-[15px] shadow-app-card transition-all z-[10000] font-bold transform translate-y-0 opacity-0 pointer-events-none flex items-center gap-2 w-max max-w-[90vw] bg-slate-800 text-white"></div>
 
 <script>
-  // ⭐ 請確定此處的 WORKER_URL 與您首頁的相同
+  // ⭐ 確保此處的 LIFF_ID 和 WORKER_URL 與您的專案一致
+  const LIFF_ID = "2009367829-DLtYBDUm"; 
   const WORKER_URL = "https://actmaster.fangwl591021.workers.dev"; 
+  
   let compressedBase64 = "";
+  let userProfile = null;
+
+  // ⭐ 初始化 LIFF，抓取登入者的 UID
+  window.onload = async () => {
+    try {
+      await liff.init({ liffId: LIFF_ID });
+      if (liff.isLoggedIn()) {
+        userProfile = await liff.getProfile();
+        console.log("LIFF 登入成功，取得 UID:", userProfile.userId);
+      } else {
+        liff.login();
+      }
+    } catch (err) {
+      console.error("LIFF Init Error:", err);
+      showToast("⚠️ LIFF 初始化失敗，無法自動帶入您的身分");
+    }
+  };
 
   function switchSection(id) {
     ['section-upload', 'section-loading', 'section-form'].forEach(v => {
@@ -157,7 +178,7 @@
     setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -1rem)'; }, 3000);
   }
 
-  // 1. 圖片前端壓縮 (確保 OCR 清晰度，但體積不過大)
+  // 1. 圖片前端壓縮
   function processCardImage(input) {
     const file = input.files[0];
     if (!file) return;
@@ -169,7 +190,7 @@
       const img = new Image();
       img.onload = async () => {
         let w = img.width, h = img.height;
-        let maxWidth = 1200; // OCR 需要一定解析度，設為 1200
+        let maxWidth = 1200; 
         if (w > maxWidth) { h = Math.round(h * (maxWidth/w)); w = maxWidth; }
         
         const cvs = document.createElement('canvas');
@@ -223,16 +244,19 @@
     }
   }
 
-  // 3. 將確認後的資料連同圖片傳給 GAS
+  // 3. 將確認後的資料連同 UID 傳給 GAS
   async function saveToCloud() {
     const btn = document.getElementById('btn-save');
     btn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> 上傳中...';
     btn.classList.add('btn-disabled');
     
+    // ⭐ 將抓取到的 userId 包裝進 payload
     const payload = {
       base64Image: compressedBase64,
-      Notes: document.getElementById('f-Notes').value
+      Notes: document.getElementById('f-Notes').value,
+      userId: userProfile ? userProfile.userId : ''
     };
+    
     const fields = ['Name', 'EnglishName', 'Title', 'Department', 'CompanyName', 'TaxID', 'Mobile', 'Tel', 'Ext', 'Fax', 'Address', 'Email', 'Website', 'SocialMedia', 'Slogan'];
     fields.forEach(f => { payload[f] = document.getElementById(`f-${f}`).value; });
     

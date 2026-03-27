@@ -212,7 +212,6 @@
 <!-- ================= 名片明細 Modal ================= -->
 <div id="card-detail-modal" class="hidden fixed inset-0 z-[60] bg-background flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl overflow-hidden">
   
-  <!-- 右上角加入「編輯」按鈕 -->
   <div class="absolute top-5 right-5 z-50 flex gap-2">
     <button onclick="openCardEdit()" class="w-10 h-10 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-blue-600 shadow-md active:scale-90 transition-transform border border-slate-100" title="編輯補登資料">
       <span class="material-symbols-outlined font-bold">edit</span>
@@ -410,7 +409,6 @@
   let isProcessing = false;
   let dynamicAspectRatio = "20:13"; 
 
-  // ⭐ 智慧電話號碼修復函式
   function formatPhoneStr(val) {
     if (val === null || val === undefined) return '';
     let s = String(val).trim();
@@ -705,7 +703,6 @@
     document.getElementById('card-detail-modal').classList.add('hidden');
   }
 
-  // ⭐ 名片事後編輯與資料綁定
   function openCardEdit() {
     const c = currentActiveCard;
     if (!c) return;
@@ -803,8 +800,6 @@
     }
   }
 
-  // ==================== 數位電子名片產生器 ====================
-
   function getDirectImageUrl(url) {
     if (!url) return url;
     const driveMatch = url.match(/id=([a-zA-Z0-9_-]+)/) || url.match(/d\/([a-zA-Z0-9_-]+)/);
@@ -849,8 +844,13 @@
   function buildFlexMessageFromCard(card, config, dynamicAr = null) {
     let imgUrl, imgActionUrl, imgSize, aspectMode, ar, title, desc, buttons = [];
     
+    let rawImg = (config && config.imgUrl) ? config.imgUrl : (card && card['名片圖檔'] ? card['名片圖檔'] : '');
+    if (!rawImg || typeof rawImg !== 'string' || !rawImg.startsWith('http')) {
+        rawImg = 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
+    }
+    imgUrl = getDirectImageUrl(rawImg);
+    
     if (config) {
-        imgUrl = getDirectImageUrl(config.imgUrl) || getDirectImageUrl(card['名片圖檔']) || 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
         imgActionUrl = config.imgActionUrl || 'https://liff.line.me/2009367829-DLtYBDUm';
         imgSize = config.imgSize || 'mega';
         aspectMode = config.aspectMode || 'cover';
@@ -859,7 +859,6 @@
         desc = config.desc || '-'; 
         buttons = config.buttons || [];
     } else {
-        imgUrl = getDirectImageUrl(card['名片圖檔']) || 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
         imgActionUrl = 'https://liff.line.me/2009367829-DLtYBDUm';
         imgSize = 'mega';
         aspectMode = 'cover';
@@ -877,7 +876,11 @@
 
     const validSizes = ['nano', 'micro', 'kilo', 'mega', 'giga'];
     if (!validSizes.includes(imgSize) || imgSize === 'full') imgSize = 'mega';
+    
     if (!/^\d+:\d+$/.test(ar)) ar = '20:13';
+    const [w, h] = ar.split(':').map(Number);
+    if (!w || !h || isNaN(w) || isNaN(h)) ar = '20:13';
+
     title = (title || '').trim() || '-';
     desc = (desc || '').trim() || '-';
 
@@ -890,12 +893,11 @@
         let safeU = buttons[i].u ? String(buttons[i].u).trim() : '';
         if (!safeU) { safeU = 'https://line.me'; } 
         else if (!safeU.match(/^(http|https|tel|mailto|line):/i)) {
-            // ⭐ 完美還原舊版寫法，並只針對 886 做乾淨俐落的替換處理
             if (/^[\d\-\+\s()]+$/.test(safeU)) {
-                let numStr = safeU.replace(/[^\d+]/g, ''); 
-                if (numStr.startsWith('+886')) numStr = '0' + numStr.substring(4);
-                else if (numStr.startsWith('886')) numStr = '0' + numStr.substring(3);
-                safeU = numStr ? 'tel:' + numStr : 'https://line.me';
+                let pureNum = safeU.replace(/[^\d+]/g, '');
+                if (pureNum.startsWith('+886')) pureNum = '0' + pureNum.substring(4);
+                else if (pureNum.startsWith('886')) pureNum = '0' + pureNum.substring(3);
+                safeU = pureNum ? 'tel:' + pureNum : 'https://line.me';
             }
             else if (safeU.includes('@')) safeU = 'mailto:' + safeU;
             else safeU = 'https://' + safeU;
@@ -909,6 +911,7 @@
 
     const badgeUrl = `https://liff.line.me/${LIFF_ID}?shareCardId=${card.rowId}`;
 
+    // ⭐ 完美套用標準 Flex Message 架構，將圖片與文字合併至 body，確保標籤可以完美覆蓋！
     const flexContents = {
         "type": "bubble",
         "size": imgSize,
@@ -923,14 +926,13 @@
                   "size": "full", 
                   "aspectRatio": ar, 
                   "aspectMode": aspectMode, 
-                  "animated": true,
-                  "action": { "type": "uri", "uri": safeImgActionUrl.substring(0, 1000) }
+                  "action": { "type": "uri", "label": "cover", "uri": safeImgActionUrl.substring(0, 1000) }
                 },
                 {
                     "type": "box", "layout": "vertical", "paddingAll": "15px",
                     "contents": [
                         { "type": "text", "text": title, "weight": "bold", "size": "xl", "align": "center", "wrap": true },
-                        { "type": "text", "text": desc, "size": "xs", "margin": "sm", "color": "#666666", "wrap": true }
+                        { "type": "text", "text": desc, "size": "xs", "margin": "md", "color": "#666666", "wrap": true }
                     ]
                 },
                 {

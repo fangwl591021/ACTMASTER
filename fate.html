@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html class="light" lang="zh-TW">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+  <title>AI 商業智能配對</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#ec4899", // 粉紅色系，代表媒合
+            "primary-light": "#fce7f3",
+            background: "#f8f9fc",
+            "input-bg": "#f0f2f8",
+            "text-main": "#1e293b",
+          }
+        },
+      },
+    }
+  </script>
+  <style>
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
+    .icon-filled { font-variation-settings: 'FILL' 1; }
+    body { background-color: #f8f9fc; -webkit-tap-highlight-color: transparent; }
+    .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1.5rem); }
+    .custom-input { @apply w-full py-4 px-5 bg-input-bg border-none rounded-2xl outline-none focus:ring-2 focus:ring-primary/30 transition-all font-medium text-text-main; }
+    .nav-btn { @apply flex flex-col items-center gap-1.5 transition-all w-20 text-slate-400; }
+    .nav-btn .icon-box { @apply px-5 py-1.5 rounded-full transition-all; }
+    .nav-active { @apply text-primary font-bold; }
+    .nav-active .icon-box { @apply bg-primary-light text-primary; }
+    .nav-active .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
+  </style>
+</head>
+<body class="font-body text-text-main min-h-screen flex flex-col items-center">
+
+<div class="w-full max-w-md bg-background h-screen relative flex flex-col shadow-2xl overflow-hidden">
+  
+  <nav class="fixed top-0 w-full max-w-md z-40 bg-background/90 backdrop-blur-xl px-6 py-4 flex justify-between items-center left-1/2 -translate-x-1/2 border-b border-slate-200/50">
+    <div class="text-[20px] font-black text-primary flex items-center gap-2 font-headline tracking-tight">
+      <span class="material-symbols-outlined text-[24px] icon-filled">psychology</span>
+      AI 合作配對池
+    </div>
+  </nav>
+
+  <main class="flex-1 overflow-y-auto pb-32 pt-20 px-4 space-y-6">
+    
+    <div id="view-loading" class="h-full flex flex-col items-center justify-center space-y-4 pb-20">
+      <span class="material-symbols-outlined text-5xl text-primary animate-spin mb-2">data_usage</span>
+      <p class="text-primary font-bold tracking-widest text-sm">載入通訊錄與標籤...</p>
+    </div>
+
+    <div id="view-main" class="hidden animate-in fade-in pt-2">
+      <div class="bg-white rounded-[2rem] shadow-sm p-6 mb-6">
+        <h2 class="text-xl font-black mb-2 text-slate-800">尋找完美合作夥伴</h2>
+        <p class="text-sm text-slate-500 mb-4 font-medium">輸入您的業務需求，AI 將結合您的性格與 CRM 資料庫的命理標籤，尋找最互補的人選。</p>
+        
+        <textarea id="search-query" class="custom-input h-28 resize-none mb-4" placeholder="例如：我想找有電商通路資源的夥伴，且做事穩重細心..."></textarea>
+        
+        <button id="btn-match" onclick="startMatchmaking()" class="w-full py-4 bg-primary text-white rounded-2xl font-bold text-[16px] shadow-lg shadow-pink-500/30 active:scale-95 transition-all flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined">magic_button</span> 啟動 AI 媒合
+        </button>
+      </div>
+
+      <div id="results-container" class="space-y-4">
+        <!-- 媒合結果卡片會在這裡生成 -->
+      </div>
+    </div>
+
+  </main>
+
+  <nav class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-around items-center px-1 py-2 z-40 pb-safe shadow-[0_-4px_15px_rgba(0,0,0,0.03)]">
+    <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn group"><div class="icon-box group-hover:bg-slate-50"><span class="material-symbols-outlined text-[26px]">fact_check</span></div><span class="text-[10px] font-bold mt-1">核銷</span></button>
+    <button onclick="window.location.href='active.html'" class="nav-btn group"><div class="icon-box group-hover:bg-slate-50"><span class="material-symbols-outlined text-[26px]">add_circle</span></div><span class="text-[10px] font-bold mt-1">建立</span></button>
+    <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn group"><div class="icon-box group-hover:bg-slate-50"><span class="material-symbols-outlined text-[26px]">groups</span></div><span class="text-[10px] font-bold mt-1">CRM</span></button>
+    <button class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">psychology</span></div><span class="text-[10px] font-bold mt-1">配對</span></button>
+    <button onclick="window.location.href='card.html'" class="nav-btn group"><div class="icon-box group-hover:bg-slate-50"><span class="material-symbols-outlined text-[26px]">recent_patient</span></div><span class="text-[10px] font-bold mt-1">名片</span></button>
+  </nav>
+</div>
+
+<script>
+  const LIFF_ID = "2009367829-DLtYBDUm"; 
+  const WORKER_URL = "https://actmaster.fangwl591021.workers.dev"; 
+  
+  let globalCardContacts = [];
+  let currentUserProfile = null;
+
+  window.onload = async () => {
+    try {
+      await liff.init({ liffId: LIFF_ID });
+      if (!liff.isLoggedIn()) { liff.login(); return; }
+      
+      const profile = await liff.getProfile();
+      // 嘗試從資料庫取得當前使用者的資訊與標籤
+      const userRes = await fetchAPI('checkUser', { userId: profile.userId });
+      currentUserProfile = {
+        name: userRes.isRegistered ? userRes.info.name : profile.displayName,
+        industry: userRes.isRegistered ? userRes.info.industry : '未知'
+      };
+
+      globalCardContacts = await fetchAPI('getCardContacts');
+      
+      document.getElementById('view-loading').classList.add('hidden');
+      document.getElementById('view-main').classList.remove('hidden');
+      
+    } catch (err) {
+      alert("初始化失敗：" + err.message);
+    }
+  };
+
+  async function fetchAPI(action, payload = {}) {
+    const response = await fetch(WORKER_URL, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, payload })
+    });
+    const result = await response.json();
+    if (!result.success) throw new Error(result.error);
+    return result.data;
+  }
+
+  async function startMatchmaking() {
+    const query = document.getElementById('search-query').value.trim();
+    if (!query) return alert('請輸入您的業務需求！');
+
+    const btn = document.getElementById('btn-match');
+    btn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> AI 深度分析中...';
+    btn.classList.add('pointer-events-none', 'opacity-70');
+    
+    document.getElementById('results-container').innerHTML = '';
+
+    try {
+      // 濃縮傳送資料以節省 Token
+      const slimContacts = globalCardContacts.map(c => ({
+          rowId: c.rowId,
+          Name: c['姓名'],
+          Company: c['公司名稱'],
+          Title: c['職稱'],
+          Industry: c['服務項目/品牌標語'],
+          Personality: c['個性'],
+          Hobbies: c['興趣'],
+          Wealth: c['財運'],
+          Health: c['健康'],
+          Career: c['事業']
+      }));
+
+      const matches = await fetchAPI('matchmakeContacts', {
+          currentUser: currentUserProfile,
+          query: query,
+          contacts: slimContacts
+      });
+
+      if (!matches || matches.length === 0) {
+          document.getElementById('results-container').innerHTML = '<p class="text-center text-slate-400 mt-10 font-bold">目前資料庫沒有找到高度吻合的對象。</p>';
+      } else {
+          renderMatches(matches);
+      }
+
+    } catch (err) {
+      alert("媒合過程發生錯誤：" + err.message);
+    } finally {
+      btn.innerHTML = '<span class="material-symbols-outlined">magic_button</span> 重新啟動媒合';
+      btn.classList.remove('pointer-events-none', 'opacity-70');
+    }
+  }
+
+  function renderMatches(matches) {
+    const container = document.getElementById('results-container');
+    
+    container.innerHTML = matches.map((match, idx) => {
+      // 從全域變數找回該名片的完整資料
+      const contact = globalCardContacts.find(c => c.rowId === match.rowId);
+      if (!contact) return '';
+
+      return `
+      <div class="bg-white rounded-[1.5rem] shadow-sm border border-slate-100 p-5 animate-in fade-in slide-in-from-bottom-4" style="animation-delay: ${idx * 100}ms">
+        <div class="flex justify-between items-start mb-3">
+            <div>
+                <h3 class="text-lg font-black text-slate-800">${contact['姓名']}</h3>
+                <p class="text-xs text-slate-500 font-bold mt-0.5">${contact['公司名稱']} - ${contact['職稱']}</p>
+            </div>
+            <div class="bg-pink-100 text-pink-600 px-3 py-1 rounded-full text-sm font-black shadow-sm">
+                ${match.score}% 契合
+            </div>
+        </div>
+        
+        <div class="bg-slate-50 p-4 rounded-xl mb-4 border border-slate-100 relative">
+            <span class="material-symbols-outlined absolute top-3 right-3 text-slate-200 text-3xl">format_quote</span>
+            <p class="text-[13px] text-slate-600 leading-relaxed font-medium relative z-10">${match.reason}</p>
+        </div>
+
+        <div class="flex gap-2">
+            ${contact['手機號碼'] ? `<a href="tel:${contact['手機號碼'].replace(/[^\d+]/g,'')}" class="flex-1 py-2.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-xs text-center active:scale-95 transition-transform flex justify-center items-center gap-1"><span class="material-symbols-outlined text-[16px]">call</span> 聯絡</a>` : ''}
+            <button onclick="window.location.href='card.html'" class="flex-1 py-2.5 bg-slate-800 text-white rounded-xl font-bold text-xs text-center active:scale-95 transition-transform flex justify-center items-center gap-1"><span class="material-symbols-outlined text-[16px]">contact_mail</span> 查看名片</button>
+        </div>
+      </div>
+      `;
+    }).join('');
+  }
+</script>
+</body>
+</html>

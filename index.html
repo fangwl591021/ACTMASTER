@@ -189,12 +189,13 @@
     <button onclick="switchView('user-profile')" id="nav-user-profile" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">person</span></div><span class="text-[10px] mt-1 font-bold">設定</span></button>
   </nav>
 
-  <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-100 flex justify-around items-center px-1 py-2 z-40 pb-safe shadow-app-nav left-1/2 -translate-x-1/2">
-    <button onclick="switchView('admin-activities')" id="nav-admin-activities" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">fact_check</span></div><span class="text-[10px] mt-1 font-bold">列表核銷</span></button>
-    <button onclick="window.location.href='active.html'" id="nav-admin-create" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">add_circle</span></div><span class="text-[10px] mt-1 font-bold">建立活動</span></button>
-    <button onclick="switchView('admin-crm')" id="nav-admin-crm" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">groups</span></div><span class="text-[10px] mt-1 font-bold">CRM</span></button>
-    <button onclick="window.location.href='card.html'" id="nav-admin-cards" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">recent_patient</span></div><span class="text-[10px] mt-1 font-bold">名片</span></button>
-    <button onclick="switchView('admin-settings')" id="nav-admin-settings" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">settings</span></div><span class="text-[10px] mt-1 font-bold">參數設定</span></button>
+  <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-100 flex justify-between items-center px-1 py-2 z-40 pb-safe shadow-app-nav left-1/2 -translate-x-1/2">
+    <button onclick="switchView('admin-activities')" id="nav-admin-activities" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">fact_check</span></div><span class="text-[10px] mt-1 font-bold">核銷</span></button>
+    <button onclick="window.location.href='active.html'" id="nav-admin-create" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">add_circle</span></div><span class="text-[10px] mt-1 font-bold">建立</span></button>
+    <button onclick="switchView('admin-crm')" id="nav-admin-crm" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">groups</span></div><span class="text-[10px] mt-1 font-bold">CRM</span></button>
+    <button onclick="window.location.href='fate.html'" id="nav-admin-fate" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px] text-pink-500">psychology</span></div><span class="text-[10px] mt-1 font-bold text-pink-600">配對</span></button>
+    <button onclick="window.location.href='card.html'" id="nav-admin-cards" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">recent_patient</span></div><span class="text-[10px] mt-1 font-bold">名片</span></button>
+    <button onclick="switchView('admin-settings')" id="nav-admin-settings" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">settings</span></div><span class="text-[10px] mt-1 font-bold">參數</span></button>
   </nav>
 </div>
 

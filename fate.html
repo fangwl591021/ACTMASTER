@@ -32,6 +32,7 @@
     .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1.5rem); }
     .custom-input { @apply w-full py-4 px-5 bg-input-bg border-none rounded-2xl outline-none focus:ring-2 focus:ring-primary/30 transition-all font-medium text-text-main; }
     
+    /* 統一導覽列按鈕樣式 */
     .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-slate-400; min-width: 48px; }
     .nav-btn .icon-box { @apply px-3 py-1.5 rounded-full transition-all flex items-center justify-center; }
     .nav-active { @apply text-primary font-bold; }
@@ -59,6 +60,7 @@
 
     <div id="view-main" class="hidden animate-in fade-in pt-2">
       
+      <!-- 命理標籤控制區 -->
       <div class="bg-white rounded-[2rem] shadow-sm p-5 mb-4 border border-slate-100 flex justify-between items-center">
         <div>
            <h3 class="text-sm font-black text-slate-800">資料庫標籤狀態</h3>
@@ -93,6 +95,7 @@
 
   </main>
 
+  <!-- 統一 6 顆按鈕滿版底部導覽列 -->
   <nav id="bottom-nav-admin" class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-evenly items-center px-2 py-2 z-[80] pb-safe shadow-[0_-4px_15px_rgba(0,0,0,0.03)] left-1/2 -translate-x-1/2">
     <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn" id="nav-admin-activities">
       <div class="icon-box"><span class="material-symbols-outlined text-[24px]">fact_check</span></div><span class="text-[10px] mt-1 font-bold whitespace-nowrap">核銷</span>
@@ -113,67 +116,34 @@
       <div class="icon-box"><span class="material-symbols-outlined text-[24px]">settings</span></div><span class="text-[10px] mt-1 font-bold whitespace-nowrap">參數</span>
     </button>
   </nav>
+</div>
 
-  <!-- ================= Web 數位名片預覽與分享 Modal ================= -->
-  <div id="web-card-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex flex-col items-center justify-center p-4 z-[9999] animate-in fade-in duration-300">
-    <div class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] relative">
-      <button onclick="closeWebCard()" class="absolute top-4 right-4 w-8 h-8 bg-black/30 backdrop-blur-md rounded-full text-white flex items-center justify-center active:scale-90 transition-transform z-20">
-        <span class="material-symbols-outlined text-[18px]">close</span>
-      </button>
-      
-      <div class="h-32 bg-slate-200 relative shrink-0">
-        <img id="wc-bg" src="" class="w-full h-full object-cover hidden">
-        <div id="wc-no-bg" class="w-full h-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-          <span class="material-symbols-outlined text-white/50 text-6xl">contact_mail</span>
-        </div>
-      </div>
-      
-      <div class="px-6 pb-6 relative flex-1 overflow-y-auto">
-        <div class="w-20 h-20 bg-white rounded-full p-1 shadow-md absolute -top-10 left-6">
-          <div id="wc-avatar" class="w-full h-full rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-3xl font-black object-cover overflow-hidden">
-          </div>
-        </div>
-        
-        <div class="mt-12">
-          <h2 id="wc-name" class="text-2xl font-black text-slate-800 tracking-tight"></h2>
-          <p id="wc-title" class="text-[13px] font-bold text-indigo-600 mt-1"></p>
-        </div>
-        
-        <div class="mt-6 space-y-3">
-          <a href="#" id="wc-phone-btn" class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl hover:bg-indigo-50 transition-colors">
-            <div class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-indigo-500 shrink-0"><span class="material-symbols-outlined">call</span></div>
-            <div class="flex-1 overflow-hidden"><p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">行動電話</p><p id="wc-phone" class="font-bold text-slate-700 text-[13px] truncate"></p></div>
-          </a>
-          <a href="#" id="wc-email-btn" class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl hover:bg-indigo-50 transition-colors">
-            <div class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-indigo-500 shrink-0"><span class="material-symbols-outlined">mail</span></div>
-            <div class="flex-1 overflow-hidden"><p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">電子信箱</p><p id="wc-email" class="font-bold text-slate-700 text-[13px] truncate"></p></div>
-          </a>
-        </div>
-        
-        <!-- 命理標籤進階矩陣展示 -->
-        <div class="mt-6 border-t border-slate-100 pt-5">
-          <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">psychology</span> 專屬性格與商業分析</h3>
-          <div class="space-y-2">
-            <div class="flex gap-2"><span class="shrink-0 bg-pink-100 text-pink-600 text-[10px] font-black px-2 py-1 rounded-md h-fit mt-0.5">個性</span><span id="wc-tag-personality" class="text-[13px] text-slate-600 font-bold leading-snug"></span></div>
-            <div class="flex gap-2"><span class="shrink-0 bg-orange-100 text-orange-600 text-[10px] font-black px-2 py-1 rounded-md h-fit mt-0.5">興趣</span><span id="wc-tag-hobbies" class="text-[13px] text-slate-600 font-bold leading-snug"></span></div>
-            <div class="flex gap-2"><span class="shrink-0 bg-yellow-100 text-yellow-600 text-[10px] font-black px-2 py-1 rounded-md h-fit mt-0.5">財運</span><span id="wc-tag-wealth" class="text-[13px] text-slate-600 font-bold leading-snug"></span></div>
-            <div class="flex gap-2"><span class="shrink-0 bg-green-100 text-green-600 text-[10px] font-black px-2 py-1 rounded-md h-fit mt-0.5">健康</span><span id="wc-tag-health" class="text-[13px] text-slate-600 font-bold leading-snug"></span></div>
-            <div class="flex gap-2"><span class="shrink-0 bg-blue-100 text-blue-600 text-[10px] font-black px-2 py-1 rounded-md h-fit mt-0.5">事業</span><span id="wc-tag-career" class="text-[13px] text-slate-600 font-bold leading-snug"></span></div>
-          </div>
-        </div>
-      </div>
+<!-- ================= 絕對純淨版：數位電子名片預覽 Modal ================= -->
+<div id="readonly-card-modal" class="hidden fixed inset-0 bg-slate-100/95 backdrop-blur-sm flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl" style="z-index: 1050;">
+  <div class="bg-white px-5 py-4 flex justify-between items-center border-b border-slate-200 z-10 shrink-0 shadow-sm">
+    <h3 class="text-lg font-black text-slate-800">數位名片</h3>
+    <button onclick="closeReadOnlyCard()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-90 transition-transform"><span class="material-symbols-outlined">close</span></button>
+  </div>
 
-      <div class="p-4 bg-slate-50 border-t border-slate-100 shrink-0">
-        <button id="wc-share-btn" class="w-full py-3.5 bg-[#ff751f] text-white rounded-xl font-bold text-[15px] shadow-lg shadow-orange-500/30 active:scale-95 transition-all flex items-center justify-center gap-2">
-          <span class="material-symbols-outlined text-[20px]">send</span> 轉發名片至 LINE
-        </button>
+  <div class="flex-1 overflow-y-auto pb-28 pt-8 px-5 flex flex-col items-center">
+    <!-- 完美還原 Flex Message 的視覺外觀 -->
+    <div class="w-full max-w-[340px] bg-white rounded-[20px] shadow-[0_10px_30px_rgba(0,0,0,0.08)] overflow-hidden relative border border-slate-100">
+      <div class="absolute top-3 left-3 bg-[#FF0000] text-white text-[13px] font-bold px-3 py-1 rounded-full z-10 shadow-sm tracking-widest">分享</div>
+      <img id="ro-img" src="" class="w-full h-auto max-h-[220px] object-cover bg-slate-50">
+      <div class="p-6">
+        <h2 id="ro-title" class="text-[22px] font-black text-slate-800 leading-tight mb-3"></h2>
+        <p id="ro-desc" class="text-[14px] text-slate-500 whitespace-pre-wrap leading-relaxed mb-6"></p>
+        <div id="ro-buttons" class="space-y-2.5"></div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Toast 通知 -->
-<div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-6 py-3.5 rounded-full text-[15px] shadow-sm transition-all font-bold flex items-center gap-2 w-max max-w-[90vw] bg-slate-800 text-white" style="z-index: 10000;"></div>
+  <div class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 p-4 pb-safe flex justify-center" style="z-index: 1060; box-shadow: 0 -10px 30px rgba(0,0,0,0.05);">
+    <button onclick="shareReadOnlyCardToLine()" class="w-[90%] py-4 bg-[#ff751f] text-white rounded-2xl font-bold text-[17px] shadow-lg shadow-orange-500/30 active:scale-95 transition-all flex items-center justify-center gap-2">
+      🚀 轉發名片至 LINE
+    </button>
+  </div>
+</div>
 
 <script>
   const LIFF_ID = "2009367829-DLtYBDUm"; 
@@ -181,7 +151,7 @@
   
   let globalCardContacts = [];
   let currentUserProfile = null;
-  let activeViewCardId = null;
+  let currentActiveCard = null; // 用於存放準備預覽/轉發的純淨版名片
 
   window.onload = async () => {
     try {
@@ -220,16 +190,6 @@
         if (!silent) alert(err.message);
         throw err;
     }
-  }
-
-  function showToast(msg, isError = false) {
-    const t = document.getElementById('toast');
-    t.innerHTML = `<span class="material-symbols-outlined icon-filled">${isError ? 'error' : 'info'}</span> ${msg}`;
-    t.className = `fixed top-14 left-1/2 -translate-x-1/2 px-6 py-3.5 rounded-full text-[15px] shadow-sm transition-all font-bold flex items-center gap-2 w-max max-w-[90vw] ${isError ? 'bg-red-500 text-white' : 'bg-slate-800 text-white'}`; 
-    t.style.zIndex = '10000';
-    t.style.opacity = '100';
-    t.classList.remove('hidden');
-    setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -1rem)'; setTimeout(() => t.classList.add('hidden'), 300); }, 3000); 
   }
 
   function checkDatabaseStatus() {
@@ -408,6 +368,7 @@
 
         <div class="flex gap-2">
             ${phoneStr ? `<a href="tel:${phoneStr}" class="flex-1 py-2.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-[13px] text-center active:scale-95 transition-transform flex justify-center items-center gap-1"><span class="material-symbols-outlined text-[16px]">call</span> 聯絡</a>` : ''}
+            <!-- ⭐ 直接開啟純淨版 Web 數位名片 -->
             <button onclick="openWebCard('${contact.rowId}')" class="flex-1 py-2.5 bg-slate-800 text-white rounded-xl font-bold text-[13px] text-center active:scale-95 transition-transform flex justify-center items-center gap-1"><span class="material-symbols-outlined text-[16px]">contact_mail</span> 查看名片</button>
         </div>
       </div>
@@ -415,7 +376,7 @@
     }).join('');
   }
 
-  // ================= 名片預覽與分享模組 =================
+  // ================= 絕對純淨版：數位電子名片預覽與分享模組 =================
 
   function getDirectImageUrl(url) { 
       if (!url) return url;
@@ -439,68 +400,66 @@
       img.src = url;
   });
 
+  // ⭐ 點擊查看名片：開啟獨立純淨無編輯介面的預覽 Modal
   function openWebCard(rowId) {
-      const c = globalCardContacts.find(x => String(x.rowId) === String(rowId));
-      if (!c) return;
-      activeViewCardId = rowId;
+      const card = globalCardContacts.find(c => String(c.rowId) === String(rowId));
+      if (!card) return;
+      currentActiveCard = card;
 
-      document.getElementById('wc-name').innerText = c['姓名'] || '未知姓名';
-      document.getElementById('wc-title').innerText = [c['公司名稱'], c['職稱']].filter(Boolean).join(' - ') || '無職稱資訊';
+      let config = null;
+      if (card['自訂名片設定']) { try { config = JSON.parse(card['自訂名片設定']); } catch(e){} }
+
+      let rawImg = config?.imgUrl || card['名片圖檔'] || '';
+      if (!rawImg || typeof rawImg !== 'string' || !rawImg.startsWith('http')) {
+          rawImg = 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
+      }
+      const imgUrl = getDirectImageUrl(rawImg);
       
-      const phoneEl = document.getElementById('wc-phone');
-      const phoneBtn = document.getElementById('wc-phone-btn');
-      if (c['手機號碼']) {
-          phoneEl.innerText = c['手機號碼'];
-          phoneBtn.href = `tel:${String(c['手機號碼']).replace(/[^\d+]/g,'')}`;
-          phoneBtn.classList.remove('hidden');
+      let title = config?.title || [card['公司名稱'], card['姓名']].filter(Boolean).join(' - ') || '商務名片';
+      let desc = config?.desc || card['服務項目/品牌標語'] || '點擊下方按鈕與我聯繫';
+      
+      let buttons = [];
+      if (config && config.buttons && config.buttons.length > 0) {
+          buttons = config.buttons;
       } else {
-          phoneBtn.classList.add('hidden');
+          if (card['手機號碼']) {
+              let phone = String(card['手機號碼']).split(',')[0].replace(/[^\d+]/g, '');
+              if (phone.startsWith('886')) phone = '0' + phone.substring(3);
+              if (phone) buttons.push({ l: '撥打手機', u: `tel:${phone}`, c: '#ff751f' });
+          }
+          if (card['公司電話']) {
+              let tel = String(card['公司電話']).split(',')[0].replace(/[^\d+]/g, '');
+              if (tel.startsWith('886')) tel = '0' + tel.substring(3);
+              if (tel) buttons.push({ l: '撥打電話', u: `tel:${tel}`, c: '#ff751f' });
+          }
+          if (card['電子郵件']) {
+              let email = String(card['電子郵件']).split(/[\s,]+/)[0];
+              if (email.includes('@')) buttons.push({ l: '發送信箱', u: `mailto:${email}`, c: '#ff751f' });
+          }
+          if (card['公司地址']) {
+              buttons.push({ l: 'Google 導航', u: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(card['公司地址'].split(',')[0])}`, c: '#ff751f' });
+          }
       }
 
-      const emailEl = document.getElementById('wc-email');
-      const emailBtn = document.getElementById('wc-email-btn');
-      if (c['電子郵件']) {
-          emailEl.innerText = c['電子郵件'];
-          emailBtn.href = `mailto:${c['電子郵件']}`;
-          emailBtn.classList.remove('hidden');
-      } else {
-          emailBtn.classList.add('hidden');
-      }
+      document.getElementById('ro-img').src = imgUrl;
+      
+      const titleAlign = config?.titleAlign || 'center';
+      const titleEl = document.getElementById('ro-title');
+      titleEl.innerText = title;
+      titleEl.style.textAlign = titleAlign === 'start' ? 'left' : (titleAlign === 'end' ? 'right' : 'center');
+      
+      document.getElementById('ro-desc').innerText = desc;
 
-      // 命理標籤帶入
-      document.getElementById('wc-tag-personality').innerText = c['個性'] || '尚未分析';
-      document.getElementById('wc-tag-hobbies').innerText = c['興趣'] || '尚未分析';
-      document.getElementById('wc-tag-wealth').innerText = c['財運'] || '尚未分析';
-      document.getElementById('wc-tag-health').innerText = c['健康'] || '尚未分析';
-      document.getElementById('wc-tag-career').innerText = c['事業'] || '尚未分析';
+      const btnContainer = document.getElementById('ro-buttons');
+      btnContainer.innerHTML = buttons.map(b => `
+          <div class="w-full text-white text-[15px] font-bold text-center py-3.5 rounded-xl shadow-sm" style="background-color: ${b.c || '#ff751f'}">${b.l}</div>
+      `).join('');
 
-      // 處理圖片 (背景與頭像)
-      const imgUrl = getDirectImageUrl(c['名片圖檔']);
-      const bgImg = document.getElementById('wc-bg');
-      const noBg = document.getElementById('wc-no-bg');
-      const avatar = document.getElementById('wc-avatar');
-
-      if (imgUrl && imgUrl !== '圖片儲存失敗') {
-          bgImg.src = imgUrl;
-          bgImg.classList.remove('hidden');
-          noBg.classList.add('hidden');
-          avatar.innerHTML = `<img src="${imgUrl}" class="w-full h-full object-cover">`;
-      } else {
-          bgImg.src = '';
-          bgImg.classList.add('hidden');
-          noBg.classList.remove('hidden');
-          avatar.innerHTML = c['姓名'] ? c['姓名'].charAt(0) : '👤';
-      }
-
-      const shareBtn = document.getElementById('wc-share-btn');
-      shareBtn.onclick = () => shareWebCardToLine(rowId);
-
-      document.getElementById('web-card-modal').classList.remove('hidden');
+      document.getElementById('readonly-card-modal').classList.remove('hidden');
   }
 
-  function closeWebCard() {
-      document.getElementById('web-card-modal').classList.add('hidden');
-      activeViewCardId = null;
+  function closeReadOnlyCard() {
+      document.getElementById('readonly-card-modal').classList.add('hidden');
   }
 
   function buildFlexMessageFromCard(card, config, dynamicAr = null) {
@@ -543,6 +502,9 @@
             let email = String(card['電子郵件']).split(/[\s,]+/)[0];
             if (email.includes('@')) buttons.push({ l: '發送信箱', u: `mailto:${email}`, c: '#ff751f' });
         }
+        if (card['公司地址']) {
+            buttons.push({ l: 'Google 導航', u: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(card['公司地址'].split(',')[0])}`, c: '#ff751f' });
+        }
     }
 
     const validSizes = ['nano', 'micro', 'kilo', 'mega', 'giga'];
@@ -577,39 +539,47 @@
     return flexContents;
   }
 
-  async function shareWebCardToLine(rowId) {
-      const card = globalCardContacts.find(c => String(c.rowId) === String(rowId));
-      if (!card) return;
-
-      const btnShare = document.getElementById('wc-share-btn');
-      btnShare.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> 處理中...';
-      btnShare.classList.add('pointer-events-none');
-
+  const triggerFlexSharing = async (flexContents, altText) => {
+      if (!liff.isLoggedIn()) { liff.login({ redirectUri: window.location.href }); return; }
       try {
-          let config = null;
-          if (card['自訂名片設定']) { try { config = JSON.parse(card['自訂名片設定']); } catch(e){} }
-          
-          const currentImgUrl = config && config.imgUrl ? getDirectImageUrl(config.imgUrl) : getDirectImageUrl(card['名片圖檔']);
-          const detectedAr = await getTrueAspectRatio(currentImgUrl);
-          const flexMessageObj = buildFlexMessageFromCard(card, config, detectedAr);
-          const altText = `您收到一張數位名片：${config ? config.title : card['姓名'] || '商務名片'}`;
-
-          const message = { type: "flex", altText: altText, contents: flexMessageObj };
+          const message = { type: "flex", altText: altText || "您收到一張數位名片", contents: flexContents };
           const res = await liff.shareTargetPicker([message]);
           if (res) showToast('🚀 數位名片已成功轉發！');
           else showToast('取消傳送');
-          
-      } catch(err) {
-          if (err.message && err.message.includes('not allowed')) {
+          setTimeout(() => liff.closeWindow(), 1500);
+      } catch (error) {
+          if (error.message && error.message.includes('not allowed')) {
               alert("⚠️ 系統權限已更新！即將為您重新登入以獲取最新權限。");
               liff.logout(); window.location.reload(); 
           } else {
-              alert('發送取消或發生錯誤: ' + err.message);
+              alert('發送取消或發生未知錯誤: ' + error.message);
+              liff.closeWindow();
           }
-      } finally {
-          btnShare.innerHTML = '<span class="material-symbols-outlined text-[20px]">send</span> 發送數位名片';
-          btnShare.classList.remove('pointer-events-none');
       }
+  };
+
+  async function shareReadOnlyCardToLine() {
+       const btnShare = document.querySelector('#readonly-card-modal button');
+       const originalHTML = btnShare.innerHTML;
+       btnShare.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> 處理中...';
+       btnShare.classList.add('pointer-events-none', 'opacity-70');
+
+       try {
+           let config = null;
+           if (currentActiveCard['自訂名片設定']) { try { config = JSON.parse(currentActiveCard['自訂名片設定']); } catch(e){} }
+           
+           const currentImgUrl = getDirectImageUrl(config?.imgUrl || currentActiveCard['名片圖檔']);
+           const detectedAr = await getTrueAspectRatio(currentImgUrl);
+           const flexMessageObj = buildFlexMessageFromCard(currentActiveCard, config, detectedAr);
+           const altText = `您收到一張數位名片：${config ? config.title : currentActiveCard['姓名'] || '商務名片'}`;
+
+           await triggerFlexSharing(flexMessageObj, altText);
+       } catch(err) {
+           alert("發生錯誤：" + err.message);
+       } finally {
+           btnShare.innerHTML = originalHTML;
+           btnShare.classList.remove('pointer-events-none', 'opacity-70');
+       }
   }
 
 </script>

@@ -43,7 +43,6 @@
     .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1.5rem); }
     .input-label { @apply block text-[13px] font-bold text-text-main mb-1.5 ml-1; }
     .custom-input { @apply w-full py-3.5 px-4 bg-input-bg border-none rounded-xl outline-none focus:ring-2 focus:ring-primary/30 transition-all font-medium text-text-main; }
-    .btn-primary { @apply w-full py-4 bg-primary text-white rounded-2xl font-bold text-[17px] shadow-lg shadow-emerald-500/30 active:scale-95 transition-all flex items-center justify-center gap-2; }
     .btn-disabled { pointer-events: none; opacity: 0.6; filter: grayscale(100%); }
 
     /* 底部導覽列樣式 */
@@ -103,7 +102,7 @@
         <p class="text-[13px] text-text-muted font-medium mb-5 px-2">對準名片拍照或上傳圖檔，系統將自動擷取 16 項聯絡資訊並建檔。</p>
         
         <div class="flex gap-3 px-1">
-          <button onclick="document.getElementById('card-camera').click()" class="flex-[1.2] py-3.5 bg-primary text-white rounded-2xl font-bold text-[15px] shadow-lg shadow-emerald-500/30 active:scale-95 transition-all flex items-center justify-center gap-2">
+          <button onclick="document.getElementById('card-camera').click()" class="flex-[1.2] py-3.5 bg-emerald-500 text-white rounded-2xl font-bold text-[15px] shadow-lg shadow-emerald-500/30 active:scale-95 transition-all flex items-center justify-center gap-2">
             <span class="material-symbols-outlined text-[22px]">photo_camera</span> 開啟相機
           </button>
           <button onclick="document.getElementById('card-upload').click()" class="flex-1 py-3.5 bg-slate-800 text-white rounded-2xl font-bold text-[14px] shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2">
@@ -180,10 +179,16 @@
             </div>
           </div>
 
-          <button id="btn-save" onclick="saveToCloud()" class="btn-primary mt-6">
-            確認並存入雲端 <span class="material-symbols-outlined">cloud_upload</span>
-          </button>
-          <button onclick="resetUI()" class="w-full mt-3 py-3 text-slate-400 font-bold text-sm hover:text-slate-600 transition-colors">取消</button>
+          <!-- ⭐ 優化並排按鈕：明確的實體 Tailwind Class -->
+          <div class="flex gap-3 mt-8">
+            <button onclick="resetUI()" class="w-1/3 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold text-[16px] shadow-sm active:scale-95 transition-all">
+              取消
+            </button>
+            <button id="btn-save" onclick="saveToCloud()" class="flex-1 py-4 bg-emerald-500 text-white rounded-2xl font-bold text-[16px] shadow-lg shadow-emerald-500/30 active:scale-95 transition-all flex items-center justify-center gap-2">
+              存入雲端 <span class="material-symbols-outlined text-[20px]">cloud_upload</span>
+            </button>
+          </div>
+
         </div>
       </div>
     </div>
@@ -210,7 +215,7 @@
     <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">fact_check</span></div><span class="text-[10px] font-bold mt-1">核銷</span></button>
     <button onclick="window.location.href='active.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">add_circle</span></div><span class="text-[10px] font-bold mt-1">建立</span></button>
     <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">groups</span></div><span class="text-[10px] font-bold mt-1">CRM</span></button>
-    <button onclick="resetUI()" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">recent_patient</span></div><span class="text-[10px] font-bold mt-1">名片</span></button>
+    <button onclick="switchView('list')" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">recent_patient</span></div><span class="text-[10px] font-bold mt-1">名片</span></button>
     <button onclick="window.location.href='index.html?view=admin-settings'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">settings</span></div><span class="text-[10px] font-bold mt-1">參數</span></button>
   </nav>
 </div>
@@ -299,7 +304,8 @@
   </div>
   
   <div class="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-200 p-4 pb-safe z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
-    <button id="btn-save-card-edit" onclick="submitCardEdit()" class="btn-primary">
+    <!-- ⭐ 採用實體 Tailwind Classes -->
+    <button id="btn-save-card-edit" onclick="submitCardEdit()" class="w-full py-4 bg-emerald-500 text-white rounded-2xl font-bold text-[17px] shadow-lg shadow-emerald-500/30 active:scale-95 transition-all flex items-center justify-center gap-2">
       儲存更新資料 <span class="material-symbols-outlined">save</span>
     </button>
   </div>
@@ -323,8 +329,8 @@
       <div class="flex-preview-bubble w-[85%] max-w-[300px]" id="preview-ec-bubble">
         <img id="preview-ec-img" src="https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png" class="flex-preview-img">
         <div class="flex-badge" id="preview-ec-badge">分享</div>
-        <div class="p-4">
-          <h2 id="preview-ec-title" class="text-xl font-bold text-slate-800 leading-tight mb-2 text-center">標準版分頁標題</h2>
+        <div class="p-4 text-center">
+          <h2 id="preview-ec-title" class="text-xl font-bold text-slate-800 leading-tight mb-2">標準版分頁標題</h2>
           <p id="preview-ec-desc" class="text-xs text-slate-500 whitespace-pre-wrap leading-relaxed text-left">內容描述文字預覽大小為 xs，質感細膩呈現。</p>
         </div>
         <div id="preview-ec-buttons" class="p-4 pt-0 space-y-2"></div>
@@ -672,8 +678,9 @@
 
   async function saveToCloud() {
     const btn = document.getElementById('btn-save');
+    const originalText = btn.innerHTML;
     btn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> 上傳中...';
-    btn.classList.add('btn-disabled');
+    btn.classList.add('pointer-events-none', 'opacity-50');
     
     const payload = {
       base64Image: compressedBase64,
@@ -685,8 +692,8 @@
     fields.forEach(f => { payload[f] = document.getElementById(`f-${f}`).value; });
     
     if (!payload.Name && !payload.CompanyName) {
-      btn.innerHTML = '確認並存入雲端 <span class="material-symbols-outlined">cloud_upload</span>';
-      btn.classList.remove('btn-disabled');
+      btn.innerHTML = originalText;
+      btn.classList.remove('pointer-events-none', 'opacity-50');
       return showToast("⚠️ 請至少輸入姓名或公司名稱", true);
     }
 
@@ -698,8 +705,8 @@
       globalCardContacts = [];
       setTimeout(() => { resetUI(); }, 1000);
     } catch(err) {
-      btn.innerHTML = '確認並存入雲端 <span class="material-symbols-outlined">cloud_upload</span>';
-      btn.classList.remove('btn-disabled');
+      btn.innerHTML = originalText;
+      btn.classList.remove('pointer-events-none', 'opacity-50');
     }
   }
 
@@ -834,7 +841,7 @@
     const btn = document.getElementById('btn-save-card-edit');
     const originalText = btn.innerHTML;
     btn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> 儲存中...';
-    btn.classList.add('btn-disabled');
+    btn.classList.add('pointer-events-none', 'opacity-50');
 
     const payload = {
       rowId: currentActiveCard.rowId,
@@ -896,7 +903,7 @@
       showToast(err.message, true);
     } finally {
       btn.innerHTML = originalText;
-      btn.classList.remove('btn-disabled');
+      btn.classList.remove('pointer-events-none', 'opacity-50');
     }
   }
 

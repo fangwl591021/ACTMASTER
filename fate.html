@@ -31,8 +31,10 @@
     body { background-color: #f8f9fc; -webkit-tap-highlight-color: transparent; }
     .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1.5rem); }
     .custom-input { @apply w-full py-4 px-5 bg-input-bg border-none rounded-2xl outline-none focus:ring-2 focus:ring-primary/30 transition-all font-medium text-text-main; }
-    .nav-btn { @apply flex flex-col items-center gap-1 transition-all flex-1 text-slate-400; }
-    .nav-btn .icon-box { @apply px-3 py-1.5 rounded-full transition-all; }
+    
+    /* ⭐ 全站統一導覽列按鈕樣式 */
+    .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-slate-400; min-width: 48px; }
+    .nav-btn .icon-box { @apply px-3 py-1.5 rounded-full transition-all flex items-center justify-center; }
     .nav-active { @apply text-primary font-bold; }
     .nav-active .icon-box { @apply bg-primary-light text-primary; }
     .nav-active .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
@@ -58,20 +60,24 @@
 
     <div id="view-main" class="hidden animate-in fade-in pt-2">
       
-      <!-- ⭐ 舊資料補算區塊 (自動偵測與顯示) -->
+      <!-- ⭐ 命理標籤控制區 (含全庫重算功能) -->
       <div class="bg-white rounded-[2rem] shadow-sm p-5 mb-4 border border-slate-100 flex justify-between items-center">
         <div>
            <h3 class="text-sm font-black text-slate-800">資料庫標籤狀態</h3>
-           <p id="sync-status" class="text-xs text-slate-500 font-medium mt-1">
-             共 <span class="font-bold text-slate-700">0</span> 筆，缺漏 <span class="text-red-500 font-bold">0</span> 筆
+           <p id="sync-status" class="text-[11px] text-slate-500 font-medium mt-1 leading-snug">
+             共 <span id="total-count" class="font-bold text-slate-700">0</span> 筆，缺漏 <span id="missing-count" class="text-red-500 font-bold">0</span> 筆
            </p>
         </div>
-        <button id="btn-sync-tags" onclick="syncOldTags()" class="shrink-0 px-4 py-2.5 bg-slate-800 text-white rounded-xl font-bold text-xs flex items-center gap-1 active:scale-95 transition-all hidden shadow-md">
-            <span class="material-symbols-outlined text-[16px]">sync</span> 一鍵補算
-        </button>
+        <div class="flex flex-col gap-2 shrink-0">
+          <button id="btn-sync-tags" onclick="syncOldTags(false)" class="px-4 py-2 bg-slate-800 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1 active:scale-95 transition-all hidden shadow-md">
+              <span class="material-symbols-outlined text-[16px]">sync</span> 一鍵補漏
+          </button>
+          <button id="btn-force-recalc" onclick="syncOldTags(true)" class="px-4 py-2 bg-blue-100 text-blue-600 rounded-xl font-bold text-xs flex items-center justify-center gap-1 active:scale-95 transition-all shadow-md">
+              <span class="material-symbols-outlined text-[16px]">autorenew</span> 全庫重算
+          </button>
+        </div>
       </div>
 
-      <!-- 媒合主區塊 -->
       <div class="bg-white rounded-[2rem] shadow-sm p-6 mb-6">
         <h2 class="text-xl font-black mb-2 text-slate-800">尋找完美合作夥伴</h2>
         <p class="text-sm text-slate-500 mb-4 font-medium">輸入您的業務需求，AI 將結合您的性格與 CRM 資料庫的命理標籤，尋找最互補的人選。</p>
@@ -84,19 +90,31 @@
       </div>
 
       <div id="results-container" class="space-y-4">
-        <!-- 媒合結果卡片會在這裡生成 -->
       </div>
     </div>
 
   </main>
 
-  <nav class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-between items-center px-1 py-2 z-40 pb-safe shadow-[0_-4px_15px_rgba(0,0,0,0.03)]">
-    <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn"><div class="icon-box group-hover:bg-slate-50"><span class="material-symbols-outlined text-[24px]">fact_check</span></div><span class="text-[10px] font-bold mt-1">核銷</span></button>
-    <button onclick="window.location.href='active.html'" class="nav-btn"><div class="icon-box group-hover:bg-slate-50"><span class="material-symbols-outlined text-[24px]">add_circle</span></div><span class="text-[10px] font-bold mt-1">建立</span></button>
-    <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn"><div class="icon-box group-hover:bg-slate-50"><span class="material-symbols-outlined text-[24px]">groups</span></div><span class="text-[10px] font-bold mt-1">CRM</span></button>
-    <button class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">psychology</span></div><span class="text-[10px] font-bold mt-1">配對</span></button>
-    <button onclick="window.location.href='card.html'" class="nav-btn"><div class="icon-box group-hover:bg-slate-50"><span class="material-symbols-outlined text-[24px]">recent_patient</span></div><span class="text-[10px] font-bold mt-1">名片</span></button>
-    <button onclick="window.location.href='index.html?view=admin-settings'" class="nav-btn"><div class="icon-box group-hover:bg-slate-50"><span class="material-symbols-outlined text-[24px]">settings</span></div><span class="text-[10px] font-bold mt-1">參數</span></button>
+  <!-- 統一 6 顆按鈕滿版底部導覽列 -->
+  <nav id="bottom-nav-admin" class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-evenly items-center px-2 py-2 z-[999] pb-safe shadow-[0_-4px_15px_rgba(0,0,0,0.03)] left-1/2 -translate-x-1/2">
+    <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn" id="nav-admin-activities">
+      <div class="icon-box"><span class="material-symbols-outlined text-[24px]">fact_check</span></div><span class="text-[10px] mt-1 font-bold whitespace-nowrap">核銷</span>
+    </button>
+    <button onclick="window.location.href='index.html?view=admin-create'" class="nav-btn" id="nav-admin-create">
+      <div class="icon-box"><span class="material-symbols-outlined text-[24px]">add_circle</span></div><span class="text-[10px] mt-1 font-bold whitespace-nowrap">建立</span>
+    </button>
+    <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn" id="nav-admin-crm">
+      <div class="icon-box"><span class="material-symbols-outlined text-[24px]">groups</span></div><span class="text-[10px] mt-1 font-bold whitespace-nowrap">CRM</span>
+    </button>
+    <button onclick="window.location.href='fate.html'" class="nav-btn nav-active" id="nav-admin-fate">
+      <div class="icon-box"><span class="material-symbols-outlined text-[24px]">psychology</span></div><span class="text-[10px] mt-1 font-bold whitespace-nowrap">配對</span>
+    </button>
+    <button onclick="window.location.href='card.html'" class="nav-btn" id="nav-admin-cards">
+      <div class="icon-box"><span class="material-symbols-outlined text-[24px]">recent_patient</span></div><span class="text-[10px] mt-1 font-bold whitespace-nowrap">名片</span>
+    </button>
+    <button onclick="window.location.href='index.html?view=admin-settings'" class="nav-btn" id="nav-admin-settings">
+      <div class="icon-box"><span class="material-symbols-outlined text-[24px]">settings</span></div><span class="text-[10px] mt-1 font-bold whitespace-nowrap">參數</span>
+    </button>
   </nav>
 </div>
 
@@ -124,7 +142,6 @@
       document.getElementById('view-loading').classList.add('hidden');
       document.getElementById('view-main').classList.remove('hidden');
       
-      // 畫面載入完畢後，檢查是否有缺漏標籤的舊資料
       checkDatabaseStatus();
       
     } catch (err) {
@@ -147,50 +164,58 @@
     }
   }
 
-  // ⭐ 穩健的 HTML 渲染，避免 innerText null 錯誤
   function checkDatabaseStatus() {
-      // 擴大檢查條件：空值或是預設的「待分析」都算缺漏
-      const missingContacts = globalCardContacts.filter(c => !c['個性'] || String(c['個性']).trim() === '' || String(c['個性']) === '待分析');
+      const missingContacts = globalCardContacts.filter(c => !c['個性'] || String(c['個性']).trim() === '' || String(c['個性']) === '待分析' || String(c['個性']) === 'undefined');
       const missingCount = missingContacts.length;
       
-      const statusEl = document.getElementById('sync-status');
-      const btn = document.getElementById('btn-sync-tags');
+      const totalEl = document.getElementById('total-count');
+      const missingEl = document.getElementById('missing-count');
+      const btnSync = document.getElementById('btn-sync-tags');
+      
+      if(totalEl) totalEl.innerText = globalCardContacts.length;
+      if(missingEl) missingEl.innerText = missingCount;
       
       if (missingCount > 0) {
-          statusEl.innerHTML = `共 <span class="font-bold text-slate-700">${globalCardContacts.length}</span> 筆，缺漏 <span class="text-red-500 font-bold">${missingCount}</span> 筆`;
-          btn.classList.remove('hidden');
+          if(btnSync) btnSync.classList.remove('hidden');
       } else {
-          btn.classList.add('hidden');
-          statusEl.innerHTML = `共 ${globalCardContacts.length} 筆資料，<span class="text-emerald-500 font-bold">已全數具備 AI 命理標籤！</span>`;
+          if(btnSync) btnSync.classList.add('hidden');
       }
   }
 
-  // ⭐ 加入 try-catch-break 強力防護，捕捉並顯示 API 錯誤
-  async function syncOldTags() {
-      const missingContacts = globalCardContacts.filter(c => !c['個性'] || String(c['個性']).trim() === '' || String(c['個性']) === '待分析');
-      if (missingContacts.length === 0) return;
+  // ⭐ 加入 forceAll 參數，控制要補漏還是全洗牌
+  async function syncOldTags(forceAll = false) {
+      const targetContacts = forceAll 
+          ? globalCardContacts 
+          : globalCardContacts.filter(c => !c['個性'] || String(c['個性']).trim() === '' || String(c['個性']) === '待分析' || String(c['個性']) === 'undefined');
+          
+      if (targetContacts.length === 0) {
+          if(!forceAll) return;
+      }
 
-      if (!confirm(`系統發現 ${missingContacts.length} 張名片缺乏命理標籤。\n是否立即啟動 AI 批次補算？\n\n(過程約需數十秒至數分鐘，請保持網頁開啟勿關閉)`)) return;
+      const msg = forceAll 
+          ? `確定要強制重新運算【全庫 ${targetContacts.length} 張】名片的命理標籤嗎？\n\n(此操作會覆蓋所有舊標籤，全面套用最新的演算法)` 
+          : `系統發現 ${targetContacts.length} 張名片缺乏命理標籤。\n是否立即啟動 AI 批次補漏？`;
 
-      const btn = document.getElementById('btn-sync-tags');
-      btn.classList.add('pointer-events-none', 'opacity-50');
+      if (!confirm(msg + `\n\n(過程約需數十秒至數分鐘，請保持網頁開啟勿關閉)`)) return;
+
+      const btnSync = document.getElementById('btn-sync-tags');
+      const btnForce = document.getElementById('btn-force-recalc');
+      if(btnSync) btnSync.classList.add('pointer-events-none', 'opacity-50');
+      if(btnForce) btnForce.classList.add('pointer-events-none', 'opacity-50');
+      
       const statusEl = document.getElementById('sync-status');
 
       let successCount = 0;
       
-      for (let i = 0; i < missingContacts.length; i++) {
-          const c = missingContacts[i];
-          statusEl.innerHTML = `<span class="material-symbols-outlined animate-spin text-primary text-[14px] align-middle">refresh</span> 正在同步 <b>${c['姓名'] || '未知'}</b> (${i + 1}/${missingContacts.length})...`;
+      for (let i = 0; i < targetContacts.length; i++) {
+          const c = targetContacts[i];
+          statusEl.innerHTML = `<span class="material-symbols-outlined animate-spin text-primary text-[14px] align-middle">refresh</span> 正在${forceAll?'重算':'同步'} <b>${c['姓名'] || '未知'}</b> (${i + 1}/${targetContacts.length})...`;
           
           try {
-              // 取得推算用的基礎資料
               const mobileToUse = c['手機號碼'] || c['公司電話'] || '';
-              
-              // 呼叫 Cloudflare Worker 的重算 API，並啟動 silent 以自行捕獲錯誤
               const newTags = await fetchAPI('calculateFateTags', { Name: c['姓名'], Mobile: mobileToUse }, true);
               
-              // 組合需要回傳給 Google Apps Script 的完整名片結構
-              const payload = {
+              const fullPayload = {
                   rowId: c.rowId,
                   Name: c['姓名'] || '', 
                   EnglishName: c['英文名/別名'] || '', 
@@ -208,7 +233,6 @@
                   SocialMedia: c['社群帳號'] || '', 
                   Slogan: c['服務項目/品牌標語'] || '', 
                   Notes: c['建檔人/備註'] || '',
-                  // 覆蓋全新的命理標籤
                   Personality: newTags.Personality || '待分析',
                   Hobbies: newTags.Hobbies || '待分析',
                   Wealth: newTags.Wealth || '待分析',
@@ -216,33 +240,32 @@
                   Career: newTags.Career || '待分析'
               };
               
-              // 更新至 Google 試算表
-              await fetchAPI('updateCard', payload, true);
+              await fetchAPI('updateCard', fullPayload, true);
               successCount++;
               
-              // 同步更新當前網頁記憶體中的資料
-              c['個性'] = payload.Personality;
-              c['興趣'] = payload.Hobbies;
-              c['財運'] = payload.Wealth;
-              c['健康'] = payload.Health;
-              c['事業'] = payload.Career;
+              c['個性'] = fullPayload.Personality;
+              c['興趣'] = fullPayload.Hobbies;
+              c['財運'] = fullPayload.Wealth;
+              c['健康'] = fullPayload.Health;
+              c['事業'] = fullPayload.Career;
               
           } catch (err) {
-              console.error(`同步 ${c['姓名']} 失敗:`, err);
-              // ⭐ 精確報錯，中止後續的無效運算
-              alert(`⚠️ 同步「${c['姓名']}」時發生錯誤！\n\n錯誤訊息：${err.message}\n\n可能原因：\n1. 您尚未將 worker.js 更新部署至 Cloudflare。\n2. OpenAI API 超時或配額限制。`);
+              console.error(`處理 ${c['姓名']} 失敗:`, err);
+              alert(`⚠️ 處理「${c['姓名']}」時發生錯誤！\n\n錯誤訊息：${err.message}\n\n可能原因：\n1. 您尚未將 worker.js 更新部署至 Cloudflare。\n2. OpenAI API 超時或配額限制。`);
               break; 
           }
           
-          // 加入微小延遲，防止觸發 OpenAI Rate Limit (Too Many Requests)
           await new Promise(r => setTimeout(r, 1000));
       }
 
-      btn.classList.remove('pointer-events-none', 'opacity-50');
+      if(btnSync) btnSync.classList.remove('pointer-events-none', 'opacity-50');
+      if(btnForce) btnForce.classList.remove('pointer-events-none', 'opacity-50');
+      
+      statusEl.innerHTML = `共 <span id="total-count" class="font-bold text-slate-700">0</span> 筆，缺漏 <span id="missing-count" class="text-red-500 font-bold">0</span> 筆`;
       checkDatabaseStatus();
       
       if (successCount > 0) {
-          alert(`✅ 同步作業結束！\n共成功補算 ${successCount} 張名片標籤。`);
+          alert(`✅ 作業結束！\n共成功${forceAll?'重算':'補算'} ${successCount} 張名片標籤。`);
       }
   }
 
@@ -257,7 +280,6 @@
     document.getElementById('results-container').innerHTML = '';
 
     try {
-      // 濃縮傳送資料以節省 OpenAI Token 成本
       const slimContacts = globalCardContacts.map(c => ({
           rowId: c.rowId,
           Name: c['姓名'],

@@ -9,6 +9,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  
+  <!-- 加入圖片裁切套件，供註冊上傳名片使用 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
   <script id="tailwind-config">
     tailwind.config = {
       darkMode: "class",
@@ -44,11 +49,11 @@
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1.5rem); }
     
-    .input-label { @apply block text-[13px] font-bold text-text-main mb-2 ml-1; }
-    .custom-input { @apply w-full py-4 pl-5 pr-12 bg-input-bg border-none rounded-2xl outline-none focus:ring-2 focus:ring-primary/30 transition-all font-medium text-text-main appearance-none; }
+    .input-label { @apply block text-[12px] font-bold text-slate-500 mb-1.5 ml-1; }
+    .custom-input { @apply w-full py-3.5 pl-4 pr-4 bg-input-bg border-none rounded-xl outline-none focus:ring-2 focus:ring-primary/30 transition-all font-medium text-text-main text-[14px]; }
     .custom-input::placeholder { @apply text-slate-400 font-normal; }
     
-    .btn-primary { @apply w-full py-4 bg-primary text-white rounded-full font-bold text-[17px] shadow-lg shadow-blue-500/30 active:scale-95 transition-all flex items-center justify-center gap-2; }
+    .btn-primary { @apply w-full py-3.5 bg-primary text-white rounded-xl font-bold text-[16px] shadow-lg shadow-blue-500/30 active:scale-95 transition-all flex items-center justify-center gap-2; }
     .btn-disabled { pointer-events: none; opacity: 0.5; filter: grayscale(100%); }
     
     /* 導覽列樣式 */
@@ -60,6 +65,10 @@
 
     .refresh-spin { animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    .cropper-view-box, .cropper-face { border-radius: 8px; }
+    .cropper-line { background-color: #2563eb; opacity: 0.5; }
+    .cropper-point { background-color: #2563eb; }
   </style>
 </head>
 <body class="font-body text-text-main min-h-screen flex flex-col items-center">
@@ -84,50 +93,95 @@
 
   <main id="main-content" class="flex-1 overflow-y-auto pb-32 pt-20 px-4 space-y-6">
 
-    <div id="view-user-register" class="hidden animate-in fade-in duration-500 pt-8">
-      <div class="text-center mb-8 space-y-3">
-        <h1 class="text-3xl font-black font-headline text-text-main tracking-tight">建立會員檔案</h1>
-        <p class="text-text-muted text-sm font-medium">只需填寫一次，以後報名只需一秒</p>
+    <!-- ⭐ 優化與緊湊化：兩階段會員註冊流程 -->
+    <div id="view-user-register" class="hidden animate-in fade-in duration-500 pt-2 pb-10">
+      <div class="text-center mb-4 space-y-1">
+        <h1 class="text-[22px] font-black font-headline text-text-main tracking-tight">建立會員檔案</h1>
+        <p class="text-text-muted text-[13px] font-medium">完善資料以獲得精準的商務推薦</p>
       </div>
       
-      <div class="bg-white rounded-[2rem] shadow-app-card p-8 space-y-6">
-        <div>
-          <label class="input-label">真實姓名</label>
-          <div class="relative">
-            <input id="reg-name" class="custom-input" placeholder="請輸入完整姓名" type="text"/>
-            <span class="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-slate-300">badge</span>
-          </div>
+      <div class="bg-white rounded-[2rem] shadow-app-card p-6 relative overflow-hidden border border-slate-100">
+        
+        <!-- 第一階段：手填資料 -->
+        <div id="reg-step-1" class="space-y-4">
+            <div class="flex items-center gap-2 mb-2 border-b border-slate-100 pb-2">
+               <span class="bg-blue-100 text-blue-600 w-5 h-5 rounded-full flex items-center justify-center font-black text-[11px]">1</span>
+               <h3 class="font-black text-slate-800 text-[14px]">基本資料填寫</h3>
+            </div>
+            
+            <div>
+              <label class="input-label">真實姓名 (必填)</label>
+              <input id="reg-name" class="custom-input" placeholder="請輸入完整姓名" type="text"/>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="input-label">所屬業種</label>
+                <input id="reg-industry" class="custom-input" placeholder="例如：資訊科技" type="text"/>
+              </div>
+              <div>
+                <label class="input-label">性別</label>
+                <div class="relative">
+                  <select id="reg-gender" class="custom-input text-slate-500 appearance-none">
+                    <option value="" disabled selected>選擇性別</option>
+                    <option value="男">男</option><option value="女">女</option>
+                  </select>
+                  <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">expand_more</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="input-label">手機號碼 (必填)</label>
+                <input id="reg-phone" class="custom-input" placeholder="0912-345-678" type="tel"/>
+              </div>
+              <div>
+                <label class="input-label">生日 (啟動八字分析)</label>
+                <input id="reg-birthday" class="custom-input text-slate-500" type="date"/>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="input-label">居住地區</label>
+                <input id="reg-region" class="custom-input" placeholder="例如：台北市" type="text"/>
+              </div>
+              <div>
+                <label class="input-label">完整地址</label>
+                <input id="reg-address" class="custom-input" placeholder="選填" type="text"/>
+              </div>
+            </div>
+
+            <button id="btn-reg-step1" onclick="submitUserRegistrationStep1()" class="w-full py-3.5 bg-slate-800 text-white rounded-xl font-bold text-[15px] shadow-md active:scale-95 transition-all mt-2">
+              儲存並進行下一步
+            </button>
         </div>
-        <div>
-          <label class="input-label">性別</label>
-          <div class="relative">
-            <select id="reg-gender" class="custom-input text-slate-500">
-              <option value="" disabled selected>選擇性別</option>
-              <option value="男">男</option>
-              <option value="女">女</option>
-            </select>
-            <span class="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
-          </div>
+
+        <!-- 第二階段：名片上傳 (初始隱藏/半透明) -->
+        <div id="reg-step-2" class="space-y-4 opacity-30 pointer-events-none transition-opacity duration-300 border-t border-slate-100 pt-5 mt-5">
+            <div class="flex items-center gap-2 mb-2 border-b border-slate-100 pb-2">
+               <span class="bg-emerald-100 text-emerald-600 w-5 h-5 rounded-full flex items-center justify-center font-black text-[11px]">2</span>
+               <h3 class="font-black text-slate-800 text-[14px]">上傳名片建立通訊錄 (建議)</h3>
+            </div>
+            <p class="text-[12px] text-slate-500 font-medium">系統將自動辨識名片，並結合您的生日生成數位專屬命理標籤。</p>
+
+            <div class="flex gap-3">
+              <button onclick="document.getElementById('reg-card-camera').click()" class="flex-1 py-3 bg-emerald-500 text-white rounded-xl font-bold text-[14px] shadow-sm active:scale-95 transition-all flex items-center justify-center gap-1">
+                <span class="material-symbols-outlined text-[18px]">photo_camera</span> 拍照
+              </button>
+              <button onclick="document.getElementById('reg-card-upload').click()" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold text-[14px] shadow-sm active:scale-95 transition-all flex items-center justify-center gap-1">
+                <span class="material-symbols-outlined text-[18px]">image</span> 相簿
+              </button>
+            </div>
+            <input type="file" id="reg-card-camera" accept="image/*" capture="environment" class="hidden" onchange="openRegCropper(this)">
+            <input type="file" id="reg-card-upload" accept="image/*" class="hidden" onchange="openRegCropper(this)">
+
+            <div class="text-center mt-3 pt-3">
+              <button onclick="finishRegistration()" class="text-[12px] text-slate-400 font-bold underline hover:text-primary transition-colors">略過上傳，直接進入系統</button>
+            </div>
         </div>
-        <div>
-          <label class="input-label">手機號碼</label>
-          <div class="relative">
-            <input id="reg-phone" class="custom-input" placeholder="0912-345-678" type="tel"/>
-            <span class="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-slate-300">smartphone</span>
-          </div>
-        </div>
-        <div>
-          <label class="input-label">所屬業種</label>
-          <div class="relative">
-            <input id="reg-industry" class="custom-input" placeholder="請輸入您目前的產業" type="text"/>
-            <span class="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-slate-300">work</span>
-          </div>
-        </div>
-        <div class="pt-6">
-          <button onclick="submitUserRegistration()" class="btn-primary">
-            確認完成註冊 <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
-          </button>
-        </div>
+
       </div>
     </div>
 
@@ -159,13 +213,23 @@
       <div id="user-history-container" class="space-y-4"></div>
     </div>
 
-    <div id="view-user-profile" class="hidden animate-in fade-in pt-4">
+    <!-- ⭐ 更新版個人資料編輯 (加入生日、地區、地址) -->
+    <div id="view-user-profile" class="hidden animate-in fade-in pt-4 pb-10">
       <h2 class="text-2xl font-black font-headline px-2 mb-4 text-text-main">個人資料</h2>
-      <div class="bg-white rounded-[2rem] shadow-app-card p-8 space-y-6">
+      <div class="bg-white rounded-[2rem] shadow-app-card p-6 space-y-4 mx-1">
         <div><label class="input-label">姓名</label><input type="text" id="edit-name" class="custom-input"></div>
-        <div><label class="input-label">性別</label><div class="relative"><select id="edit-gender" class="custom-input"><option value="男">男</option><option value="女">女</option></select><span class="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span></div></div>
-        <div><label class="input-label">電話</label><input type="tel" id="edit-phone" class="custom-input"></div>
-        <div><label class="input-label">業種</label><input type="text" id="edit-industry" class="custom-input"></div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="input-label">業種</label><input type="text" id="edit-industry" class="custom-input"></div>
+          <div><label class="input-label">性別</label><div class="relative"><select id="edit-gender" class="custom-input appearance-none"><option value="男">男</option><option value="女">女</option></select><span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">expand_more</span></div></div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="input-label">手機</label><input type="tel" id="edit-phone" class="custom-input"></div>
+          <div><label class="input-label">生日</label><input type="date" id="edit-birthday" class="custom-input text-slate-500"></div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="input-label">居住地區</label><input type="text" id="edit-region" class="custom-input"></div>
+          <div><label class="input-label">完整地址</label><input type="text" id="edit-address" class="custom-input"></div>
+        </div>
         <button onclick="submitProfileUpdate()" class="btn-primary mt-2">儲存變更</button>
       </div>
     </div>
@@ -339,6 +403,23 @@
   </nav>
 </div>
 
+<!-- ================= 註冊名片裁切 Modal ================= -->
+<div id="section-reg-cropper" class="hidden fixed inset-0 bg-black flex flex-col animate-in fade-in duration-300 w-full max-w-md mx-auto" style="z-index: 1030;">
+  <div class="flex justify-between items-center p-5 bg-black text-white shrink-0 z-10 shadow-md">
+    <button onclick="cancelRegCrop()" class="px-4 py-2 font-bold text-slate-300 active:scale-90 transition-transform">取消</button>
+    <span class="font-black text-[15px] tracking-widest text-emerald-400 flex items-center gap-2">
+      <span class="material-symbols-outlined text-[18px]">crop</span> 裁切名片
+    </span>
+    <button onclick="confirmRegCrop()" class="px-4 py-2 font-bold text-black bg-emerald-400 rounded-full active:scale-95 transition-transform text-sm shadow-[0_0_15px_rgba(16,185,129,0.5)]">確定上傳</button>
+  </div>
+  <div class="flex-1 relative bg-[#111] overflow-hidden flex items-center justify-center">
+    <img id="reg-cropper-image" src="" class="max-w-full max-h-full block opacity-0 transition-opacity duration-300">
+  </div>
+  <div class="p-6 bg-black text-center shrink-0">
+    <p class="text-slate-400 text-sm font-bold">💡 請框選您的名片清晰範圍</p>
+  </div>
+</div>
+
 <div id="activity-detail-modal" class="hidden fixed inset-0 z-[100] bg-background flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl overflow-hidden">
   <div class="absolute top-5 right-5 z-50">
     <button onclick="closeActivityDetail()" class="w-10 h-10 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-slate-800 shadow-md active:scale-90 transition-transform border border-slate-100">
@@ -406,6 +487,11 @@
   let isProcessing = false;
   let currentCategory = '全部活動';
 
+  // ⭐ 註冊專用變數
+  let regStep1Data = {};
+  let regCompressedBase64 = "";
+  let regCropperInstance = null;
+
   function renderActivitiesSkeleton() {
     const skeletonHTML = Array(4).fill(0).map(() => `
       <div class="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm animate-pulse flex flex-col h-[280px]">
@@ -424,7 +510,6 @@
       el.innerHTML = skeletonHTML;
     }
   }
-  renderActivitiesSkeleton();
 
   async function fetchAPI(action, payload = {}) {
     try {
@@ -524,6 +609,132 @@
     else if (view === 'user-activities') loadUserActivities();
     else if (view === 'user-profile') populateUserProfile();
     else if (view === 'user-history') loadUserHistory();
+  }
+
+  // ⭐ 註冊流程 Step 1: 手填資料儲存
+  async function submitUserRegistrationStep1() {
+    const p = {
+        userId: userProfile.userId,
+        name: document.getElementById('reg-name').value.trim(),
+        gender: document.getElementById('reg-gender').value,
+        industry: document.getElementById('reg-industry').value.trim(),
+        phone: document.getElementById('reg-phone').value.trim(),
+        birthday: document.getElementById('reg-birthday').value,
+        region: document.getElementById('reg-region').value.trim(),
+        address: document.getElementById('reg-address').value.trim(),
+        referrerId: ''
+    };
+    if (!p.name || !p.phone) return showToast("⚠️ 請填寫必填欄位 (姓名、電話)", true);
+    
+    const btn = document.getElementById('btn-reg-step1');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[18px]">refresh</span> 儲存中...';
+    btn.classList.add('pointer-events-none');
+    
+    try {
+        await fetchAPI('registerUser', p);
+        regStep1Data = p; // 暫存給名片建檔用
+        
+        document.getElementById('reg-step-1').classList.add('hidden');
+        document.getElementById('reg-step-2').classList.remove('opacity-30', 'pointer-events-none');
+        showToast("✅ 基本資料已儲存，建議上傳名片建立完整檔案");
+    } catch(e) {
+        showToast(e.message, true);
+    } finally {
+        btn.innerHTML = originalText;
+        btn.classList.remove('pointer-events-none');
+    }
+  }
+
+  // ⭐ 註冊流程 Step 2: 圖片裁切與辨識
+  function openRegCropper(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = document.getElementById('reg-cropper-image');
+      img.src = e.target.result;
+      img.style.opacity = '0';
+      document.getElementById('section-reg-cropper').classList.remove('hidden');
+      if (regCropperInstance) regCropperInstance.destroy();
+      setTimeout(() => {
+        img.style.opacity = '1';
+        regCropperInstance = new Cropper(img, { viewMode: 1, dragMode: 'move', autoCropArea: 0.9, restore: false, guides: true, center: true, highlight: false, cropBoxMovable: true, cropBoxResizable: true, toggleDragModeOnDblclick: false });
+      }, 100);
+    };
+    reader.readAsDataURL(file);
+    input.value = ""; 
+  }
+
+  function cancelRegCrop() {
+    if (regCropperInstance) { regCropperInstance.destroy(); regCropperInstance = null; }
+    document.getElementById('section-reg-cropper').classList.add('hidden');
+  }
+
+  function confirmRegCrop() {
+    if (!regCropperInstance) return;
+    const croppedCanvas = regCropperInstance.getCroppedCanvas({ maxWidth: 1200, maxHeight: 1200, imageSmoothingEnabled: true, imageSmoothingQuality: 'high' });
+    regCompressedBase64 = croppedCanvas.toDataURL('image/jpeg', 0.8);
+    cancelRegCrop();
+    recognizeAndSaveRegCard();
+  }
+
+  async function recognizeAndSaveRegCard() {
+    showToast("AI 辨識與命理分析中，這需要幾秒鐘...", false);
+    const step2Div = document.getElementById('reg-step-2');
+    step2Div.classList.add('pointer-events-none', 'opacity-50');
+
+    try {
+      // 1. 執行 OCR，若有生日，會自動啟動命理八字擴增
+      const data = await fetchAPI('recognizeCard', { 
+          base64Image: regCompressedBase64,
+          Birthday: regStep1Data.birthday
+      });
+      
+      // 2. 組合 Payload：以會員基本資料為準，補齊名片上的商務資訊與命理標籤
+      const payload = {
+        base64Image: regCompressedBase64,
+        userId: userProfile.userId,
+        Name: regStep1Data.name, 
+        EnglishName: data.EnglishName || '',
+        Title: data.Title || '',
+        Department: data.Department || '',
+        CompanyName: data.CompanyName || '',
+        TaxID: data.TaxID || '',
+        Mobile: regStep1Data.phone, 
+        Tel: data.Tel || '',
+        Ext: data.Ext || '',
+        Fax: data.Fax || '',
+        Address: data.Address || regStep1Data.address || '',
+        Email: data.Email || '',
+        Website: data.Website || '',
+        SocialMedia: data.SocialMedia || '',
+        Slogan: data.Slogan || '',
+        Notes: '註冊自動建檔',
+        Birthday: regStep1Data.birthday || '',
+        Personality: data.Personality || '',
+        Hobbies: data.Hobbies || '',
+        Wealth: data.Wealth || '',
+        Health: data.Health || '',
+        Career: data.Career || ''
+      };
+      
+      await fetchAPI('saveCard', payload);
+      showToast("🎉 名片建檔成功！歡迎使用系統。");
+      finishRegistration();
+      
+    } catch(err) {
+      showToast("名片處理失敗，已為您略過直接進入系統", true);
+      finishRegistration();
+    }
+  }
+
+  // ⭐ 完成註冊進入系統
+  function finishRegistration() {
+      isRegistered = true;
+      registeredInfo = regStep1Data;
+      document.getElementById('bottom-nav-user').classList.remove('hidden');
+      switchView('user-activities');
   }
 
   async function reloadActivities() {
@@ -727,7 +938,7 @@
     const container = document.getElementById('user-history-container');
     container.innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-primary text-xl"></i></div>';
     const history = await fetchAPI('getUserHistory', { userId: userProfile.userId });
-    if (!history || history.length === 0) { container.innerHTML = '<div class="text-center py-16 bg-white shadow-app-card rounded-[2rem] text-slate-400 font-bold">尚無報名紀錄</div>'; return; }
+    if (!history || history.length === 0) { container.innerHTML = '<div class="text-center py-16 bg-white shadow-app-card rounded-[2rem] text-slate-400 font-bold border border-slate-100">尚無報名紀錄</div>'; return; }
     container.innerHTML = history.map(item => {
       let payStatusBadge = `<span class="px-3 py-1 text-[11px] font-extrabold rounded-full ${item.payStatus==='已完款'?'bg-blue-100 text-blue-600':(item.payStatus==='匯款審核中'?'bg-slate-800 text-white':'bg-orange-100 text-orange-600')}">${item.payStatus}</span>`;
       const isPendingAudit = item.payStatus === '匯款審核中';
@@ -790,10 +1001,39 @@
     } catch(e) { showToast("取消失敗", true); }
   }
 
+  // --- Profile Functions ---
+  function populateUserProfile() { 
+    if(registeredInfo) { 
+        document.getElementById('edit-name').value=registeredInfo.name || ''; 
+        document.getElementById('edit-gender').value=registeredInfo.gender || '男'; 
+        document.getElementById('edit-phone').value=registeredInfo.phone || ''; 
+        document.getElementById('edit-industry').value=registeredInfo.industry || ''; 
+        document.getElementById('edit-birthday').value=registeredInfo.birthday || '';
+        document.getElementById('edit-region').value=registeredInfo.region || '';
+        document.getElementById('edit-address').value=registeredInfo.address || '';
+    } 
+  }
+
+  async function submitProfileUpdate() { 
+    const p = { 
+        userId: userProfile.userId, 
+        name: document.getElementById('edit-name').value.trim(), 
+        gender: document.getElementById('edit-gender').value, 
+        phone: document.getElementById('edit-phone').value.trim(), 
+        industry: document.getElementById('edit-industry').value.trim(),
+        birthday: document.getElementById('edit-birthday').value,
+        region: document.getElementById('edit-region').value.trim(),
+        address: document.getElementById('edit-address').value.trim()
+    }; 
+    await fetchAPI('updateUser', p); 
+    registeredInfo = p; 
+    showToast("✅ 資料儲存成功"); 
+  }
+
   // --- Admin Functions ---
   async function loadAdminActivities() {
     const list = document.getElementById('admin-activity-list-container');
-    list.innerHTML = `<div class="flex justify-center py-10"><span class="material-symbols-outlined animate-spin text-primary text-xl">refresh</span></div>`;
+    list.innerHTML = `<div class="flex justify-center py-10"><i class="fas fa-spinner fa-spin text-primary text-xl"></i></div>`;
     try {
       currentActivities = await fetchAPI('getActivityDashboard');
       renderActivityList(currentActivities, 'admin');
@@ -811,7 +1051,7 @@
   async function openAdminRegistrants(actName) {
     activeActivityName = actName;
     document.getElementById('admin-reg-title').innerText = actName;
-    document.getElementById('admin-reg-list').innerHTML = `<div class="flex justify-center py-10"><span class="material-symbols-outlined animate-spin text-primary text-xl">refresh</span></div>`;
+    document.getElementById('admin-reg-list').innerHTML = `<div class="flex justify-center py-10"><i class="fas fa-spinner fa-spin text-primary text-xl"></i></div>`;
     document.getElementById('admin-registrants-modal').classList.remove('hidden');
     
     try {
@@ -893,7 +1133,6 @@
     } catch(e) { showToast("新增失敗", true); }
   }
 
-  // --- QR Scanner ---
   function startScanner() {
     if(html5QrcodeScanner) return;
     html5QrcodeScanner = new Html5Qrcode("qr-reader");
@@ -929,10 +1168,9 @@
     document.getElementById('qr-scanner-modal').classList.add('hidden');
   }
 
-  // --- CRM & Settings ---
   async function loadCrmData() {
     const list = document.getElementById('admin-crm-list-container');
-    list.innerHTML = `<div class="flex justify-center py-10"><span class="material-symbols-outlined animate-spin text-primary text-xl">refresh</span></div>`;
+    list.innerHTML = `<div class="flex justify-center py-10"><i class="fas fa-spinner fa-spin text-primary text-xl"></i></div>`;
     try {
       globalCrmData = await fetchAPI('getAllCrmData');
       if(!globalCrmData.length) return list.innerHTML = `<p class="text-center text-slate-400 font-bold mt-10">尚無資料</p>`;
@@ -1011,63 +1249,6 @@
   function toggleFeeInput() { document.getElementById('detail-price').classList.toggle('hidden', document.querySelector('input[name="fee-type"]:checked').value !== '收費'); }
   function toggleEditFeeInput() { document.getElementById('edit-act-price').classList.toggle('hidden', document.querySelector('input[name="edit-act-fee-type"]:checked').value !== '收費'); }
   function toggleCreateMode(m) { document.getElementById('tab-quick').className = `flex-1 py-3 rounded-full text-[15px] font-bold transition-all ${m==='quick'?'bg-white text-primary shadow':'text-slate-500 hover:text-slate-800'}`; document.getElementById('tab-detailed').className = `flex-1 py-3 rounded-full text-[15px] font-bold transition-all ${m==='detailed'?'bg-white text-primary shadow':'text-slate-500 hover:text-slate-800'}`; document.getElementById('form-quick').classList.toggle('hidden', m!=='quick'); document.getElementById('form-detailed').classList.toggle('hidden', m!=='detailed'); }
-  
-  function previewFile(mode) { 
-    const f = document.getElementById(`file-input-${mode}`).files[0]; 
-    if(!f) return; 
-    
-    showToast("圖片處理壓縮中...", false);
-    
-    const r = new FileReader(); 
-    r.onloadend = () => { 
-      const img = new Image(); 
-      img.onload = () => { 
-        let w = img.width; 
-        let h = img.height; 
-        let maxWidth = 400; 
-        if (w > maxWidth) { h = Math.round(h * (maxWidth/w)); w = maxWidth; } 
-        
-        const cvs = document.createElement('canvas'); 
-        cvs.width = w; cvs.height = h; 
-        const ctx = cvs.getContext('2d'); 
-        
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, w, h);
-        ctx.drawImage(img, 0, 0, w, h); 
-        
-        let quality = 0.5; 
-        let b64 = cvs.toDataURL('image/jpeg', quality); 
-        
-        while (b64.length > 40000 && quality > 0.1) {
-          quality -= 0.1;
-          b64 = cvs.toDataURL('image/jpeg', quality);
-        }
-        
-        while (b64.length > 40000 && w > 100) {
-          w = Math.round(w * 0.8);
-          h = Math.round(h * 0.8);
-          cvs.width = w; cvs.height = h;
-          ctx.fillStyle = '#FFFFFF';
-          ctx.fillRect(0, 0, w, h);
-          ctx.drawImage(img, 0, 0, w, h);
-          b64 = cvs.toDataURL('image/jpeg', quality);
-        }
-        
-        if (b64.length > 49000) {
-          showToast("⚠️ 圖片過於複雜無法壓縮至系統限制，請裁切或更換圖片", true);
-          return;
-        }
-        
-        document.getElementById(`image-preview-${mode}`).src = b64; 
-        document.getElementById(`image-preview-${mode}`).classList.remove('hidden'); 
-        document.getElementById(`preview-placeholder-${mode}`).classList.add('hidden'); 
-        document.getElementById(`in-image-url-${mode}`).value = b64; 
-        showToast("✅ 圖片上傳並壓縮成功");
-      }; 
-      img.src = r.result; 
-    }; 
-    r.readAsDataURL(f); 
-  }
 </script>
 </body>
 </html>

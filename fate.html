@@ -3,34 +3,23 @@
 <head>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-  <title>發起新活動</title>
+  <title>AI 商業智能配對</title>
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  
+
   <script id="tailwind-config">
     tailwind.config = {
       darkMode: "class",
       theme: {
         extend: {
           colors: {
-            primary: "#2563eb",
-            "primary-light": "#eff6ff",
-            background: "#ffffff",
-            "input-bg": "#f3f4f6", /* 更柔和的輸入框底色 */
-            "text-main": "#0f172a",
-            "text-muted": "#64748b",
-            error: "#ef4444"
-          },
-          fontFamily: {
-            headline: ["Manrope", "Noto Sans TC", "sans-serif"],
-            body: ["Inter", "Noto Sans TC", "sans-serif"],
-          },
-          boxShadow: {
-            'app-card': '0 12px 40px -12px rgba(0,0,0,0.06)',
-            'app-nav': '0 -4px 24px rgba(0,0,0,0.04)',
-            'tab-active': '0 2px 10px rgba(0,0,0,0.05)',
+            primary: "#ec4899", 
+            "primary-light": "#fce7f3",
+            background: "#f8f9fc",
+            "input-bg": "#f0f2f8",
+            "text-main": "#1e293b",
           }
         },
       },
@@ -38,459 +27,301 @@
   </script>
   <style>
     .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
-    .icon-filled { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-    
-    /* 整體背景加上淡淡的漸層，營造高級感 */
-    body { background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); background-attachment: fixed; -webkit-tap-highlight-color: transparent; }
-    ::-webkit-scrollbar { width: 0px; }
+    .icon-filled { font-variation-settings: 'FILL' 1; }
+    body { background-color: #f8f9fc; -webkit-tap-highlight-color: transparent; }
     .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1.5rem); }
-    
-    /* ⭐ 優化輸入框樣式：無邊框、大圓角、獲取焦點時的柔和光暈 */
-    .input-label { @apply block text-[13px] font-bold text-slate-700 mb-2 ml-1 tracking-wide; }
-    .custom-input { @apply w-full py-4 pl-5 pr-12 bg-input-bg border-2 border-transparent rounded-[1.25rem] outline-none focus:border-blue-500/20 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all duration-300 font-bold text-text-main appearance-none; }
-    .custom-input::placeholder { @apply text-slate-400 font-medium; }
-    
-    /* ⭐ 優化按鈕樣式 */
-    .btn-primary { @apply w-full py-4 bg-primary text-white rounded-full font-black text-[17px] shadow-xl shadow-blue-600/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2; }
-    .btn-disabled { pointer-events: none; opacity: 0.6; filter: grayscale(50%); }
-    
-    /* ⭐ 優化底部導覽列 */
+    .custom-input { @apply w-full py-4 px-5 bg-input-bg border-none rounded-2xl outline-none focus:ring-2 focus:ring-primary/30 transition-all font-medium text-text-main; }
     .nav-btn { @apply flex flex-col items-center gap-1 transition-all flex-1 text-slate-400; }
-    .nav-btn .icon-box { @apply px-5 py-1.5 rounded-2xl transition-all duration-300 flex justify-center items-center; }
+    .nav-btn .icon-box { @apply px-3 py-1.5 rounded-full transition-all; }
     .nav-active { @apply text-primary font-bold; }
     .nav-active .icon-box { @apply bg-primary-light text-primary; }
     .nav-active .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
-    
-    .loading-gif { width: 90px; height: auto; }
   </style>
 </head>
 <body class="font-body text-text-main min-h-screen flex flex-col items-center">
 
-<div id="app-container" class="w-full max-w-md h-screen relative flex flex-col overflow-hidden bg-transparent">
+<div class="w-full max-w-md bg-background h-screen relative flex flex-col shadow-2xl overflow-hidden">
   
-  <!-- 頂部 Header (改為更簡潔的透明毛玻璃) -->
-  <nav id="top-nav" class="fixed top-0 w-full max-w-md z-40 bg-white/80 backdrop-blur-xl px-6 py-4 flex justify-between items-center left-1/2 -translate-x-1/2 border-b border-slate-100">
+  <nav class="fixed top-0 w-full max-w-md z-40 bg-background/90 backdrop-blur-xl px-6 py-4 flex justify-between items-center left-1/2 -translate-x-1/2 border-b border-slate-200/50">
     <div class="text-[20px] font-black text-primary flex items-center gap-2 font-headline tracking-tight">
-      <span class="material-symbols-outlined text-[24px] icon-filled text-primary">event_note</span>
-      報名大師
-      <span class="bg-blue-100 text-blue-700 text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider font-black ml-1">Admin</span>
-    </div>
-    <div class="flex items-center gap-3">
-      <div id="user-profile-badge" class="hidden flex items-center gap-2">
-        <img id="user-avatar" src="" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm">
-      </div>
+      <span class="material-symbols-outlined text-[24px] icon-filled">psychology</span>
+      AI 合作配對池
     </div>
   </nav>
 
-  <main id="main-content" class="flex-1 overflow-y-auto pb-32 pt-24 px-5 space-y-6">
+  <main class="flex-1 overflow-y-auto pb-32 pt-20 px-4 space-y-6">
     
-    <!-- View: Loading -->
     <div id="view-loading" class="h-full flex flex-col items-center justify-center space-y-4 pb-20">
-      <img src="https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExdXpzNDRvN3BpNjZhZmZ1djh6ZDV4N2ZucjQ5MHJidjhoOGNrZWp6byZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/uOlsQMZSTU6Ff55OnQ/giphy.gif" alt="Loading" class="loading-gif mb-2">
-      <p id="loading-text" class="text-primary font-bold tracking-widest text-sm">驗證權限中...</p>
+      <span class="material-symbols-outlined text-5xl text-primary animate-spin mb-2">data_usage</span>
+      <p class="text-primary font-bold tracking-widest text-sm">載入通訊錄與標籤...</p>
     </div>
 
-    <!-- View: Admin Create -->
-    <div id="view-admin-create" class="hidden space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div id="view-main" class="hidden animate-in fade-in pt-2">
       
-      <!-- 標題區 (對齊截圖的簡約大氣風格) -->
-      <div class="px-1 pt-2">
-        <h2 class="text-[34px] font-black font-headline text-slate-800 tracking-tight leading-tight">建立新活動</h2>
-        <p class="text-slate-500 text-[14px] font-medium mt-2 leading-relaxed">快速部署您的活動報名流程，只需幾個步驟。</p>
+      <!-- ⭐ 舊資料補算區塊 (自動偵測與顯示) -->
+      <div class="bg-white rounded-[2rem] shadow-sm p-5 mb-4 border border-slate-100 flex justify-between items-center">
+        <div>
+           <h3 class="text-sm font-black text-slate-800">資料庫標籤狀態</h3>
+           <p id="sync-status" class="text-xs text-slate-500 font-medium mt-1">
+             共 <span class="font-bold text-slate-700">0</span> 筆，缺漏 <span class="text-red-500 font-bold">0</span> 筆
+           </p>
+        </div>
+        <button id="btn-sync-tags" onclick="syncOldTags()" class="shrink-0 px-4 py-2.5 bg-slate-800 text-white rounded-xl font-bold text-xs flex items-center gap-1 active:scale-95 transition-all hidden shadow-md">
+            <span class="material-symbols-outlined text-[16px]">sync</span> 一鍵補算
+        </button>
       </div>
 
-      <!-- ⭐ 模式切換 Tabs (還原截圖的精緻膠囊感) -->
-      <div class="flex p-1.5 rounded-[1.5rem] mx-1 border border-slate-100 bg-slate-100/70 shadow-inner">
-        <button onclick="toggleCreateMode('quick')" id="tab-quick" class="flex-1 py-3.5 rounded-[1.25rem] text-[15px] font-bold bg-white text-primary shadow-tab-active transition-all">快速匯入</button>
-        <button onclick="toggleCreateMode('detailed')" id="tab-detailed" class="flex-1 py-3.5 rounded-[1.25rem] text-[15px] font-bold text-slate-500 transition-all hover:text-slate-700">完整發佈</button>
+      <!-- 媒合主區塊 -->
+      <div class="bg-white rounded-[2rem] shadow-sm p-6 mb-6">
+        <h2 class="text-xl font-black mb-2 text-slate-800">尋找完美合作夥伴</h2>
+        <p class="text-sm text-slate-500 mb-4 font-medium">輸入您的業務需求，AI 將結合您的性格與 CRM 資料庫的命理標籤，尋找最互補的人選。</p>
+        
+        <textarea id="search-query" class="custom-input h-28 resize-none mb-4" placeholder="例如：我想找有電商通路資源的夥伴，且做事穩重細心..."></textarea>
+        
+        <button id="btn-match" onclick="startMatchmaking()" class="w-full py-4 bg-primary text-white rounded-2xl font-bold text-[16px] shadow-lg shadow-pink-500/30 active:scale-95 transition-all flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined">magic_button</span> 啟動 AI 媒合
+        </button>
       </div>
-      
-      <!-- ================= 快速模式 ================= -->
-      <div id="form-quick" class="space-y-6 px-1 animate-in fade-in">
-        
-        <div>
-          <label class="input-label">活動名稱</label>
-          <input type="text" id="quick-name" class="custom-input !pr-5" placeholder="輸入活動標題...">
-        </div>
-        
-        <div>
-          <label class="input-label">活動類型</label>
-          <div class="relative">
-            <select id="quick-type" class="custom-input text-slate-700 cursor-pointer">
-              <option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option>
-            </select>
-            <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none transition-transform">expand_more</span>
-          </div>
-        </div>
-        
-        <div>
-          <label class="input-label">預設身份</label>
-          <div class="relative">
-            <select id="quick-identity" class="custom-input text-slate-700 cursor-pointer">
-              <option>會員</option><option>來賓</option>
-            </select>
-            <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none transition-transform">expand_more</span>
-          </div>
-        </div>
 
-        <div>
-          <label class="input-label">活動說明</label>
-          <textarea id="quick-desc" class="custom-input h-32 !pr-5 py-4 resize-none leading-relaxed text-[15px]" placeholder="輸入詳盡說明..."></textarea>
-        </div>
-        
-        <div>
-          <label class="input-label">宣傳大圖</label>
-          <div onclick="document.getElementById('file-input-quick').click()" class="w-full h-44 border-2 border-dashed border-blue-200 rounded-[1.25rem] flex flex-col items-center justify-center bg-blue-50/50 cursor-pointer overflow-hidden transition-all hover:bg-blue-50 relative group">
-            <div id="preview-placeholder-quick" class="text-center text-blue-500 flex flex-col items-center group-hover:scale-105 transition-transform duration-300">
-              <span class="material-symbols-outlined text-4xl mb-2 icon-filled">add_photo_alternate</span>
-              <p class="text-[13px] font-bold">點擊上傳宣傳圖片</p>
-            </div>
-            <img id="image-preview-quick" class="hidden w-full h-full object-cover absolute inset-0">
-            <input type="file" id="file-input-quick" class="hidden" accept="image/*" onchange="previewFile('quick')">
-          </div>
-          <input type="hidden" id="in-image-url-quick">
-        </div>
-
-        <div>
-          <div class="flex justify-between items-center mb-2">
-            <label class="text-[13px] font-bold text-slate-700 ml-1">名單內容</label>
-            <span class="text-[10px] font-bold text-primary bg-primary-light px-2.5 py-1 rounded-full">支援批次輸入</span>
-          </div>
-          <div class="relative">
-            <textarea id="quick-names" class="custom-input h-48 !pr-5 py-5 resize-none leading-relaxed text-[15px]" placeholder="請貼上參與者姓名或電子郵件，每行一位..."></textarea>
-            <span class="material-symbols-outlined absolute right-4 top-4 text-slate-300">assignment</span>
-          </div>
-        </div>
-
-        <div class="pt-4">
-          <button onclick="handleCreateActivity('quick')" id="btn-quick-create" class="btn-primary">
-              建立活動 <span class="material-symbols-outlined text-[20px]">rocket_launch</span>
-          </button>
-        </div>
-      </div>
-      
-      <!-- ================= 完整模式 ================= -->
-      <div id="form-detailed" class="hidden space-y-6 px-1 animate-in fade-in">
-         
-         <div>
-           <label class="input-label">正式標題</label>
-           <input type="text" id="detail-name" class="custom-input !pr-5" placeholder="輸入活動標題...">
-         </div>
-         
-         <div class="grid grid-cols-2 gap-4">
-           <div>
-             <label class="input-label">活動類型</label>
-             <div class="relative">
-               <select id="detail-type" class="custom-input text-slate-700 !pr-10 cursor-pointer">
-                 <option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option>
-               </select>
-               <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
-             </div>
-           </div>
-           <div>
-             <label class="input-label">收費方式</label>
-             <div class="flex gap-4 items-center h-[52px] px-3 bg-input-bg rounded-[1.25rem]">
-               <label class="flex items-center gap-2 cursor-pointer">
-                 <input type="radio" name="fee-type" value="免費" checked onchange="toggleFeeInput()" class="w-4 h-4 text-primary bg-white border-slate-300 focus:ring-primary focus:ring-2">
-                 <span class="font-bold text-[14px] text-slate-700">免費</span>
-               </label>
-               <label class="flex items-center gap-2 cursor-pointer">
-                 <input type="radio" name="fee-type" value="收費" onchange="toggleFeeInput()" class="w-4 h-4 text-primary bg-white border-slate-300 focus:ring-primary focus:ring-2">
-                 <span class="font-bold text-[14px] text-slate-700">收費</span>
-               </label>
-             </div>
-           </div>
-         </div>
-         
-         <input type="number" id="detail-price" class="custom-input !pr-5 hidden animate-in fade-in" placeholder="請輸入金額 (NT$)">
-         
-         <div class="grid grid-cols-2 gap-4 border-t border-slate-100 pt-6 mt-2">
-           <div>
-             <label class="input-label">開始時間</label>
-             <input type="datetime-local" id="detail-start" class="custom-input !px-4 text-[13px] font-bold text-slate-600">
-           </div>
-           <div>
-             <label class="input-label">結束時間</label>
-             <input type="datetime-local" id="detail-end" class="custom-input !px-4 text-[13px] font-bold text-slate-600">
-           </div>
-         </div>
-         
-         <div>
-           <label class="input-label">活動說明</label>
-           <textarea id="detail-desc" class="custom-input h-32 !pr-5 py-4 resize-none leading-relaxed text-[15px]" placeholder="輸入詳盡說明..."></textarea>
-         </div>
-         
-         <div>
-           <label class="input-label">宣傳大圖</label>
-           <div onclick="document.getElementById('file-input-create').click()" class="w-full h-44 border-2 border-dashed border-blue-200 rounded-[1.25rem] flex flex-col items-center justify-center bg-blue-50/50 cursor-pointer overflow-hidden transition-all hover:bg-blue-50 relative group">
-             <div id="preview-placeholder-create" class="text-center text-blue-500 flex flex-col items-center group-hover:scale-105 transition-transform duration-300">
-               <span class="material-symbols-outlined text-4xl mb-2 icon-filled">add_photo_alternate</span>
-               <p class="text-[13px] font-bold">點擊上傳宣傳圖片</p>
-             </div>
-             <img id="image-preview-create" class="hidden w-full h-full object-cover absolute inset-0">
-             <input type="file" id="file-input-create" class="hidden" accept="image/*" onchange="previewFile('create')">
-           </div>
-           <input type="hidden" id="in-image-url-create">
-         </div>
-         
-         <div class="pt-4">
-           <button onclick="handleCreateActivity('detailed')" id="btn-detail-create" class="btn-primary">
-              發布活動頁面 <span class="material-symbols-outlined text-[20px]">rocket_launch</span>
-           </button>
-         </div>
+      <div id="results-container" class="space-y-4">
+        <!-- 媒合結果卡片會在這裡生成 -->
       </div>
     </div>
 
   </main>
 
-  <!-- ⭐ 底部導覽：管理員 (全站統一 6 顆按鈕) -->
-  <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-2xl border-t border-slate-100 flex justify-between items-center px-1 py-2 z-40 pb-safe shadow-app-nav left-1/2 -translate-x-1/2">
-    <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn">
-      <div class="icon-box group-hover:bg-slate-50"><span class="material-symbols-outlined text-[24px]">fact_check</span></div>
-      <span class="text-[10px] font-bold mt-1">核銷</span>
-    </button>
-    <button class="nav-btn nav-active">
-      <div class="icon-box"><span class="material-symbols-outlined text-[24px]">add_circle</span></div>
-      <span class="text-[10px] font-bold mt-1">建立</span>
-    </button>
-    <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn">
-      <div class="icon-box group-hover:bg-slate-50"><span class="material-symbols-outlined text-[24px]">groups</span></div>
-      <span class="text-[10px] font-bold mt-1">CRM</span>
-    </button>
-    <button onclick="window.location.href='fate.html'" class="nav-btn">
-      <div class="icon-box group-hover:bg-slate-50"><span class="material-symbols-outlined text-[24px] text-pink-500">psychology</span></div>
-      <span class="text-[10px] font-bold mt-1 text-pink-600">配對</span>
-    </button>
-    <button onclick="window.location.href='card.html'" class="nav-btn">
-      <div class="icon-box group-hover:bg-slate-50"><span class="material-symbols-outlined text-[24px]">recent_patient</span></div>
-      <span class="text-[10px] font-bold mt-1">名片</span>
-    </button>
-    <button onclick="window.location.href='index.html?view=admin-settings'" class="nav-btn">
-      <div class="icon-box group-hover:bg-slate-50"><span class="material-symbols-outlined text-[24px]">settings</span></div>
-      <span class="text-[10px] font-bold mt-1">參數</span>
-    </button>
+  <nav class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-between items-center px-1 py-2 z-40 pb-safe shadow-[0_-4px_15px_rgba(0,0,0,0.03)]">
+    <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn"><div class="icon-box group-hover:bg-slate-50"><span class="material-symbols-outlined text-[24px]">fact_check</span></div><span class="text-[10px] font-bold mt-1">核銷</span></button>
+    <button onclick="window.location.href='active.html'" class="nav-btn"><div class="icon-box group-hover:bg-slate-50"><span class="material-symbols-outlined text-[24px]">add_circle</span></div><span class="text-[10px] font-bold mt-1">建立</span></button>
+    <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn"><div class="icon-box group-hover:bg-slate-50"><span class="material-symbols-outlined text-[24px]">groups</span></div><span class="text-[10px] font-bold mt-1">CRM</span></button>
+    <button class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">psychology</span></div><span class="text-[10px] font-bold mt-1">配對</span></button>
+    <button onclick="window.location.href='card.html'" class="nav-btn"><div class="icon-box group-hover:bg-slate-50"><span class="material-symbols-outlined text-[24px]">recent_patient</span></div><span class="text-[10px] font-bold mt-1">名片</span></button>
+    <button onclick="window.location.href='index.html?view=admin-settings'" class="nav-btn"><div class="icon-box group-hover:bg-slate-50"><span class="material-symbols-outlined text-[24px]">settings</span></div><span class="text-[10px] font-bold mt-1">參數</span></button>
   </nav>
 </div>
-
-<!-- Toast 通知容器 -->
-<div id="toast" class="fixed top-14 left-1/2 -translate-x-1/2 px-6 py-3.5 rounded-full text-[15px] shadow-app-card transition-all z-[10000] font-bold transform translate-y-0 opacity-0 pointer-events-none flex items-center gap-2 w-max max-w-[90vw]"></div>
 
 <script>
   const LIFF_ID = "2009367829-DLtYBDUm"; 
   const WORKER_URL = "https://actmaster.fangwl591021.workers.dev"; 
-  const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55"]; 
-
-  let userProfile = null, isAdmin = false, isProcessing = false;
-
-  async function fetchAPI(action, payload = {}, silent = false) {
-    try {
-      const response = await fetch(WORKER_URL, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, payload })
-      });
-      const resText = await response.text();
-      let result;
-      try { result = JSON.parse(resText); } catch(e) { throw new Error(`系統連線錯誤，請確認 GAS 已發佈為「所有人」。`); }
-      if (!result.success) throw new Error(result.error);
-      return result.data;
-    } catch (err) {
-      if (!silent) showToast(err.message, true); 
-      throw err;
-    }
-  }
+  
+  let globalCardContacts = [];
+  let currentUserProfile = null;
 
   window.onload = async () => {
     try {
       await liff.init({ liffId: LIFF_ID });
-
       if (!liff.isLoggedIn()) { liff.login(); return; }
+      
+      const profile = await liff.getProfile();
+      const userRes = await fetchAPI('checkUser', { userId: profile.userId });
+      currentUserProfile = {
+        name: userRes.isRegistered ? userRes.info.name : profile.displayName,
+        industry: userRes.isRegistered ? userRes.info.industry : '未知'
+      };
 
-      userProfile = await liff.getProfile();
-      isAdmin = ADMIN_IDS.includes(userProfile.userId);
-
-      if (isAdmin) {
-        document.getElementById('view-loading').classList.add('hidden');
-        document.getElementById('view-admin-create').classList.remove('hidden');
-        document.getElementById('bottom-nav-admin').classList.remove('hidden');
-      } else {
-        // 如果不是管理員，強制導回首頁
-        window.location.replace('index.html');
-      }
-
-    } catch (err) { 
-      showToast("載入中斷: " + err.toString(), true);
+      globalCardContacts = await fetchAPI('getCardContacts');
+      
+      document.getElementById('view-loading').classList.add('hidden');
+      document.getElementById('view-main').classList.remove('hidden');
+      
+      // 畫面載入完畢後，檢查是否有缺漏標籤的舊資料
+      checkDatabaseStatus();
+      
+    } catch (err) {
+      alert("初始化失敗：" + err.message);
     }
   };
 
-  function showToast(m, e = false) { 
-    const t = document.getElementById('toast'); 
-    if(!t) return; 
-    t.innerHTML = `<span class="material-symbols-outlined icon-filled">${e ? 'error' : 'check_circle'}</span>` + m; 
-    t.className = `fixed top-14 left-1/2 -translate-x-1/2 px-6 py-3.5 rounded-full text-[15px] shadow-app-card transition-all z-[10000] font-bold transform translate-y-0 opacity-100 ${e ? 'bg-red-500 text-white' : 'bg-slate-800 text-white'} flex items-center gap-2 w-max max-w-[90vw]`; 
-    setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -1rem)'; }, 3000); 
-  }
-
-  function toggleFeeInput() { 
-    const isFee = document.querySelector('input[name="fee-type"]:checked').value === '收費';
-    document.getElementById('detail-price').classList.toggle('hidden', !isFee); 
-  }
-
-  function toggleCreateMode(mode) { 
-    const tabQuick = document.getElementById('tab-quick');
-    const tabDetailed = document.getElementById('tab-detailed');
-    const formQuick = document.getElementById('form-quick');
-    const formDetailed = document.getElementById('form-detailed');
-
-    if (mode === 'quick') {
-      tabQuick.className = 'flex-1 py-3.5 rounded-[1.25rem] text-[15px] font-bold bg-white text-primary shadow-tab-active transition-all';
-      tabDetailed.className = 'flex-1 py-3.5 rounded-[1.25rem] text-[15px] font-bold text-slate-500 transition-all hover:text-slate-700';
-      formQuick.classList.remove('hidden');
-      formDetailed.classList.add('hidden');
-    } else {
-      tabQuick.className = 'flex-1 py-3.5 rounded-[1.25rem] text-[15px] font-bold text-slate-500 transition-all hover:text-slate-700';
-      tabDetailed.className = 'flex-1 py-3.5 rounded-[1.25rem] text-[15px] font-bold bg-white text-primary shadow-tab-active transition-all';
-      formQuick.classList.add('hidden');
-      formDetailed.classList.remove('hidden');
+  async function fetchAPI(action, payload = {}, silent = false) {
+    try {
+        const response = await fetch(WORKER_URL, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action, payload })
+        });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.error);
+        return result.data;
+    } catch (err) {
+        if (!silent) alert(err.message);
+        throw err;
     }
   }
 
-  function previewFile(mode) { 
-    const f = document.getElementById(`file-input-${mode}`).files[0]; 
-    if(!f) return; 
-    
-    showToast("圖片處理壓縮中...", false);
-    
-    const r = new FileReader(); 
-    r.onloadend = () => { 
-      const img = new Image(); 
-      img.onload = () => { 
-        let w = img.width; 
-        let h = img.height; 
-        let maxWidth = 400; // 稍微提升預覽解析度 
-        if (w > maxWidth) { h = Math.round(h * (maxWidth/w)); w = maxWidth; } 
-        
-        const cvs = document.createElement('canvas'); 
-        cvs.width = w; cvs.height = h; 
-        const ctx = cvs.getContext('2d'); 
-        
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, w, h);
-        ctx.drawImage(img, 0, 0, w, h); 
-        
-        let quality = 0.6; 
-        let b64 = cvs.toDataURL('image/jpeg', quality); 
-        
-        while (b64.length > 40000 && quality > 0.1) {
-          quality -= 0.1;
-          b64 = cvs.toDataURL('image/jpeg', quality);
-        }
-        
-        if (b64.length > 49000) {
-          showToast("⚠️ 圖片過於複雜無法壓縮至系統限制，請裁切或更換圖片", true);
-          return;
-        }
-        
-        const previewImg = document.getElementById(`image-preview-${mode}`);
-        const placeholder = document.getElementById(`preview-placeholder-${mode}`);
-        
-        if (previewImg) {
-            previewImg.src = b64; 
-            previewImg.classList.remove('hidden'); 
-        }
-        if (placeholder) {
-            placeholder.classList.add('hidden'); 
-        }
-        
-        document.getElementById(`in-image-url-${mode}`).value = b64; 
-        showToast("✅ 圖片預覽成功");
-      }; 
-      img.src = r.result; 
-    }; 
-    r.readAsDataURL(f); 
+  // ⭐ 穩健的 HTML 渲染，避免 innerText null 錯誤
+  function checkDatabaseStatus() {
+      // 擴大檢查條件：空值或是預設的「待分析」都算缺漏
+      const missingContacts = globalCardContacts.filter(c => !c['個性'] || String(c['個性']).trim() === '' || String(c['個性']) === '待分析');
+      const missingCount = missingContacts.length;
+      
+      const statusEl = document.getElementById('sync-status');
+      const btn = document.getElementById('btn-sync-tags');
+      
+      if (missingCount > 0) {
+          statusEl.innerHTML = `共 <span class="font-bold text-slate-700">${globalCardContacts.length}</span> 筆，缺漏 <span class="text-red-500 font-bold">${missingCount}</span> 筆`;
+          btn.classList.remove('hidden');
+      } else {
+          btn.classList.add('hidden');
+          statusEl.innerHTML = `共 ${globalCardContacts.length} 筆資料，<span class="text-emerald-500 font-bold">已全數具備 AI 命理標籤！</span>`;
+      }
   }
 
-  async function handleCreateActivity(mode) { 
-    if (isProcessing) return; 
-    const btn = document.getElementById(mode === 'quick' ? 'btn-quick-create' : 'btn-detail-create'); 
-    isProcessing = true; 
-    
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> 處理中...';
-    btn.classList.add('btn-disabled'); 
-    
-    let payload = { 
-      activityName: document.getElementById(mode === 'quick' ? 'quick-name' : 'detail-name').value.trim(), 
-      activityType: document.getElementById(mode === 'quick' ? 'quick-type' : 'detail-type').value, 
-      feeType: '免費', price: '', startTime: '', endTime: '', description: '', imageUrl: '', names: [], 
-      defaultIdentity: mode === 'quick' ? document.getElementById('quick-identity').value : '來賓' 
-    }; 
-    
-    if (!payload.activityName) { 
-      isProcessing = false; 
-      btn.innerHTML = originalText;
-      btn.classList.remove('btn-disabled'); 
-      return showToast("⚠️ 活動標題必填", true); 
-    } 
-    
-    if (mode === 'quick') { 
-      const raw = document.getElementById('quick-names').value.trim(); 
-      payload.names = raw.split('\n').filter(n => n.trim()); 
-      payload.description = document.getElementById('quick-desc').value;
-      payload.imageUrl = document.getElementById('in-image-url-quick').value;
-    } else { 
-      const feeCheck = document.querySelector('input[name="fee-type"]:checked');
-      payload.feeType = feeCheck ? feeCheck.value : '免費'; 
-      payload.price = document.getElementById('detail-price').value; 
-      payload.startTime = document.getElementById('detail-start').value; 
-      payload.endTime = document.getElementById('detail-end').value;
-      payload.description = document.getElementById('detail-desc').value; 
-      payload.imageUrl = document.getElementById('in-image-url-create').value; 
-    } 
-    
-    try { 
-      await fetchAPI('bulkAddRegistrants', payload); 
-      showToast("✅ 活動建立成功"); 
+  // ⭐ 加入 try-catch-break 強力防護，捕捉並顯示 API 錯誤
+  async function syncOldTags() {
+      const missingContacts = globalCardContacts.filter(c => !c['個性'] || String(c['個性']).trim() === '' || String(c['個性']) === '待分析');
+      if (missingContacts.length === 0) return;
+
+      if (!confirm(`系統發現 ${missingContacts.length} 張名片缺乏命理標籤。\n是否立即啟動 AI 批次補算？\n\n(過程約需數十秒至數分鐘，請保持網頁開啟勿關閉)`)) return;
+
+      const btn = document.getElementById('btn-sync-tags');
+      btn.classList.add('pointer-events-none', 'opacity-50');
+      const statusEl = document.getElementById('sync-status');
+
+      let successCount = 0;
       
-      // 成功後清空表單
-      if (mode === 'quick') {
-        document.getElementById('quick-name').value = '';
-        document.getElementById('quick-desc').value = '';
-        document.getElementById('in-image-url-quick').value = '';
-        document.getElementById('quick-names').value = '';
-        const imgPreviewQuick = document.getElementById('image-preview-quick');
-        if (imgPreviewQuick) {
-            imgPreviewQuick.classList.add('hidden');
-            imgPreviewQuick.src = '';
-        }
-        const placeholderQuick = document.getElementById('preview-placeholder-quick');
-        if (placeholderQuick) placeholderQuick.classList.remove('hidden');
-      } else {
-        document.getElementById('detail-name').value = '';
-        document.getElementById('detail-price').value = '';
-        document.getElementById('detail-start').value = '';
-        document.getElementById('detail-end').value = '';
-        document.getElementById('detail-desc').value = '';
-        document.getElementById('in-image-url-create').value = '';
-        const imgPreview = document.getElementById('image-preview-create');
-        if (imgPreview) {
-            imgPreview.classList.add('hidden');
-            imgPreview.src = '';
-        }
-        const placeholder = document.getElementById('preview-placeholder-create');
-        if (placeholder) placeholder.classList.remove('hidden');
+      for (let i = 0; i < missingContacts.length; i++) {
+          const c = missingContacts[i];
+          statusEl.innerHTML = `<span class="material-symbols-outlined animate-spin text-primary text-[14px] align-middle">refresh</span> 正在同步 <b>${c['姓名'] || '未知'}</b> (${i + 1}/${missingContacts.length})...`;
+          
+          try {
+              // 取得推算用的基礎資料
+              const mobileToUse = c['手機號碼'] || c['公司電話'] || '';
+              
+              // 呼叫 Cloudflare Worker 的重算 API，並啟動 silent 以自行捕獲錯誤
+              const newTags = await fetchAPI('calculateFateTags', { Name: c['姓名'], Mobile: mobileToUse }, true);
+              
+              // 組合需要回傳給 Google Apps Script 的完整名片結構
+              const payload = {
+                  rowId: c.rowId,
+                  Name: c['姓名'] || '', 
+                  EnglishName: c['英文名/別名'] || '', 
+                  Title: c['職稱'] || '', 
+                  Department: c['部門'] || '',
+                  CompanyName: c['公司名稱'] || '', 
+                  TaxID: c['統一編號'] || '', 
+                  Mobile: c['手機號碼'] || '', 
+                  Tel: c['公司電話'] || '',
+                  Ext: c['分機'] || '', 
+                  Fax: c['傳真'] || '', 
+                  Address: c['公司地址'] || '', 
+                  Email: c['電子郵件'] || '', 
+                  Website: c['公司網址'] || '',
+                  SocialMedia: c['社群帳號'] || '', 
+                  Slogan: c['服務項目/品牌標語'] || '', 
+                  Notes: c['建檔人/備註'] || '',
+                  // 覆蓋全新的命理標籤
+                  Personality: newTags.Personality || '待分析',
+                  Hobbies: newTags.Hobbies || '待分析',
+                  Wealth: newTags.Wealth || '待分析',
+                  Health: newTags.Health || '待分析',
+                  Career: newTags.Career || '待分析'
+              };
+              
+              // 更新至 Google 試算表
+              await fetchAPI('updateCard', payload, true);
+              successCount++;
+              
+              // 同步更新當前網頁記憶體中的資料
+              c['個性'] = payload.Personality;
+              c['興趣'] = payload.Hobbies;
+              c['財運'] = payload.Wealth;
+              c['健康'] = payload.Health;
+              c['事業'] = payload.Career;
+              
+          } catch (err) {
+              console.error(`同步 ${c['姓名']} 失敗:`, err);
+              // ⭐ 精確報錯，中止後續的無效運算
+              alert(`⚠️ 同步「${c['姓名']}」時發生錯誤！\n\n錯誤訊息：${err.message}\n\n可能原因：\n1. 您尚未將 worker.js 更新部署至 Cloudflare。\n2. OpenAI API 超時或配額限制。`);
+              break; 
+          }
+          
+          // 加入微小延遲，防止觸發 OpenAI Rate Limit (Too Many Requests)
+          await new Promise(r => setTimeout(r, 1000));
       }
+
+      btn.classList.remove('pointer-events-none', 'opacity-50');
+      checkDatabaseStatus();
       
-      // 自動跳轉回首頁的活動管理
-      setTimeout(() => {
-        window.location.replace('index.html?view=admin-activities');
-      }, 1000);
-      
-    } catch(e) { 
-      console.error(e); 
-      isProcessing = false; 
-      btn.innerHTML = originalText;
-      btn.classList.remove('btn-disabled'); 
-    } 
+      if (successCount > 0) {
+          alert(`✅ 同步作業結束！\n共成功補算 ${successCount} 張名片標籤。`);
+      }
+  }
+
+  async function startMatchmaking() {
+    const query = document.getElementById('search-query').value.trim();
+    if (!query) return alert('請輸入您的業務需求！');
+
+    const btn = document.getElementById('btn-match');
+    btn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> AI 深度分析中...';
+    btn.classList.add('pointer-events-none', 'opacity-70');
+    
+    document.getElementById('results-container').innerHTML = '';
+
+    try {
+      // 濃縮傳送資料以節省 OpenAI Token 成本
+      const slimContacts = globalCardContacts.map(c => ({
+          rowId: c.rowId,
+          Name: c['姓名'],
+          Company: c['公司名稱'],
+          Title: c['職稱'],
+          Industry: c['服務項目/品牌標語'],
+          Personality: c['個性'],
+          Hobbies: c['興趣'],
+          Wealth: c['財運'],
+          Health: c['健康'],
+          Career: c['事業']
+      }));
+
+      const matches = await fetchAPI('matchmakeContacts', {
+          currentUser: currentUserProfile,
+          query: query,
+          contacts: slimContacts
+      });
+
+      if (!matches || matches.length === 0) {
+          document.getElementById('results-container').innerHTML = '<p class="text-center text-slate-400 mt-10 font-bold">目前資料庫沒有找到高度吻合的對象。</p>';
+      } else {
+          renderMatches(matches);
+      }
+
+    } catch (err) {
+      alert("媒合過程發生錯誤：" + err.message);
+    } finally {
+      btn.innerHTML = '<span class="material-symbols-outlined">magic_button</span> 重新啟動媒合';
+      btn.classList.remove('pointer-events-none', 'opacity-70');
+    }
+  }
+
+  function renderMatches(matches) {
+    const container = document.getElementById('results-container');
+    
+    container.innerHTML = matches.map((match, idx) => {
+      const contact = globalCardContacts.find(c => c.rowId === match.rowId);
+      if (!contact) return '';
+
+      return `
+      <div class="bg-white rounded-[1.5rem] shadow-sm border border-slate-100 p-5 animate-in fade-in slide-in-from-bottom-4" style="animation-delay: ${idx * 100}ms">
+        <div class="flex justify-between items-start mb-3">
+            <div>
+                <h3 class="text-lg font-black text-slate-800">${contact['姓名']}</h3>
+                <p class="text-xs text-slate-500 font-bold mt-0.5">${contact['公司名稱']} - ${contact['職稱']}</p>
+            </div>
+            <div class="bg-pink-100 text-pink-600 px-3 py-1 rounded-full text-sm font-black shadow-sm">
+                ${match.score}% 契合
+            </div>
+        </div>
+        
+        <div class="bg-slate-50 p-4 rounded-xl mb-4 border border-slate-100 relative">
+            <span class="material-symbols-outlined absolute top-3 right-3 text-slate-200 text-3xl">format_quote</span>
+            <p class="text-[13px] text-slate-600 leading-relaxed font-medium relative z-10">${match.reason}</p>
+        </div>
+
+        <div class="flex gap-2">
+            ${contact['手機號碼'] ? `<a href="tel:${contact['手機號碼'].replace(/[^\d+]/g,'')}" class="flex-1 py-2.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-xs text-center active:scale-95 transition-transform flex justify-center items-center gap-1"><span class="material-symbols-outlined text-[16px]">call</span> 聯絡</a>` : ''}
+            <button onclick="window.location.href='card.html'" class="flex-1 py-2.5 bg-slate-800 text-white rounded-xl font-bold text-xs text-center active:scale-95 transition-transform flex justify-center items-center gap-1"><span class="material-symbols-outlined text-[16px]">contact_mail</span> 查看名片</button>
+        </div>
+      </div>
+      `;
+    }).join('');
   }
 </script>
 </body>

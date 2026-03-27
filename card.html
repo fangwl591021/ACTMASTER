@@ -185,7 +185,7 @@
     </div>
   </main>
 
-  <div id="section-cropper" class="hidden fixed inset-0 bg-black flex flex-col animate-in fade-in duration-300 w-full max-w-md mx-auto" style="z-index: 100;">
+  <div id="section-cropper" class="hidden fixed inset-0 bg-black flex flex-col animate-in fade-in duration-300 w-full max-w-md mx-auto" style="z-index: 1030;">
     <div class="flex justify-between items-center p-5 bg-black text-white shrink-0 z-10 shadow-md">
       <button onclick="cancelCrop()" class="px-4 py-2 font-bold text-slate-300 active:scale-90 transition-transform">取消</button>
       <span class="font-black text-lg tracking-widest text-emerald-400 flex items-center gap-2">
@@ -201,7 +201,7 @@
     </div>
   </div>
 
-  <!-- ⭐ 統一 6 顆按鈕滿版底部導覽列 -->
+  <!-- ⭐ 統一 6 顆按鈕滿版底部導覽列 (z-[999]) -->
   <nav id="bottom-nav-admin" class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-evenly items-center px-4 py-2 z-[999] pb-safe shadow-[0_-4px_15px_rgba(0,0,0,0.03)] left-1/2 -translate-x-1/2">
     <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn" id="nav-admin-activities">
       <div class="icon-box"><span class="material-symbols-outlined text-[24px]">fact_check</span></div><span class="text-[10px] mt-1 font-bold whitespace-nowrap">核銷</span>
@@ -224,8 +224,8 @@
   </nav>
 </div>
 
-<!-- ================= 名片明細 Modal ================= -->
-<div id="card-detail-modal" class="hidden fixed inset-0 bg-background flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl overflow-hidden" style="z-index: 60;">
+<!-- ================= 名片明細 Modal (提升 Z-Index 到 1000) ================= -->
+<div id="card-detail-modal" class="hidden fixed inset-0 bg-background flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl overflow-hidden" style="z-index: 1000;">
   
   <div class="absolute top-5 right-5 z-50 flex gap-2">
     <button onclick="openCardEdit()" class="w-10 h-10 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-blue-600 shadow-md active:scale-90 transition-transform border border-slate-100" title="編輯補登資料">
@@ -266,15 +266,15 @@
     </div>
   </div>
 
-  <div class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-100 p-4 pb-safe flex justify-center" style="z-index: 65; box-shadow: 0 -10px 30px rgba(0,0,0,0.05);">
+  <div class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-100 p-4 pb-safe flex justify-center" style="z-index: 1005; box-shadow: 0 -10px 30px rgba(0,0,0,0.05);">
     <button onclick="openECardGenerator()" class="w-[90%] py-4 bg-[#ff751f] text-white rounded-2xl font-bold text-[17px] shadow-lg shadow-orange-500/30 active:scale-95 transition-all flex items-center justify-center gap-2">
       ✨ 產生數位電子名片
     </button>
   </div>
 </div>
 
-<!-- ================= 名片事後補登/編輯 Modal ================= -->
-<div id="card-edit-modal" class="hidden fixed inset-0 bg-slate-50 flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl overflow-hidden" style="z-index: 110;">
+<!-- ================= 名片事後補登/編輯 Modal (提升 Z-Index 到 1010) ================= -->
+<div id="card-edit-modal" class="hidden fixed inset-0 bg-slate-50 flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl overflow-hidden" style="z-index: 1010;">
   <div class="bg-white px-5 py-4 flex justify-between items-center border-b border-slate-200 z-10 shrink-0 shadow-sm">
     <h3 class="text-lg font-black text-slate-800">編輯名片資料</h3>
     <button onclick="closeCardEdit()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-90"><span class="material-symbols-outlined">close</span></button>
@@ -307,15 +307,15 @@
     <div><label class="input-label text-primary">建檔備註</label><textarea id="edit-c-Notes" class="custom-input h-20 resize-none bg-primary-light/30 !py-3 px-4"></textarea></div>
   </div>
   
-  <div class="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-200 p-4 pb-safe shadow-[0_-10px_30px_rgba(0,0,0,0.05)]" style="z-index: 115;">
+  <div class="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-200 p-4 pb-safe shadow-[0_-10px_30px_rgba(0,0,0,0.05)]" style="z-index: 1015;">
     <button id="btn-save-card-edit" onclick="submitCardEdit()" class="w-full py-4 bg-emerald-500 text-white rounded-2xl font-bold text-[17px] shadow-lg shadow-emerald-500/30 active:scale-95 transition-all flex items-center justify-center gap-2">
       儲存更新資料 <span class="material-symbols-outlined">save</span>
     </button>
   </div>
 </div>
 
-<!-- ================= 數位電子名片產生器 ================= -->
-<div id="ecard-generator-modal" class="hidden fixed inset-0 bg-slate-100 flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl" style="z-index: 70;">
+<!-- ================= 數位電子名片產生器 (提升 Z-Index 到 1020) ================= -->
+<div id="ecard-generator-modal" class="hidden fixed inset-0 bg-slate-100 flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl" style="z-index: 1020;">
   <div class="bg-white px-5 py-4 flex justify-between items-center border-b border-slate-200 z-10 shrink-0 shadow-sm">
     <h3 class="text-lg font-black text-slate-800">數位名片產生器</h3>
     <div class="flex items-center gap-3">
@@ -424,7 +424,7 @@
     </div>
   </div>
 
-  <div class="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-200 p-4 pb-safe flex gap-3" style="z-index: 80; box-shadow: 0 -10px 30px rgba(0,0,0,0.05);">
+  <div class="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-200 p-4 pb-safe flex gap-3" style="z-index: 1025; box-shadow: 0 -10px 30px rgba(0,0,0,0.05);">
     <button onclick="checkFormat(true)" id="btn-check-format" class="flex-[1] py-4 bg-slate-100 text-slate-700 rounded-2xl font-bold text-[15px] active:scale-95 transition-all flex items-center justify-center gap-1 shadow-sm border border-slate-200">
       <span class="material-symbols-outlined text-[20px]">fact_check</span> 檢查
     </button>
@@ -435,7 +435,7 @@
 </div>
 
 <!-- Toast 通知 -->
-<div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-6 py-3.5 rounded-full text-[15px] shadow-app-card transition-all font-bold flex items-center gap-2 w-max max-w-[90vw] bg-slate-800 text-white" style="z-index: 10000;"></div>
+<div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-6 py-3.5 rounded-full text-[15px] shadow-sm transition-all font-bold flex items-center gap-2 w-max max-w-[90vw] bg-slate-800 text-white" style="z-index: 10000;"></div>
 
 <script>
   const LIFF_ID = "2009367829-DLtYBDUm"; 
@@ -616,7 +616,7 @@
   function showToast(msg, isError = false) {
     const t = document.getElementById('toast');
     t.innerHTML = `<span class="material-symbols-outlined icon-filled">${isError ? 'error' : 'info'}</span> ${msg}`;
-    t.className = `fixed top-14 left-1/2 -translate-x-1/2 px-6 py-3.5 rounded-full text-[15px] shadow-app-card transition-all font-bold flex items-center gap-2 w-max max-w-[90vw] ${isError ? 'bg-red-500 text-white' : 'bg-slate-800 text-white'}`; 
+    t.className = `fixed top-14 left-1/2 -translate-x-1/2 px-6 py-3.5 rounded-full text-[15px] shadow-sm transition-all font-bold flex items-center gap-2 w-max max-w-[90vw] ${isError ? 'bg-red-500 text-white' : 'bg-slate-800 text-white'}`; 
     t.style.zIndex = '10000';
     t.style.opacity = '100';
     t.classList.remove('hidden');
@@ -1272,13 +1272,13 @@
       
       const altText = `您收到一張數位名片：${config.title || currentActiveCard['姓名'] || '商務名片'}`;
 
-      btnShare.innerHTML = '🚀 轉發至 LINE';
+      btnShare.innerHTML = '🚀 轉發至 LINE 聊天室';
       btnShare.classList.remove('pointer-events-none');
 
       await triggerFlexSharing(flexMessageObj, altText);
     } catch(err) {
       alert("發生未預期的錯誤：" + err.message);
-      btnShare.innerHTML = '🚀 轉發至 LINE';
+      btnShare.innerHTML = '🚀 轉發至 LINE 聊天室';
       btnShare.classList.remove('pointer-events-none');
     }
   }

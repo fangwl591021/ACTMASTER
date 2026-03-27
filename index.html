@@ -10,7 +10,6 @@
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   
-  <!-- 加入圖片裁切套件，供註冊上傳名片使用 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
@@ -20,7 +19,7 @@
       theme: {
         extend: {
           colors: {
-            primary: "#2563eb", /* 藍色系 */
+            primary: "#2563eb", 
             "primary-light": "#dbeafe",
             background: "#f8f9fc",
             "input-bg": "#f0f2f8",
@@ -56,7 +55,6 @@
     .btn-primary { @apply w-full py-3.5 bg-primary text-white rounded-xl font-bold text-[16px] shadow-lg shadow-blue-500/30 active:scale-95 transition-all flex items-center justify-center gap-2; }
     .btn-disabled { pointer-events: none; opacity: 0.5; filter: grayscale(100%); }
     
-    /* 導覽列樣式 */
     .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-slate-400; min-width: 48px; }
     .nav-btn .icon-box { @apply px-3 py-1.5 rounded-full transition-all flex items-center justify-center; }
     .nav-active { @apply text-primary font-bold; }
@@ -93,7 +91,6 @@
 
   <main id="main-content" class="flex-1 overflow-y-auto pb-32 pt-20 px-4 space-y-6">
 
-    <!-- ⭐ 優化與緊湊化：兩階段會員註冊流程 -->
     <div id="view-user-register" class="hidden animate-in fade-in duration-500 pt-2 pb-10">
       <div class="text-center mb-4 space-y-1">
         <h1 class="text-[22px] font-black font-headline text-text-main tracking-tight">建立會員檔案</h1>
@@ -110,8 +107,8 @@
             </div>
             
             <div>
-              <label class="input-label">真實姓名 (必填)</label>
-              <input id="reg-name" class="custom-input" placeholder="請輸入完整姓名" type="text"/>
+              <label class="input-label">真實姓名</label>
+              <input id="reg-name" class="custom-input" placeholder="不填則自動代入 LINE 暱稱" type="text"/>
             </div>
             
             <div class="grid grid-cols-2 gap-3">
@@ -133,11 +130,11 @@
 
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="input-label">手機號碼 (必填)</label>
+                <label class="input-label">手機號碼</label>
                 <input id="reg-phone" class="custom-input" placeholder="0912-345-678" type="tel"/>
               </div>
               <div>
-                <label class="input-label">生日 (啟動八字分析)</label>
+                <label class="input-label">生日</label>
                 <input id="reg-birthday" class="custom-input text-slate-500" type="date"/>
               </div>
             </div>
@@ -158,13 +155,13 @@
             </button>
         </div>
 
-        <!-- 第二階段：名片上傳 (初始隱藏/半透明) -->
+        <!-- 第二階段：名片上傳 -->
         <div id="reg-step-2" class="space-y-4 opacity-30 pointer-events-none transition-opacity duration-300 border-t border-slate-100 pt-5 mt-5">
             <div class="flex items-center gap-2 mb-2 border-b border-slate-100 pb-2">
                <span class="bg-emerald-100 text-emerald-600 w-5 h-5 rounded-full flex items-center justify-center font-black text-[11px]">2</span>
                <h3 class="font-black text-slate-800 text-[14px]">上傳名片建立通訊錄 (建議)</h3>
             </div>
-            <p class="text-[12px] text-slate-500 font-medium">系統將自動辨識名片，並結合您的生日生成數位專屬命理標籤。</p>
+            <p class="text-[12px] text-slate-500 font-medium">系統將自動辨識名片，並生成數位專屬命理標籤。</p>
 
             <div class="flex gap-3">
               <button onclick="document.getElementById('reg-card-camera').click()" class="flex-1 py-3 bg-emerald-500 text-white rounded-xl font-bold text-[14px] shadow-sm active:scale-95 transition-all flex items-center justify-center gap-1">
@@ -198,14 +195,10 @@
       </div>
       
       <!-- 動態分類列 -->
-      <div class="flex gap-2 overflow-x-auto hide-scrollbar px-2 mb-3 pb-1" id="activity-categories">
-        <!-- 分類按鈕將動態產生於此 -->
-      </div>
+      <div class="flex gap-2 overflow-x-auto hide-scrollbar px-2 mb-3 pb-1" id="activity-categories"></div>
 
       <!-- 活動卡片區 (網格) -->
-      <div id="user-activities-container" class="grid grid-cols-2 gap-3 px-1">
-        <!-- 卡片將動態產生於此 -->
-      </div>
+      <div id="user-activities-container" class="grid grid-cols-2 gap-3 px-1"></div>
     </div>
 
     <div id="view-user-history" class="hidden space-y-4 animate-in fade-in pt-4">
@@ -213,7 +206,6 @@
       <div id="user-history-container" class="space-y-4"></div>
     </div>
 
-    <!-- ⭐ 更新版個人資料編輯 (加入生日、地區、地址) -->
     <div id="view-user-profile" class="hidden animate-in fade-in pt-4 pb-10">
       <h2 class="text-2xl font-black font-headline px-2 mb-4 text-text-main">個人資料</h2>
       <div class="bg-white rounded-[2rem] shadow-app-card p-6 space-y-4 mx-1">
@@ -370,9 +362,6 @@
       </div>
     </div>
     
-    <div id="view-admin-checkin" class="hidden h-full flex flex-col p-0 overflow-y-auto pb-24 space-y-4 pt-2">
-       <div id="checkin-list-container" class="space-y-4"></div>
-    </div>
   </main>
 
   <nav id="bottom-nav-user" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-100 flex justify-evenly items-center px-4 py-2 z-[999] pb-safe shadow-[0_-4px_15px_rgba(0,0,0,0.03)] left-1/2 -translate-x-1/2">
@@ -420,6 +409,7 @@
   </div>
 </div>
 
+<!-- ================= 活動明細 Modal ================= -->
 <div id="activity-detail-modal" class="hidden fixed inset-0 z-[100] bg-background flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl overflow-hidden">
   <div class="absolute top-5 right-5 z-50">
     <button onclick="closeActivityDetail()" class="w-10 h-10 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-slate-800 shadow-md active:scale-90 transition-transform border border-slate-100">
@@ -465,6 +455,49 @@
   </div>
 </div>
 
+<!-- ⭐ 恢復：後台核銷名單 Modal -->
+<div id="admin-registrants-modal" class="hidden fixed inset-0 z-[1050] bg-background flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl">
+  <div class="bg-slate-800 px-5 pt-12 pb-5 flex justify-between items-center shrink-0">
+    <div class="flex items-center gap-3">
+      <button onclick="closeAdminRegistrants()" class="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white active:scale-90 transition-transform"><span class="material-symbols-outlined">arrow_back</span></button>
+      <h3 id="admin-reg-title" class="text-lg font-black text-white truncate max-w-[200px]">活動名單</h3>
+    </div>
+    <button onclick="document.getElementById('qr-scanner-modal').classList.remove('hidden'); startScanner();" class="px-4 py-2 bg-emerald-500 text-white rounded-full font-bold text-sm flex items-center gap-1 active:scale-95 shadow-md shadow-emerald-500/20"><span class="material-symbols-outlined text-[18px]">qr_code_scanner</span> 掃碼</button>
+  </div>
+
+  <div class="bg-slate-800 px-5 pb-5 shrink-0 flex gap-2">
+     <div class="relative flex-1">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
+        <input type="text" id="admin-search-reg" onkeyup="filterAdminReg()" class="w-full py-2.5 pl-9 pr-3 bg-slate-700/50 text-white border-none rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500/50 placeholder-slate-400" placeholder="搜尋姓名或電話...">
+     </div>
+     <button onclick="document.getElementById('walkin-modal').classList.remove('hidden')" class="w-10 h-10 bg-slate-700/50 rounded-xl flex items-center justify-center text-white active:scale-90"><span class="material-symbols-outlined">person_add</span></button>
+  </div>
+
+  <div class="flex-1 overflow-y-auto p-4 space-y-3 pb-safe bg-slate-50" id="admin-reg-list"></div>
+</div>
+
+<!-- ⭐ 恢復：後台現場報名 Modal -->
+<div id="walkin-modal" class="hidden fixed inset-0 z-[1060] bg-black/60 backdrop-blur-sm flex items-end justify-center animate-in fade-in duration-200 w-full max-w-md mx-auto left-0 right-0">
+  <div class="bg-white w-full rounded-t-[2rem] p-7 pb-safe">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="text-xl font-black text-text-main flex items-center gap-2"><span class="material-symbols-outlined text-primary">person_add</span> 現場來賓登記</h3>
+      <button onclick="document.getElementById('walkin-modal').classList.add('hidden')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center active:scale-90"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="mb-6"><label class="input-label">來賓姓名</label><input type="text" id="f-walkin-name" class="custom-input" placeholder="請輸入姓名"></div>
+    <button onclick="submitWalkIn()" class="btn-primary">新增並自動簽到 <span class="material-symbols-outlined">how_to_reg</span></button>
+  </div>
+</div>
+
+<!-- ⭐ 恢復：掃碼器 Modal -->
+<div id="qr-scanner-modal" class="hidden fixed inset-0 z-[1070] bg-black flex flex-col animate-in fade-in duration-300 w-full max-w-md mx-auto left-0 right-0">
+  <div class="flex justify-between items-center p-4 bg-gradient-to-b from-black/80 to-transparent absolute top-0 w-full z-10">
+    <span class="text-white font-bold tracking-widest text-sm">請對準學員 QR Code</span>
+    <button onclick="stopScanner()" class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white active:scale-90 transition-transform"><span class="material-symbols-outlined">close</span></button>
+  </div>
+  <div class="flex-1 flex items-center justify-center relative"><div id="qr-reader" class="w-full h-full max-h-[80vh]"></div></div>
+</div>
+
+<!-- Toast 通知 -->
 <div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-6 py-3.5 rounded-full text-[15px] shadow-app-card transition-all z-[10000] font-bold transform translate-y-0 opacity-0 pointer-events-none flex items-center gap-2 w-max max-w-[90vw] bg-slate-800 text-white"></div>
 
 <div id="custom-modal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-6">
@@ -482,15 +515,16 @@
   const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55", "U8932b891ad24da512afb9c1a6f41567b"]; 
 
   let userProfile = null, isAdmin = false, isViewModeAdmin = false, isRegistered = false, registeredInfo = null;
-  let globalPublicActivities = [], currentCheckinData = [], activeActivityName = '', modalTargetView = '';
+  let globalPublicActivities = [], currentRegistrants = [], activeActivityName = '', modalTargetView = '';
   let globalCrmData = []; 
   let isProcessing = false;
   let currentCategory = '全部活動';
 
-  // ⭐ 註冊專用變數
+  // 註冊專用變數
   let regStep1Data = {};
   let regCompressedBase64 = "";
   let regCropperInstance = null;
+  let html5QrcodeScanner = null;
 
   function renderActivitiesSkeleton() {
     const skeletonHTML = Array(4).fill(0).map(() => `
@@ -611,11 +645,12 @@
     else if (view === 'user-history') loadUserHistory();
   }
 
-  // ⭐ 註冊流程 Step 1: 手填資料儲存
+  // 註冊流程 Step 1: 手填資料儲存
   async function submitUserRegistrationStep1() {
+    const nameVal = document.getElementById('reg-name').value.trim();
     const p = {
         userId: userProfile.userId,
-        name: document.getElementById('reg-name').value.trim(),
+        name: nameVal || userProfile.displayName, 
         gender: document.getElementById('reg-gender').value,
         industry: document.getElementById('reg-industry').value.trim(),
         phone: document.getElementById('reg-phone').value.trim(),
@@ -624,7 +659,6 @@
         address: document.getElementById('reg-address').value.trim(),
         referrerId: ''
     };
-    if (!p.name || !p.phone) return showToast("⚠️ 請填寫必填欄位 (姓名、電話)", true);
     
     const btn = document.getElementById('btn-reg-step1');
     const originalText = btn.innerHTML;
@@ -633,7 +667,7 @@
     
     try {
         await fetchAPI('registerUser', p);
-        regStep1Data = p; // 暫存給名片建檔用
+        regStep1Data = p; 
         
         document.getElementById('reg-step-1').classList.add('hidden');
         document.getElementById('reg-step-2').classList.remove('opacity-30', 'pointer-events-none');
@@ -646,7 +680,6 @@
     }
   }
 
-  // ⭐ 註冊流程 Step 2: 圖片裁切與辨識
   function openRegCropper(input) {
     const file = input.files[0];
     if (!file) return;
@@ -685,13 +718,11 @@
     step2Div.classList.add('pointer-events-none', 'opacity-50');
 
     try {
-      // 1. 執行 OCR，若有生日，會自動啟動命理八字擴增
       const data = await fetchAPI('recognizeCard', { 
           base64Image: regCompressedBase64,
           Birthday: regStep1Data.birthday
       });
       
-      // 2. 組合 Payload：以會員基本資料為準，補齊名片上的商務資訊與命理標籤
       const payload = {
         base64Image: regCompressedBase64,
         userId: userProfile.userId,
@@ -729,7 +760,6 @@
     }
   }
 
-  // ⭐ 完成註冊進入系統
   function finishRegistration() {
       isRegistered = true;
       registeredInfo = regStep1Data;
@@ -771,7 +801,7 @@
   }
 
   function filterActivities() {
-      const term = ''; // 若有搜尋框可加入搜尋過濾，目前僅實作分類過濾
+      const term = ''; 
       const filtered = globalPublicActivities.filter(a => {
           const matchCat = currentCategory === '全部活動' || a.type === currentCategory;
           return matchCat;
@@ -807,9 +837,11 @@
     let html = '';
     data.forEach((a, i) => {
       const bgImg = a.imageUrl || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80';
+      const safeName = a.name.replace(/'/g, "\\'");
+
       if (mode === 'user') {
         html += `
-        <div onclick="openActivityDetailByName('${a.name}')" class="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm flex flex-col h-full cursor-pointer active:scale-[0.98] transition-transform animate-in fade-in zoom-in-95" style="animation-delay: ${i*50}ms">
+        <div onclick="openActivityDetailByName('${safeName}')" class="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm flex flex-col h-full cursor-pointer active:scale-[0.98] transition-transform animate-in fade-in zoom-in-95" style="animation-delay: ${i*50}ms">
           <div class="relative h-32 w-full shrink-0">
             <img src="${bgImg}" class="w-full h-full object-cover">
             <div class="absolute inset-0 bg-black/10"></div>
@@ -825,10 +857,10 @@
             </p>
             <h3 class="text-[14px] font-black text-slate-800 leading-snug line-clamp-2 mb-3 flex-1">${a.name}</h3>
             <div class="flex gap-2 mt-auto">
-              <button onclick="event.stopPropagation(); openActivityDetailByName('${a.name}')" class="flex-[1] py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold text-[12px] active:scale-95 transition-transform flex items-center justify-center">
+              <button onclick="event.stopPropagation(); openActivityDetailByName('${safeName}')" class="flex-[1] py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold text-[12px] active:scale-95 transition-transform flex items-center justify-center">
                 說明
               </button>
-              <button onclick="event.stopPropagation(); userJoinActivity(this, '${a.name}', '${a.feeType}', '${a.price}')" class="flex-[1.5] py-2.5 bg-primary text-white rounded-xl font-bold text-[12px] active:scale-95 transition-transform flex items-center justify-center gap-1 shadow-md shadow-blue-500/20">
+              <button onclick="event.stopPropagation(); userJoinActivity(this, '${safeName}', '${a.feeType}', '${a.price}')" class="flex-[1.5] py-2.5 bg-primary text-white rounded-xl font-bold text-[12px] active:scale-95 transition-transform flex items-center justify-center gap-1 shadow-md shadow-blue-500/20">
                 報名 <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
               </button>
             </div>
@@ -855,8 +887,8 @@
           </div>
 
           <div class="flex gap-2">
-            <button onclick="toggleActivityStatus('${a.name}')" class="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold text-[13px] active:scale-95 transition-transform flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[16px]">power_settings_new</span> 上下架</button>
-            <button onclick="openAdminRegistrants('${a.name}')" class="flex-1 py-2.5 bg-slate-800 text-white rounded-xl font-bold text-[13px] shadow-md active:scale-95 transition-transform flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[16px]">list_alt</span> 名單核銷</button>
+            <button onclick="toggleActivityStatus('${safeName}')" class="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold text-[13px] active:scale-95 transition-transform flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[16px]">${a.status==='上架'?'visibility_off':'visibility'}</span> ${a.status==='上架'?'強制下架':'重新上架'}</button>
+            <button onclick="openAdminRegistrants('${safeName}')" class="flex-1 py-2.5 bg-slate-800 text-white rounded-xl font-bold text-[13px] shadow-md active:scale-95 transition-transform flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[16px]">list_alt</span> 名單核銷</button>
           </div>
         </div>`;
       }
@@ -936,12 +968,13 @@
 
   async function loadUserHistory() {
     const container = document.getElementById('user-history-container');
-    container.innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-primary text-xl"></i></div>';
+    container.innerHTML = '<div class="text-center py-10"><span class="material-symbols-outlined animate-spin text-primary text-xl">refresh</span></div>';
     const history = await fetchAPI('getUserHistory', { userId: userProfile.userId });
-    if (!history || history.length === 0) { container.innerHTML = '<div class="text-center py-16 bg-white shadow-app-card rounded-[2rem] text-slate-400 font-bold border border-slate-100">尚無報名紀錄</div>'; return; }
+    if (!history || history.length === 0) { container.innerHTML = '<div class="text-center py-16 bg-white shadow-app-card border border-slate-100 rounded-[2rem] text-slate-400 font-bold">尚無報名紀錄</div>'; return; }
     container.innerHTML = history.map(item => {
       let payStatusBadge = `<span class="px-3 py-1 text-[11px] font-extrabold rounded-full ${item.payStatus==='已完款'?'bg-blue-100 text-blue-600':(item.payStatus==='匯款審核中'?'bg-slate-800 text-white':'bg-orange-100 text-orange-600')}">${item.payStatus}</span>`;
       const isPendingAudit = item.payStatus === '匯款審核中';
+      const safeName = item.name.replace(/'/g, "\\'");
       return `
       <div class="bg-white rounded-[2rem] shadow-app-card p-6 border border-slate-50 relative overflow-hidden animate-in slide-in-from-bottom-2">
         ${item.regStatus==='已取消' ? '<div class="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-black px-4 py-1 rounded-bl-xl shadow-sm">已取消</div>' : ''}
@@ -962,11 +995,11 @@
         ${item.isPaidAct && item.payStatus === '未繳費' && item.regStatus !== '已取消' ? `
           <div class="mt-4 pt-4 border-t border-slate-100 flex gap-2">
              <input type="text" id="pay-${item.name.replace(/\s+/g,'')}" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-center tracking-widest outline-none focus:border-primary" placeholder="後五碼" maxlength="5">
-             <button onclick="submitLast5('${item.name}', '${item.name.replace(/\s+/g,'')}')" class="bg-slate-800 text-white px-4 py-2 rounded-xl text-sm font-bold active:scale-95 transition-transform">回報</button>
+             <button onclick="submitLast5('${safeName}', '${item.name.replace(/\s+/g,'')}')" class="bg-slate-800 text-white px-4 py-2 rounded-xl text-sm font-bold active:scale-95 transition-transform">回報</button>
           </div>
         ` : ''}
         ${item.regStatus !== '已取消' ? `
-          <button onclick="userCancelRegistration('${item.name}')" class="absolute bottom-4 right-4 text-[11px] text-slate-400 font-bold hover:text-red-500 transition-colors">取消報名</button>
+          <button onclick="userCancelRegistration('${safeName}')" class="absolute bottom-4 right-4 text-[11px] text-slate-400 font-bold hover:text-red-500 transition-colors">取消報名</button>
         ` : ''}
       </div>`;
     }).join('');
@@ -1001,7 +1034,6 @@
     } catch(e) { showToast("取消失敗", true); }
   }
 
-  // --- Profile Functions ---
   function populateUserProfile() { 
     if(registeredInfo) { 
         document.getElementById('edit-name').value=registeredInfo.name || ''; 
@@ -1017,7 +1049,7 @@
   async function submitProfileUpdate() { 
     const p = { 
         userId: userProfile.userId, 
-        name: document.getElementById('edit-name').value.trim(), 
+        name: document.getElementById('edit-name').value.trim() || userProfile.displayName, 
         gender: document.getElementById('edit-gender').value, 
         phone: document.getElementById('edit-phone').value.trim(), 
         industry: document.getElementById('edit-industry').value.trim(),
@@ -1030,10 +1062,9 @@
     showToast("✅ 資料儲存成功"); 
   }
 
-  // --- Admin Functions ---
   async function loadAdminActivities() {
     const list = document.getElementById('admin-activity-list-container');
-    list.innerHTML = `<div class="flex justify-center py-10"><i class="fas fa-spinner fa-spin text-primary text-xl"></i></div>`;
+    list.innerHTML = `<div class="flex justify-center py-10"><span class="material-symbols-outlined animate-spin text-primary text-xl">refresh</span></div>`;
     try {
       currentActivities = await fetchAPI('getActivityDashboard');
       renderActivityList(currentActivities, 'admin');
@@ -1051,7 +1082,7 @@
   async function openAdminRegistrants(actName) {
     activeActivityName = actName;
     document.getElementById('admin-reg-title').innerText = actName;
-    document.getElementById('admin-reg-list').innerHTML = `<div class="flex justify-center py-10"><i class="fas fa-spinner fa-spin text-primary text-xl"></i></div>`;
+    document.getElementById('admin-reg-list').innerHTML = `<div class="flex justify-center py-10"><span class="material-symbols-outlined animate-spin text-primary text-xl">refresh</span></div>`;
     document.getElementById('admin-registrants-modal').classList.remove('hidden');
     
     try {
@@ -1170,7 +1201,7 @@
 
   async function loadCrmData() {
     const list = document.getElementById('admin-crm-list-container');
-    list.innerHTML = `<div class="flex justify-center py-10"><i class="fas fa-spinner fa-spin text-primary text-xl"></i></div>`;
+    list.innerHTML = `<div class="flex justify-center py-10"><span class="material-symbols-outlined animate-spin text-primary text-xl">refresh</span></div>`;
     try {
       globalCrmData = await fetchAPI('getAllCrmData');
       if(!globalCrmData.length) return list.innerHTML = `<p class="text-center text-slate-400 font-bold mt-10">尚無資料</p>`;
@@ -1249,6 +1280,63 @@
   function toggleFeeInput() { document.getElementById('detail-price').classList.toggle('hidden', document.querySelector('input[name="fee-type"]:checked').value !== '收費'); }
   function toggleEditFeeInput() { document.getElementById('edit-act-price').classList.toggle('hidden', document.querySelector('input[name="edit-act-fee-type"]:checked').value !== '收費'); }
   function toggleCreateMode(m) { document.getElementById('tab-quick').className = `flex-1 py-3 rounded-full text-[15px] font-bold transition-all ${m==='quick'?'bg-white text-primary shadow':'text-slate-500 hover:text-slate-800'}`; document.getElementById('tab-detailed').className = `flex-1 py-3 rounded-full text-[15px] font-bold transition-all ${m==='detailed'?'bg-white text-primary shadow':'text-slate-500 hover:text-slate-800'}`; document.getElementById('form-quick').classList.toggle('hidden', m!=='quick'); document.getElementById('form-detailed').classList.toggle('hidden', m!=='detailed'); }
+  
+  function previewFile(mode) { 
+    const f = document.getElementById(`file-input-${mode}`).files[0]; 
+    if(!f) return; 
+    
+    showToast("圖片處理壓縮中...", false);
+    
+    const r = new FileReader(); 
+    r.onloadend = () => { 
+      const img = new Image(); 
+      img.onload = () => { 
+        let w = img.width; 
+        let h = img.height; 
+        let maxWidth = 400; 
+        if (w > maxWidth) { h = Math.round(h * (maxWidth/w)); w = maxWidth; } 
+        
+        const cvs = document.createElement('canvas'); 
+        cvs.width = w; cvs.height = h; 
+        const ctx = cvs.getContext('2d'); 
+        
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h); 
+        
+        let quality = 0.5; 
+        let b64 = cvs.toDataURL('image/jpeg', quality); 
+        
+        while (b64.length > 40000 && quality > 0.1) {
+          quality -= 0.1;
+          b64 = cvs.toDataURL('image/jpeg', quality);
+        }
+        
+        while (b64.length > 40000 && w > 100) {
+          w = Math.round(w * 0.8);
+          h = Math.round(h * 0.8);
+          cvs.width = w; cvs.height = h;
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+          b64 = cvs.toDataURL('image/jpeg', quality);
+        }
+        
+        if (b64.length > 49000) {
+          showToast("⚠️ 圖片過於複雜無法壓縮至系統限制，請裁切或更換圖片", true);
+          return;
+        }
+        
+        document.getElementById(`image-preview-${mode}`).src = b64; 
+        document.getElementById(`image-preview-${mode}`).classList.remove('hidden'); 
+        document.getElementById(`preview-placeholder-${mode}`).classList.add('hidden'); 
+        document.getElementById(`in-image-url-${mode}`).value = b64; 
+        showToast("✅ 圖片上傳並壓縮成功");
+      }; 
+      img.src = r.result; 
+    }; 
+    r.readAsDataURL(f); 
+  }
 </script>
 </body>
 </html>

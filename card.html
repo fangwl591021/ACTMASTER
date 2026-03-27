@@ -43,27 +43,23 @@
     .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1.5rem); }
     .input-label { @apply block text-[13px] font-bold text-text-main mb-1.5 ml-1; }
     .custom-input { @apply w-full py-3.5 px-4 bg-input-bg border-none rounded-xl outline-none focus:ring-2 focus:ring-primary/30 transition-all font-medium text-text-main; }
-    .btn-primary { @apply w-full py-4 bg-primary text-white rounded-2xl font-bold text-[17px] shadow-lg shadow-emerald-500/30 active:scale-95 transition-all flex items-center justify-center gap-2; }
     .btn-disabled { pointer-events: none; opacity: 0.6; filter: grayscale(100%); }
 
-    /* 底部導覽列樣式 */
-    .nav-btn { @apply flex flex-col items-center gap-1.5 transition-all w-20 text-slate-400; }
-    .nav-btn .icon-box { @apply px-5 py-1.5 rounded-full transition-all; }
-    .nav-active { @apply text-emerald-500 font-bold; }
-    .nav-active .icon-box { @apply bg-emerald-100 text-emerald-600; }
+    /* ⭐ 全站統一底部導覽列樣式 (保證不擁擠) */
+    .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-slate-400; min-width: 48px; }
+    .nav-btn .icon-box { @apply px-3 py-1.5 rounded-full transition-all flex items-center justify-center; }
+    .nav-active { @apply text-primary font-bold; }
+    .nav-active .icon-box { @apply bg-primary-light text-primary; }
     .nav-active .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
 
-    /* 裁切器自訂樣式 */
     .cropper-view-box, .cropper-face { border-radius: 8px; }
     .cropper-line { background-color: #10b981; opacity: 0.5; }
     .cropper-point { background-color: #10b981; }
 
-    /* 名片產生器預覽區專用樣式 */
     .flex-preview-bubble { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #edf2f7; position: relative; transition: max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1); width: 100%; }
     .flex-preview-img { width: 100%; object-fit: cover; background-color: #f1f5f9; transition: aspect-ratio 0.3s ease, object-fit 0.3s ease; }
     .flex-badge { position: absolute; top: 10px; left: 10px; background-color: #FF0000; color: white; font-size: 14px; font-weight: bold; padding: 4px 12px; border-radius: 9999px; z-index: 10; }
     
-    /* 自訂顏色選擇器外觀 */
     input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
     input[type="color"]::-webkit-color-swatch { border: none; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
   </style>
@@ -91,10 +87,8 @@
       <p id="loading-text" class="text-primary font-bold tracking-widest text-sm">資料載入中</p>
     </div>
 
-    <!-- ==================== 模組：主畫面 (掃描上傳與通訊錄列表) ==================== -->
+    <!-- 主畫面 -->
     <div id="view-list" class="hidden space-y-5 animate-in fade-in pt-4">
-      
-      <!-- 掃描/上傳區塊 -->
       <div class="bg-white rounded-[2rem] shadow-app-card p-6 text-center mx-1 mt-4">
         <div class="w-16 h-16 bg-primary-light text-primary rounded-full flex items-center justify-center mx-auto mb-3">
           <span class="material-symbols-outlined text-4xl">document_scanner</span>
@@ -115,7 +109,6 @@
         <input type="file" id="card-upload" accept="image/*" class="hidden" onchange="openCropper(this)">
       </div>
 
-      <!-- 搜尋與通訊錄列表 -->
       <div class="space-y-4">
         <div class="relative px-2">
           <span class="material-symbols-outlined absolute left-6 top-1/2 -translate-y-1/2 text-slate-400">search</span>
@@ -125,21 +118,19 @@
       </div>
     </div>
 
-    <!-- ==================== 模組：AI 處理與確認表單 ==================== -->
+    <!-- AI 處理與確認表單 -->
     <div id="view-process" class="hidden space-y-6 animate-in fade-in pt-4">
       <div class="flex items-center gap-3 px-2 mb-2">
         <button onclick="resetUI()" class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-600 shadow-sm active:scale-90 transition-all border border-slate-100"><span class="material-symbols-outlined">arrow_back</span></button>
         <h2 class="text-2xl font-black font-headline text-text-main tracking-tight">辨識結果確認</h2>
       </div>
 
-      <!-- 處理中畫面 -->
       <div id="section-loading" class="hidden bg-white rounded-[2rem] shadow-app-card p-10 text-center animate-in zoom-in-95 mt-10 mx-2">
         <span class="material-symbols-outlined text-5xl text-primary animate-spin mb-4">autorenew</span>
         <h3 class="text-xl font-black text-text-main mb-2">AI 辨識中...</h3>
         <p class="text-sm text-text-muted">正在萃取名片資訊，這可能需要幾秒鐘。</p>
       </div>
 
-      <!-- 結果確認表單 -->
       <div id="section-form" class="hidden space-y-6 animate-in slide-in-from-bottom-8">
         <div class="bg-white rounded-[2rem] shadow-app-card p-6">
           <h3 class="text-lg font-black text-text-main mb-4 flex items-center gap-2">
@@ -194,7 +185,6 @@
     </div>
   </main>
 
-  <!-- 滿版裁切器 Modal (改用內聯 style 以保證 z-index 絕對生效) -->
   <div id="section-cropper" class="hidden fixed inset-0 bg-black flex flex-col animate-in fade-in duration-300 w-full max-w-md mx-auto" style="z-index: 100;">
     <div class="flex justify-between items-center p-5 bg-black text-white shrink-0 z-10 shadow-md">
       <button onclick="cancelCrop()" class="px-4 py-2 font-bold text-slate-300 active:scale-90 transition-transform">取消</button>
@@ -211,12 +201,26 @@
     </div>
   </div>
 
-  <nav id="bottom-nav-admin" class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-around items-center px-1 py-2 z-40 pb-safe shadow-[0_-4px_15px_rgba(0,0,0,0.03)]">
-    <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">fact_check</span></div><span class="text-[10px] font-bold mt-1">核銷</span></button>
-    <button onclick="window.location.href='active.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">add_circle</span></div><span class="text-[10px] font-bold mt-1">建立</span></button>
-    <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">groups</span></div><span class="text-[10px] font-bold mt-1">CRM</span></button>
-    <button onclick="resetUI()" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">recent_patient</span></div><span class="text-[10px] font-bold mt-1">名片</span></button>
-    <button onclick="window.location.href='index.html?view=admin-settings'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">settings</span></div><span class="text-[10px] font-bold mt-1">參數</span></button>
+  <!-- ⭐ 統一 6 顆按鈕滿版底部導覽列 -->
+  <nav id="bottom-nav-admin" class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-evenly items-center px-4 py-2 z-[999] pb-safe shadow-[0_-4px_15px_rgba(0,0,0,0.03)] left-1/2 -translate-x-1/2">
+    <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn" id="nav-admin-activities">
+      <div class="icon-box"><span class="material-symbols-outlined text-[24px]">fact_check</span></div><span class="text-[10px] mt-1 font-bold whitespace-nowrap">核銷</span>
+    </button>
+    <button onclick="window.location.href='index.html?view=admin-create'" class="nav-btn" id="nav-admin-create">
+      <div class="icon-box"><span class="material-symbols-outlined text-[24px]">add_circle</span></div><span class="text-[10px] mt-1 font-bold whitespace-nowrap">建立</span>
+    </button>
+    <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn" id="nav-admin-crm">
+      <div class="icon-box"><span class="material-symbols-outlined text-[24px]">groups</span></div><span class="text-[10px] mt-1 font-bold whitespace-nowrap">CRM</span>
+    </button>
+    <button onclick="window.location.href='fate.html'" class="nav-btn" id="nav-admin-fate">
+      <div class="icon-box"><span class="material-symbols-outlined text-[24px] text-pink-500">psychology</span></div><span class="text-[10px] mt-1 font-bold text-pink-600 whitespace-nowrap">配對</span>
+    </button>
+    <button onclick="window.location.href='card.html'" class="nav-btn nav-active" id="nav-admin-cards">
+      <div class="icon-box"><span class="material-symbols-outlined text-[24px]">recent_patient</span></div><span class="text-[10px] mt-1 font-bold whitespace-nowrap">名片</span>
+    </button>
+    <button onclick="window.location.href='index.html?view=admin-settings'" class="nav-btn" id="nav-admin-settings">
+      <div class="icon-box"><span class="material-symbols-outlined text-[24px]">settings</span></div><span class="text-[10px] mt-1 font-bold whitespace-nowrap">參數</span>
+    </button>
   </nav>
 </div>
 
@@ -612,9 +616,11 @@
   function showToast(msg, isError = false) {
     const t = document.getElementById('toast');
     t.innerHTML = `<span class="material-symbols-outlined icon-filled">${isError ? 'error' : 'info'}</span> ${msg}`;
-    t.className = `fixed top-14 left-1/2 -translate-x-1/2 px-6 py-3.5 rounded-full text-[15px] shadow-app-card transition-all z-[10000] font-bold transform translate-y-0 opacity-100 ${isError ? 'bg-red-500 text-white' : 'bg-slate-800 text-white'} flex items-center gap-2 w-max max-w-[90vw]`; 
-    t.style.zIndex = '10000'; 
-    setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -1rem)'; }, 3000);
+    t.className = `fixed top-14 left-1/2 -translate-x-1/2 px-6 py-3.5 rounded-full text-[15px] shadow-app-card transition-all font-bold flex items-center gap-2 w-max max-w-[90vw] ${isError ? 'bg-red-500 text-white' : 'bg-slate-800 text-white'}`; 
+    t.style.zIndex = '10000';
+    t.style.opacity = '100';
+    t.classList.remove('hidden');
+    setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -1rem)'; setTimeout(() => t.classList.add('hidden'), 300); }, 3000); 
   }
 
   function openCropper(input) {
@@ -732,7 +738,6 @@
         container.innerHTML = '<div class="text-center py-16 bg-white rounded-[2rem] shadow-app-card text-slate-400 font-bold">目前尚無名片資料</div>';
         return;
       }
-      // ⭐ 改用 rowId 精準傳遞，徹底解決搜尋排序錯亂導致的點擊問題
       container.innerHTML = data.map((card) => `
         <div onclick="openCardDetailByRowId('${card.rowId}')" class="bg-white rounded-[1.5rem] shadow-sm border border-slate-100 p-5 flex items-center gap-4 animate-in fade-in slide-in-from-bottom-2 cursor-pointer active:scale-95 transition-all">
           <div class="w-12 h-12 shrink-0 rounded-full overflow-hidden bg-slate-50 flex items-center justify-center border border-slate-100">
@@ -758,7 +763,6 @@
       renderCardList(filtered);
   }
 
-  // ⭐ 加入 try-catch 安全防護與 rowId 精確綁定
   function openCardDetailByRowId(rowId) { 
       try {
         const card = globalCardContacts.find(c => String(c.rowId) === String(rowId));
@@ -1042,10 +1046,10 @@
     for (let i=0; i<buttons.length; i++) {
         let label = buttons[i].l ? String(buttons[i].l).trim() : '查看';
         let safeU = buttons[i].u ? String(buttons[i].u).trim() : 'https://line.me';
-        let btnC = buttons[i].c || '#ff751f';
+        let btnColor = buttons[i].c || '#ff751f';
 
         btnContents.push({
-            "type": "button", "style": "primary", "color": btnC, "height": "sm", "margin": "sm",
+            "type": "button", "style": "primary", "color": btnColor, "height": "sm", "margin": "sm",
             "action": { "type": "uri", "label": label.substring(0, 20), "uri": safeU.substring(0, 1000) }
         });
     }
@@ -1140,7 +1144,7 @@
         const btn = buttons[i-1];
         document.getElementById(`ec-btn${i}-label`).value = btn ? btn.action.label : '';
         document.getElementById(`ec-btn${i}-url`).value = btn ? btn.action.uri.replace(/^(tel|mailto|https):\/\//, '').replace(/^(tel|mailto):/, '') : '';
-        document.getElementById(`ec-btn${i}-color`).value = btn && btn.color ? btn.color : '#ff751f';
+        document.getElementById(`ec-btn${i}-color`).value = '#ff751f';
       }
     }
 
@@ -1268,13 +1272,13 @@
       
       const altText = `您收到一張數位名片：${config.title || currentActiveCard['姓名'] || '商務名片'}`;
 
-      btnShare.innerHTML = '🚀 轉發至 LINE 聊天室';
+      btnShare.innerHTML = '🚀 轉發至 LINE';
       btnShare.classList.remove('pointer-events-none');
 
       await triggerFlexSharing(flexMessageObj, altText);
     } catch(err) {
       alert("發生未預期的錯誤：" + err.message);
-      btnShare.innerHTML = '🚀 轉發至 LINE 聊天室';
+      btnShare.innerHTML = '🚀 轉發至 LINE';
       btnShare.classList.remove('pointer-events-none');
     }
   }

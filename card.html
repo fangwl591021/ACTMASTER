@@ -417,6 +417,43 @@
     return s;
   }
 
+  // ⭐ 發送前嚴格檢查 JSON 格式是否有效
+  function validateFlexObj(flex) {
+      let errors = [];
+      function checkNode(node) {
+          if (!node || typeof node !== 'object') return;
+          
+          if (node.action && node.action.type === 'uri') {
+              const u = node.action.uri || '';
+              const label = node.action.label || '';
+              if (!u || u === 'tel:' || u === 'mailto:' || u === 'http://' || u === 'https://') {
+                  errors.push(`【無效連結】 按鈕「${label || '未命名'}」缺少實際網址或號碼。`);
+              }
+              if (label && label.length > 20) {
+                  errors.push(`【文字過長】 按鈕「${label}」超過 LINE 的 20 字元上限。`);
+              }
+              if (u && u.length > 1000) {
+                  errors.push(`【網址過長】 按鈕「${label}」的網址超過 1000 字元。`);
+              }
+          }
+          
+          if (node.type === 'image' && node.url) {
+              if (!node.url.startsWith('https://') && !node.url.startsWith('http://')) {
+                  errors.push(`【圖片錯誤】 網址必須為 http(s) 開頭 (當前為: ${node.url.substring(0, 20)}...)`);
+              }
+          }
+          
+          ['hero', 'body', 'footer'].forEach(key => {
+              if (node[key]) checkNode(node[key]);
+          });
+          if (node.contents && Array.isArray(node.contents)) {
+              node.contents.forEach(checkNode);
+          }
+      }
+      checkNode(flex);
+      return [...new Set(errors)]; 
+  }
+
   window.onload = async () => {
     try {
       await liff.init({ liffId: LIFF_ID });
@@ -666,7 +703,7 @@
     
     const mobileLink = document.getElementById('cd-mobile-link');
     mobileLink.innerText = card['手機號碼'] || '未提供';
-    mobileLink.href = card['手機號碼'] ? `tel:${card['手機號碼']}` : '#';
+    mobileLink.href = card['手機號碼'] ? `tel:${card['手機號碼'].replace(/[^\d+]/g, '')}` : '#';
     
     document.getElementById('cd-tel').innerText = [card['公司電話'], card['分機'] ? `ext.${card['分機']}` : ''].filter(Boolean).join(' ') || '未提供';
     
@@ -891,16 +928,23 @@
     for (let i=0; i<buttons.length; i++) {
         let label = buttons[i].l ? String(buttons[i].l).trim() : '查看';
         let safeU = buttons[i].u ? String(buttons[i].u).trim() : '';
-        if (!safeU) { safeU = 'https://line.me'; } 
-        else if (!safeU.match(/^(http|https|tel|mailto|line):/i)) {
+        const invalidTexts = ['none', 'null', '未提供', '無', '-', ''];
+        
+        if (invalidTexts.includes(safeU.toLowerCase())) { 
+            safeU = 'https://line.me'; 
+        } else if (!safeU.match(/^(http|https|tel|mailto|line):/i)) {
             if (/^[\d\-\+\s()]+$/.test(safeU)) {
                 let pureNum = safeU.replace(/[^\d+]/g, '');
                 if (pureNum.startsWith('+886')) pureNum = '0' + pureNum.substring(4);
                 else if (pureNum.startsWith('886')) pureNum = '0' + pureNum.substring(3);
                 safeU = pureNum ? 'tel:' + pureNum : 'https://line.me';
             }
-            else if (safeU.includes('@')) safeU = 'mailto:' + safeU;
-            else safeU = 'https://' + safeU;
+            else if (safeU.includes('@')) {
+                safeU = 'mailto:' + safeU;
+            }
+            else {
+                safeU = 'https://' + safeU.replace(/\s/g, '');
+            }
         }
 
         btnContents.push({
@@ -911,7 +955,6 @@
 
     const badgeUrl = `https://liff.line.me/${LIFF_ID}?shareCardId=${card.rowId}`;
 
-    // ⭐ 完美套用標準 Flex Message 架構，將圖片與文字合併至 body，確保標籤可以完美覆蓋！
     const flexContents = {
         "type": "bubble",
         "size": imgSize,
@@ -932,7 +975,7 @@
                     "type": "box", "layout": "vertical", "paddingAll": "15px",
                     "contents": [
                         { "type": "text", "text": title, "weight": "bold", "size": "xl", "align": "center", "wrap": true },
-                        { "type": "text", "text": desc, "size": "xs", "margin": "md", "color": "#666666", "wrap": true }
+                        { "type": "text", "text": desc, "size": "xs", "margin": "sm", "color": "#666666", "wrap": true }
                     ]
                 },
                 {
@@ -1108,18 +1151,37 @@
     btnShare.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> 處理中...';
     btnShare.classList.add('pointer-events-none');
 
-    const currentImgUrl = getDirectImageUrl(document.getElementById('ec-img-input').value) || getDirectImageUrl(currentActiveCard['名片圖檔']);
-    const detectedAr = await getTrueAspectRatio(currentImgUrl);
-    dynamicAspectRatio = detectedAr; 
+    try {
+      const currentImgUrl = getDirectImageUrl(document.getElementById('ec-img-input').value) || getDirectImageUrl(currentActiveCard['名片圖檔']);
+      const detectedAr = await getTrueAspectRatio(currentImgUrl);
+      dynamicAspectRatio = detectedAr; 
 
-    const config = await saveECardConfig(true); 
-    const flexMessageObj = buildFlexMessageFromCard(currentActiveCard, config, detectedAr);
-    const altText = `您收到一張數位名片：${config.title || currentActiveCard['姓名'] || '商務名片'}`;
+      const config = await saveECardConfig(true); 
+      const flexMessageObj = buildFlexMessageFromCard(currentActiveCard, config, detectedAr);
+      
+      // ⭐ 發送前檢查，若有錯直接攔截並跳出明確提示
+      const validationErrors = validateFlexObj(flexMessageObj);
+      if (validationErrors.length > 0) {
+          let errorMsg = "⚠️ 發現格式錯誤，LINE 伺服器會拒絕發送：\n\n";
+          validationErrors.forEach((e, i) => errorMsg += `${i + 1}. ${e}\n`);
+          errorMsg += "\n請至上方「編輯區」修正後再試一次！";
+          alert(errorMsg);
+          btnShare.innerHTML = '🚀 轉發至 LINE 聊天室';
+          btnShare.classList.remove('pointer-events-none');
+          return;
+      }
 
-    btnShare.innerHTML = '🚀 轉發至 LINE 聊天室';
-    btnShare.classList.remove('pointer-events-none');
+      const altText = `您收到一張數位名片：${config.title || currentActiveCard['姓名'] || '商務名片'}`;
 
-    await triggerFlexSharing(flexMessageObj, altText);
+      btnShare.innerHTML = '🚀 轉發至 LINE 聊天室';
+      btnShare.classList.remove('pointer-events-none');
+
+      await triggerFlexSharing(flexMessageObj, altText);
+    } catch(err) {
+      alert("發生未預期的錯誤：" + err.message);
+      btnShare.innerHTML = '🚀 轉發至 LINE 聊天室';
+      btnShare.classList.remove('pointer-events-none');
+    }
   }
 
   async function handleECardImageUpload(input) {

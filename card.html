@@ -103,7 +103,6 @@
         <h2 class="text-3xl font-black font-headline text-text-main tracking-tight">掃描名片</h2>
       </div>
 
-      <!-- 1. 拍照/上傳區 -->
       <div id="section-upload" class="bg-white rounded-[2rem] shadow-app-card p-6 text-center animate-in fade-in">
         <div class="w-20 h-20 bg-primary-light text-primary rounded-full flex items-center justify-center mx-auto mb-4">
           <span class="material-symbols-outlined text-4xl">document_scanner</span>
@@ -126,14 +125,12 @@
         <input type="file" id="card-upload" accept="image/*" class="hidden" onchange="openCropper(this)">
       </div>
 
-      <!-- 2. 處理中畫面 -->
       <div id="section-loading" class="hidden bg-white rounded-[2rem] shadow-app-card p-10 text-center animate-in zoom-in-95 mt-10">
         <span class="material-symbols-outlined text-5xl text-primary animate-spin mb-4">autorenew</span>
         <h3 class="text-xl font-black text-text-main mb-2">AI 辨識中...</h3>
         <p class="text-sm text-text-muted">正在萃取名片資訊，這可能需要幾秒鐘。</p>
       </div>
 
-      <!-- 3. 結果確認表單 -->
       <div id="section-form" class="hidden space-y-6 animate-in slide-in-from-bottom-8">
         <div class="bg-white rounded-[2rem] shadow-app-card p-6">
           <h3 class="text-lg font-black text-text-main mb-4 flex items-center gap-2">
@@ -183,7 +180,7 @@
     </div>
   </main>
 
-  <!-- ⭐ 滿版裁切器 Modal -->
+  <!-- 滿版裁切器 Modal -->
   <div id="section-cropper" class="hidden fixed inset-0 z-[100] bg-black flex flex-col animate-in fade-in duration-300 w-full max-w-md mx-auto">
     <div class="flex justify-between items-center p-5 bg-black text-white shrink-0 z-10 shadow-md">
       <button onclick="cancelCrop()" class="px-4 py-2 font-bold text-slate-300 active:scale-90 transition-transform">取消</button>
@@ -409,6 +406,7 @@
   let isProcessing = false;
   let dynamicAspectRatio = "20:13"; 
 
+  // ⭐ 智慧修復與資料清洗函式
   function formatPhoneStr(val) {
     if (val === null || val === undefined) return '';
     let s = String(val).trim();
@@ -417,29 +415,69 @@
     return s;
   }
 
-  // ⭐ 發送前嚴格檢查 JSON 格式是否有效
+  // ⭐ 嚴格網址清理器：專門對付那些混雜在同一個欄位裡的髒資料 (例如: https://..., LINE ID:...)
+  function sanitizeUri(rawUri) {
+      if (!rawUri) return 'https://line.me';
+      let s = String(rawUri).trim();
+      const invalidTexts = ['none', 'null', '未提供', '無', '-', ''];
+      if (invalidTexts.includes(s.toLowerCase())) return 'https://line.me';
+
+      // 1. 如果字串內混有合法的 http/https，強制抽出第一段有效網址，忽略後面所有廢話
+      const httpMatch = s.match(/(https?:\/\/[^\s,]+)/i);
+      if (httpMatch) return httpMatch[1];
+
+      // 2. 如果使用者直接打了信箱，或是字串有 @
+      if (s.includes('@') && !s.includes('/')) {
+          // 只抽取出第一段沒有空白跟逗號的字串當信箱
+          return 'mailto:' + s.split(/[\s,]+/)[0];
+      }
+
+      // 3. 如果是純數字電話格式 (含加號、括號等)
+      if (/^[\d\-\+\s()]+$/.test(s)) {
+          let pureNum = s.replace(/[^\d+]/g, '');
+          if (pureNum.startsWith('+886')) pureNum = '0' + pureNum.substring(4);
+          else if (pureNum.startsWith('886')) pureNum = '0' + pureNum.substring(3);
+          return pureNum ? 'tel:' + pureNum : 'https://line.me';
+      }
+
+      // 4. 最後的防線，直接補上 https:// 並切掉第一段以外的垃圾字元
+      if (s.startsWith('tel:') || s.startsWith('mailto:') || s.startsWith('line:')) {
+          return s.split(/[\s,]+/)[0];
+      }
+      return 'https://' + s.split(/[\s,]+/)[0];
+  }
+
+  // ⭐ 發送前終極檢查機制 (嚴格攔截無效格式並跳出警告)
   function validateFlexObj(flex) {
       let errors = [];
       function checkNode(node) {
           if (!node || typeof node !== 'object') return;
           
+          // 檢查按鈕與點擊動作的網址
           if (node.action && node.action.type === 'uri') {
               const u = node.action.uri || '';
-              const label = node.action.label || '';
+              const label = node.action.label || '圖片區塊';
+              
               if (!u || u === 'tel:' || u === 'mailto:' || u === 'http://' || u === 'https://') {
-                  errors.push(`【無效連結】 按鈕「${label || '未命名'}」缺少實際網址或號碼。`);
+                  errors.push(`【無效連結】 「${label}」缺少實際網址或號碼。`);
+              } else if (!/^(https?|tel|mailto|line):/i.test(u)) {
+                  errors.push(`【網址格式錯誤】 「${label}」必須以 http, https, tel 或 mailto 開頭。(當前: ${u.substring(0,20)})`);
+              } else if (/\s|,/.test(u)) {
+                  errors.push(`【包含非法字元】 「${label}」的網址包含空白或逗號，會導致 LINE 阻擋發送。(當前: ${u.substring(0,20)})`);
               }
+              
               if (label && label.length > 20) {
-                  errors.push(`【文字過長】 按鈕「${label}」超過 LINE 的 20 字元上限。`);
+                  errors.push(`【文字過長】 按鈕「${label}」超過 LINE 的 20 字元限制。`);
               }
               if (u && u.length > 1000) {
-                  errors.push(`【網址過長】 按鈕「${label}」的網址超過 1000 字元。`);
+                  errors.push(`【網址過長】 「${label}」的網址超過 1000 字元。`);
               }
           }
           
+          // 檢查圖片
           if (node.type === 'image' && node.url) {
               if (!node.url.startsWith('https://') && !node.url.startsWith('http://')) {
-                  errors.push(`【圖片錯誤】 網址必須為 http(s) 開頭 (當前為: ${node.url.substring(0, 20)}...)`);
+                  errors.push(`【圖片錯誤】 圖片網址必須為 http 或 https 開頭。`);
               }
           }
           
@@ -702,10 +740,11 @@
     document.getElementById('cd-taxid').innerText = card['統一編號'] || '未提供';
     
     const mobileLink = document.getElementById('cd-mobile-link');
-    mobileLink.innerText = card['手機號碼'] || '未提供';
-    mobileLink.href = card['手機號碼'] ? `tel:${card['手機號碼'].replace(/[^\d+]/g, '')}` : '#';
+    let phoneStr = card['手機號碼'] ? formatPhoneStr(card['手機號碼']) : '';
+    mobileLink.innerText = phoneStr || '未提供';
+    mobileLink.href = phoneStr ? `tel:${phoneStr}` : '#';
     
-    document.getElementById('cd-tel').innerText = [card['公司電話'], card['分機'] ? `ext.${card['分機']}` : ''].filter(Boolean).join(' ') || '未提供';
+    document.getElementById('cd-tel').innerText = [card['公司電話'] ? formatPhoneStr(card['公司電話']) : '', card['分機'] ? `ext.${card['分機']}` : ''].filter(Boolean).join(' ') || '未提供';
     
     const emailLink = document.getElementById('cd-email-link');
     emailLink.innerText = card['電子郵件'] || '未提供';
@@ -878,6 +917,7 @@
       }
   };
 
+  // ⭐ 從 OCR 髒資料中萃取合法按鈕連結
   function buildFlexMessageFromCard(card, config, dynamicAr = null) {
     let imgUrl, imgActionUrl, imgSize, aspectMode, ar, title, desc, buttons = [];
     
@@ -903,17 +943,49 @@
         title = [card['公司名稱'], card['姓名']].filter(Boolean).join(' - ') || '商務名片';
         desc = card['服務項目/品牌標語'] || '點擊下方按鈕與我聯繫';
 
-        if (card['手機號碼']) buttons.push({ l: '撥打手機', u: card['手機號碼'] });
-        else if (card['公司電話']) buttons.push({ l: '撥打電話', u: card['公司電話'] });
-        if (card['電子郵件']) buttons.push({ l: '發送信箱', u: card['電子郵件'] });
-        if (card['公司地址']) buttons.push({ l: 'Google 導航', u: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(card['公司地址'])}` });
-        if (card['社群帳號']) buttons.push({ l: '社群連結', u: card['社群帳號'] });
-        else if (card['公司網址']) buttons.push({ l: '公司網站', u: card['公司網址'] });
+        // ⭐ 將電話格式化，確保符合 tel:09... 且只取數字
+        if (card['手機號碼']) {
+            let phone = String(card['手機號碼']).split(',')[0].replace(/[^\d+]/g, '');
+            if (phone.startsWith('+886')) phone = '0' + phone.substring(4);
+            else if (phone.startsWith('886')) phone = '0' + phone.substring(3);
+            if (phone) buttons.push({ l: '撥打手機', u: `tel:${phone}` });
+        }
+        
+        if (card['公司電話']) {
+            let tel = String(card['公司電話']).split(',')[0].replace(/[^\d+]/g, '');
+            if (tel.startsWith('+886')) tel = '0' + tel.substring(4);
+            else if (tel.startsWith('886')) tel = '0' + tel.substring(3);
+            if (tel) buttons.push({ l: '撥打電話', u: `tel:${tel}` });
+        }
+        
+        if (card['電子郵件']) {
+            let email = String(card['電子郵件']).split(/[\s,]+/)[0];
+            if (email.includes('@')) buttons.push({ l: '發送信箱', u: `mailto:${email}` });
+        }
+        
+        if (card['公司地址']) {
+            buttons.push({ l: 'Google 導航', u: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(card['公司地址'].split(',')[0])}` });
+        }
+
+        // ⭐ 自動從髒資料中萃取有效的 http 網址
+        if (card['社群帳號']) {
+            let social = String(card['社群帳號']);
+            let urlMatch = social.match(/(https?:\/\/[^\s,]+)/i);
+            if (urlMatch) buttons.push({ l: '社群連結', u: urlMatch[1] });
+            else buttons.push({ l: '社群連結', u: `https://line.me` });
+        } else if (card['公司網址']) {
+            let web = String(card['公司網址']);
+            let urlMatch = web.match(/(https?:\/\/[^\s,]+)/i);
+            if (urlMatch) buttons.push({ l: '公司網站', u: urlMatch[1] });
+            else {
+                let domain = web.split(/[\s,]+/)[0];
+                if (domain) buttons.push({ l: '公司網站', u: `https://${domain}` });
+            }
+        }
     }
 
     const validSizes = ['nano', 'micro', 'kilo', 'mega', 'giga'];
     if (!validSizes.includes(imgSize) || imgSize === 'full') imgSize = 'mega';
-    
     if (!/^\d+:\d+$/.test(ar)) ar = '20:13';
     const [w, h] = ar.split(':').map(Number);
     if (!w || !h || isNaN(w) || isNaN(h)) ar = '20:13';
@@ -921,31 +993,15 @@
     title = (title || '').trim() || '-';
     desc = (desc || '').trim() || '-';
 
-    let safeImgActionUrl = imgActionUrl ? String(imgActionUrl).trim() : 'https://liff.line.me/2009367829-DLtYBDUm';
-    if (!safeImgActionUrl.match(/^(http|https|tel|mailto|line):/i)) { safeImgActionUrl = 'https://' + safeImgActionUrl; }
+    let safeImgActionUrl = sanitizeUri(imgActionUrl);
+    if (!safeImgActionUrl || safeImgActionUrl === 'https://line.me') {
+         safeImgActionUrl = 'https://liff.line.me/2009367829-DLtYBDUm';
+    }
 
     const btnContents = [];
     for (let i=0; i<buttons.length; i++) {
         let label = buttons[i].l ? String(buttons[i].l).trim() : '查看';
-        let safeU = buttons[i].u ? String(buttons[i].u).trim() : '';
-        const invalidTexts = ['none', 'null', '未提供', '無', '-', ''];
-        
-        if (invalidTexts.includes(safeU.toLowerCase())) { 
-            safeU = 'https://line.me'; 
-        } else if (!safeU.match(/^(http|https|tel|mailto|line):/i)) {
-            if (/^[\d\-\+\s()]+$/.test(safeU)) {
-                let pureNum = safeU.replace(/[^\d+]/g, '');
-                if (pureNum.startsWith('+886')) pureNum = '0' + pureNum.substring(4);
-                else if (pureNum.startsWith('886')) pureNum = '0' + pureNum.substring(3);
-                safeU = pureNum ? 'tel:' + pureNum : 'https://line.me';
-            }
-            else if (safeU.includes('@')) {
-                safeU = 'mailto:' + safeU;
-            }
-            else {
-                safeU = 'https://' + safeU.replace(/\s/g, '');
-            }
-        }
+        let safeU = sanitizeUri(buttons[i].u);
 
         btnContents.push({
             "type": "button", "style": "primary", "color": '#ff751f', "height": "sm", "margin": "sm",

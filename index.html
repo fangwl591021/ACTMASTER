@@ -47,13 +47,7 @@
     
     .input-label { @apply block text-[14px] text-slate-700 mb-1.5 font-medium tracking-wide; }
     
-    select.custom-input {
-      -webkit-appearance: none !important;
-      -moz-appearance: none !important;
-      appearance: none !important;
-      background-image: none !important;
-    }
-
+    /* 移除強制的 appearance: none，讓 Tailwind Forms 原生的下拉箭頭自然顯示 */
     .custom-input { @apply w-full py-2.5 px-3 bg-white border border-slate-300 rounded-lg outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-medium text-text-main text-[15px] shadow-sm; }
     .custom-input::placeholder { @apply text-slate-400 font-normal; }
     
@@ -120,14 +114,11 @@
           </div>
           <div class="flex flex-col">
             <label class="input-label">性別</label>
-            <div class="relative">
-              <select id="reg-gender" class="custom-input cursor-pointer">
-                <option value="" disabled selected>選擇性別</option>
-                <option value="男">男</option>
-                <option value="女">女</option>
-              </select>
-              <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">expand_more</span>
-            </div>
+            <select id="reg-gender" class="custom-input cursor-pointer">
+              <option value="" disabled selected>選擇性別</option>
+              <option value="男">男</option>
+              <option value="女">女</option>
+            </select>
           </div>
         </div>
         
@@ -208,7 +199,13 @@
       <div class="flex flex-col"><label class="input-label">姓名</label><input type="text" id="edit-name" class="custom-input"></div>
       <div class="grid grid-cols-2 gap-3">
         <div class="flex flex-col"><label class="input-label">業種</label><input type="text" id="edit-industry" class="custom-input"></div>
-        <div class="flex flex-col"><label class="input-label">性別</label><div class="relative"><select id="edit-gender" class="custom-input cursor-pointer"><option value="男">男</option><option value="女">女</option></select><span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span></div></div>
+        <div class="flex flex-col">
+          <label class="input-label">性別</label>
+          <select id="edit-gender" class="custom-input cursor-pointer">
+            <option value="男">男</option>
+            <option value="女">女</option>
+          </select>
+        </div>
       </div>
       <div class="grid grid-cols-2 gap-3">
         <div class="flex flex-col"><label class="input-label">手機</label><input type="tel" id="edit-phone" class="custom-input"></div>
@@ -282,17 +279,11 @@
         <div class="grid grid-cols-2 gap-3">
           <div class="flex flex-col">
             <label class="input-label">活動類型</label>
-            <div class="relative">
-              <select id="quick-type" class="custom-input cursor-pointer"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option></select>
-              <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
-            </div>
+            <select id="quick-type" class="custom-input cursor-pointer"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option></select>
           </div>
           <div class="flex flex-col">
             <label class="input-label">預設身份</label>
-            <div class="relative">
-              <select id="quick-identity" class="custom-input cursor-pointer"><option>會員</option><option>來賓</option></select>
-              <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
-            </div>
+            <select id="quick-identity" class="custom-input cursor-pointer"><option>會員</option><option>來賓</option></select>
           </div>
         </div>
         
@@ -322,14 +313,19 @@
       <!-- 完整模式 -->
       <div id="form-detailed" class="hidden space-y-4 animate-in fade-in">
          <div class="flex flex-col"><label class="input-label">正式標題</label><input type="text" id="detail-name" class="custom-input" placeholder="輸入活動標題..."></div>
+         
          <div class="grid grid-cols-2 gap-3">
            <div class="flex flex-col">
              <label class="input-label">活動類型</label>
-             <div class="relative">
-               <select id="detail-type" class="custom-input cursor-pointer"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option></select>
-               <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
-             </div>
+             <select id="detail-type" class="custom-input cursor-pointer"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option></select>
            </div>
+           <div class="flex flex-col">
+             <label class="input-label">預設身份</label>
+             <select id="detail-identity" class="custom-input cursor-pointer"><option>會員</option><option>來賓</option></select>
+           </div>
+         </div>
+
+         <div class="grid grid-cols-2 gap-3 border-t border-slate-100 pt-4 mt-1">
            <div class="flex flex-col">
              <label class="input-label">收費方式</label>
              <div class="flex gap-4 items-center h-[46px] px-3 bg-white border border-slate-300 rounded-lg shadow-sm">
@@ -337,8 +333,10 @@
                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="fee-type" value="收費" onchange="toggleFeeInput()" class="w-4 h-4 text-primary bg-white border-slate-300 focus:ring-primary focus:ring-2"><span class="font-bold text-[14px] text-slate-700">收費</span></label>
              </div>
            </div>
+           <div class="flex flex-col justify-end">
+             <input type="number" id="detail-price" class="custom-input hidden h-[46px]" placeholder="金額 (NT$)">
+           </div>
          </div>
-         <div class="flex flex-col"><input type="number" id="detail-price" class="custom-input hidden" placeholder="金額 (NT$)"></div>
          
          <div class="grid grid-cols-2 gap-3 border-t border-slate-100 pt-4 mt-1">
            <div class="flex flex-col"><label class="input-label">開始時間</label><input type="datetime-local" id="detail-start" class="custom-input !px-2 text-[13px] text-slate-600"></div>
@@ -440,7 +438,7 @@
   </div>
 </div>
 
-<!-- ⭐ 後台：單一活動核銷名單 Modal (已補回) -->
+<!-- 後台：單一活動核銷名單 Modal -->
 <div id="admin-registrants-modal" class="hidden fixed inset-0 z-[1050] bg-slate-50 flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl">
   <div class="bg-white px-4 pt-12 pb-3 flex justify-between items-center shrink-0 border-b border-slate-200 shadow-sm">
     <div class="flex items-center gap-2.5">
@@ -459,7 +457,7 @@
   <div class="flex-1 overflow-y-auto p-3 space-y-3 pb-safe bg-slate-50" id="admin-reg-list"></div>
 </div>
 
-<!-- ⭐ 現場報名 Modal (已補回) -->
+<!-- 現場報名 Modal -->
 <div id="walkin-modal" class="hidden fixed inset-0 z-[1060] bg-slate-900/40 backdrop-blur-sm flex items-end justify-center animate-in fade-in duration-200 w-full max-w-md mx-auto left-0 right-0">
   <div class="bg-white w-full rounded-t-3xl p-6 pb-safe shadow-2xl">
     <div class="flex justify-between items-center mb-5">
@@ -471,7 +469,7 @@
   </div>
 </div>
 
-<!-- ⭐ 動態掃碼器 Modal (已補回) -->
+<!-- 動態掃碼器 Modal -->
 <div id="qr-scanner-modal" class="hidden fixed inset-0 z-[1070] bg-black flex flex-col animate-in fade-in duration-300 w-full max-w-md mx-auto left-0 right-0">
   <div class="flex justify-between items-center p-4 bg-gradient-to-b from-black/80 to-transparent absolute top-0 w-full z-10">
     <span class="text-white font-bold tracking-widest text-[13px]">請對準學員 QR Code</span>
@@ -1166,7 +1164,7 @@
   }
   function stopScanner() { if(html5QrcodeScanner) { html5QrcodeScanner.stop().then(() => { html5QrcodeScanner.clear(); html5QrcodeScanner = null; }); } document.getElementById('qr-scanner-modal').classList.add('hidden'); }
 
-  // ⭐ CRM 核心邏輯 (保留 LINE OA 原生樣式更新版)
+  // ⭐ CRM 核心邏輯
   async function loadCrmData() { 
     const list = document.getElementById('admin-crm-list-container');
     list.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>'; 
@@ -1244,7 +1242,12 @@
   }
 
   // ⭐ Admin Create Activity
-  function toggleCreateMode(m) { document.getElementById('tab-quick').className = `flex-1 py-2.5 rounded-lg text-[14px] font-bold transition-all ${m==='quick'?'bg-white text-primary shadow-sm':'text-slate-500 hover:text-slate-700'}`; document.getElementById('tab-detailed').className = `flex-1 py-2.5 rounded-lg text-[14px] font-bold transition-all ${m==='detailed'?'bg-white text-primary shadow-sm':'text-slate-500 hover:text-slate-700'}`; document.getElementById('form-quick').classList.toggle('hidden', m!=='quick'); document.getElementById('form-detailed').classList.toggle('hidden', m!=='detailed'); }
+  function toggleCreateMode(m) { 
+    document.getElementById('tab-quick').className = `flex-1 py-2 rounded-md text-[14px] font-bold transition-all ${m==='quick'?'bg-white text-primary shadow-sm':'text-slate-500 hover:text-slate-700'}`; 
+    document.getElementById('tab-detailed').className = `flex-1 py-2 rounded-md text-[14px] font-bold transition-all ${m==='detailed'?'bg-white text-primary shadow-sm':'text-slate-500 hover:text-slate-700'}`; 
+    document.getElementById('form-quick').classList.toggle('hidden', m!=='quick'); 
+    document.getElementById('form-detailed').classList.toggle('hidden', m!=='detailed'); 
+  }
   function toggleFeeInput() { document.getElementById('detail-price').classList.toggle('hidden', document.querySelector('input[name="fee-type"]:checked').value !== '收費'); }
   
   function previewFile(mode) { 
@@ -1282,7 +1285,19 @@
     const btn = document.getElementById(mode === 'quick' ? 'btn-quick-create' : 'btn-detail-create');
     const ori = btn.innerHTML; btn.innerHTML='<span class="material-symbols-outlined animate-spin">refresh</span>'; btn.classList.add('pointer-events-none', 'opacity-50');
     
-    let p = { activityName: document.getElementById(mode === 'quick' ? 'quick-name' : 'detail-name').value.trim(), activityType: document.getElementById(mode === 'quick' ? 'quick-type' : 'detail-type').value, feeType: '免費', price: '', startTime: '', endTime: '', description: '', imageUrl: '', names: [], defaultIdentity: mode === 'quick' ? document.getElementById('quick-identity').value : '來賓' }; 
+    let p = { 
+        activityName: document.getElementById(mode === 'quick' ? 'quick-name' : 'detail-name').value.trim(), 
+        activityType: document.getElementById(mode === 'quick' ? 'quick-type' : 'detail-type').value, 
+        feeType: '免費', 
+        price: '', 
+        startTime: '', 
+        endTime: '', 
+        description: '', 
+        imageUrl: '', 
+        names: [], 
+        defaultIdentity: document.getElementById(mode === 'quick' ? 'quick-identity' : 'detail-identity').value 
+    }; 
+    
     if(!p.activityName) { isProcessing=false; btn.innerHTML=ori; btn.classList.remove('pointer-events-none', 'opacity-50'); return showToast("名稱必填", true); }
     
     if(mode==='quick') {

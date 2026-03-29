@@ -1,3 +1,4 @@
+<!-- Version: v1.1.1 -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -161,7 +162,7 @@
       <div id="user-history-container" class="space-y-4"></div>
     </div>
 
-    <!-- ⭐ 個人資料與專屬名片入口 -->
+    <!-- 個人資料與專屬名片入口 -->
     <div id="view-user-profile" class="hidden animate-in fade-in pt-4 pb-10 space-y-4">
       <h2 class="text-2xl font-extrabold font-headline mb-4 text-slate-800">個人資料</h2>
       <div class="flex flex-col"><label class="input-label">姓名</label><input type="text" id="edit-name" class="custom-input"></div>
@@ -514,6 +515,8 @@
 
       if (referrer) window.claimReferrer = referrer;
       else window.claimReferrer = '';
+
+      if (claimCardId) { window.claimCardId = claimCardId; }
       
       document.getElementById('view-loading').classList.add('hidden'); 
       
@@ -524,6 +527,12 @@
         switchView(targetView || 'admin-activities');
       } else {
         if (isRegistered) {
+          if (claimCardId) {
+             try {
+                await fetchAPI('updateCard', { rowId: claimCardId, userId: userProfile.userId });
+                showToast("✅ 名片已成功認領並綁定至您的帳號");
+             } catch(e) {}
+          }
           switchView(targetView || 'user-activities'); 
         } else { 
           document.getElementById('bottom-nav-user').classList.add('hidden');
@@ -624,7 +633,6 @@
     setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -1rem)'; }, 3000); 
   }
 
-  // ⭐ User Registration
   async function submitUserRegistrationStep1() {
     if (isProcessing) return; isProcessing = true;
     const btn = document.getElementById('btn-reg-step1'); 
@@ -641,12 +649,26 @@
       birthday: document.getElementById('reg-birthday').value, 
       region: document.getElementById('reg-region').value.trim(), 
       address: document.getElementById('reg-address').value.trim(),
-      referrerId: window.claimReferrer || '' 
+      referrerId: window.claimReferrer || '',
+      claimCardId: window.claimCardId || ''
     };
     
     try { 
       await fetchAPI('registerUser', p); 
       regStep1Data = p; 
+
+      if (window.claimCardId) {
+          try {
+              await fetchAPI('updateCard', { 
+                  rowId: window.claimCardId, 
+                  userId: userProfile.userId,
+                  Name: p.name,
+                  Mobile: p.phone,
+                  CompanyName: p.industry
+              });
+          } catch(e) { console.error("Update card failed", e); }
+      }
+
       document.getElementById('reg-step-1').classList.add('hidden'); 
       document.getElementById('reg-step-2').classList.remove('opacity-30', 'pointer-events-none'); 
       showToast("基礎資料已建立"); 
@@ -689,7 +711,6 @@
 
   function finishRegistration() { isRegistered = true; registeredInfo = regStep1Data; document.getElementById('bottom-nav-user').classList.remove('hidden'); switchView('user-activities'); }
 
-  // ⭐ User Activities
   let currentCategory = '全部活動';
   async function reloadActivities() { 
     if(isProcessing) return;
@@ -870,7 +891,6 @@
     }
   }
 
-  // ⭐ User History
   async function loadUserHistory() {
     const container = document.getElementById('user-history-container');
     container.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>';
@@ -972,7 +992,6 @@
     }
   }
 
-  // ⭐ Admin Activities
   async function loadAdminActivities() { 
     const list = document.getElementById('admin-activity-list-container');
     list.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>'; 
@@ -1104,7 +1123,6 @@
   }
   function stopScanner() { if(html5QrcodeScanner) { html5QrcodeScanner.stop().then(() => { html5QrcodeScanner.clear(); html5QrcodeScanner = null; }); } document.getElementById('qr-scanner-modal').classList.add('hidden'); }
 
-  // ⭐ CRM 核心邏輯
   async function loadCrmData() { 
     const list = document.getElementById('admin-crm-list-container');
     list.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>'; 
@@ -1168,7 +1186,6 @@
     }
   }
 
-  // ⭐ Admin Settings
   async function loadAdminSettings() { const s = await fetchAPI('getSettings'); document.getElementById('set-tg-token').value = s.TG_BOT_TOKEN || ''; document.getElementById('set-tg-chat').value = s.TG_CHAT_ID || ''; document.getElementById('set-line-link').value = s.LINE_LINK || ''; }
   async function autoFetchTgChatId() { const token = document.getElementById('set-tg-token').value; if(!token) return; document.getElementById('set-tg-chat').value = "獲取中..."; try { document.getElementById('set-tg-chat').value = await fetchAPI('getTgChatId', { token }); } catch(e) { document.getElementById('set-tg-chat').value = ""; } }
   
@@ -1181,7 +1198,6 @@
     } catch(e) { console.error(e); } finally { isProcessing = false; btn.innerHTML=ori; btn.classList.remove('pointer-events-none', 'opacity-50'); }
   }
 
-  // ⭐ Admin Create Activity
   function toggleCreateMode(m) { 
     document.getElementById('tab-quick').className = `flex-1 py-2 rounded-md text-[14px] font-bold transition-all ${m==='quick'?'bg-white text-primary shadow-sm':'text-slate-500 hover:text-slate-700'}`; 
     document.getElementById('tab-detailed').className = `flex-1 py-2 rounded-md text-[14px] font-bold transition-all ${m==='detailed'?'bg-white text-primary shadow-sm':'text-slate-500 hover:text-slate-700'}`; 

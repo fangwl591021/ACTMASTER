@@ -1,4 +1,4 @@
-<!-- Version: v1.1.5 -->
+<!-- Version: v1.1.6 -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -82,10 +82,6 @@
     
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-    /* 原生清單風格 - 左邊5px，上下拉開 */
-    .flat-list { @apply bg-white border-y border-slate-200 divide-y divide-slate-100 mt-2; }
-    .flat-item { @apply pl-[5px] pr-4 py-5 bg-white flex items-center gap-3 active:bg-slate-50 cursor-pointer transition-colors; }
   </style>
 </head>
 <body class="font-sans text-text-main min-h-screen flex flex-col items-center">
@@ -147,7 +143,7 @@
             <input type="text" id="card-search-input" onkeyup="filterCardList()" class="w-full py-2.5 pl-11 pr-4 bg-slate-100 border-none rounded-xl text-[14px] outline-none focus:bg-white focus:ring-1 focus:ring-primary/20 transition-all shadow-none" placeholder="搜尋姓名或公司...">
           </div>
         </div>
-        <div id="admin-card-list-container" class="flex flex-col"></div>
+        <div id="admin-card-list-container" class="flex flex-col mt-2"></div>
         <div id="card-load-more-box" class="hidden py-6 text-center">
           <button onclick="loadMoreCards()" class="text-primary font-bold text-[14px] px-6 py-2 border border-primary/20 rounded-full hover:bg-primary-light transition-all">
             顯示更多名片
@@ -857,22 +853,20 @@
       let html = pageData.map((card) => {
           const isClaimed = !!(card.userId || card['LINE ID'] || card['Line ID'] || card['lineId']);
           const claimBadge = isClaimed 
-            ? '<span class="shrink-0 text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded text-[11px] whitespace-nowrap ml-2">已認領</span>' 
-            : '<span class="shrink-0 text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded text-[11px] whitespace-nowrap ml-2">未認領</span>';
+            ? '<span class="shrink-0 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded text-[11px] whitespace-nowrap ml-2 border border-emerald-100">已認領</span>' 
+            : '<span class="shrink-0 text-slate-400 bg-slate-50 px-2 py-0.5 rounded text-[11px] whitespace-nowrap ml-2 border border-slate-200">未認領</span>';
           
           return `
-          <div onclick="openCardDetailByRowId('${card.rowId}')" class="flat-item border-b border-slate-100 last:border-b-0">
-            <div class="flex items-center gap-3 w-full overflow-hidden">
-              <div class="w-12 h-12 shrink-0 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center">
-                ${card['名片圖檔'] && card['名片圖檔'] !== '圖片儲存失敗' ? `<img src="${getDirectImageUrl(card['名片圖檔'])}" class="w-full h-full object-cover">` : `<span class="material-symbols-outlined text-slate-400 text-[24px]">person</span>`}
+          <div onclick="openCardDetailByRowId('${card.rowId}')" class="pl-[5px] pr-4 py-4 bg-white flex items-center gap-4 border-b border-slate-100 last:border-b-0 active:bg-slate-50 cursor-pointer transition-colors">
+            <div class="w-[50px] h-[50px] shrink-0 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center border border-slate-100/50">
+              ${card['名片圖檔'] && card['名片圖檔'] !== '圖片儲存失敗' ? `<img src="${getDirectImageUrl(card['名片圖檔'])}" class="w-full h-full object-cover">` : `<span class="material-symbols-outlined text-slate-400 text-[24px]">person</span>`}
+            </div>
+            <div class="flex-1 overflow-hidden flex flex-col justify-center gap-1.5">
+              <div class="flex items-center">
+                <h4 class="text-[17px] text-slate-800 truncate leading-none">${card['姓名'] || '未知姓名'}</h4>
+                ${isAdmin ? claimBadge : ''}
               </div>
-              <div class="flex-1 overflow-hidden pr-2">
-                <div class="flex items-center">
-                  <h4 class="text-[16px] text-slate-800 truncate">${card['姓名'] || '未知姓名'}</h4>
-                  ${isAdmin ? claimBadge : ''}
-                </div>
-                <p class="text-[13px] text-slate-500 truncate mt-1">${card['公司名稱'] || card['職稱'] || '無資訊'}</p>
-              </div>
+              <p class="text-[14px] text-slate-500 truncate leading-none">${card['公司名稱'] || card['職稱'] || '無資訊'}</p>
             </div>
           </div>
       `}).join('');
@@ -881,7 +875,7 @@
       let loadMoreBtn = document.getElementById(loadMoreBtnId);
 
       if (isReset) {
-          container.innerHTML = `<div class="flat-list rounded-lg overflow-hidden" id="card-list-wrapper">${html}</div>`;
+          container.innerHTML = `<div class="bg-white border-y border-slate-200 divide-y divide-slate-100 rounded-lg overflow-hidden" id="card-list-wrapper">${html}</div>`;
       } else {
           if (loadMoreBtn) loadMoreBtn.remove();
           const wrapper = document.getElementById('card-list-wrapper');
@@ -917,10 +911,10 @@
         if (isAdmin) {
             if (card.userId || card['LINE ID'] || card['Line ID'] || card['lineId']) {
                 statusEl.innerText = '已認領';
-                statusEl.className = 'px-2 py-0.5 rounded-md text-[11px] border bg-emerald-50 border-emerald-200 text-emerald-600';
+                statusEl.className = 'px-2 py-0.5 rounded-md text-[11px] font-bold border bg-emerald-50 border-emerald-200 text-emerald-600';
             } else {
                 statusEl.innerText = '未認領';
-                statusEl.className = 'px-2 py-0.5 rounded-md text-[11px] border bg-slate-50 border-slate-200 text-slate-400';
+                statusEl.className = 'px-2 py-0.5 rounded-md text-[11px] font-bold border bg-slate-50 border-slate-200 text-slate-400';
             }
             statusEl.classList.remove('hidden');
         } else {

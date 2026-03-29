@@ -88,13 +88,13 @@
 
 <div class="w-full max-w-md bg-background h-screen relative flex flex-col shadow-2xl overflow-hidden">
   
-  <!-- Header -->
+  <!-- Header 統一風格設計 -->
   <nav class="fixed top-0 w-full max-w-md z-40 bg-white/90 backdrop-blur-xl px-5 py-3.5 flex justify-between items-center left-1/2 -translate-x-1/2 border-b border-slate-200 shadow-sm">
     <div class="text-[19px] font-extrabold text-slate-800 flex items-center gap-2 font-headline tracking-tight">
       <div class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shadow-md shadow-blue-500/20">
         <span class="material-symbols-outlined text-[20px]">contact_mail</span>
       </div>
-      名片與通訊錄
+      名片管理
     </div>
     <div class="flex items-center gap-3">
       <div id="user-profile-badge" class="hidden flex items-center gap-2">
@@ -230,7 +230,7 @@
     <button onclick="closeReadOnlyCard()" class="w-9 h-9 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white shadow-sm"><span class="material-symbols-outlined text-[20px]">close</span></button>
   </div>
 
-  <div class="flex-1 overflow-y-auto pb-24">
+  <div class="flex-1 overflow-y-auto pb-24 bg-slate-50">
     <div class="w-full h-64 bg-slate-200 relative flex items-center justify-center shrink-0">
       <img id="ro-image" src="" class="w-full h-full object-cover hidden">
       <div id="ro-no-image" class="absolute inset-0 flex items-center justify-center bg-slate-100"><span class="material-symbols-outlined text-6xl text-slate-300">contact_mail</span></div>
@@ -286,10 +286,13 @@
     </div>
     <div class="grid grid-cols-2 gap-3">
       <div class="flex flex-col"><label class="input-label">公司電話</label><input type="text" id="edit-c-Tel" class="custom-input"></div>
+      <div class="flex flex-col"><label class="input-label">分機</label><input type="text" id="edit-c-Ext" class="custom-input"></div>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <div class="flex flex-col"><label class="input-label">電子信箱</label><input type="email" id="edit-c-Email" class="custom-input"></div>
       <div class="flex flex-col"><label class="input-label">傳真</label><input type="text" id="edit-c-Fax" class="custom-input"></div>
     </div>
     <div class="flex flex-col"><label class="input-label">公司地址</label><input type="text" id="edit-c-Address" class="custom-input"></div>
-    <div class="flex flex-col"><label class="input-label">電子信箱</label><input type="email" id="edit-c-Email" class="custom-input"></div>
     <div class="flex flex-col"><label class="input-label">公司網址</label><input type="url" id="edit-c-Website" class="custom-input"></div>
     <div class="flex flex-col"><label class="input-label">社群帳號</label><input type="text" id="edit-c-SocialMedia" class="custom-input"></div>
     <div class="flex flex-col"><label class="input-label">品牌標語 / 服務項目</label><textarea id="edit-c-Slogan" class="textarea-block h-20"></textarea></div>
@@ -486,7 +489,7 @@
     </div>
 </div>
 
-<div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-md text-[14px] shadow-lg transition-all z-[10000] font-bold flex items-center gap-2 w-max max-w-[90vw] bg-slate-800 text-white border border-slate-700"></div>
+<div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-md text-[14px] shadow-lg transition-all z-[10000] font-bold flex items-center gap-2 w-max max-w-[90vw] bg-slate-800 text-white opacity-0 pointer-events-none"></div>
 
 <script>
   const LIFF_ID = "2009367829-DLtYBDUm"; 
@@ -924,22 +927,29 @@
   function openCardEdit() { 
       const c = currentActiveCard;
       if (!c) return;
-      document.getElementById('edit-c-Name').value = c['姓名'] || '';
-      document.getElementById('edit-c-EnglishName').value = c['英文名/別名'] || '';
-      document.getElementById('edit-c-Title').value = c['職稱'] || '';
-      document.getElementById('edit-c-Department').value = c['部門'] || '';
-      document.getElementById('edit-c-CompanyName').value = c['公司名稱'] || '';
-      document.getElementById('edit-c-TaxID').value = c['統一編號'] || '';
-      document.getElementById('edit-c-Mobile').value = formatPhoneStr(c['手機號碼']) || '';
-      document.getElementById('edit-c-Tel').value = formatPhoneStr(c['公司電話']) || '';
-      document.getElementById('edit-c-Ext').value = c['分機'] || '';
-      document.getElementById('edit-c-Fax').value = formatPhoneStr(c['傳真']) || '';
-      document.getElementById('edit-c-Address').value = c['公司地址'] || '';
-      document.getElementById('edit-c-Email').value = c['電子郵件'] || '';
-      document.getElementById('edit-c-Website').value = c['公司網址'] || '';
-      document.getElementById('edit-c-SocialMedia').value = c['社群帳號'] || '';
-      document.getElementById('edit-c-Slogan').value = c['服務項目/品牌標語'] || '';
-      document.getElementById('edit-c-Notes').value = c['建檔人/備註'] || '';
+      const fields = {
+        'edit-c-Name': c['姓名'] || c['Name'] || '',
+        'edit-c-EnglishName': c['英文名/別名'] || c['EnglishName'] || '',
+        'edit-c-Title': c['職稱'] || c['Title'] || '',
+        'edit-c-Department': c['部門'] || c['Department'] || '',
+        'edit-c-CompanyName': c['公司名稱'] || c['CompanyName'] || '',
+        'edit-c-TaxID': c['統一編號'] || c['TaxID'] || '',
+        'edit-c-Mobile': formatPhoneStr(c['手機號碼'] || c['Mobile']) || '',
+        'edit-c-Tel': formatPhoneStr(c['公司電話'] || c['Tel']) || '',
+        'edit-c-Ext': c['分機'] || c['Ext'] || '',
+        'edit-c-Fax': formatPhoneStr(c['傳真'] || c['Fax']) || '',
+        'edit-c-Address': c['公司地址'] || c['Address'] || '',
+        'edit-c-Email': c['電子郵件'] || c['Email'] || '',
+        'edit-c-Website': c['公司網址'] || c['Website'] || '',
+        'edit-c-SocialMedia': c['社群帳號'] || c['SocialMedia'] || '',
+        'edit-c-Slogan': c['服務項目/品牌標語'] || c['Slogan'] || '',
+        'edit-c-Notes': c['建檔人/備註'] || c['Notes'] || ''
+      };
+      
+      for (const [id, value] of Object.entries(fields)) {
+        const el = document.getElementById(id);
+        if (el) el.value = value;
+      }
 
       document.getElementById('card-edit-modal').classList.remove('hidden');
   }
@@ -947,31 +957,32 @@
   function closeCardEdit() { document.getElementById('card-edit-modal').classList.add('hidden'); }
 
   async function submitCardEdit() {
-    if (isProcessing) return; isProcessing = true;
+    if (isProcessing || !currentActiveCard) return;
+    isProcessing = true;
     setButtonLoading('btn-save-card-edit', true);
 
     let payload = {
       rowId: currentActiveCard.rowId,
-      Name: document.getElementById('edit-c-Name').value.trim(),
-      EnglishName: document.getElementById('edit-c-EnglishName').value.trim(),
-      Title: document.getElementById('edit-c-Title').value.trim(),
-      Department: document.getElementById('edit-c-Department').value.trim(),
-      CompanyName: document.getElementById('edit-c-CompanyName').value.trim(),
-      TaxID: document.getElementById('edit-c-TaxID').value.trim(),
-      Mobile: document.getElementById('edit-c-Mobile').value.trim(),
-      Tel: document.getElementById('edit-c-Tel').value.trim(),
-      Ext: document.getElementById('edit-c-Ext').value.trim(),
-      Fax: document.getElementById('edit-c-Fax').value.trim(),
-      Address: document.getElementById('edit-c-Address').value.trim(),
-      Email: document.getElementById('edit-c-Email').value.trim(),
-      Website: document.getElementById('edit-c-Website').value.trim(),
-      SocialMedia: document.getElementById('edit-c-SocialMedia').value.trim(),
-      Slogan: document.getElementById('edit-c-Slogan').value.trim(),
-      Notes: document.getElementById('edit-c-Notes').value.trim()
+      Name: document.getElementById('edit-c-Name')?.value.trim() || '',
+      EnglishName: document.getElementById('edit-c-EnglishName')?.value.trim() || '',
+      Title: document.getElementById('edit-c-Title')?.value.trim() || '',
+      Department: document.getElementById('edit-c-Department')?.value.trim() || '',
+      CompanyName: document.getElementById('edit-c-CompanyName')?.value.trim() || '',
+      TaxID: document.getElementById('edit-c-TaxID')?.value.trim() || '',
+      Mobile: document.getElementById('edit-c-Mobile')?.value.trim() || '',
+      Tel: document.getElementById('edit-c-Tel')?.value.trim() || '',
+      Ext: document.getElementById('edit-c-Ext')?.value.trim() || '',
+      Fax: document.getElementById('edit-c-Fax')?.value.trim() || '',
+      Address: document.getElementById('edit-c-Address')?.value.trim() || '',
+      Email: document.getElementById('edit-c-Email')?.value.trim() || '',
+      Website: document.getElementById('edit-c-Website')?.value.trim() || '',
+      SocialMedia: document.getElementById('edit-c-SocialMedia')?.value.trim() || '',
+      Slogan: document.getElementById('edit-c-Slogan')?.value.trim() || '',
+      Notes: document.getElementById('edit-c-Notes')?.value.trim() || ''
     };
 
-    const oldName = currentActiveCard['姓名'] || '';
-    const oldPhone = formatPhoneStr(currentActiveCard['手機號碼']) || '';
+    const oldName = currentActiveCard['姓名'] || currentActiveCard['Name'] || '';
+    const oldPhone = formatPhoneStr(currentActiveCard['手機號碼'] || currentActiveCard['Mobile']) || '';
     
     if (payload.Name !== oldName || payload.Mobile !== oldPhone) {
         try {
@@ -982,25 +993,17 @@
 
     try {
       await fetchAPI('updateCard', payload);
-      showToast("✅ 更新成功");
-      
-      currentActiveCard['姓名'] = payload.Name;
-      currentActiveCard['英文名/別名'] = payload.EnglishName;
-      currentActiveCard['職稱'] = payload.Title;
-      currentActiveCard['部門'] = payload.Department;
-      currentActiveCard['公司名稱'] = payload.CompanyName;
-      currentActiveCard['統一編號'] = payload.TaxID;
-      currentActiveCard['手機號碼'] = payload.Mobile;
-      currentActiveCard['公司電話'] = payload.Tel;
-      currentActiveCard['分機'] = payload.Ext;
-      currentActiveCard['傳真'] = payload.Fax;
-      currentActiveCard['公司地址'] = payload.Address;
-      currentActiveCard['電子郵件'] = payload.Email;
-      currentActiveCard['公司網址'] = payload.Website;
-      currentActiveCard['社群帳號'] = payload.SocialMedia;
-      currentActiveCard['服務項目/品牌標語'] = payload.Slogan;
-      currentActiveCard['建檔人/備註'] = payload.Notes;
-      
+      Object.assign(currentActiveCard, {
+        '姓名': payload.Name, 'Name': payload.Name, '英文名/別名': payload.EnglishName,
+        '手機號碼': payload.Mobile, 'Mobile': payload.Mobile, '公司名稱': payload.CompanyName,
+        '職稱': payload.Title, 'Title': payload.Title, '部門': payload.Department,
+        '統一編號': payload.TaxID, 'TaxID': payload.TaxID, '公司電話': payload.Tel,
+        '傳真': payload.Fax, 'Fax': payload.Fax, '分機': payload.Ext, 'Ext': payload.Ext,
+        '電子郵件': payload.Email, 'Email': payload.Email, '公司地址': payload.Address,
+        '公司網址': payload.Website, '社群帳號': payload.SocialMedia,
+        '服務項目/品牌標語': payload.Slogan, 'Slogan': payload.Slogan,
+        '建檔人/備註': payload.Notes, 'Notes': payload.Notes
+      });
       if (payload.Personality) currentActiveCard['個性'] = payload.Personality;
       if (payload.Hobbies) currentActiveCard['興趣'] = payload.Hobbies;
       if (payload.Wealth) currentActiveCard['財運'] = payload.Wealth;
@@ -1022,8 +1025,9 @@
           filterCardList();
       });
 
+      showToast("✅ 資料更新成功");
     } catch(err) {
-      console.error(err);
+      showToast("更新失敗", true);
     } finally {
       setButtonLoading('btn-save-card-edit', false, '儲存變更並更新畫面');
       isProcessing = false;

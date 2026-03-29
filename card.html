@@ -3,6 +3,8 @@
 <head>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+  <!-- 消除 favicon 404 報錯 -->
+  <link rel="icon" href="data:,">
   <title>名片管理中樞</title>
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700;800&display=swap" rel="stylesheet"/>
@@ -59,10 +61,8 @@
 
     /* 數位名片產生器專屬樣式 */
     .manus-gradient { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
-    .phone-frame { border: 10px solid #1e293b; border-radius: 3rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); background-color: #849ebf; position: relative; overflow: hidden; }
-    .phone-notch { width: 45%; height: 26px; background-color: #1e293b; position: absolute; top: 0; left: 50%; transform: translateX(-50%); border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; z-index: 20; }
     
-    .flex-preview-bubble { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); position: relative; width: 100%; }
+    .flex-preview-bubble { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); position: relative; width: 100%; border: 1px solid #edf2f7; }
     .flex-preview-img { width: 100%; object-fit: cover; background-color: #f1f5f9; transition: aspect-ratio 0.3s ease, object-fit 0.3s ease; }
     .flex-badge { position: absolute; top: 12px; left: 12px; background-color: #FF0000; color: white; font-size: 13px; font-bold; padding: 2px 10px; border-radius: 9999px; z-index: 10; }
     
@@ -233,44 +233,44 @@
   </nav>
 </div>
 
-<!-- ⭐ 名片明細 Modal (加入認領按鈕) -->
-<div id="card-detail-modal" class="hidden fixed inset-0 bg-background flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl overflow-hidden" style="z-index: 1000;">
+<!-- ================= 絕對純淨版：數位電子名片預覽 Modal ================= -->
+<div id="readonly-card-modal" class="hidden fixed inset-0 bg-background flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl overflow-hidden" style="z-index: 1000;">
   
   <div class="absolute top-4 right-4 z-50 flex gap-2">
     <button onclick="openCardEdit()" class="w-9 h-9 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-primary shadow-sm active:scale-90 transition-transform border border-slate-200" title="編輯補登資料">
       <span class="material-symbols-outlined text-[18px]">edit</span>
     </button>
-    <button onclick="closeCardDetail()" class="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center text-white shadow-sm active:scale-90 transition-transform">
+    <button onclick="closeReadOnlyCard()" class="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center text-white shadow-sm active:scale-90 transition-transform">
       <span class="material-symbols-outlined text-[20px]">close</span>
     </button>
   </div>
 
   <div class="flex-1 overflow-y-auto pb-24 bg-slate-50">
     <div class="w-full h-56 bg-slate-200 relative flex items-center justify-center overflow-hidden border-b border-slate-200">
-      <img id="cd-image" src="" class="w-full h-full object-cover hidden">
-      <div id="cd-no-image" class="absolute inset-0 flex items-center justify-center bg-slate-100">
+      <img id="ro-image" src="" class="w-full h-full object-cover hidden">
+      <div id="ro-no-image" class="absolute inset-0 flex items-center justify-center bg-slate-100">
         <span class="material-symbols-outlined text-6xl text-slate-300">contact_mail</span>
       </div>
     </div>
     
     <div class="bg-white -mt-4 relative z-10 rounded-t-2xl p-6 space-y-6 shadow-[0_-8px_20px_rgba(0,0,0,0.03)] min-h-[60vh]">
       <div>
-        <h2 id="cd-name" class="text-[22px] font-extrabold text-slate-800 leading-tight">姓名</h2>
-        <p id="cd-title" class="text-[14px] font-bold text-primary mt-1">職稱 / 部門</p>
+        <h2 id="ro-name" class="text-[22px] font-extrabold text-slate-800 leading-tight">姓名</h2>
+        <p id="ro-title" class="text-[14px] font-bold text-primary mt-1">職稱 / 部門</p>
       </div>
       
       <div class="bg-white border border-slate-200 p-4 rounded-xl space-y-3">
-        <div class="flex items-center gap-3"><span class="material-symbols-outlined text-slate-400 text-[18px]">apartment</span><span id="cd-company" class="font-medium text-slate-700 text-[14px]"></span></div>
-        <div class="flex items-center gap-3"><span class="material-symbols-outlined text-slate-400 text-[18px]">tag</span><span id="cd-taxid" class="font-medium text-slate-700 text-[14px]"></span></div>
-        <div class="flex items-center gap-3"><span class="material-symbols-outlined text-slate-400 text-[18px]">smartphone</span><a href="" id="cd-mobile-link" class="font-medium text-blue-600 text-[14px]"></a></div>
-        <div class="flex items-center gap-3"><span class="material-symbols-outlined text-slate-400 text-[18px]">call</span><span id="cd-tel" class="font-medium text-slate-700 text-[14px]"></span></div>
-        <div class="flex items-center gap-3"><span class="material-symbols-outlined text-slate-400 text-[18px]">email</span><a href="" id="cd-email-link" class="font-medium text-blue-600 text-[14px] truncate"></a></div>
-        <div class="flex items-start gap-3"><span class="material-symbols-outlined text-slate-400 text-[18px] mt-0.5">location_on</span><span id="cd-address" class="font-medium text-slate-700 text-[14px] leading-snug"></span></div>
+        <div class="flex items-center gap-3"><span class="material-symbols-outlined text-slate-400 text-[18px]">apartment</span><span id="ro-company" class="font-medium text-slate-700 text-[14px]"></span></div>
+        <div class="flex items-center gap-3"><span class="material-symbols-outlined text-slate-400 text-[18px]">tag</span><span id="ro-taxid" class="font-medium text-slate-700 text-[14px]"></span></div>
+        <div class="flex items-center gap-3"><span class="material-symbols-outlined text-slate-400 text-[18px]">smartphone</span><a href="" id="ro-mobile-link" class="font-medium text-blue-600 text-[14px]"></a></div>
+        <div class="flex items-center gap-3"><span class="material-symbols-outlined text-slate-400 text-[18px]">call</span><span id="ro-tel" class="font-medium text-slate-700 text-[14px]"></span></div>
+        <div class="flex items-center gap-3"><span class="material-symbols-outlined text-slate-400 text-[18px]">email</span><a href="" id="ro-email-link" class="font-medium text-blue-600 text-[14px] truncate"></a></div>
+        <div class="flex items-start gap-3"><span class="material-symbols-outlined text-slate-400 text-[18px] mt-0.5">location_on</span><span id="ro-address" class="font-medium text-slate-700 text-[14px] leading-snug"></span></div>
       </div>
       
       <div>
         <h3 class="text-[15px] font-bold text-slate-800 mb-2 flex items-center gap-1.5"><span class="material-symbols-outlined text-primary text-[18px]">info</span> 備註與其他資訊</h3>
-        <p id="cd-notes" class="text-[14px] text-slate-600 leading-relaxed whitespace-pre-wrap bg-slate-50 p-4 rounded-md border border-slate-200"></p>
+        <p id="ro-notes" class="text-[14px] text-slate-600 leading-relaxed whitespace-pre-wrap bg-slate-50 p-4 rounded-md border border-slate-200"></p>
       </div>
     </div>
   </div>
@@ -326,22 +326,21 @@
   </div>
 </div>
 
-<!-- 數位電子名片產生器 -->
+<!-- ================= ⭐ 數位電子名片產生器 ================= -->
 <div id="ecard-generator-modal" class="hidden fixed inset-0 bg-white flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl" style="z-index: 1020;">
   
   <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-slate-200 z-10 shrink-0">
     <div class="flex items-center gap-2">
-      <button onclick="closeECardGenerator()" class="w-8 h-8 flex items-center justify-center text-slate-600"><span class="material-symbols-outlined">chevron_left</span></button>
+      <button onclick="closeECardGenerator()" class="w-8 h-8 flex items-center justify-center text-slate-600 active:scale-90 transition-transform"><span class="material-symbols-outlined">chevron_left</span></button>
       <div class="flex flex-col">
         <h3 id="ecard-generator-title" class="text-[16px] font-bold text-slate-800 leading-tight">數位名片產生器</h3>
         <p class="text-[10px] text-slate-400 leading-tight">fangwl591021.github.io</p>
       </div>
     </div>
     <div class="flex items-center gap-2">
-      <button onclick="saveECardConfig()" id="btn-save-ecard" class="px-3 py-1.5 bg-orange-50 text-[#ff751f] text-[13px] font-bold rounded-md flex items-center gap-1 border border-orange-100">
+      <button onclick="saveECardConfig()" id="btn-save-ecard" class="px-3 py-1.5 bg-orange-50 text-[#ff751f] text-[13px] font-bold rounded-md flex items-center gap-1 border border-orange-100 active:scale-95 transition-transform">
         <span class="material-symbols-outlined text-[16px]">save</span> 儲存設定
       </button>
-      <button onclick="closeECardGenerator()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-90"><span class="material-symbols-outlined text-[18px]">close</span></button>
     </div>
   </div>
 
@@ -354,7 +353,7 @@
         <div class="flex gap-2 w-full">
           <div class="relative flex-1">
             <input type="text" id="ec-img-input" class="custom-input pr-10 text-sm" placeholder="https://..." oninput="updateECardPreview()">
-            <button id="btn-ec-upload" onclick="document.getElementById('ec-upload-input').click()" class="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 bg-slate-100 rounded flex items-center justify-center text-slate-600 hover:bg-slate-200">
+            <button id="btn-ec-upload" onclick="document.getElementById('ec-upload-input').click()" class="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 bg-slate-100 rounded flex items-center justify-center text-slate-600 hover:bg-slate-200 active:scale-90 transition-transform">
               <span class="material-symbols-outlined text-[16px]">upload</span>
             </button>
             <input type="file" id="ec-upload-input" accept="image/*" class="hidden" onchange="handleECardImageUpload(this)">
@@ -726,23 +725,23 @@
         if(!card) return;
         currentActiveCard = card; 
         
-        document.getElementById('cd-name').innerText = card['姓名'] || '未知姓名';
-        document.getElementById('cd-title').innerText = [card['職稱'], card['部門']].filter(Boolean).join(' / ') || '無職稱';
-        document.getElementById('cd-company').innerText = [card['公司名稱'], card['英文名/別名']].filter(Boolean).join(' - ') || '未提供';
-        document.getElementById('cd-taxid').innerText = card['統一編號'] || '未提供';
+        document.getElementById('ro-name').innerText = card['姓名'] || '未知姓名';
+        document.getElementById('ro-title').innerText = [card['職稱'], card['部門']].filter(Boolean).join(' / ') || '無職稱';
+        document.getElementById('ro-company').innerText = [card['公司名稱'], card['英文名/別名']].filter(Boolean).join(' - ') || '未提供';
+        document.getElementById('ro-taxid').innerText = card['統一編號'] || '未提供';
         
-        const mobileLink = document.getElementById('cd-mobile-link');
+        const mobileLink = document.getElementById('ro-mobile-link');
         let phoneStr = card['手機號碼'] ? formatPhoneStr(card['手機號碼']) : '';
         mobileLink.innerText = phoneStr || '未提供';
         mobileLink.href = phoneStr ? `tel:${phoneStr}` : '#';
         
-        document.getElementById('cd-tel').innerText = [card['公司電話'] ? formatPhoneStr(card['公司電話']) : '', card['分機'] ? `ext.${card['分機']}` : ''].filter(Boolean).join(' ') || '未提供';
+        document.getElementById('ro-tel').innerText = [card['公司電話'] ? formatPhoneStr(card['公司電話']) : '', card['分機'] ? `ext.${card['分機']}` : ''].filter(Boolean).join(' ') || '未提供';
         
-        const emailLink = document.getElementById('cd-email-link');
+        const emailLink = document.getElementById('ro-email-link');
         emailLink.innerText = card['電子郵件'] || '未提供';
         emailLink.href = card['電子郵件'] ? `mailto:${card['電子郵件']}` : '#';
         
-        document.getElementById('cd-address').innerText = card['公司地址'] || '未提供';
+        document.getElementById('ro-address').innerText = card['公司地址'] || '未提供';
         
         const notesArr = [];
         if(card['服務項目/品牌標語']) notesArr.push(`【關於我們】\n${card['服務項目/品牌標語']}`);
@@ -751,10 +750,10 @@
         if(card['社群帳號']) notesArr.push(`【社群】${card['社群帳號']}`);
         if(card['建檔人/備註']) notesArr.push(`【備註】\n${card['建檔人/備註']}`);
         
-        document.getElementById('cd-notes').innerText = notesArr.join('\n\n') || '無其他資訊';
+        document.getElementById('ro-notes').innerText = notesArr.join('\n\n') || '無其他資訊';
 
-        const imgEl = document.getElementById('cd-image');
-        const noImgEl = document.getElementById('cd-no-image');
+        const imgEl = document.getElementById('ro-image');
+        const noImgEl = document.getElementById('ro-no-image');
         if (card['名片圖檔'] && card['名片圖檔'] !== '圖片儲存失敗') {
           imgEl.src = getDirectImageUrl(card['名片圖檔']);
           imgEl.classList.remove('hidden');
@@ -765,15 +764,15 @@
           noImgEl.classList.remove('hidden');
         }
         
-        document.getElementById('card-detail-modal').classList.remove('hidden');
+        document.getElementById('readonly-card-modal').classList.remove('hidden');
       } catch(e) {
         alert("無法開啟: " + e.message);
       }
   }
 
-  function closeCardDetail() { document.getElementById('card-detail-modal').classList.add('hidden'); }
+  function closeReadOnlyCard() { document.getElementById('readonly-card-modal').classList.add('hidden'); }
 
-  // ⭐ 新增：產生並發送專屬認領編輯連結
+  // ⭐ 發送認領連結
   async function shareClaimLink() {
     if (!currentActiveCard) return;
     const card = currentActiveCard;
@@ -802,9 +801,9 @@
     try {
         const message = { type: "flex", altText: "您的專屬數位名片認領邀請", contents: flexMessage };
         const res = await liff.shareTargetPicker([message]);
-        if (res) showToast('✅ 認領連結已成功發送！');
+        if (res) showToast('✅ 認領連結已發送！');
     } catch (error) {
-        alert('發送已取消或失敗');
+        alert('發送已取消');
     }
   }
 
@@ -921,28 +920,6 @@
     }
   }
 
-  function getDirectImageUrl(url) { 
-      if (!url) return url;
-      const driveMatch = url.match(/id=([a-zA-Z0-9_-]+)/) || url.match(/d\/([a-zA-Z0-9_-]+)/);
-      if (driveMatch && url.includes('drive.google.com')) {
-        return `https://drive.google.com/thumbnail?id=${driveMatch[1]}&sz=w1000`;
-      }
-      return url;
-  }
-
-  const getTrueAspectRatio = (url) => new Promise((resolve) => {
-      if (!url) return resolve('20:13');
-      const img = new Image();
-      img.onload = function() {
-          let w = this.width; let h = this.height; let ratio = w / h;
-          if (ratio > 3) { w = 300; h = 100; }
-          else if (ratio < 0.334) { w = 100; h = 300; }
-          resolve(`${Math.round(w)}:${Math.round(h)}`);
-      };
-      img.onerror = function() { resolve('20:13'); };
-      img.src = url;
-  });
-
   function buildFlexMessageFromCard(card, config, dynamicAr = null) {
     let imgUrl, imgActionUrl, imgSize, aspectMode, ar, title, desc, buttons = [];
     let titleAlign = config && config.titleAlign ? config.titleAlign : 'center';
@@ -1023,12 +1000,6 @@
   function openECardGenerator() {
     if (!currentActiveCard) return;
     const c = currentActiveCard;
-
-    if (userProfile && userProfile.pictureUrl) {
-        document.getElementById('preview-user-avatar').src = userProfile.pictureUrl;
-        document.getElementById('preview-user-avatar').classList.remove('hidden');
-        document.querySelector('.avatar-fallback').classList.add('hidden');
-    }
 
     let savedConfig = null;
     if (c['自訂名片設定']) { try { savedConfig = JSON.parse(c['自訂名片設定']); } catch(e){} }
@@ -1224,20 +1195,6 @@
     }
     return config;
   }
-
-  const triggerFlexSharing = async (flexContents, altText) => {
-      if (!liff.isLoggedIn()) { liff.login({ redirectUri: window.location.href }); return; }
-      try {
-          const message = { type: "flex", altText: altText || "您收到一張數位名片", contents: flexContents };
-          const res = await liff.shareTargetPicker([message]);
-          if (res) showToast('🚀 數位名片已成功轉發！');
-          else showToast('取消傳送');
-          setTimeout(() => liff.closeWindow(), 1500);
-      } catch (error) {
-          alert('發送取消或發生錯誤: ' + error.message);
-          liff.closeWindow();
-      }
-  };
 
   async function shareECardToLine() {
     if (!checkFormat(true)) return;

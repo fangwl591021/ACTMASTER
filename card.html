@@ -39,7 +39,6 @@
     body { background-color: #ffffff; -webkit-tap-highlight-color: transparent; }
     .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1.5rem); }
     
-    /* ⭐ LINE OA 原生平鋪表單風格 */
     .input-label { @apply block text-[14px] text-slate-700 mb-1.5 font-normal; }
     
     select.custom-input {
@@ -78,7 +77,6 @@
     .refresh-spin { animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-    /* 原生清單風格 */
     .flat-list { @apply bg-white border-y border-slate-200 divide-y divide-slate-100 mt-2; }
     .flat-item { @apply px-4 py-3 bg-white flex items-center gap-3 active:bg-slate-50 cursor-pointer transition-colors; }
   </style>
@@ -87,7 +85,7 @@
 
 <div class="w-full max-w-md bg-background h-screen relative flex flex-col shadow-2xl overflow-hidden">
   
-  <!-- ⭐ Header 統一風格設計 (對齊 image_e30a07.png) -->
+  <!-- ⭐ Header 統一風格設計 - 移除右側相機按鈕 -->
   <nav class="fixed top-0 w-full max-w-md z-40 bg-white/90 backdrop-blur-xl px-4 py-3 flex justify-between items-center left-1/2 -translate-x-1/2 border-b border-slate-200 shadow-sm">
     <div class="text-[20px] font-bold text-slate-800 flex items-center gap-2 tracking-tight">
       <div class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center">
@@ -95,11 +93,7 @@
       </div>
       名片與通訊錄
     </div>
-    <div class="flex items-center gap-3">
-      <button onclick="document.getElementById('card-camera').click()" class="w-9 h-9 rounded-full bg-slate-50 text-slate-600 flex items-center justify-center active:bg-slate-100 transition-colors" title="快速掃描">
-        <span class="material-symbols-outlined text-[20px]">add_photo_alternate</span>
-      </button>
-    </div>
+    <!-- 移除原本位於此處的相機按鈕 -->
   </nav>
 
   <main id="main-content" class="flex-1 overflow-y-auto pb-32 pt-20 px-4 space-y-6">
@@ -473,7 +467,6 @@
     return s;
   }
 
-  // ⭐ 按鈕防空轉：全站通用的鎖定與解鎖管理
   function setButtonLoading(btnId, isLoading, originalText = '') {
       const btn = document.getElementById(btnId);
       if (!btn) return false;
@@ -539,7 +532,6 @@
     }
   };
 
-  // ⭐ API 發送器 (加入嚴格例外攔截，確保所有 caller 都能收到 throw 並解鎖按鈕)
   async function fetchAPI(action, payload = {}, silent = false) {
     try {
       const response = await fetch(WORKER_URL, {
@@ -553,7 +545,7 @@
       return result.data;
     } catch (err) {
       if (!silent) showToast(err.message, true); 
-      throw err; // 向外拋出，讓調用者的 catch/finally 可以執行
+      throw err;
     }
   }
 
@@ -690,7 +682,6 @@
     }
   }
 
-  // ⭐ 原生 Flat List + 10筆分頁
   async function loadCardContacts() { 
       const container = document.getElementById('admin-card-list-container');
       
@@ -876,7 +867,6 @@
         const res = await liff.shareTargetPicker([message]);
         if (res) showToast('✅ 認領連結已發送！');
     } catch (error) {
-        // 如果是使用者關閉視窗，這算是正常行為
     } finally {
         setButtonLoading('btn-share-claim', false, '<span class="material-symbols-outlined text-[18px]">person_add</span> 邀請認領');
         isProcessing = false;
@@ -1055,7 +1045,7 @@
             if (email.includes('@')) buttons.push({ l: '發送信箱', u: `mailto:${email}`, c: '#ff751f' });
         }
         if (card['公司地址']) {
-            buttons.push({ l: 'Google 導 গৌ航', u: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(card['公司地址'].split(',')[0])}`, c: '#ff751f' });
+            buttons.push({ l: 'Google 導航', u: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(card['公司地址'].split(',')[0])}`, c: '#ff751f' });
         }
     }
 

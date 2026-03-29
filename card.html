@@ -3,7 +3,6 @@
 <head>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-  <!-- 消除 favicon 404 報錯 -->
   <link rel="icon" href="data:,">
   <title>名片管理中樞</title>
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
@@ -22,7 +21,7 @@
           colors: {
             primary: "#2563eb", 
             "primary-light": "#eff6ff",
-            background: "#ffffff",
+            background: "#f8fafc",
             "text-main": "#0f172a",
             "text-muted": "#64748b",
           },
@@ -37,7 +36,7 @@
   <style>
     .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
     .icon-filled { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-    body { background-color: #ffffff; -webkit-tap-highlight-color: transparent; }
+    body { background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
     .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1.5rem); }
     
     .input-label { @apply block text-[14px] text-slate-700 mb-1.5 font-medium tracking-wide; }
@@ -101,7 +100,7 @@
       <p id="loading-text" class="text-slate-500 font-bold tracking-widest text-[13px]">資料載入中</p>
     </div>
 
-    <!-- ⭐ 主畫面 (純淨平鋪) -->
+    <!-- 主畫面 -->
     <div id="view-list" class="hidden space-y-5 animate-in fade-in pt-4">
       <div class="bg-white rounded-3xl shadow-sm p-6 text-center border border-slate-100">
         <div class="w-14 h-14 bg-primary-light text-primary rounded-full flex items-center justify-center mx-auto mb-3">
@@ -128,7 +127,7 @@
           <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
           <input type="text" id="card-search-input" onkeyup="filterCardList()" class="custom-input !pl-10 !rounded-xl" placeholder="搜尋姓名或公司...">
         </div>
-        <div id="admin-card-list-container" class="space-y-3 pb-4"></div>
+        <div id="admin-card-list-container" class="pb-4"></div>
       </div>
     </div>
 
@@ -237,7 +236,7 @@
   </nav>
 </div>
 
-<!-- ================= 絕對純淨版：數位電子名片預覽 Modal ================= -->
+<!-- 絕對純淨版：數位電子名片預覽 Modal -->
 <div id="readonly-card-modal" class="hidden fixed inset-0 bg-background flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl overflow-hidden" style="z-index: 1000;">
   
   <div class="absolute top-4 right-4 z-50 flex gap-2">
@@ -280,7 +279,7 @@
   </div>
 
   <div class="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-200 p-4 pb-safe flex gap-2 z-[1005]">
-    <button onclick="shareClaimLink()" class="flex-[1.2] py-3.5 bg-white border border-slate-300 text-slate-700 rounded-xl font-bold text-[15px] active:bg-slate-50 transition-colors flex items-center justify-center gap-1 shadow-sm hover:bg-slate-50">
+    <button onclick="shareClaimLink()" id="btn-share-claim" class="flex-[1.2] py-3.5 bg-white border border-slate-300 text-slate-700 rounded-xl font-bold text-[15px] active:bg-slate-50 transition-colors flex items-center justify-center gap-1 shadow-sm hover:bg-slate-50">
       <span class="material-symbols-outlined text-[20px]">person_add</span> 邀請認領
     </button>
     <button onclick="openECardGenerator()" class="flex-[1.5] py-3.5 bg-[#ff751f] text-white rounded-xl font-bold text-[16px] shadow-sm active:opacity-80 transition-opacity flex items-center justify-center gap-1.5 hover:bg-[#e66a1c]">
@@ -330,7 +329,7 @@
   </div>
 </div>
 
-<!-- ================= ⭐ 數位電子名片產生器 ================= -->
+<!-- 數位電子名片產生器 -->
 <div id="ecard-generator-modal" class="hidden fixed inset-0 bg-white flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl" style="z-index: 1020;">
   
   <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-slate-200 z-10 shrink-0 shadow-sm">
@@ -349,7 +348,6 @@
   </div>
 
   <div class="flex-1 overflow-y-auto pb-24 bg-white flex flex-col">
-    <!-- 編輯表單區 -->
     <div id="ec-editor-form" class="px-5 pt-5 pb-6 bg-white space-y-5 shrink-0">
       
       <div class="flex flex-col">
@@ -454,6 +452,16 @@
 <!-- Toast 通知 -->
 <div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-md text-[14px] shadow-lg transition-all z-[10000] font-bold flex items-center gap-2 w-max max-w-[90vw] bg-slate-800 text-white border border-slate-700"></div>
 
+<!-- Custom Info Modal -->
+<div id="custom-modal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-6">
+  <div class="bg-white w-full max-w-[300px] rounded-2xl p-6 shadow-2xl text-center scale-95 transition-all duration-200 border border-slate-100">
+    <div class="w-14 h-14 bg-blue-50 text-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><span class="material-symbols-outlined text-[28px] icon-filled">info</span></div>
+    <h3 id="modal-title" class="text-[19px] font-extrabold mb-2 text-slate-800 tracking-tight font-headline">系統通知</h3>
+    <p id="modal-desc" class="text-slate-500 font-medium mb-6 leading-relaxed text-[14px]"></p>
+    <button onclick="closeModalAndGo()" class="btn-primary !py-2.5 !text-[15px]">我知道了</button>
+  </div>
+</div>
+
 <script>
   const LIFF_ID = "2009367829-DLtYBDUm"; 
   const WORKER_URL = "https://actmaster.fangwl591021.workers.dev"; 
@@ -466,6 +474,11 @@
   let isProcessing = false;
   let dynamicAspectRatio = "20:13"; 
   let currentFateTags = null; 
+
+  // 分頁相關狀態
+  let currentCardPage = 1;
+  const CARDS_PER_PAGE = 10;
+  let activeFilteredCards = [];
 
   function formatPhoneStr(val) {
     if (val === null || val === undefined) return '';
@@ -525,7 +538,6 @@
     }
   };
 
-  // ⭐ 加入嚴格防空轉：每一支 API 呼叫都必須通過此防線
   async function fetchAPI(action, payload = {}, silent = false) {
     try {
       const response = await fetch(WORKER_URL, {
@@ -539,7 +551,7 @@
       return result.data;
     } catch (err) {
       if (!silent) showToast(err.message, true); 
-      throw err; // 拋出給呼叫端，觸發 finally 以確保按鈕解鎖
+      throw err;
     }
   }
 
@@ -646,7 +658,7 @@
     const btn = document.getElementById('btn-save');
     const originalText = btn.innerHTML;
     btn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> 上傳中...';
-    btn.classList.add('pointer-events-none', 'opacity-50');
+    btn.classList.add('btn-disabled');
     
     const payload = {
       base64Image: compressedBase64,
@@ -660,7 +672,7 @@
     
     if (!payload.Name && !payload.CompanyName) {
       btn.innerHTML = originalText;
-      btn.classList.remove('pointer-events-none', 'opacity-50');
+      btn.classList.remove('btn-disabled');
       isProcessing = false;
       return showToast("⚠️ 請輸入姓名或公司", true);
     }
@@ -669,65 +681,116 @@
       await fetchAPI('saveCard', payload);
       showToast("🎉 建立成功！");
       globalCardContacts = [];
+      sessionStorage.removeItem('getCardContacts{}');
       setTimeout(() => { resetUI(); }, 1000);
     } catch(err) {
       console.error(err);
     } finally {
-      // ⭐ 強制恢復按鈕狀態
       btn.innerHTML = originalText;
-      btn.classList.remove('pointer-events-none', 'opacity-50');
+      btn.classList.remove('btn-disabled');
       isProcessing = false;
     }
   }
 
+  // ⭐ SWR + 背景載入 機制
   async function loadCardContacts() { 
       const container = document.getElementById('admin-card-list-container');
-      if (globalCardContacts.length === 0) {
-        container.innerHTML = '<div class="text-center py-10"><div class="w-10 h-10 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>';
+      
+      const cacheKey = 'getCardContacts{}';
+      const cached = sessionStorage.getItem(cacheKey);
+      
+      if (cached) {
+          try {
+              globalCardContacts = JSON.parse(cached);
+              globalCardContacts.forEach(c => {
+                  if (c['手機號碼']) c['手機號碼'] = formatPhoneStr(c['手機號碼']);
+                  if (c['公司電話']) c['公司電話'] = formatPhoneStr(c['公司電話']);
+              });
+              filterCardList(); 
+          } catch(e) {}
+      } else {
+          container.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>';
       }
-      try {
-        globalCardContacts = await fetchAPI('getCardContacts');
-        globalCardContacts.forEach(c => {
-            if (c['手機號碼']) c['手機號碼'] = formatPhoneStr(c['手機號碼']);
-            if (c['公司電話']) c['公司電話'] = formatPhoneStr(c['公司電話']);
-        });
-        renderCardList(globalCardContacts);
-      } catch(e) {
-        if (globalCardContacts.length === 0) {
-            container.innerHTML = `<div class="text-center py-10 text-error font-bold">讀取失敗</div>`;
-        }
-      }
-  }
 
-  function renderCardList(data) { 
-      const container = document.getElementById('admin-card-list-container');
-      if (!data || data.length === 0) {
-        container.innerHTML = '<div class="text-center py-16 bg-white rounded-xl shadow-sm border border-slate-200 text-slate-400 font-bold">目前尚無名片</div>';
-        return;
-      }
-      container.innerHTML = data.map((card) => `
-        <div onclick="openCardDetailByRowId('${card.rowId}')" class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex items-center gap-4 animate-in fade-in slide-in-from-bottom-2 cursor-pointer active:scale-95 transition-all hover:bg-slate-50">
-          <div class="w-12 h-12 shrink-0 rounded-md overflow-hidden bg-slate-100 flex items-center justify-center border border-slate-200">
-            ${card['名片圖檔'] && card['名片圖檔'] !== '圖片儲存失敗' ? `<img src="${getDirectImageUrl(card['名片圖檔'])}" class="w-full h-full object-cover">` : `<span class="material-symbols-outlined text-slate-400 text-[24px]">person</span>`}
-          </div>
-          <div class="flex-1 overflow-hidden">
-            <h4 class="text-[16px] font-bold text-slate-800 truncate">${card['姓名'] || '未知姓名'}</h4>
-            <p class="text-[13px] text-slate-500 font-medium truncate mt-0.5">${card['公司名稱'] || card['職稱'] || '無資訊'}</p>
-          </div>
-          <div class="shrink-0 text-slate-400">
-            <span class="material-symbols-outlined text-[20px]">chevron_right</span>
-          </div>
-        </div>
-      `).join('');
+      fetchAPI('getCardContacts', {}, true).then(data => {
+          globalCardContacts = data || [];
+          globalCardContacts.forEach(c => {
+              if (c['手機號碼']) c['手機號碼'] = formatPhoneStr(c['手機號碼']);
+              if (c['公司電話']) c['公司電話'] = formatPhoneStr(c['公司電話']);
+          });
+          sessionStorage.setItem(cacheKey, JSON.stringify(globalCardContacts));
+          filterCardList(); 
+      }).catch(e => {
+          if (globalCardContacts.length === 0) {
+              container.innerHTML = `<div class="text-center py-10 text-error font-bold">讀取失敗</div>`;
+          }
+      });
   }
 
   function filterCardList() { 
       const term = document.getElementById('card-search-input').value.toLowerCase();
-      const filtered = globalCardContacts.filter(c => 
+      activeFilteredCards = globalCardContacts.filter(c => 
         (c['姓名'] || '').toLowerCase().includes(term) || 
         (c['公司名稱'] || '').toLowerCase().includes(term)
       );
-      renderCardList(filtered);
+      currentCardPage = 1;
+      renderCardPage(true);
+  }
+
+  // ⭐ 原生 Flat List + 10筆分頁
+  function renderCardPage(isReset = false) {
+      const container = document.getElementById('admin-card-list-container');
+
+      if (!activeFilteredCards || activeFilteredCards.length === 0) {
+          container.innerHTML = '<div class="text-center py-16 bg-white rounded-xl shadow-sm border border-slate-200 text-slate-400 font-bold">目前尚無名片</div>';
+          return;
+      }
+
+      const startIndex = (currentCardPage - 1) * CARDS_PER_PAGE;
+      const endIndex = startIndex + CARDS_PER_PAGE;
+      const pageData = activeFilteredCards.slice(startIndex, endIndex);
+
+      let html = pageData.map((card) => `
+          <div onclick="openCardDetailByRowId('${card.rowId}')" class="flex items-center gap-3.5 px-4 py-3 bg-white active:bg-slate-50 cursor-pointer transition-colors border-b border-slate-100 last:border-b-0">
+            <div class="w-11 h-11 shrink-0 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center border border-slate-200">
+              ${card['名片圖檔'] && card['名片圖檔'] !== '圖片儲存失敗' ? `<img src="${getDirectImageUrl(card['名片圖檔'])}" class="w-full h-full object-cover">` : `<span class="material-symbols-outlined text-slate-400 text-[24px]">person</span>`}
+            </div>
+            <div class="flex-1 overflow-hidden">
+              <h4 class="text-[16px] font-bold text-slate-800 truncate leading-snug">${card['姓名'] || '未知姓名'}</h4>
+              <p class="text-[13px] text-slate-500 font-medium truncate mt-0.5">${card['公司名稱'] || card['職稱'] || '無資訊'}</p>
+            </div>
+            <div class="shrink-0 text-slate-300">
+              <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+            </div>
+          </div>
+      `).join('');
+
+      const loadMoreBtnId = 'btn-load-more-cards';
+      let loadMoreBtn = document.getElementById(loadMoreBtnId);
+
+      if (isReset) {
+          container.innerHTML = `<div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden" id="card-list-wrapper">${html}</div>`;
+      } else {
+          if (loadMoreBtn) loadMoreBtn.remove();
+          const wrapper = document.getElementById('card-list-wrapper');
+          if (wrapper) wrapper.insertAdjacentHTML('beforeend', html);
+      }
+
+      if (endIndex < activeFilteredCards.length) {
+          const wrapper = document.getElementById('card-list-wrapper');
+          if (wrapper) {
+              wrapper.insertAdjacentHTML('afterend', `
+                  <button id="${loadMoreBtnId}" onclick="loadMoreCards()" class="w-full py-3.5 mt-3 bg-white text-slate-600 font-bold text-[14px] rounded-xl border border-slate-200 shadow-sm active:bg-slate-50 transition-colors flex justify-center items-center gap-1">
+                      <span class="material-symbols-outlined text-[18px]">expand_more</span> 載入更多名片
+                  </button>
+              `);
+          }
+      }
+  }
+
+  function loadMoreCards() {
+      currentCardPage++;
+      renderCardPage(false);
   }
 
   function openCardDetailByRowId(rowId) { 
@@ -820,9 +883,8 @@
         const res = await liff.shareTargetPicker([message]);
         if (res) showToast('✅ 認領連結已發送！');
     } catch (error) {
-        // 如果是使用者關閉視窗，這算是正常行為
+        // 取消或失敗
     } finally {
-        // ⭐ 強制恢復按鈕狀態
         isProcessing = false;
         btn.innerHTML = ori;
         btn.classList.remove('pointer-events-none', 'opacity-70');
@@ -859,7 +921,7 @@
     const btn = document.getElementById('btn-save-card-edit');
     const originalText = btn.innerHTML;
     btn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> 儲存中...';
-    btn.classList.add('pointer-events-none', 'opacity-50');
+    btn.classList.add('btn-disabled');
 
     let payload = {
       rowId: currentActiveCard.rowId,
@@ -888,9 +950,7 @@
         try {
              const newTags = await fetchAPI('calculateFateTags', { Name: payload.Name, Mobile: payload.Mobile }, true);
              payload = { ...payload, ...newTags };
-        } catch (e) {
-             console.warn("重算標籤失敗");
-        }
+        } catch (e) {}
     }
 
     try {
@@ -932,15 +992,15 @@
             if (c['手機號碼']) c['手機號碼'] = formatPhoneStr(c['手機號碼']);
             if (c['公司電話']) c['公司電話'] = formatPhoneStr(c['公司電話']);
           });
-          renderCardList(globalCardContacts);
+          filterCardList();
       });
 
     } catch(err) {
-      console.error(err);
+      showToast(err.message, true);
     } finally {
       isProcessing = false;
       btn.innerHTML = originalText;
-      btn.classList.remove('pointer-events-none', 'opacity-50');
+      btn.classList.remove('btn-disabled');
     }
   }
 
@@ -1282,7 +1342,7 @@
 
       await triggerFlexSharing(flexMessageObj, altText);
     } catch(err) {
-      console.error("錯誤：" + err.message);
+      alert("錯誤：" + err.message);
     } finally {
       isProcessing = false;
       btnShare.innerHTML = oriHtml;

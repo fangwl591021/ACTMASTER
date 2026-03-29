@@ -1,4 +1,4 @@
-<!-- Version: v1.1.2 -->
+<!-- Version: v1.1.6 -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -203,7 +203,7 @@
       <div id="admin-activity-list-container" class="space-y-4"></div>
     </div>
 
-    <!-- 後台：CRM (LINE 原生樣式) -->
+    <!-- 後台：CRM -->
     <div id="view-admin-crm" class="hidden space-y-2 animate-in fade-in pt-4">
       <div class="px-1 mb-4">
         <h2 class="text-2xl font-extrabold font-headline text-slate-800 tracking-tight">會員 CRM</h2>
@@ -413,7 +413,7 @@
     <button onclick="closeModalAndGo()" class="btn-primary !py-2.5 !text-[15px]">我知道了</button>
   </div>
 </div>
-<div id="toast" class="fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-bold flex items-center gap-2 w-max max-w-[90vw] opacity-0 pointer-events-none"></div>
+<div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-bold flex items-center gap-2 w-max max-w-[90vw] opacity-0 pointer-events-none"></div>
 
 <script>
   const LIFF_ID = "2009367829-DLtYBDUm"; 
@@ -432,6 +432,21 @@
   let regCompressedBase64 = "";
   let regCropperInstance = null;
   let html5QrcodeScanner = null;
+
+  function setButtonLoading(btnId, isLoading, originalText = '') {
+      const btn = document.getElementById(btnId);
+      if (!btn) return false;
+      if (isLoading) {
+          if (!btn.dataset.oriText) btn.dataset.oriText = btn.innerHTML;
+          btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[18px] align-middle">refresh</span> 處理中...';
+          btn.classList.add('opacity-50', 'pointer-events-none');
+          return true;
+      } else {
+          btn.innerHTML = originalText || btn.dataset.oriText || '送出';
+          btn.classList.remove('opacity-50', 'pointer-events-none');
+          return false;
+      }
+  }
 
   const loadScript = (src) => new Promise((res, rej) => {
     if (document.querySelector(`script[src="${src}"]`)) return res();
@@ -529,13 +544,23 @@
         if (isRegistered) {
           if (claimCardId) {
              try {
-                // ⭐ 認領時，將 LINE ID 綁定到名片資料中
-                await fetchAPI('updateCard', { 
-                    rowId: claimCardId, 
-                    'LINE ID': userProfile.userId,
-                    userId: userProfile.userId 
-                });
-                showToast("✅ 名片已成功認領並綁定至您的帳號");
+                const cardData = await fetchAPI('getCardById', { rowId: claimCardId });
+                if (cardData) {
+                    const updatePayload = {
+                        rowId: claimCardId,
+                        'LINE ID': userProfile.userId,
+                        userId: userProfile.userId
+                    };
+                    const fields = ['Name', 'EnglishName', 'Title', 'Department', 'CompanyName', 'TaxID', 'Mobile', 'Tel', 'Ext', 'Fax', 'Address', 'Email', 'Website', 'SocialMedia', 'Slogan', 'Notes'];
+                    const zhKeys = {'Name':'姓名', 'EnglishName':'英文名/別名', 'Title':'職稱', 'Department':'部門', 'CompanyName':'公司名稱', 'TaxID':'統一編號', 'Mobile':'手機號碼', 'Tel':'公司電話', 'Ext':'分機', 'Fax':'傳真', 'Address':'公司地址', 'Email':'電子郵件', 'Website':'公司網址', 'SocialMedia':'社群帳號', 'Slogan':'服務項目/品牌標語', 'Notes':'建檔人/備註'};
+                    fields.forEach(f => {
+                        if (cardData[f] !== undefined) updatePayload[f] = cardData[f];
+                        else if (zhKeys[f] && cardData[zhKeys[f]] !== undefined) updatePayload[f] = cardData[zhKeys[f]];
+                        else updatePayload[f] = '';
+                    });
+                    await fetchAPI('updateCard', updatePayload);
+                    showToast("✅ 名片已成功認領並綁定至您的帳號");
+                }
              } catch(e) {}
           }
           switchView(targetView || 'user-activities'); 
@@ -640,10 +665,7 @@
 
   async function submitUserRegistrationStep1() {
     if (isProcessing) return; isProcessing = true;
-    const btn = document.getElementById('btn-reg-step1'); 
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> 儲存中...'; 
-    btn.classList.add('pointer-events-none', 'opacity-50');
+    setButtonLoading('btn-reg-step1', true);
     
     const p = { 
       userId: userProfile.userId, 
@@ -664,15 +686,25 @@
 
       if (window.claimCardId) {
           try {
-              // ⭐ 同步將剛註冊的使用者 LINE ID 寫入到名片庫中綁定
-              await fetchAPI('updateCard', { 
-                  rowId: window.claimCardId, 
-                  'LINE ID': userProfile.userId,
-                  userId: userProfile.userId,
-                  Name: p.name,
-                  Mobile: p.phone,
-                  CompanyName: p.industry
-              });
+              const cardData = await fetchAPI('getCardById', { rowId: window.claimCardId });
+              if (cardData) {
+                  const updatePayload = {
+                      rowId: window.claimCardId,
+                      'LINE ID': userProfile.userId,
+                      userId: userProfile.userId,
+                      Name: p.name,
+                      Mobile: p.phone,
+                      CompanyName: p.industry
+                  };
+                  const fields = ['EnglishName', 'Title', 'Department', 'TaxID', 'Tel', 'Ext', 'Fax', 'Address', 'Email', 'Website', 'SocialMedia', 'Slogan', 'Notes'];
+                  const zhKeys = {'EnglishName':'英文名/別名', 'Title':'職稱', 'Department':'部門', 'TaxID':'統一編號', 'Tel':'公司電話', 'Ext':'分機', 'Fax':'傳真', 'Address':'公司地址', 'Email':'電子郵件', 'Website':'公司網址', 'SocialMedia':'社群帳號', 'Slogan':'服務項目/品牌標語', 'Notes':'建檔人/備註'};
+                  fields.forEach(f => {
+                      if (cardData[f] !== undefined) updatePayload[f] = cardData[f];
+                      else if (zhKeys[f] && cardData[zhKeys[f]] !== undefined) updatePayload[f] = cardData[zhKeys[f]];
+                      else updatePayload[f] = '';
+                  });
+                  await fetchAPI('updateCard', updatePayload);
+              }
           } catch(e) { console.error("Update card failed", e); }
       }
 
@@ -683,8 +715,7 @@
       console.error(e);
     } finally { 
       isProcessing = false;
-      btn.innerHTML = originalText; 
-      btn.classList.remove('pointer-events-none', 'opacity-50'); 
+      setButtonLoading('btn-reg-step1', false, '儲存並繼續 <span class="material-symbols-outlined text-[20px]">arrow_forward</span>'); 
     }
   }
 
@@ -881,9 +912,7 @@
     if (isProcessing) return;
     if (!confirm(`確定報名「${name}」？`)) return;
     isProcessing = true; 
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[16px]">refresh</span>';
-    btn.classList.add('pointer-events-none', 'opacity-50');
+    setButtonLoading('detail-modal-join-btn', true);
     try {
       await fetchAPI('joinActivity', { userId: userProfile.userId, activityName: name });
       if (feeType === '收費') showModal("報名成功", `此為收費活動，請完成匯款 \nNT$ ${price} 後，至「報名紀錄」填寫後五碼。`, "history");
@@ -893,8 +922,7 @@
       console.error(e);
     } finally { 
       isProcessing = false; 
-      btn.classList.remove('pointer-events-none', 'opacity-50'); 
-      btn.innerHTML = originalText;
+      setButtonLoading('detail-modal-join-btn', false, '我要報名 <span class="material-symbols-outlined text-[20px]">arrow_forward</span>');
     }
   }
 
@@ -930,9 +958,9 @@
             ${item.isPaidAct && item.payStatus === '未繳費' && !isCanceled ? `
               <div class="mt-4 pt-4 border-t border-slate-100 flex gap-2">
                  <input type="text" id="pay-${item.name.replace(/\s+/g,'')}" class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[13px] font-bold text-center outline-none focus:border-primary focus:bg-white" placeholder="末五碼" maxlength="5">
-                 <button onclick="submitLast5(this, '${safeName}', '${item.name.replace(/\s+/g,'')}')" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-[13px] font-bold active:scale-95 transition-transform hover:bg-slate-700">回報</button>
+                 <button id="btn-report-${item.name.replace(/\s+/g,'')}" onclick="submitLast5(this, '${safeName}', '${item.name.replace(/\s+/g,'')}')" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-[13px] font-bold active:scale-95 transition-transform hover:bg-slate-700">回報</button>
               </div>` : ''}
-            ${!isCanceled ? `<button onclick="userCancelRegistration(this, '${safeName}')" class="absolute bottom-4 right-4 text-[11px] text-slate-400 font-bold hover:text-red-500 transition-colors underline underline-offset-2">取消</button>` : ''}
+            ${!isCanceled ? `<button id="btn-cancel-${item.name.replace(/\s+/g,'')}" onclick="userCancelRegistration(this, '${safeName}')" class="absolute bottom-4 right-4 text-[11px] text-slate-400 font-bold hover:text-red-500 transition-colors underline underline-offset-2">取消</button>` : ''}
           </div>`;
         }).join('');
         
@@ -947,7 +975,7 @@
     const val = document.getElementById(`pay-${inputId}`).value; 
     if(!val || val.length < 4) return showToast("輸入錯誤",true); 
     isProcessing = true;
-    const ori = btn.innerHTML; btn.innerHTML='<span class="material-symbols-outlined animate-spin text-[16px]">refresh</span>'; btn.classList.add('pointer-events-none', 'opacity-50');
+    setButtonLoading(btn.id, true);
     try {
       await fetchAPI('updateLast5Digits', { userId: userProfile.userId, activityName: actName, last5Digits: val }); 
       showToast("回報成功"); 
@@ -957,9 +985,7 @@
       console.error(e);
     } finally {
       isProcessing = false; 
-      if(document.body.contains(btn)){
-          btn.innerHTML=ori; btn.classList.remove('pointer-events-none', 'opacity-50');
-      }
+      setButtonLoading(btn.id, false, '回報');
     }
   }
 
@@ -967,7 +993,7 @@
     if(isProcessing) return;
     if(!confirm(`確定要取消？`)) return; 
     isProcessing = true;
-    const ori = btn.innerHTML; btn.innerHTML='取消中...'; btn.classList.add('pointer-events-none', 'opacity-50');
+    setButtonLoading(btn.id, true);
     try {
       await fetchAPI('cancelRegistration', { userId: userProfile.userId, activityName: actName }); 
       showToast("已取消"); 
@@ -977,9 +1003,7 @@
       console.error(e);
     } finally {
       isProcessing = false; 
-      if(document.body.contains(btn)){
-          btn.innerHTML=ori; btn.classList.remove('pointer-events-none', 'opacity-50');
-      }
+      setButtonLoading(btn.id, false, '取消');
     }
   }
 
@@ -987,15 +1011,15 @@
   
   async function submitProfileUpdate() { 
     if(isProcessing) return; isProcessing = true;
-    const btn = document.getElementById('btn-save-profile');
-    const ori = btn.innerHTML; btn.innerHTML='<span class="material-symbols-outlined animate-spin">refresh</span>'; btn.classList.add('pointer-events-none', 'opacity-50');
+    setButtonLoading('btn-save-profile', true);
     const p = { userId: userProfile.userId, name: document.getElementById('edit-name').value.trim() || userProfile.displayName, gender: document.getElementById('edit-gender').value, phone: document.getElementById('edit-phone').value.trim(), industry: document.getElementById('edit-industry').value.trim(), birthday: document.getElementById('edit-birthday').value, region: document.getElementById('edit-region').value.trim(), address: document.getElementById('edit-address').value.trim() }; 
     try {
       await fetchAPI('updateUser', p); registeredInfo = p; showToast("儲存成功"); 
     } catch(e) {
       console.error(e);
     } finally {
-      isProcessing = false; btn.innerHTML=ori; btn.classList.remove('pointer-events-none', 'opacity-50');
+      isProcessing = false;
+      setButtonLoading('btn-save-profile', false, '儲存變更');
     }
   }
 
@@ -1041,7 +1065,7 @@
             <h4 class="font-bold text-[15px] text-slate-800 flex items-center gap-1">${r['姓名']} ${cIn ? '<span class="material-symbols-outlined text-[15px] text-emerald-500 icon-filled">check_circle</span>' : ''}</h4>
             <p class="text-[11px] text-slate-500 font-medium mt-1">${r['電話'] || '無電話'}</p>
           </div>
-          <button ${isCanceled ? 'disabled' : ''} onclick="toggleCheckIn(this, ${r.rowId}, ${cIn})" class="px-3 py-1.5 rounded-md flex items-center justify-center gap-1 transition-all font-bold text-[12px] ${cIn ? 'bg-emerald-500 text-white shadow-sm' : 'bg-white border border-slate-300 text-slate-600 active:scale-95 hover:bg-slate-50'}">
+          <button id="btn-chk-${r.rowId}" ${isCanceled ? 'disabled' : ''} onclick="toggleCheckIn(this, ${r.rowId}, ${cIn})" class="px-3 py-1.5 rounded-md flex items-center justify-center gap-1 transition-all font-bold text-[12px] ${cIn ? 'bg-emerald-500 text-white shadow-sm' : 'bg-white border border-slate-300 text-slate-600 active:scale-95 hover:bg-slate-50'}">
             <span class="material-symbols-outlined text-[16px] ${cIn?'icon-filled':''}">${cIn ? 'check_circle' : 'touch_app'}</span>
             ${cIn ? '已簽到' : '手動簽到'}
           </button>
@@ -1058,7 +1082,7 @@
 
   async function toggleCheckIn(btn, rowId, currentStatus) { 
     if(isProcessing) return; isProcessing = true;
-    const ori = btn.innerHTML; btn.innerHTML='...'; btn.classList.add('pointer-events-none', 'opacity-50');
+    setButtonLoading(btn.id, true);
     try { 
       await fetchAPI('toggleStatus', { activityName: activeActivityName, rowId: rowId, currentStatus: currentStatus }); 
       const reg = currentRegistrants.find(r => r.rowId === rowId); if(reg) reg.checkedIn = !currentStatus; 
@@ -1067,9 +1091,6 @@
       console.error(e); showToast("錯誤", true); 
     } finally { 
       isProcessing = false; 
-      if(document.body.contains(btn)){
-          btn.innerHTML=ori; btn.classList.remove('pointer-events-none', 'opacity-50');
-      }
     }
   }
 
@@ -1079,8 +1100,7 @@
     if(isProcessing) return;
     const name = document.getElementById('f-walkin-name').value; if(!name) return; 
     isProcessing = true;
-    const btn = document.getElementById('btn-walkin'); 
-    const ori = btn.innerHTML; btn.innerHTML='<span class="material-symbols-outlined animate-spin">refresh</span>'; btn.classList.add('pointer-events-none', 'opacity-50');
+    setButtonLoading('btn-walkin', true);
     try {
       await fetchAPI('addWalkIn', { activityName: activeActivityName, name: name }); 
       document.getElementById('f-walkin-name').value = ''; 
@@ -1090,8 +1110,7 @@
       console.error(e); 
     } finally { 
       isProcessing = false; 
-      btn.innerHTML=ori; 
-      btn.classList.remove('pointer-events-none', 'opacity-50'); 
+      setButtonLoading('btn-walkin', false, '新增並自動簽到 <span class="material-symbols-outlined text-[20px]">how_to_reg</span>');
     }
   }
 
@@ -1198,11 +1217,10 @@
   
   async function submitSettings() { 
     if(isProcessing) return; isProcessing = true;
-    const btn = document.getElementById('btn-submit-settings');
-    const ori = btn.innerHTML; btn.innerHTML='<span class="material-symbols-outlined animate-spin">refresh</span>'; btn.classList.add('pointer-events-none', 'opacity-50');
+    setButtonLoading('btn-submit-settings', true);
     try {
       await fetchAPI('saveSettings', { TG_BOT_TOKEN: document.getElementById('set-tg-token').value, TG_CHAT_ID: document.getElementById('set-tg-chat').value, LINE_LINK: document.getElementById('set-line-link').value }); showToast("已儲存"); 
-    } catch(e) { console.error(e); } finally { isProcessing = false; btn.innerHTML=ori; btn.classList.remove('pointer-events-none', 'opacity-50'); }
+    } catch(e) { console.error(e); } finally { isProcessing = false; setButtonLoading('btn-submit-settings', false, '儲存設定'); }
   }
 
   function toggleCreateMode(m) { 
@@ -1245,8 +1263,9 @@
 
   async function handleCreateActivity(mode) { 
     if(isProcessing) return; isProcessing=true; 
-    const btn = document.getElementById(mode === 'quick' ? 'btn-quick-create' : 'btn-detail-create');
-    const ori = btn.innerHTML; btn.innerHTML='<span class="material-symbols-outlined animate-spin">refresh</span>'; btn.classList.add('pointer-events-none', 'opacity-50');
+    const btnId = mode === 'quick' ? 'btn-quick-create' : 'btn-detail-create';
+    const btnHtml = mode === 'quick' ? '建立活動 <span class="material-symbols-outlined text-[20px]">add_circle</span>' : '發布活動頁面 <span class="material-symbols-outlined text-[20px]">rocket_launch</span>';
+    setButtonLoading(btnId, true);
     
     let p = { 
         activityName: document.getElementById(mode === 'quick' ? 'quick-name' : 'detail-name').value.trim(), 
@@ -1261,7 +1280,7 @@
         defaultIdentity: document.getElementById(mode === 'quick' ? 'quick-identity' : 'detail-identity').value 
     }; 
     
-    if(!p.activityName) { isProcessing=false; btn.innerHTML=ori; btn.classList.remove('pointer-events-none', 'opacity-50'); return showToast("名稱必填", true); }
+    if(!p.activityName) { isProcessing=false; setButtonLoading(btnId, false, btnHtml); return showToast("名稱必填", true); }
     
     if(mode==='quick') {
         p.names = document.getElementById('quick-names').value.split('\n').filter(n=>n.trim()); 
@@ -1283,8 +1302,22 @@
     } catch(e){
       console.error(e);
     } finally{ 
-      isProcessing=false; btn.innerHTML=ori; btn.classList.remove('pointer-events-none', 'opacity-50'); 
+      isProcessing=false; setButtonLoading(btnId, false, btnHtml); 
     }
+  }
+  
+  async function triggerFlexSharing(flexContents, altText) {
+      if (!liff.isLoggedIn()) { liff.login({ redirectUri: window.location.href }); return; }
+      try {
+          const message = { type: "flex", altText: altText || "您收到一張數位名片", contents: flexContents };
+          const res = await liff.shareTargetPicker([message]);
+          if (res) showToast('🚀 數位名片已成功轉發！');
+          else showToast('取消傳送');
+          setTimeout(() => liff.closeWindow(), 1500);
+      } catch (error) {
+          alert('發送取消或發生錯誤: ' + error.message);
+          liff.closeWindow();
+      }
   }
 </script>
 </body>

@@ -88,7 +88,6 @@
 
 <div class="w-full max-w-md bg-background h-screen relative flex flex-col shadow-2xl overflow-hidden">
   
-  <!-- Header 統一風格設計 -->
   <nav class="fixed top-0 w-full max-w-md z-40 bg-white/90 backdrop-blur-xl px-5 py-3.5 flex justify-between items-center left-1/2 -translate-x-1/2 border-b border-slate-200 shadow-sm">
     <div class="text-[19px] font-extrabold text-slate-800 flex items-center gap-2 font-headline tracking-tight">
       <div class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shadow-md shadow-blue-500/20">
@@ -115,28 +114,7 @@
 
     <!-- 主畫面 -->
     <div id="view-list" class="hidden animate-in fade-in">
-      
-      <!-- ⭐ 我的專屬名片 Banner (受邀者進來能直接看到) -->
-      <div id="my-card-banner" class="hidden px-5 pt-4">
-        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-5 text-white shadow-lg shadow-blue-900/20 flex justify-between items-center relative overflow-hidden">
-            <div class="absolute -right-4 -top-4 opacity-10">
-                <span class="material-symbols-outlined text-[100px]">contact_mail</span>
-            </div>
-            <div class="relative z-10">
-                <div class="flex items-center gap-1.5 mb-1">
-                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                  <span class="text-[11px] font-bold text-emerald-300 tracking-wider">已認領</span>
-                </div>
-                <h3 class="text-[17px] font-black mb-1">我的專屬數位名片</h3>
-                <p class="text-[12px] text-blue-100 opacity-90">點擊即可預覽並轉發至 LINE 對話</p>
-            </div>
-            <button onclick="openMyCard()" class="relative z-10 w-11 h-11 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm active:scale-95 transition-transform border border-white/30 shadow-sm">
-                <span class="material-symbols-outlined text-[24px]">arrow_forward</span>
-            </button>
-        </div>
-      </div>
-
-      <div class="px-5 pt-4">
+      <div id="admin-tools-container" class="px-5 pt-4">
         <div class="bg-white rounded-2xl shadow-sm p-6 text-center border border-slate-200">
           <div class="w-12 h-12 bg-primary-light text-primary rounded-full flex items-center justify-center mx-auto mb-3">
             <span class="material-symbols-outlined text-[24px]">document_scanner</span>
@@ -158,16 +136,14 @@
         </div>
       </div>
 
-      <div class="mt-6">
+      <div class="mt-6" id="admin-search-container">
         <div class="px-5 mb-3">
           <div class="relative flex flex-col">
             <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
             <input type="text" id="card-search-input" onkeyup="filterCardList()" class="w-full py-2.5 pl-11 pr-4 bg-slate-100 border-none rounded-xl text-[14px] outline-none focus:bg-white focus:ring-1 focus:ring-primary/20 transition-all shadow-none" placeholder="搜尋姓名或公司...">
           </div>
         </div>
-        
         <div id="admin-card-list-container" class="flex flex-col"></div>
-        
         <div id="card-load-more-box" class="hidden py-6 text-center">
           <button onclick="loadMoreCards()" class="text-primary font-bold text-[14px] px-6 py-2 border border-primary/20 rounded-full hover:bg-primary-light transition-all">
             顯示更多名片
@@ -327,10 +303,9 @@
   </div>
 </div>
 
-<!-- ⭐ 數位電子名片產生器 (Manus 桌面行動雙響應完美版) -->
+<!-- ⭐ 數位電子名片產生器 -->
 <div id="ecard-generator-modal" class="hidden fixed inset-0 bg-slate-50 flex flex-col animate-in fade-in duration-300 w-full z-[1020] overflow-hidden">
   
-  <!-- 頂部 Navbar -->
   <div class="manus-gradient px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center shadow-lg shrink-0 w-full z-20">
     <div class="flex items-center gap-3 text-white">
       <button onclick="closeECardGenerator()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"><span class="material-symbols-outlined text-[20px]">close</span></button>
@@ -350,12 +325,10 @@
     </div>
   </div>
 
-  <!-- 內容區 -->
   <div class="flex-1 overflow-y-auto p-0 sm:p-6 w-full">
     <div class="container mx-auto max-w-5xl h-full">
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-0 sm:gap-6 lg:gap-8 h-full">
         
-        <!-- 左側：編輯表單 -->
         <div class="lg:col-span-2 space-y-6">
           <div class="bg-white sm:rounded-2xl shadow-sm border-b sm:border border-slate-200 p-5 sm:p-8">
             <h2 class="text-[18px] sm:text-xl font-black text-slate-800 mb-5 sm:mb-6 flex items-center gap-2 border-b border-slate-100 pb-3 sm:pb-4">
@@ -363,7 +336,6 @@
             </h2>
             
             <div id="ec-editor-form" class="space-y-5 sm:space-y-6">
-              <!-- 圖片設定 -->
               <div class="w-full">
                 <label class="input-label">大圖網址與版型</label>
                 <div class="flex gap-2 w-full">
@@ -412,7 +384,6 @@
                 <textarea id="ec-desc-input" class="custom-input h-24 sm:h-32 resize-none text-[13px] sm:text-[14px] leading-relaxed focus:border-emerald-500 focus:ring-emerald-500/20" oninput="updateECardPreview()"></textarea>
               </div>
 
-              <!-- 動作按鈕 -->
               <div class="bg-slate-50 p-4 sm:p-5 rounded-xl border border-slate-200 space-y-3">
                 <div class="font-bold text-[12px] sm:text-[13px] text-slate-700 border-b border-slate-200 pb-2.5 mb-2 flex justify-between items-center">
                   <span>動作按鈕配置 (最多4個)</span>
@@ -472,7 +443,6 @@
                       <div class="flex flex-col gap-1.5 max-w-[88%] w-full">
                           <div class="bg-white px-3.5 py-2 rounded-2xl rounded-tl-sm text-[13px] text-slate-800 shadow-sm w-fit font-medium">為您準備的數位名片！</div>
                           
-                          <!-- 預覽泡泡 (會與左側連動) -->
                           <div class="flex-preview-bubble" id="preview-ec-bubble">
                               <img id="preview-ec-img" src="" class="flex-preview-img h-40">
                               <div class="flex-badge" id="preview-ec-badge">分享</div>
@@ -501,7 +471,6 @@
   </div>
 </div>
 
-<!-- 裁切功能 Modal -->
 <div id="section-cropper" class="hidden fixed inset-0 bg-slate-900 flex flex-col animate-in fade-in duration-300 w-full max-w-md mx-auto" style="z-index: 1030;">
     <div class="flex justify-between items-center p-4 bg-slate-900 text-white shrink-0 z-10 shadow-sm border-b border-slate-800">
       <button onclick="cancelCrop()" class="px-3 py-2 font-bold text-slate-400 active:scale-90 transition-transform text-sm">取消</button>
@@ -530,9 +499,12 @@
   let isProcessing = false;
   let dynamicAspectRatio = "20:13"; 
   let currentFateTags = null; 
+  
+  const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55", "U8932b891ad24da512afb9c1a6f41567b"];
+  let isAdmin = false;
 
   function formatPhoneStr(val) {
-    if (val === null || val === undefined) return '';
+    if (!val) return '';
     let s = String(val).trim();
     if (/^9\d{8}$/.test(s)) return '0' + s;
     if (/^[2-8]\d{7,8}$/.test(s)) return '0' + s;
@@ -593,14 +565,13 @@
         userProfile = await liff.getProfile();
         document.getElementById('user-avatar').src = userProfile.pictureUrl || '';
         document.getElementById('user-profile-badge').classList.remove('hidden');
+        isAdmin = ADMIN_IDS.includes(userProfile.userId);
       } else {
         liff.login();
         return;
       }
 
-      const targetView = params.get('view') || 'list';
-      switchView(targetView);
-
+      switchView('list');
     } catch (err) {
       showToast("⚠️ LIFF 初始化失敗", true);
     }
@@ -651,7 +622,13 @@
     document.getElementById('card-upload').value = "";
     compressedBase64 = "";
     currentFateTags = null;
-    switchView('list');
+    
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('mode') === 'mycard') {
+        window.location.href = 'index.html?view=user-profile';
+    } else {
+        switchView('list');
+    }
   }
 
   function showToast(msg, isError = false) {
@@ -758,6 +735,17 @@
   async function loadCardContacts() { 
       const container = document.getElementById('admin-card-list-container');
       
+      if (!isAdmin) {
+          const navAdmin = document.getElementById('bottom-nav-admin');
+          if (navAdmin) navAdmin.classList.add('hidden');
+          const toolsContainer = document.getElementById('admin-tools-container');
+          if (toolsContainer) toolsContainer.classList.add('hidden');
+          const searchContainer = document.getElementById('admin-search-container');
+          if (searchContainer) searchContainer.classList.add('hidden');
+          const loadMoreBox = document.getElementById('card-load-more-box');
+          if (loadMoreBox) loadMoreBox.classList.add('hidden');
+      }
+
       const cacheKey = 'getCardContacts{}';
       const cached = sessionStorage.getItem(cacheKey);
       
@@ -769,10 +757,15 @@
                   if (c['公司電話']) c['公司電話'] = formatPhoneStr(c['公司電話']);
               });
               
-              // 檢查是否有屬於自己的名片
-              const myCard = globalCardContacts.find(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId);
-              if (myCard) {
-                  document.getElementById('my-card-banner').classList.remove('hidden');
+              if (!isAdmin) {
+                  globalCardContacts = globalCardContacts.filter(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId);
+                  const mode = new URLSearchParams(window.location.search).get('mode');
+                  if (mode === 'mycard' && globalCardContacts.length > 0) {
+                      openCardDetailByRowId(globalCardContacts[0].rowId);
+                  } else if (mode === 'mycard' && globalCardContacts.length === 0) {
+                      showToast("找不到您的專屬名片", true);
+                      setTimeout(() => window.location.href = 'index.html?view=user-profile', 2000);
+                  }
               }
               
               filterCardList(); 
@@ -789,9 +782,15 @@
           });
           sessionStorage.setItem(cacheKey, JSON.stringify(globalCardContacts));
           
-          const myCard = globalCardContacts.find(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId);
-          if (myCard) {
-              document.getElementById('my-card-banner').classList.remove('hidden');
+          if (!isAdmin) {
+              globalCardContacts = globalCardContacts.filter(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId);
+              const mode = new URLSearchParams(window.location.search).get('mode');
+              if (mode === 'mycard' && globalCardContacts.length > 0 && !cached) {
+                  openCardDetailByRowId(globalCardContacts[0].rowId);
+              } else if (mode === 'mycard' && globalCardContacts.length === 0 && !cached) {
+                  showToast("找不到您的專屬名片", true);
+                  setTimeout(() => window.location.href = 'index.html?view=user-profile', 2000);
+              }
           }
           
           filterCardList(); 
@@ -800,16 +799,6 @@
               container.innerHTML = `<div class="text-center py-10 text-error font-bold">讀取失敗</div>`;
           }
       });
-  }
-
-  function openMyCard() {
-      const myCard = globalCardContacts.find(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId);
-      if (myCard) {
-          currentActiveCard = myCard;
-          openECardGenerator(); 
-      } else {
-          showToast("找不到您的專屬名片", true);
-      }
   }
 
   function filterCardList() { 
@@ -849,7 +838,7 @@
               <div class="flex-1 overflow-hidden pr-2">
                 <div class="flex items-center">
                   <h4 class="text-[15px] font-bold text-slate-800 truncate">${card['姓名'] || '未知姓名'}</h4>
-                  ${claimBadge}
+                  ${isAdmin ? claimBadge : ''}
                 </div>
                 <p class="text-[12px] text-slate-500 font-medium truncate mt-0.5">${card['公司名稱'] || card['職稱'] || '無資訊'}</p>
               </div>
@@ -897,14 +886,18 @@
         document.getElementById('ro-name').innerText = card['姓名'] || '未知姓名';
         
         const statusEl = document.getElementById('ro-claim-status');
-        if (card.userId || card['LINE ID']) {
-            statusEl.innerText = '已認領';
-            statusEl.className = 'px-2 py-0.5 rounded-md text-[11px] font-bold border bg-emerald-50 border-emerald-200 text-emerald-600';
+        if (isAdmin) {
+            if (card.userId || card['LINE ID']) {
+                statusEl.innerText = '已認領';
+                statusEl.className = 'px-2 py-0.5 rounded-md text-[11px] font-bold border bg-emerald-50 border-emerald-200 text-emerald-600';
+            } else {
+                statusEl.innerText = '未認領';
+                statusEl.className = 'px-2 py-0.5 rounded-md text-[11px] font-bold border bg-slate-50 border-slate-200 text-slate-400';
+            }
+            statusEl.classList.remove('hidden');
         } else {
-            statusEl.innerText = '未認領';
-            statusEl.className = 'px-2 py-0.5 rounded-md text-[11px] font-bold border bg-slate-50 border-slate-200 text-slate-400';
+            statusEl.classList.add('hidden');
         }
-        statusEl.classList.remove('hidden');
         
         document.getElementById('ro-title').innerText = [card['職稱'], card['部門']].filter(Boolean).join(' / ') || '無職稱';
         document.getElementById('ro-company').innerText = [card['公司名稱'], card['英文名/別名']].filter(Boolean).join(' - ') || '未提供';
@@ -928,7 +921,7 @@
         if(card['傳真']) notesArr.push(`【傳真】${card['傳真']}`);
         if(card['公司網址']) notesArr.push(`【網址】${card['公司網址']}`);
         if(card['社群帳號']) notesArr.push(`【社群】${card['社群帳號']}`);
-        if(card['建檔人/備註']) notesArr.push(`【備註】\n${card['建檔人/備註']}`);
+        if(card['建檔人/備註'] && isAdmin) notesArr.push(`【內部備註】\n${card['建檔人/備註']}`);
         
         const finalNotes = notesArr.join('\n\n');
         document.getElementById('ro-notes').innerText = finalNotes || '無其他資訊';
@@ -945,13 +938,26 @@
           noImgEl.classList.remove('hidden');
         }
         
+        if (!isAdmin) {
+            document.getElementById('btn-share-claim').classList.add('hidden');
+        } else {
+            document.getElementById('btn-share-claim').classList.remove('hidden');
+        }
+
         document.getElementById('readonly-card-modal').classList.remove('hidden');
       } catch(e) {
         alert("無法開啟: " + e.message);
       }
   }
 
-  function closeReadOnlyCard() { document.getElementById('readonly-card-modal').classList.add('hidden'); }
+  function closeReadOnlyCard() { 
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('mode') === 'mycard') {
+          window.location.href = 'index.html?view=user-profile';
+      } else {
+          document.getElementById('readonly-card-modal').classList.add('hidden'); 
+      }
+  }
 
   async function shareClaimLink() {
     if (!currentActiveCard || isProcessing) return;

@@ -1,4 +1,4 @@
-<!-- Version: v1.1.4 -->
+<!-- Version: v1.1.5 -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -83,9 +83,9 @@
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-    /* 原生清單風格 */
+    /* 原生清單風格 - 左邊5px，上下拉開 */
     .flat-list { @apply bg-white border-y border-slate-200 divide-y divide-slate-100 mt-2; }
-    .flat-item { @apply px-5 py-4 bg-white flex items-center gap-4 active:bg-slate-50 cursor-pointer transition-colors; }
+    .flat-item { @apply pl-[5px] pr-4 py-5 bg-white flex items-center gap-3 active:bg-slate-50 cursor-pointer transition-colors; }
   </style>
 </head>
 <body class="font-sans text-text-main min-h-screen flex flex-col items-center">
@@ -241,7 +241,7 @@
       <div>
         <div class="flex items-center gap-2 mb-1">
           <h2 id="ro-name" class="text-[24px] font-bold text-slate-800">姓名</h2>
-          <span id="ro-claim-status" class="hidden px-2 py-0.5 rounded-md text-[11px] font-bold border"></span>
+          <span id="ro-claim-status" class="hidden px-2 py-0.5 rounded-md text-[11px] border"></span>
         </div>
         <p id="ro-title" class="text-[15px] font-medium text-primary">職稱 / 部門</p>
       </div>
@@ -857,24 +857,21 @@
       let html = pageData.map((card) => {
           const isClaimed = !!(card.userId || card['LINE ID'] || card['Line ID'] || card['lineId']);
           const claimBadge = isClaimed 
-            ? '<span class="shrink-0 bg-emerald-50 border border-emerald-200 text-emerald-600 px-1.5 py-0.5 rounded text-[10px] font-bold whitespace-nowrap ml-2">已認領</span>' 
-            : '<span class="shrink-0 bg-slate-50 border border-slate-200 text-slate-400 px-1.5 py-0.5 rounded text-[10px] font-bold whitespace-nowrap ml-2">未認領</span>';
+            ? '<span class="shrink-0 text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded text-[11px] whitespace-nowrap ml-2">已認領</span>' 
+            : '<span class="shrink-0 text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded text-[11px] whitespace-nowrap ml-2">未認領</span>';
           
           return `
           <div onclick="openCardDetailByRowId('${card.rowId}')" class="flat-item border-b border-slate-100 last:border-b-0">
             <div class="flex items-center gap-3 w-full overflow-hidden">
-              <div class="w-10 h-10 shrink-0 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center border border-slate-200">
-                ${card['名片圖檔'] && card['名片圖檔'] !== '圖片儲存失敗' ? `<img src="${getDirectImageUrl(card['名片圖檔'])}" class="w-full h-full object-cover">` : `<span class="material-symbols-outlined text-slate-400 text-[20px]">person</span>`}
+              <div class="w-12 h-12 shrink-0 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center">
+                ${card['名片圖檔'] && card['名片圖檔'] !== '圖片儲存失敗' ? `<img src="${getDirectImageUrl(card['名片圖檔'])}" class="w-full h-full object-cover">` : `<span class="material-symbols-outlined text-slate-400 text-[24px]">person</span>`}
               </div>
               <div class="flex-1 overflow-hidden pr-2">
                 <div class="flex items-center">
-                  <h4 class="text-[15px] font-bold text-slate-800 truncate">${card['姓名'] || '未知姓名'}</h4>
+                  <h4 class="text-[16px] text-slate-800 truncate">${card['姓名'] || '未知姓名'}</h4>
                   ${isAdmin ? claimBadge : ''}
                 </div>
-                <p class="text-[12px] text-slate-500 font-medium truncate mt-0.5">${card['公司名稱'] || card['職稱'] || '無資訊'}</p>
-              </div>
-              <div class="shrink-0 text-slate-300">
-                <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+                <p class="text-[13px] text-slate-500 truncate mt-1">${card['公司名稱'] || card['職稱'] || '無資訊'}</p>
               </div>
             </div>
           </div>
@@ -920,10 +917,10 @@
         if (isAdmin) {
             if (card.userId || card['LINE ID'] || card['Line ID'] || card['lineId']) {
                 statusEl.innerText = '已認領';
-                statusEl.className = 'px-2 py-0.5 rounded-md text-[11px] font-bold border bg-emerald-50 border-emerald-200 text-emerald-600';
+                statusEl.className = 'px-2 py-0.5 rounded-md text-[11px] border bg-emerald-50 border-emerald-200 text-emerald-600';
             } else {
                 statusEl.innerText = '未認領';
-                statusEl.className = 'px-2 py-0.5 rounded-md text-[11px] font-bold border bg-slate-50 border-slate-200 text-slate-400';
+                statusEl.className = 'px-2 py-0.5 rounded-md text-[11px] border bg-slate-50 border-slate-200 text-slate-400';
             }
             statusEl.classList.remove('hidden');
         } else {

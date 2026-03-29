@@ -47,7 +47,13 @@
     
     .input-label { @apply block text-[14px] text-slate-700 mb-1.5 font-medium tracking-wide; }
     
-    /* 移除強制的 appearance: none，讓 Tailwind Forms 原生的下拉箭頭自然顯示 */
+    select.custom-input {
+      -webkit-appearance: none !important;
+      -moz-appearance: none !important;
+      appearance: none !important;
+      background-image: none !important;
+    }
+
     .custom-input { @apply w-full py-2.5 px-3 bg-white border border-slate-300 rounded-lg outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-medium text-text-main text-[15px] shadow-sm; }
     .custom-input::placeholder { @apply text-slate-400 font-normal; }
     
@@ -68,7 +74,6 @@
 
 <div id="app-container" class="w-full max-w-md h-screen relative flex flex-col shadow-2xl overflow-hidden bg-background">
   
-  <!-- Header -->
   <nav id="top-nav" class="fixed top-0 w-full max-w-md z-40 bg-white/90 backdrop-blur-xl px-5 py-3.5 flex justify-between items-center left-1/2 -translate-x-1/2 border-b border-slate-200 shadow-sm">
     <div class="text-[19px] font-extrabold text-slate-800 flex items-center gap-2 font-headline tracking-tight">
       <div class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shadow-md shadow-blue-500/20">
@@ -102,51 +107,20 @@
       </div>
       
       <div id="reg-step-1" class="space-y-4">
-        <div class="flex flex-col">
-          <label class="input-label">真實姓名</label>
-          <input id="reg-name" class="custom-input" placeholder="不填則自動代入 LINE 暱稱" type="text"/>
-        </div>
-        
+        <div class="flex flex-col"><label class="input-label">真實姓名</label><input id="reg-name" class="custom-input" placeholder="不填則自動代入 LINE 暱稱" type="text"/></div>
         <div class="grid grid-cols-2 gap-3">
-          <div class="flex flex-col">
-            <label class="input-label">所屬業種</label>
-            <input id="reg-industry" class="custom-input" placeholder="例如：資訊科技" type="text"/>
-          </div>
-          <div class="flex flex-col">
-            <label class="input-label">性別</label>
-            <select id="reg-gender" class="custom-input cursor-pointer">
-              <option value="" disabled selected>選擇性別</option>
-              <option value="男">男</option>
-              <option value="女">女</option>
-            </select>
-          </div>
+          <div class="flex flex-col"><label class="input-label">所屬業種</label><input id="reg-industry" class="custom-input" placeholder="例如：資訊科技" type="text"/></div>
+          <div class="flex flex-col"><label class="input-label">性別</label><select id="reg-gender" class="custom-input cursor-pointer"><option value="" disabled selected>選擇性別</option><option value="男">男</option><option value="女">女</option></select></div>
         </div>
-        
         <div class="grid grid-cols-2 gap-3">
-          <div class="flex flex-col">
-            <label class="input-label">手機號碼</label>
-            <input id="reg-phone" class="custom-input" placeholder="0912-345-678" type="tel"/>
-          </div>
-          <div class="flex flex-col">
-            <label class="input-label">生日</label>
-            <input id="reg-birthday" class="custom-input !px-2 text-slate-600" type="date"/>
-          </div>
+          <div class="flex flex-col"><label class="input-label">手機號碼</label><input id="reg-phone" class="custom-input" placeholder="0912-345-678" type="tel"/></div>
+          <div class="flex flex-col"><label class="input-label">生日</label><input id="reg-birthday" class="custom-input !px-2 text-slate-600" type="date"/></div>
         </div>
-
         <div class="grid grid-cols-2 gap-3">
-          <div class="flex flex-col">
-            <label class="input-label">居住地區</label>
-            <input id="reg-region" class="custom-input" placeholder="例如：台北市" type="text"/>
-          </div>
-          <div class="flex flex-col">
-            <label class="input-label">完整地址</label>
-            <input id="reg-address" class="custom-input" placeholder="選填" type="text"/>
-          </div>
+          <div class="flex flex-col"><label class="input-label">居住地區</label><input id="reg-region" class="custom-input" placeholder="例如：台北市" type="text"/></div>
+          <div class="flex flex-col"><label class="input-label">完整地址</label><input id="reg-address" class="custom-input" placeholder="選填" type="text"/></div>
         </div>
-
-        <button id="btn-reg-step1" onclick="submitUserRegistrationStep1()" class="btn-primary mt-4">
-          儲存並繼續 <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
-        </button>
+        <button id="btn-reg-step1" onclick="submitUserRegistrationStep1()" class="btn-primary mt-4">儲存並繼續 <span class="material-symbols-outlined text-[20px]">arrow_forward</span></button>
       </div>
 
       <div id="reg-step-2" class="space-y-4 opacity-30 pointer-events-none transition-opacity duration-300 border-t border-slate-200 pt-6 mt-6">
@@ -154,18 +128,12 @@
            <h3 class="font-bold text-slate-800 text-[15px]">上傳名片建立通訊錄 <span class="text-slate-400 font-normal text-xs">(建議)</span></h3>
            <p class="text-[12px] text-slate-500 mt-1">系統將自動辨識名片，並生成數位專屬命理標籤。</p>
         </div>
-
         <div class="flex gap-3 mt-3">
-          <button onclick="document.getElementById('reg-card-camera').click()" class="btn-secondary flex-1 border-primary/30 text-primary bg-blue-50/50">
-            <span class="material-symbols-outlined text-[20px]">photo_camera</span> 拍照
-          </button>
-          <button onclick="document.getElementById('reg-card-upload').click()" class="btn-secondary flex-1">
-            <span class="material-symbols-outlined text-[20px]">image</span> 相簿
-          </button>
+          <button onclick="document.getElementById('reg-card-camera').click()" class="btn-secondary flex-1 border-primary/30 text-primary bg-blue-50/50"><span class="material-symbols-outlined text-[20px]">photo_camera</span> 拍照</button>
+          <button onclick="document.getElementById('reg-card-upload').click()" class="btn-secondary flex-1"><span class="material-symbols-outlined text-[20px]">image</span> 相簿</button>
         </div>
         <input type="file" id="reg-card-camera" accept="image/*" capture="environment" class="hidden" onchange="openRegCropper(this)">
         <input type="file" id="reg-card-upload" accept="image/*" class="hidden" onchange="openRegCropper(this)">
-
         <div class="text-center mt-3 pt-2">
           <button onclick="finishRegistration()" class="text-[13px] text-slate-400 font-bold hover:text-slate-600 transition-colors py-2 px-4 rounded-lg">略過上傳，直接進入系統</button>
         </div>
@@ -193,19 +161,13 @@
       <div id="user-history-container" class="space-y-4"></div>
     </div>
 
-    <!-- 個人資料 -->
+    <!-- ⭐ 個人資料與專屬名片入口 -->
     <div id="view-user-profile" class="hidden animate-in fade-in pt-4 pb-10 space-y-4">
       <h2 class="text-2xl font-extrabold font-headline mb-4 text-slate-800">個人資料</h2>
       <div class="flex flex-col"><label class="input-label">姓名</label><input type="text" id="edit-name" class="custom-input"></div>
       <div class="grid grid-cols-2 gap-3">
         <div class="flex flex-col"><label class="input-label">業種</label><input type="text" id="edit-industry" class="custom-input"></div>
-        <div class="flex flex-col">
-          <label class="input-label">性別</label>
-          <select id="edit-gender" class="custom-input cursor-pointer">
-            <option value="男">男</option>
-            <option value="女">女</option>
-          </select>
-        </div>
+        <div class="flex flex-col"><label class="input-label">性別</label><select id="edit-gender" class="custom-input cursor-pointer"><option value="男">男</option><option value="女">女</option></select></div>
       </div>
       <div class="grid grid-cols-2 gap-3">
         <div class="flex flex-col"><label class="input-label">手機</label><input type="tel" id="edit-phone" class="custom-input"></div>
@@ -216,6 +178,22 @@
         <div class="flex flex-col"><label class="input-label">完整地址</label><input type="text" id="edit-address" class="custom-input"></div>
       </div>
       <button id="btn-save-profile" onclick="submitProfileUpdate()" class="btn-primary mt-4">儲存變更</button>
+
+      <!-- 專屬名片入口橫幅 (動態顯示) -->
+      <div id="my-card-entry" class="hidden mt-8 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-5 text-white shadow-xl shadow-slate-900/20 flex justify-between items-center relative overflow-hidden cursor-pointer active:scale-[0.98] transition-transform" onclick="window.location.href='card.html?mode=mycard'">
+          <div class="absolute -right-4 -top-4 opacity-10"><span class="material-symbols-outlined text-[100px]">contact_mail</span></div>
+          <div class="relative z-10">
+              <div class="flex items-center gap-1.5 mb-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span>
+                <span class="text-[11px] font-bold text-emerald-300 tracking-wider">已開通專屬權限</span>
+              </div>
+              <h3 class="text-[18px] font-black mb-1">數位電子名片</h3>
+              <p class="text-[12px] text-slate-300 font-medium">預覽、編輯與轉發至 LINE</p>
+          </div>
+          <div class="relative z-10 w-11 h-11 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20 shadow-sm">
+              <span class="material-symbols-outlined text-[24px]">arrow_forward</span>
+          </div>
+      </div>
     </div>
 
     <!-- 後台：管理核銷 -->
@@ -234,28 +212,14 @@
         <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
         <input type="text" id="crm-search-input" onkeyup="filterCrmList()" class="w-full py-2.5 pl-10 pr-4 bg-slate-100 border-none rounded-xl text-[14px] outline-none focus:bg-white focus:ring-1 focus:ring-primary/20 transition-all shadow-none" placeholder="搜尋參與者姓名...">
       </div>
-      
-      <!-- 列表容器：移除外框 -->
       <div id="admin-crm-list-container" class="flex flex-col"></div>
-      
-      <!-- 載入更多按鈕 -->
-      <div id="crm-load-more-box" class="hidden py-6 text-center">
-        <button onclick="loadMoreCrm()" class="text-primary font-bold text-[14px] px-6 py-2 border border-primary/20 rounded-full hover:bg-primary-light transition-all">
-          顯示更多
-        </button>
-      </div>
+      <div id="crm-load-more-box" class="hidden py-6 text-center"><button onclick="loadMoreCrm()" class="text-primary font-bold text-[14px] px-6 py-2 border border-primary/20 rounded-full hover:bg-primary-light transition-all">顯示更多</button></div>
     </div>
 
     <!-- 後台：系統參數 -->
     <div id="view-admin-settings" class="hidden animate-in fade-in pt-4 space-y-4">
       <h2 class="text-2xl font-extrabold font-headline mb-4 text-slate-800">系統參數</h2>
-      <div class="flex flex-col">
-        <label class="input-label">Telegram Bot Token</label>
-        <div class="flex gap-2">
-          <input type="text" id="set-tg-token" class="custom-input flex-1">
-          <button onclick="autoFetchTgChatId()" id="btn-fetch-tg" class="bg-white text-slate-600 px-4 rounded-lg font-bold border border-slate-300 hover:bg-slate-50 active:scale-95 transition-all shadow-sm">轉換</button>
-        </div>
-      </div>
+      <div class="flex flex-col"><label class="input-label">Telegram Bot Token</label><div class="flex gap-2"><input type="text" id="set-tg-token" class="custom-input flex-1"><button onclick="autoFetchTgChatId()" id="btn-fetch-tg" class="bg-white text-slate-600 px-4 rounded-lg font-bold border border-slate-300 hover:bg-slate-50 active:scale-95 transition-all shadow-sm">轉換</button></div></div>
       <div class="flex flex-col"><label class="input-label">Telegram Chat ID</label><input type="text" id="set-tg-chat" class="custom-input bg-slate-50 text-slate-500" readonly placeholder="由上方轉換取得"></div>
       <div class="flex flex-col"><label class="input-label">官方 LINE 連結</label><input type="text" id="set-line-link" class="custom-input" placeholder="https://lin.ee/..."></div>
       <button id="btn-submit-settings" onclick="submitSettings()" class="btn-primary mt-2">儲存設定</button>
@@ -269,7 +233,7 @@
       </div>
 
       <div class="flex p-1 rounded-lg border border-slate-200 bg-slate-100 mb-6">
-        <button onclick="toggleCreateMode('quick')" id="tab-quick" class="flex-1 py-2 rounded-md text-[14px] font-bold bg-white text-slate-800 shadow-sm transition-all">快速匯入</button>
+        <button onclick="toggleCreateMode('quick')" id="tab-quick" class="flex-1 py-2 rounded-md text-[14px] font-bold bg-white text-primary shadow-sm transition-all">快速匯入</button>
         <button onclick="toggleCreateMode('detailed')" id="tab-detailed" class="flex-1 py-2 rounded-md text-[14px] font-bold text-slate-500 transition-all hover:text-slate-700">完整發佈</button>
       </div>
       
@@ -277,34 +241,20 @@
       <div id="form-quick" class="space-y-4 animate-in fade-in">
         <div class="flex flex-col"><label class="input-label">活動名稱</label><input type="text" id="quick-name" class="custom-input" placeholder="輸入活動標題..."></div>
         <div class="grid grid-cols-2 gap-3">
-          <div class="flex flex-col">
-            <label class="input-label">活動類型</label>
-            <select id="quick-type" class="custom-input cursor-pointer"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option></select>
-          </div>
-          <div class="flex flex-col">
-            <label class="input-label">預設身份</label>
-            <select id="quick-identity" class="custom-input cursor-pointer"><option>會員</option><option>來賓</option></select>
-          </div>
+          <div class="flex flex-col"><label class="input-label">活動類型</label><select id="quick-type" class="custom-input cursor-pointer"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option></select></div>
+          <div class="flex flex-col"><label class="input-label">預設身份</label><select id="quick-identity" class="custom-input cursor-pointer"><option>會員</option><option>來賓</option></select></div>
         </div>
-        
         <div class="flex flex-col mt-2">
           <label class="input-label">宣傳大圖 (選填)</label>
           <div onclick="document.getElementById('file-input-quick').click()" class="w-full h-36 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-all hover:bg-slate-100 relative group">
-            <div id="preview-placeholder-quick" class="text-center text-slate-400 flex flex-col items-center">
-              <span class="material-symbols-outlined text-3xl mb-1">add_photo_alternate</span>
-              <p class="text-[12px] font-bold">點擊上傳圖片</p>
-            </div>
+            <div id="preview-placeholder-quick" class="text-center text-slate-400 flex flex-col items-center"><span class="material-symbols-outlined text-3xl mb-1">add_photo_alternate</span><p class="text-[12px] font-bold">點擊上傳圖片</p></div>
             <img id="image-preview-quick" class="hidden w-full h-full object-cover absolute inset-0">
             <input type="file" id="file-input-quick" class="hidden" accept="image/*" onchange="previewFile('quick')">
           </div>
           <input type="hidden" id="in-image-url-quick">
         </div>
-
         <div class="flex flex-col mt-2">
-          <div class="flex justify-between items-center mb-1">
-            <label class="input-label !mb-0">名單內容</label>
-            <span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">支援批次輸入</span>
-          </div>
+          <div class="flex justify-between items-center mb-1"><label class="input-label !mb-0">名單內容</label><span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">支援批次輸入</span></div>
           <textarea id="quick-names" class="w-full p-4 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all text-[14px] text-slate-700 resize-none h-36" placeholder="請貼上參與者姓名，每行一位..."></textarea>
         </div>
         <button onclick="handleCreateActivity('quick')" id="btn-quick-create" class="btn-primary mt-2">建立活動 <span class="material-symbols-outlined text-[20px]">add_circle</span></button>
@@ -313,18 +263,10 @@
       <!-- 完整模式 -->
       <div id="form-detailed" class="hidden space-y-4 animate-in fade-in">
          <div class="flex flex-col"><label class="input-label">正式標題</label><input type="text" id="detail-name" class="custom-input" placeholder="輸入活動標題..."></div>
-         
          <div class="grid grid-cols-2 gap-3">
-           <div class="flex flex-col">
-             <label class="input-label">活動類型</label>
-             <select id="detail-type" class="custom-input cursor-pointer"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option></select>
-           </div>
-           <div class="flex flex-col">
-             <label class="input-label">預設身份</label>
-             <select id="detail-identity" class="custom-input cursor-pointer"><option>會員</option><option>來賓</option></select>
-           </div>
+           <div class="flex flex-col"><label class="input-label">活動類型</label><select id="detail-type" class="custom-input cursor-pointer"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option></select></div>
+           <div class="flex flex-col"><label class="input-label">預設身份</label><select id="detail-identity" class="custom-input cursor-pointer"><option>會員</option><option>來賓</option></select></div>
          </div>
-
          <div class="grid grid-cols-2 gap-3 border-t border-slate-100 pt-4 mt-1">
            <div class="flex flex-col">
              <label class="input-label">收費方式</label>
@@ -333,47 +275,36 @@
                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="fee-type" value="收費" onchange="toggleFeeInput()" class="w-4 h-4 text-primary bg-white border-slate-300 focus:ring-primary focus:ring-2"><span class="font-bold text-[14px] text-slate-700">收費</span></label>
              </div>
            </div>
-           <div class="flex flex-col justify-end">
-             <input type="number" id="detail-price" class="custom-input hidden h-[46px]" placeholder="金額 (NT$)">
-           </div>
+           <div class="flex flex-col justify-end"><input type="number" id="detail-price" class="custom-input hidden h-[46px]" placeholder="金額 (NT$)"></div>
          </div>
-         
          <div class="grid grid-cols-2 gap-3 border-t border-slate-100 pt-4 mt-1">
            <div class="flex flex-col"><label class="input-label">開始時間</label><input type="datetime-local" id="detail-start" class="custom-input !px-2 text-[13px] text-slate-600"></div>
            <div class="flex flex-col"><label class="input-label">結束時間</label><input type="datetime-local" id="detail-end" class="custom-input !px-2 text-[13px] text-slate-600"></div>
          </div>
-         
          <div class="flex flex-col mt-2">
            <label class="input-label">活動說明</label>
            <textarea id="detail-desc" class="w-full p-4 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all text-[14px] text-slate-700 resize-none h-32" placeholder="輸入詳盡說明..."></textarea>
          </div>
-         
          <div class="flex flex-col mt-2">
            <label class="input-label">宣傳大圖</label>
            <div onclick="document.getElementById('file-input-create').click()" class="w-full h-36 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-all hover:bg-slate-100 relative group">
-             <div id="preview-placeholder-create" class="text-center text-slate-400 flex flex-col items-center">
-               <span class="material-symbols-outlined text-3xl mb-1">add_photo_alternate</span>
-               <p class="text-[12px] font-bold">點擊上傳圖片</p>
-             </div>
+             <div id="preview-placeholder-create" class="text-center text-slate-400 flex flex-col items-center"><span class="material-symbols-outlined text-3xl mb-1">add_photo_alternate</span><p class="text-[12px] font-bold">點擊上傳圖片</p></div>
              <img id="image-preview-create" class="hidden w-full h-full object-cover absolute inset-0">
              <input type="file" id="file-input-create" class="hidden" accept="image/*" onchange="previewFile('create')">
            </div>
            <input type="hidden" id="in-image-url-create">
          </div>
-         
          <button onclick="handleCreateActivity('detailed')" id="btn-detail-create" class="btn-primary mt-4">發布活動頁面 <span class="material-symbols-outlined text-[20px]">rocket_launch</span></button>
       </div>
     </div>
   </main>
 
-  <!-- Bottom Nav User -->
   <nav id="bottom-nav-user" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-around items-center px-2 py-2 z-40 pb-safe shadow-app-nav left-1/2 -translate-x-1/2 h-[72px]">
     <button onclick="switchView('user-activities')" id="nav-user-activities" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">explore</span></div><span class="text-[11px] mt-0.5 font-bold tracking-wide">活動</span></button>
     <button onclick="switchView('user-history')" id="nav-user-history" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">receipt_long</span></div><span class="text-[11px] mt-0.5 font-bold tracking-wide">紀錄</span></button>
     <button onclick="switchView('user-profile')" id="nav-user-profile" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">person</span></div><span class="text-[11px] mt-0.5 font-bold tracking-wide">設定</span></button>
   </nav>
 
-  <!-- Bottom Nav Admin -->
   <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-evenly items-center px-1 py-2 z-40 pb-safe shadow-app-nav left-1/2 -translate-x-1/2 h-[72px]">
     <button onclick="switchView('admin-activities')" class="nav-btn" id="nav-admin-activities"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">fact_check</span></div><span class="text-[10px] font-bold mt-0.5">核銷</span></button>
     <button onclick="switchView('admin-create')" class="nav-btn" id="nav-admin-create"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">add_circle</span></div><span class="text-[10px] font-bold mt-0.5">建立</span></button>
@@ -385,7 +316,6 @@
 </div>
 
 <!-- Modals -->
-<!-- 註冊裁切 Modal -->
 <div id="section-reg-cropper" class="hidden fixed inset-0 bg-slate-900 flex flex-col animate-in fade-in duration-200 w-full max-w-md mx-auto z-[1030]">
   <div class="flex justify-between items-center p-4 bg-slate-900 text-white shrink-0 border-b border-slate-800 shadow-sm">
     <button onclick="cancelRegCrop()" class="text-slate-400 font-bold text-sm px-3 py-2 active:scale-90 transition-transform">取消</button>
@@ -395,7 +325,6 @@
   <div class="flex-1 relative overflow-hidden flex items-center justify-center bg-black"><img id="reg-cropper-image" src="" class="max-w-full max-h-full block opacity-0"></div>
 </div>
 
-<!-- 活動明細 Modal -->
 <div id="activity-detail-modal" class="hidden fixed inset-0 z-[1000] bg-white flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 overflow-hidden shadow-2xl">
   <div class="absolute top-4 right-4 z-[1050]">
     <button onclick="closeActivityDetail()" class="w-9 h-9 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white shadow-sm active:scale-90 transition-transform">
@@ -438,7 +367,6 @@
   </div>
 </div>
 
-<!-- 後台：單一活動核銷名單 Modal -->
 <div id="admin-registrants-modal" class="hidden fixed inset-0 z-[1050] bg-slate-50 flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl">
   <div class="bg-white px-4 pt-12 pb-3 flex justify-between items-center shrink-0 border-b border-slate-200 shadow-sm">
     <div class="flex items-center gap-2.5">
@@ -457,7 +385,6 @@
   <div class="flex-1 overflow-y-auto p-3 space-y-3 pb-safe bg-slate-50" id="admin-reg-list"></div>
 </div>
 
-<!-- 現場報名 Modal -->
 <div id="walkin-modal" class="hidden fixed inset-0 z-[1060] bg-slate-900/40 backdrop-blur-sm flex items-end justify-center animate-in fade-in duration-200 w-full max-w-md mx-auto left-0 right-0">
   <div class="bg-white w-full rounded-t-3xl p-6 pb-safe shadow-2xl">
     <div class="flex justify-between items-center mb-5">
@@ -469,7 +396,6 @@
   </div>
 </div>
 
-<!-- 動態掃碼器 Modal -->
 <div id="qr-scanner-modal" class="hidden fixed inset-0 z-[1070] bg-black flex flex-col animate-in fade-in duration-300 w-full max-w-md mx-auto left-0 right-0">
   <div class="flex justify-between items-center p-4 bg-gradient-to-b from-black/80 to-transparent absolute top-0 w-full z-10">
     <span class="text-white font-bold tracking-widest text-[13px]">請對準學員 QR Code</span>
@@ -478,7 +404,6 @@
   <div class="flex-1 flex items-center justify-center relative"><div id="qr-reader" class="w-full h-full max-h-[80vh]"></div></div>
 </div>
 
-<!-- 自訂彈窗與 Toast -->
 <div id="custom-modal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-6">
   <div class="bg-white w-full max-w-[300px] rounded-3xl p-6 shadow-2xl text-center scale-95 transition-all duration-200 border border-slate-100">
     <div class="w-14 h-14 bg-blue-50 text-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><span class="material-symbols-outlined text-[28px] icon-filled">info</span></div>
@@ -659,8 +584,23 @@
     else if (view === 'admin-settings') loadAdminSettings();
     else if (view === 'admin-crm') loadCrmData();
     else if (view === 'user-activities') loadUserActivities();
-    else if (view === 'user-profile') populateUserProfile();
+    else if (view === 'user-profile') {
+        populateUserProfile();
+        checkMyCardEntry();
+    }
     else if (view === 'user-history') loadUserHistory();
+  }
+
+  async function checkMyCardEntry() {
+      try {
+          const data = await fetchAPI('getCardContacts', {}, true);
+          const myCard = data.find(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId);
+          if (myCard) {
+              document.getElementById('my-card-entry').classList.remove('hidden');
+          } else {
+              document.getElementById('my-card-entry').classList.add('hidden');
+          }
+      } catch(e) {}
   }
 
   function showModal(title, desc, targetView = '') {

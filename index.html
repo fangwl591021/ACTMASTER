@@ -1,4 +1,4 @@
-<!-- Version: v1.1.1 -->
+<!-- Version: v1.1.2 -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -180,7 +180,7 @@
       </div>
       <button id="btn-save-profile" onclick="submitProfileUpdate()" class="btn-primary mt-4">儲存變更</button>
 
-      <!-- 專屬名片入口橫幅 (動態顯示) -->
+      <!-- 專屬名片入口橫幅 -->
       <div id="my-card-entry" class="hidden mt-8 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-5 text-white shadow-xl shadow-slate-900/20 flex justify-between items-center relative overflow-hidden cursor-pointer active:scale-[0.98] transition-transform" onclick="window.location.href='card.html?mode=mycard'">
           <div class="absolute -right-4 -top-4 opacity-10"><span class="material-symbols-outlined text-[100px]">contact_mail</span></div>
           <div class="relative z-10">
@@ -529,7 +529,12 @@
         if (isRegistered) {
           if (claimCardId) {
              try {
-                await fetchAPI('updateCard', { rowId: claimCardId, userId: userProfile.userId });
+                // ⭐ 認領時，將 LINE ID 綁定到名片資料中
+                await fetchAPI('updateCard', { 
+                    rowId: claimCardId, 
+                    'LINE ID': userProfile.userId,
+                    userId: userProfile.userId 
+                });
                 showToast("✅ 名片已成功認領並綁定至您的帳號");
              } catch(e) {}
           }
@@ -603,7 +608,7 @@
   async function checkMyCardEntry() {
       try {
           const data = await fetchAPI('getCardContacts', {}, true);
-          const myCard = data.find(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId);
+          const myCard = data.find(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId || c['Line ID'] === userProfile.userId);
           if (myCard) {
               document.getElementById('my-card-entry').classList.remove('hidden');
           } else {
@@ -659,8 +664,10 @@
 
       if (window.claimCardId) {
           try {
+              // ⭐ 同步將剛註冊的使用者 LINE ID 寫入到名片庫中綁定
               await fetchAPI('updateCard', { 
                   rowId: window.claimCardId, 
+                  'LINE ID': userProfile.userId,
                   userId: userProfile.userId,
                   Name: p.name,
                   Mobile: p.phone,
@@ -704,7 +711,7 @@
     showToast("AI 辨識中...", false); document.getElementById('reg-step-2').classList.add('pointer-events-none', 'opacity-50');
     try {
       const data = await fetchAPI('recognizeCard', { base64Image: regCompressedBase64, Birthday: regStep1Data.birthday });
-      const payload = { base64Image: regCompressedBase64, userId: userProfile.userId, Name: regStep1Data.name, EnglishName: data.EnglishName || '', Title: data.Title || '', Department: data.Department || '', CompanyName: data.CompanyName || '', TaxID: data.TaxID || '', Mobile: regStep1Data.phone, Tel: data.Tel || '', Ext: data.Ext || '', Fax: data.Fax || '', Address: data.Address || regStep1Data.address || '', Email: data.Email || '', Website: data.Website || '', SocialMedia: data.SocialMedia || '', Slogan: data.Slogan || '', Notes: '註冊自動建檔', Birthday: regStep1Data.birthday || '', Personality: data.Personality || '', Hobbies: data.Hobbies || '', Wealth: data.Wealth || '', Health: data.Health || '', Career: data.Career || '' };
+      const payload = { base64Image: regCompressedBase64, userId: userProfile.userId, 'LINE ID': userProfile.userId, Name: regStep1Data.name, EnglishName: data.EnglishName || '', Title: data.Title || '', Department: data.Department || '', CompanyName: data.CompanyName || '', TaxID: data.TaxID || '', Mobile: regStep1Data.phone, Tel: data.Tel || '', Ext: data.Ext || '', Fax: data.Fax || '', Address: data.Address || regStep1Data.address || '', Email: data.Email || '', Website: data.Website || '', SocialMedia: data.SocialMedia || '', Slogan: data.Slogan || '', Notes: '註冊自動建檔', Birthday: regStep1Data.birthday || '', Personality: data.Personality || '', Hobbies: data.Hobbies || '', Wealth: data.Wealth || '', Health: data.Health || '', Career: data.Career || '' };
       await fetchAPI('saveCard', payload); showToast("名片建檔成功！"); finishRegistration();
     } catch(err) { finishRegistration(); }
   }

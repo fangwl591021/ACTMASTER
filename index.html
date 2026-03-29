@@ -4,459 +4,324 @@
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
   <title>報名大師</title>
-  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700;800&display=swap" rel="stylesheet"/>
+  
+  <!-- 核心輕量化：僅保留 Tailwind CDN 與字體、LIFF，拔除所有肥大第三方 JS -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-  
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
   <script id="tailwind-config">
     tailwind.config = {
-      darkMode: "class",
       theme: {
         extend: {
-          colors: {
-            primary: "#2563eb",
-            "primary-light": "#eff6ff",
-            background: "#f8fafc",
-            "input-bg": "#f3f4f6",
-            "text-main": "#0f172a",
-            "text-muted": "#64748b",
-            error: "#ef4444"
-          },
-          fontFamily: {
-            headline: ["Manrope", "Noto Sans TC", "sans-serif"],
-            body: ["Inter", "Noto Sans TC", "sans-serif"],
-          },
-          boxShadow: {
-            'app-card': '0 12px 40px -12px rgba(0,0,0,0.06)',
-            'app-nav': '0 -4px 24px rgba(0,0,0,0.04)',
-            'tab-active': '0 2px 10px rgba(0,0,0,0.05)',
-          }
-        },
-      },
+          colors: { primary: "#06c755", "primary-light": "#e6f9ed", background: "#f5f6f8", "text-main": "#111111", "text-muted": "#888888", error: "#ff334b" },
+          fontFamily: { sans: ["Noto Sans TC", "sans-serif"] }
+        }
+      }
     }
   </script>
   <style>
-    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
-    .icon-filled { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-    
-    body { background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400; vertical-align: middle; }
+    .icon-filled { font-variation-settings: 'FILL' 1, 'wght' 400; }
+    body { background-color: #f5f6f8; -webkit-tap-highlight-color: transparent; }
     ::-webkit-scrollbar { width: 0px; }
     .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1.5rem); }
     
-    /* 專業 App 輸入框風格 */
-    .input-label { @apply block text-[13px] text-slate-700 mb-2 ml-1 tracking-wide; }
-    .custom-input { @apply w-full py-3.5 pl-4 pr-12 bg-input-bg border border-transparent rounded-[1rem] outline-none focus:border-blue-500/20 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all duration-300 text-text-main appearance-none; }
-    .custom-input::placeholder { @apply text-slate-400; }
+    /* LINE OA 質感的極簡輸入框 */
+    .input-label { @apply block text-[13px] text-text-muted mb-1 ml-1; }
+    .custom-input { @apply w-full py-3 px-4 bg-white border border-slate-200 rounded-xl outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-[15px] appearance-none; }
+    .custom-input::placeholder { @apply text-slate-300; }
     
-    /* 按鈕樣式 */
-    .btn-primary { @apply w-full py-4 bg-primary text-white rounded-full font-bold text-[16px] shadow-lg shadow-blue-600/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2; }
-    .btn-disabled { pointer-events: none; opacity: 0.6; filter: grayscale(100%); }
+    /* LINE 原生按鈕風格 */
+    .btn-primary { @apply w-full py-3.5 bg-primary text-white rounded-xl font-bold text-[16px] active:opacity-80 transition-opacity flex items-center justify-center gap-2; }
+    .btn-disabled { pointer-events: none; opacity: 0.5; filter: grayscale(100%); }
     
-    /* 底部導覽列 Active 狀態 */
-    .nav-btn { @apply flex flex-col items-center gap-1 transition-all w-20 text-slate-400; }
-    .nav-btn .icon-box { @apply px-5 py-1.5 rounded-full transition-all; }
-    .nav-active { @apply text-primary font-bold; }
-    .nav-active .icon-box { @apply bg-primary-light text-primary; }
-    .nav-active .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
+    /* 底部導覽列 */
+    .nav-btn { @apply flex flex-col items-center gap-1 transition-all w-full text-slate-400; }
+    .nav-active { @apply text-text-main font-bold; }
+    .nav-active .material-symbols-outlined { font-variation-settings: 'FILL' 1; color: #111; }
 
-    .loading-gif { width: 80px; height: auto; }
-    .refresh-spin { animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+    .refresh-spin { animation: spin 1s linear infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-    /* 原生 LINE OA 列表風格重置 (消除多餘框線與圓角) */
-    .native-list-container { @apply bg-white border-y border-slate-200 divide-y divide-slate-100; }
-    .native-list-item { @apply flex items-center justify-between px-4 py-3.5 bg-white; }
+    /* 原生列表重置 */
+    .native-list { @apply bg-white border-y border-slate-200 divide-y divide-slate-100; }
+    .native-item { @apply px-4 py-3.5 bg-white flex flex-col justify-center; }
   </style>
 </head>
-<body class="font-body text-text-main min-h-screen flex flex-col items-center">
+<body class="font-sans text-text-main min-h-screen flex flex-col items-center">
 
 <div id="app-container" class="w-full max-w-md h-screen relative flex flex-col overflow-hidden bg-background">
   
-  <!-- 頂部 Header -->
-  <nav id="top-nav" class="fixed top-0 w-full max-w-md z-40 bg-white/95 backdrop-blur-xl px-5 py-3.5 flex justify-between items-center left-1/2 -translate-x-1/2 border-b border-slate-200/50 shadow-sm">
-    <div class="text-[20px] font-bold text-slate-800 flex items-center gap-2 font-headline tracking-tight">
-      <span class="material-symbols-outlined text-[24px] icon-filled text-primary">event_note</span>
+  <!-- 頂部 Header (LINE 原生白底) -->
+  <nav id="top-nav" class="fixed top-0 w-full max-w-md z-40 bg-white px-4 py-3 flex justify-between items-center left-1/2 -translate-x-1/2 border-b border-slate-200">
+    <div class="text-[18px] font-bold text-text-main tracking-tight flex items-center gap-1.5">
       報名大師
-      <span id="header-admin-badge" class="hidden bg-slate-800 text-white text-[10px] px-2 py-0.5 rounded uppercase tracking-wider font-medium ml-1">Admin</span>
+      <span id="header-admin-badge" class="hidden bg-slate-100 text-slate-500 text-[10px] px-1.5 py-0.5 rounded font-medium">Admin</span>
     </div>
     <div class="flex items-center gap-3">
-      <div id="user-profile-badge" class="hidden flex items-center gap-2">
-        <img id="user-avatar" src="" class="w-8 h-8 rounded-full object-cover border border-slate-200">
-      </div>
-      <button id="role-switch-btn" onclick="toggleRoleMode()" class="hidden w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center active:scale-95 transition-all">
-        <span class="material-symbols-outlined text-[18px]">swap_horiz</span>
-      </button>
+      <div id="user-profile-badge" class="hidden"><img id="user-avatar" src="" class="w-8 h-8 rounded-full object-cover"></div>
+      <button id="role-switch-btn" onclick="toggleRoleMode()" class="hidden w-8 h-8 flex items-center justify-center text-slate-500 active:opacity-50"><span class="material-symbols-outlined text-[20px]">swap_horiz</span></button>
     </div>
   </nav>
 
-  <main id="main-content" class="flex-1 overflow-y-auto pb-32 pt-20 space-y-6">
+  <main id="main-content" class="flex-1 overflow-y-auto pb-24 pt-16">
 
-    <!-- View: Loading -->
-    <div id="view-loading" class="h-full flex flex-col items-center justify-center space-y-4 pb-20">
-      <img src="https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExdXpzNDRvN3BpNjZhZmZ1djh6ZDV4N2ZucjQ5MHJidjhoOGNrZWp6byZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/uOlsQMZSTU6Ff55OnQ/giphy.gif" alt="Loading" class="loading-gif mb-2">
-      <p id="loading-text" class="text-slate-500 text-[13px]">驗證權限中...</p>
+    <!-- Loading -->
+    <div id="view-loading" class="h-full flex flex-col items-center justify-center space-y-3 pb-20">
+      <div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
+      <p class="text-slate-400 text-[13px]">驗證權限中</p>
     </div>
 
-    <!-- View: User Register -->
-    <div id="view-user-register" class="hidden animate-in fade-in duration-500 pt-6 px-5">
-      <div class="mb-6 space-y-1">
-        <h1 class="text-2xl font-bold text-slate-800 tracking-tight">建立會員檔案</h1>
-        <p class="text-slate-500 text-[14px]">只需填寫一次，以後報名只需一秒</p>
+    <!-- 註冊 -->
+    <div id="view-user-register" class="hidden animate-in fade-in duration-300 pt-4 px-4 pb-10 space-y-5">
+      <div class="text-center space-y-1 mb-6">
+        <h1 class="text-[20px] font-bold text-text-main">建立會員檔案</h1>
+        <p class="text-text-muted text-[13px]">完善資料以獲取精準推薦</p>
       </div>
       
-      <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 space-y-5">
-        <div>
-          <label class="input-label">真實姓名</label>
-          <div class="relative">
-            <input id="reg-name" class="custom-input" placeholder="請輸入完整姓名" type="text"/>
-          </div>
-        </div>
+      <div id="reg-step-1" class="space-y-4">
+        <div><label class="input-label">姓名</label><input id="reg-name" class="custom-input" type="text" placeholder="真實姓名"/></div>
         <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="input-label">性別</label>
-            <div class="relative">
-              <select id="reg-gender" class="custom-input text-slate-700">
-                <option value="" disabled selected>選擇</option>
-                <option value="男">男</option><option value="女">女</option>
-              </select>
-              <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
-            </div>
-          </div>
-          <div>
-            <label class="input-label">手機號碼</label>
-            <input id="reg-phone" class="custom-input" placeholder="0912-..." type="tel"/>
-          </div>
+          <div><label class="input-label">性別</label><select id="reg-gender" class="custom-input"><option value="" disabled selected>選擇</option><option value="男">男</option><option value="女">女</option></select></div>
+          <div><label class="input-label">手機</label><input id="reg-phone" class="custom-input" type="tel" placeholder="09xx"/></div>
         </div>
+        <div><label class="input-label">業種</label><input id="reg-industry" class="custom-input" type="text" placeholder="例如：資訊科技"/></div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="input-label">地區</label><input id="reg-region" class="custom-input" type="text" placeholder="例如：台北市"/></div>
+          <div><label class="input-label">生日</label><input id="reg-birthday" class="custom-input !px-2" type="date"/></div>
+        </div>
+        <div><label class="input-label">完整地址</label><input id="reg-address" class="custom-input" type="text" placeholder="選填"/></div>
+        <button id="btn-reg-step1" onclick="submitUserRegistrationStep1()" class="btn-primary mt-4">儲存並繼續</button>
+      </div>
+
+      <div id="reg-step-2" class="space-y-4 opacity-30 pointer-events-none transition-opacity pt-6 border-t border-slate-200">
         <div>
-          <label class="input-label">所屬業種</label>
-          <input id="reg-industry" class="custom-input" placeholder="請輸入您目前的產業" type="text"/>
+           <h3 class="font-bold text-text-main text-[15px]">智慧名片建檔 <span class="text-text-muted text-[12px] font-normal">(建議)</span></h3>
+           <p class="text-[12px] text-text-muted mt-1">上傳名片自動生成數位專屬命理標籤。</p>
         </div>
-        <div class="pt-4">
-          <button onclick="submitUserRegistration()" class="btn-primary">
-            確認完成 <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
-          </button>
+        <div class="flex gap-3">
+          <button onclick="document.getElementById('reg-card-camera').click()" class="flex-1 py-3 bg-white border border-slate-300 rounded-xl font-bold text-[14px] flex justify-center items-center gap-1 active:bg-slate-50"><span class="material-symbols-outlined text-[18px]">photo_camera</span> 拍照</button>
+          <button onclick="document.getElementById('reg-card-upload').click()" class="flex-1 py-3 bg-white border border-slate-300 rounded-xl font-bold text-[14px] flex justify-center items-center gap-1 active:bg-slate-50"><span class="material-symbols-outlined text-[18px]">image</span> 相簿</button>
         </div>
+        <input type="file" id="reg-card-camera" accept="image/*" capture="environment" class="hidden" onchange="openRegCropper(this)">
+        <input type="file" id="reg-card-upload" accept="image/*" class="hidden" onchange="openRegCropper(this)">
+        <div class="text-center pt-2"><button onclick="finishRegistration()" class="text-[13px] text-primary font-bold active:opacity-50">略過，直接進入系統</button></div>
       </div>
     </div>
 
-    <!-- View: User Activities -->
-    <div id="view-user-activities" class="space-y-4 animate-in fade-in duration-500 pt-2 px-4">
-      <div class="flex justify-between items-center mb-2 px-1">
-        <div>
-          <h2 class="text-2xl font-bold text-slate-800">探索活動</h2>
-          <p class="text-slate-500 text-[13px] mt-1">為您精選的最新場次</p>
-        </div>
-        <button onclick="reloadActivities()" id="btn-refresh-activities" class="w-9 h-9 rounded-full bg-white shadow-sm flex items-center justify-center text-slate-600 active:scale-90 transition-all border border-slate-200">
-          <span class="material-symbols-outlined text-[20px]">refresh</span>
-        </button>
+    <!-- 探索活動 (一排兩格 Grid) -->
+    <div id="view-user-activities" class="hidden animate-in fade-in duration-300 pt-2 space-y-3">
+      <div class="flex justify-between items-end px-4 mb-2">
+        <h2 class="text-[18px] font-bold text-text-main">探索活動</h2>
+        <button onclick="reloadActivities()" id="btn-refresh-activities" class="text-slate-400 active:opacity-50"><span class="material-symbols-outlined text-[20px]">refresh</span></button>
       </div>
-      <div id="user-activities-container" class="space-y-5"></div>
+      <div class="flex gap-2 overflow-x-auto hide-scrollbar px-4 pb-1" id="activity-categories"></div>
+      <div id="user-activities-container" class="grid grid-cols-2 gap-3 px-4"></div>
     </div>
 
-    <!-- View: User History (Flat Native Style) -->
+    <!-- 報名紀錄 (原生 Flat List) -->
     <div id="view-user-history" class="hidden animate-in fade-in pt-2">
-      <h2 class="text-[20px] font-bold px-5 text-slate-800 mb-3">報名紀錄</h2>
+      <h2 class="text-[18px] font-bold px-4 text-text-main mb-3">報名紀錄</h2>
       <div id="user-history-container" class="w-full"></div>
     </div>
 
-    <!-- View: User Profile Edit -->
-    <div id="view-user-profile" class="hidden animate-in fade-in pt-4 px-5">
-      <h2 class="text-2xl font-bold px-1 mb-4 text-slate-800">個人資料</h2>
-      <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 space-y-5">
-        <div><label class="input-label">姓名</label><input type="text" id="edit-name" class="custom-input"></div>
-        <div class="grid grid-cols-2 gap-3">
-          <div><label class="input-label">性別</label><div class="relative"><select id="edit-gender" class="custom-input"><option value="男">男</option><option value="女">女</option></select><span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span></div></div>
-          <div><label class="input-label">電話</label><input type="tel" id="edit-phone" class="custom-input"></div>
-        </div>
+    <!-- 個人資料 -->
+    <div id="view-user-profile" class="hidden animate-in fade-in pt-2 px-4 pb-10 space-y-4">
+      <h2 class="text-[18px] font-bold text-text-main mb-2">個人資料</h2>
+      <div><label class="input-label">姓名</label><input type="text" id="edit-name" class="custom-input"></div>
+      <div class="grid grid-cols-2 gap-3">
         <div><label class="input-label">業種</label><input type="text" id="edit-industry" class="custom-input"></div>
-        <div class="pt-2"><button onclick="submitProfileUpdate()" class="btn-primary">儲存變更</button></div>
+        <div><label class="input-label">性別</label><select id="edit-gender" class="custom-input"><option value="男">男</option><option value="女">女</option></select></div>
       </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="input-label">手機</label><input type="tel" id="edit-phone" class="custom-input"></div>
+        <div><label class="input-label">生日</label><input type="date" id="edit-birthday" class="custom-input !px-2 text-slate-600"></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="input-label">居住地區</label><input type="text" id="edit-region" class="custom-input"></div>
+        <div><label class="input-label">完整地址</label><input type="text" id="edit-address" class="custom-input"></div>
+      </div>
+      <div class="pt-4"><button onclick="submitProfileUpdate()" class="btn-primary">儲存變更</button></div>
     </div>
 
-    <!-- View: Admin Activities (Flat Native Style) -->
+    <!-- 後台：管理核銷 (原生 Flat List) -->
     <div id="view-admin-activities" class="hidden animate-in fade-in pt-2">
-      <h2 class="text-[20px] font-bold px-5 text-slate-800 mb-3">管理核銷</h2>
+      <h2 class="text-[18px] font-bold px-4 text-text-main mb-3">管理核銷</h2>
       <div id="admin-activity-list-container" class="w-full"></div>
     </div>
 
-    <!-- View: Admin CRM Dashboard (Flat Native Style) -->
-    <div id="view-admin-crm" class="hidden animate-in fade-in pt-4">
-      <div class="px-5 mb-4 flex flex-col">
-        <h2 class="text-2xl font-bold text-slate-800 tracking-tight">會員 CRM</h2>
-        <p class="text-slate-500 text-[13px] mt-1">追蹤來賓與會員的活動活躍度。</p>
-      </div>
-      <div class="px-4 mb-4">
-        <div class="relative">
-          <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
-          <input type="text" id="crm-search-input" onkeyup="filterCrmList()" class="custom-input !pl-10 !rounded-full !py-2.5 !bg-white border border-slate-200" placeholder="搜尋姓名...">
-        </div>
+    <!-- 後台：CRM (原生 Flat List) -->
+    <div id="view-admin-crm" class="hidden animate-in fade-in pt-2">
+      <h2 class="text-[18px] font-bold px-4 text-text-main mb-3">會員 CRM</h2>
+      <div class="px-4 mb-3">
+        <input type="text" id="crm-search-input" onkeyup="filterCrmList()" class="custom-input !py-2.5 !rounded-lg" placeholder="搜尋參與者姓名...">
       </div>
       <div id="admin-crm-list-container" class="w-full"></div>
     </div>
 
-    <!-- View: Admin Settings -->
-    <div id="view-admin-settings" class="hidden animate-in fade-in pt-4 px-5">
-      <h2 class="text-2xl font-bold px-1 mb-4 text-slate-800">系統參數</h2>
-      <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 space-y-5">
-        <div>
-          <label class="input-label">Telegram Bot Token</label>
-          <div class="flex gap-2">
-            <input type="text" id="set-tg-token" class="custom-input flex-1 !pr-3 text-[13px]">
-            <button onclick="autoFetchTgChatId()" id="btn-fetch-tg" class="bg-slate-100 text-slate-700 px-4 rounded-xl text-[13px] active:bg-slate-200 transition-all border border-slate-200">轉換</button>
-          </div>
-        </div>
-        <div><label class="input-label">Telegram Chat ID</label><input type="text" id="set-tg-chat" class="custom-input !pr-3 text-[13px] bg-slate-50" readonly placeholder="由上方轉換取得"></div>
-        <div><label class="input-label">官方 LINE 連結</label><input type="text" id="set-line-link" class="custom-input !pr-3 text-[13px]" placeholder="https://lin.ee/..."></div>
-        <div class="pt-2"><button onclick="submitSettings()" id="btn-submit-settings" class="btn-primary">儲存設定</button></div>
-      </div>
-    </div>
-
-    <!-- View: Admin Create -->
-    <div id="view-admin-create" class="hidden space-y-6 animate-in fade-in pt-4 px-5">
-      <div class="px-1">
-        <h2 class="text-2xl font-bold text-slate-800 tracking-tight">建立新活動</h2>
-        <p class="text-slate-500 text-[13px] mt-1">快速部署您的活動報名流程。</p>
-      </div>
-
-      <div class="flex p-1 rounded-xl mx-0 border border-slate-200 bg-slate-50">
-        <button onclick="toggleCreateMode('quick')" id="tab-quick" class="flex-1 py-2.5 rounded-lg text-[14px] font-bold bg-white text-slate-800 shadow-sm border border-slate-200 transition-all">快速匯入</button>
-        <button onclick="toggleCreateMode('detailed')" id="tab-detailed" class="flex-1 py-2.5 rounded-lg text-[14px] text-slate-500 transition-all">完整發佈</button>
+    <!-- 後台：建立活動 -->
+    <div id="view-admin-create" class="hidden animate-in fade-in pt-2 px-4 space-y-5">
+      <h2 class="text-[18px] font-bold text-text-main mb-2">建立新活動</h2>
+      <div class="flex p-1 rounded-lg bg-slate-100">
+        <button onclick="toggleCreateMode('quick')" id="tab-quick" class="flex-1 py-2 rounded text-[14px] font-bold bg-white text-text-main shadow-sm transition-all">快速匯入</button>
+        <button onclick="toggleCreateMode('detailed')" id="tab-detailed" class="flex-1 py-2 rounded text-[14px] font-bold text-slate-500 transition-all">完整發佈</button>
       </div>
       
-      <div id="form-quick" class="space-y-5 animate-in fade-in">
-        <div><label class="input-label">活動名稱</label><input type="text" id="quick-name" class="custom-input" placeholder="輸入活動標題..."></div>
+      <div id="form-quick" class="space-y-4">
+        <input type="text" id="quick-name" class="custom-input" placeholder="活動名稱 (必填)">
         <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="input-label">活動類型</label>
-            <div class="relative"><select id="quick-type" class="custom-input text-slate-700"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option></select><span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span></div>
-          </div>
-          <div>
-            <label class="input-label">預設身份</label>
-            <div class="relative"><select id="quick-identity" class="custom-input text-slate-700"><option>會員</option><option>來賓</option></select><span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span></div>
-          </div>
+          <select id="quick-type" class="custom-input"><option>例會</option><option>課程</option><option>教學</option><option>講座</option><option>其他</option></select>
+          <select id="quick-identity" class="custom-input"><option>會員</option><option>來賓</option></select>
         </div>
-        <div>
-          <div class="flex justify-between items-center mb-1"><label class="input-label !mb-0">名單內容</label><span class="text-[10px] text-slate-500 bg-slate-200 px-2 py-0.5 rounded">批次輸入</span></div>
-          <textarea id="quick-names" class="custom-input h-40 py-3 resize-none text-[14px]" placeholder="請貼上參與者姓名，每行一位..."></textarea>
-        </div>
-        <button onclick="handleCreateActivity('quick')" id="btn-quick-create" class="btn-primary mt-2">建立活動</button>
+        <textarea id="quick-names" class="custom-input h-40 py-3 resize-none" placeholder="名單內容 (支援批次貼上)"></textarea>
+        <button onclick="handleCreateActivity('quick')" id="btn-quick-create" class="btn-primary">建立活動</button>
       </div>
       
-      <div id="form-detailed" class="hidden space-y-5 animate-in fade-in">
-         <div><label class="input-label">正式標題</label><input type="text" id="detail-name" class="custom-input" placeholder="輸入活動標題..."></div>
+      <div id="form-detailed" class="hidden space-y-4">
+         <input type="text" id="detail-name" class="custom-input" placeholder="活動標題 (必填)">
          <div class="grid grid-cols-2 gap-3">
-           <div><label class="input-label">活動類型</label><div class="relative"><select id="detail-type" class="custom-input text-slate-700"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option></select><span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span></div></div>
-           <div>
-             <label class="input-label">收費方式</label>
-             <div class="flex gap-4 items-center h-[52px] px-3 bg-white border border-slate-200 rounded-xl">
-               <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="fee-type" value="免費" checked onchange="toggleFeeInput()" class="w-4 h-4 text-primary bg-slate-100 border-transparent"><span class="text-[14px] text-slate-700">免費</span></label>
-               <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="fee-type" value="收費" onchange="toggleFeeInput()" class="w-4 h-4 text-primary bg-slate-100 border-transparent"><span class="text-[14px] text-slate-700">收費</span></label>
-             </div>
+           <select id="detail-type" class="custom-input"><option>例會</option><option>課程</option><option>講座</option><option>其他</option></select>
+           <div class="flex gap-4 items-center px-2">
+             <label class="flex items-center gap-1.5"><input type="radio" name="fee-type" value="免費" checked onchange="toggleFeeInput()" class="w-4 h-4 text-primary"><span class="text-[14px]">免費</span></label>
+             <label class="flex items-center gap-1.5"><input type="radio" name="fee-type" value="收費" onchange="toggleFeeInput()" class="w-4 h-4 text-primary"><span class="text-[14px]">收費</span></label>
            </div>
          </div>
          <input type="number" id="detail-price" class="custom-input hidden" placeholder="金額 (NT$)">
-         <div class="grid grid-cols-2 gap-3 border-t border-slate-100 pt-4">
-           <div><label class="input-label">開始時間</label><input type="datetime-local" id="detail-start" class="custom-input !px-2 text-[13px] text-slate-600"></div>
-           <div><label class="input-label">結束時間</label><input type="datetime-local" id="detail-end" class="custom-input !px-2 text-[13px] text-slate-600"></div>
+         <div class="grid grid-cols-2 gap-3">
+           <div><label class="input-label">開始時間</label><input type="datetime-local" id="detail-start" class="custom-input !px-2"></div>
+           <div><label class="input-label">結束時間</label><input type="datetime-local" id="detail-end" class="custom-input !px-2"></div>
          </div>
-         <div><label class="input-label">活動說明</label><textarea id="detail-desc" class="custom-input h-32 py-3 resize-none text-[14px]" placeholder="輸入詳盡說明..."></textarea></div>
-         <div>
-           <label class="input-label">宣傳大圖</label>
-           <div onclick="document.getElementById('file-input-create').click()" class="w-full h-32 border border-slate-300 rounded-xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden relative">
-             <div id="preview-placeholder-create" class="text-center text-slate-400 flex flex-col items-center">
-               <span class="material-symbols-outlined text-3xl mb-1">add_photo_alternate</span>
-               <p class="text-[12px]">點擊上傳圖片</p>
-             </div>
-             <img id="image-preview-create" class="hidden w-full h-full object-cover absolute inset-0">
-             <input type="file" id="file-input-create" class="hidden" accept="image/*" onchange="previewFile('create')">
+         <textarea id="detail-desc" class="custom-input h-28 py-3 resize-none" placeholder="活動說明..."></textarea>
+         <div onclick="document.getElementById('file-input-create').click()" class="w-full h-32 border border-slate-300 rounded-xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden relative">
+           <div id="preview-placeholder-create" class="text-center text-slate-400 flex flex-col items-center">
+             <span class="material-symbols-outlined text-3xl mb-1">add_photo_alternate</span><p class="text-[12px]">上傳圖片</p>
            </div>
-           <input type="hidden" id="in-image-url-create">
+           <img id="image-preview-create" class="hidden w-full h-full object-cover absolute inset-0">
+           <input type="file" id="file-input-create" class="hidden" accept="image/*" onchange="previewFile('create')">
          </div>
-         <button onclick="handleCreateActivity('detailed')" id="btn-detail-create" class="btn-primary mt-2">發布活動頁面</button>
+         <input type="hidden" id="in-image-url-create">
+         <button onclick="handleCreateActivity('detailed')" id="btn-detail-create" class="btn-primary">發布活動</button>
       </div>
     </div>
 
-    <!-- View: Admin Edit -->
-    <div id="view-admin-edit" class="hidden space-y-6 animate-in fade-in pt-4 px-5">
-      <div class="flex items-center gap-3 mb-4">
-        <button onclick="switchView('admin-activities')" class="w-9 h-9 bg-white rounded-full flex items-center justify-center text-slate-600 shadow-sm active:scale-90 transition-all border border-slate-200"><span class="material-symbols-outlined text-[20px]">arrow_back</span></button>
-        <h2 class="text-2xl font-bold text-slate-800 tracking-tight">編輯活動</h2>
+    <!-- 後台：系統參數 -->
+    <div id="view-admin-settings" class="hidden animate-in fade-in pt-2 px-4 space-y-4">
+      <h2 class="text-[18px] font-bold text-text-main mb-2">系統參數</h2>
+      <div><label class="input-label">Telegram Bot Token</label><input type="text" id="set-tg-token" class="custom-input"></div>
+      <div class="flex gap-2 items-end">
+        <div class="flex-1"><label class="input-label">Telegram Chat ID</label><input type="text" id="set-tg-chat" class="custom-input bg-slate-50" readonly></div>
+        <button onclick="autoFetchTgChatId()" id="btn-fetch-tg" class="bg-white border border-slate-300 text-slate-700 py-3 px-4 rounded-xl font-bold text-[14px] active:bg-slate-50">轉換</button>
       </div>
-      <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 space-y-5">
-         <div><label class="input-label">活動名稱 (無法修改)</label><input type="text" id="edit-act-name" class="custom-input bg-slate-100 text-slate-500 border-transparent shadow-none" disabled></div>
-         <div class="grid grid-cols-2 gap-3">
-           <div><label class="input-label">活動類型</label><div class="relative"><select id="edit-act-type" class="custom-input text-slate-700"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>工作坊</option><option>其他</option></select><span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span></div></div>
-           <div>
-             <label class="input-label">收費方式</label>
-             <div class="flex gap-4 items-center h-[52px] px-2">
-               <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="edit-act-fee-type" value="免費" onchange="toggleEditFeeInput()" class="w-4 h-4 text-primary focus:ring-primary"><span class="text-[14px] text-slate-700">免費</span></label>
-               <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="edit-act-fee-type" value="收費" onchange="toggleEditFeeInput()" class="w-4 h-4 text-primary focus:ring-primary"><span class="text-[14px] text-slate-700">收費</span></label>
-             </div>
-           </div>
-         </div>
-         <input type="number" id="edit-act-price" class="custom-input hidden" placeholder="金額 (NT$)">
-         <div class="grid grid-cols-2 gap-3 border-t border-slate-100 pt-4">
-           <div><label class="input-label">開始時間</label><input type="datetime-local" id="edit-act-start" class="custom-input !px-2 text-[13px] text-slate-600"></div>
-           <div><label class="input-label">結束時間</label><input type="datetime-local" id="edit-act-end" class="custom-input !px-2 text-[13px] text-slate-600"></div>
-         </div>
-         <div><label class="input-label">活動說明</label><textarea id="edit-act-desc" class="custom-input h-32 py-3 resize-none text-[14px]"></textarea></div>
-         <div>
-           <label class="input-label">宣傳大圖</label>
-           <div onclick="document.getElementById('file-input-edit').click()" class="w-full h-32 border border-slate-300 rounded-xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden relative">
-             <div id="preview-placeholder-edit" class="text-center text-slate-400 flex flex-col items-center">
-               <span class="material-symbols-outlined text-3xl mb-1">add_photo_alternate</span>
-               <p class="text-[12px]">點擊更換圖片</p>
-             </div>
-             <img id="image-preview-edit" class="hidden w-full h-full object-cover absolute inset-0">
-             <input type="file" id="file-input-edit" class="hidden" accept="image/*" onchange="previewFile('edit')">
-           </div>
-           <input type="hidden" id="in-image-url-edit">
-         </div>
-         <button onclick="handleSaveEdit()" id="btn-save-edit" class="btn-primary mt-2">儲存活動變更</button>
-      </div>
+      <div><label class="input-label">LINE 連結</label><input type="text" id="set-line-link" class="custom-input"></div>
+      <div class="pt-4"><button onclick="submitSettings()" id="btn-submit-settings" class="btn-primary">儲存設定</button></div>
     </div>
-    
   </main>
 
-  <!-- 底部導覽列 (使用者) -->
-  <nav id="bottom-nav-user" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-100 flex justify-around items-center px-2 py-2 z-40 pb-safe shadow-[0_-4px_24px_rgba(0,0,0,0.03)] left-1/2 -translate-x-1/2 h-[72px]">
-    <button onclick="switchView('user-activities')" id="nav-user-activities" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">explore</span></div><span class="text-[11px] mt-0.5 tracking-wide">活動</span></button>
-    <button onclick="switchView('user-history')" id="nav-user-history" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">receipt_long</span></div><span class="text-[11px] mt-0.5 tracking-wide">紀錄</span></button>
-    <button onclick="switchView('user-profile')" id="nav-user-profile" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">person</span></div><span class="text-[11px] mt-0.5 tracking-wide">設定</span></button>
+  <!-- 底部導覽 (User) -->
+  <nav id="bottom-nav-user" class="hidden fixed bottom-0 w-full max-w-md bg-white border-t border-slate-200 flex justify-around items-center px-1 pt-1.5 pb-safe z-40 left-1/2 -translate-x-1/2">
+    <button onclick="switchView('user-activities')" id="nav-user-activities" class="nav-btn nav-active"><span class="material-symbols-outlined text-[24px]">explore</span><span class="text-[10px] tracking-wide">活動</span></button>
+    <button onclick="switchView('user-history')" id="nav-user-history" class="nav-btn"><span class="material-symbols-outlined text-[24px]">receipt_long</span><span class="text-[10px] tracking-wide">紀錄</span></button>
+    <button onclick="switchView('user-profile')" id="nav-user-profile" class="nav-btn"><span class="material-symbols-outlined text-[24px]">person</span><span class="text-[10px] tracking-wide">設定</span></button>
   </nav>
 
-  <!-- 底部導覽列 (管理員) -->
-  <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-100 flex justify-evenly items-center px-1 py-2 z-40 pb-safe shadow-[0_-4px_24px_rgba(0,0,0,0.03)] left-1/2 -translate-x-1/2 h-[72px]">
-    <button onclick="switchView('admin-activities')" id="nav-admin-activities" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">fact_check</span></div><span class="text-[10px] mt-0.5 tracking-wide">核銷</span></button>
-    <button onclick="switchView('admin-create')" id="nav-admin-create" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">add_circle</span></div><span class="text-[10px] mt-0.5 tracking-wide">建立</span></button>
-    <button onclick="switchView('admin-crm')" id="nav-admin-crm" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">groups</span></div><span class="text-[10px] mt-0.5 tracking-wide">CRM</span></button>
-    <button onclick="window.location.href='fate.html'" id="nav-admin-fate" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px] text-pink-500">psychology</span></div><span class="text-[10px] mt-0.5 tracking-wide text-pink-600">配對</span></button>
-    <button onclick="window.location.href='card.html'" id="nav-admin-cards" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">recent_patient</span></div><span class="text-[10px] mt-0.5 tracking-wide">名片</span></button>
-    <button onclick="switchView('admin-settings')" id="nav-admin-settings" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">settings</span></div><span class="text-[10px] mt-0.5 tracking-wide">參數</span></button>
+  <!-- 底部導覽 (Admin) -->
+  <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white border-t border-slate-200 flex justify-evenly items-center px-1 pt-1.5 pb-safe z-40 left-1/2 -translate-x-1/2">
+    <button onclick="switchView('admin-activities')" class="nav-btn" id="nav-admin-activities"><span class="material-symbols-outlined text-[22px]">fact_check</span><span class="text-[10px]">核銷</span></button>
+    <button onclick="switchView('admin-create')" class="nav-btn" id="nav-admin-create"><span class="material-symbols-outlined text-[22px]">add_circle</span><span class="text-[10px]">建立</span></button>
+    <button onclick="switchView('admin-crm')" class="nav-btn" id="nav-admin-crm"><span class="material-symbols-outlined text-[22px]">groups</span><span class="text-[10px]">CRM</span></button>
+    <button onclick="window.location.href='fate.html'" class="nav-btn text-pink-500"><span class="material-symbols-outlined text-[22px]">psychology</span><span class="text-[10px]">配對</span></button>
+    <button onclick="window.location.href='card.html'" class="nav-btn"><span class="material-symbols-outlined text-[22px]">recent_patient</span><span class="text-[10px]">名片</span></button>
+    <button onclick="switchView('admin-settings')" class="nav-btn" id="nav-admin-settings"><span class="material-symbols-outlined text-[22px]">settings</span><span class="text-[10px]">參數</span></button>
   </nav>
 </div>
 
-<!-- 後台：單一活動核銷名單 Modal (Flat Native Style) -->
-<div id="admin-registrants-modal" class="hidden fixed inset-0 z-[1050] bg-slate-50 flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0">
-  <!-- 頂部列 -->
-  <div class="bg-white px-4 pt-12 pb-3 flex justify-between items-center shrink-0 border-b border-slate-200">
-    <div class="flex items-center gap-2">
-      <button onclick="closeAdminRegistrants()" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 active:bg-slate-100 transition-colors"><span class="material-symbols-outlined text-[22px]">arrow_back</span></button>
-      <h3 id="admin-reg-title" class="text-[18px] font-bold text-slate-800 truncate max-w-[180px]">活動名單</h3>
-    </div>
-    <button onclick="document.getElementById('qr-scanner-modal').classList.remove('hidden'); startScanner();" class="text-primary font-bold text-[14px] flex items-center gap-1 px-2 active:opacity-70 transition-opacity">
-      <span class="material-symbols-outlined text-[20px]">qr_code_scanner</span>掃碼
-    </button>
+<!-- 動態加載用容器：註冊裁切 Modal -->
+<div id="section-reg-cropper" class="hidden fixed inset-0 bg-black flex flex-col animate-in fade-in duration-200 w-full max-w-md mx-auto z-50">
+  <div class="flex justify-between items-center p-4 bg-black text-white shrink-0 border-b border-slate-800">
+    <button onclick="cancelRegCrop()" class="text-slate-400 font-bold text-sm px-2">取消</button>
+    <button onclick="confirmRegCrop()" class="px-4 py-1.5 font-bold text-white bg-primary rounded-full text-sm">完成</button>
   </div>
-  
-  <!-- 搜尋與新增列 -->
-  <div class="bg-white px-4 py-2 shrink-0 flex gap-2 border-b border-slate-200">
-     <div class="relative flex-1 bg-slate-100 rounded-lg flex items-center">
-        <span class="material-symbols-outlined text-slate-400 text-[18px] ml-3">search</span>
-        <input type="text" id="admin-search-reg" onkeyup="filterAdminReg()" class="w-full py-2 pl-2 pr-3 bg-transparent border-none text-[14px] outline-none placeholder-slate-400" placeholder="搜尋姓名或電話...">
-     </div>
-     <button onclick="document.getElementById('walkin-modal').classList.remove('hidden')" class="w-10 h-10 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center active:bg-slate-200 transition-colors"><span class="material-symbols-outlined text-[20px]">person_add</span></button>
-  </div>
-
-  <!-- 名單列表 -->
-  <div class="flex-1 overflow-y-auto pb-safe bg-slate-50" id="admin-reg-list"></div>
+  <div class="flex-1 relative overflow-hidden flex items-center justify-center"><img id="reg-cropper-image" src="" class="max-w-full max-h-full block opacity-0"></div>
 </div>
 
-<!-- ================= 活動詳細說明 Modal ================= -->
-<div id="activity-detail-modal" class="hidden fixed inset-0 z-[100] bg-background flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl overflow-hidden">
-  
-  <div class="absolute top-4 right-4 z-50">
-    <button onclick="closeActivityDetail()" class="w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center text-white shadow-sm active:scale-90 transition-transform">
-      <span class="material-symbols-outlined text-[20px]">close</span>
-    </button>
+<!-- 活動明細 Modal (滿版平鋪) -->
+<div id="activity-detail-modal" class="hidden fixed inset-0 z-50 bg-white flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 overflow-hidden">
+  <div class="absolute top-4 right-4 z-[60]">
+    <button onclick="closeActivityDetail()" class="w-8 h-8 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center text-white"><span class="material-symbols-outlined text-[20px]">close</span></button>
   </div>
-
-  <div class="flex-1 overflow-y-auto pb-28">
-    <div id="detail-modal-image-container" class="w-full aspect-[4/3] bg-slate-100 relative">
+  <div class="flex-1 overflow-y-auto pb-24">
+    <div id="detail-modal-image-container" class="w-full aspect-video bg-slate-100 relative">
       <img id="detail-modal-image" src="" class="w-full h-full object-cover hidden">
-      <div id="detail-modal-no-image" class="absolute inset-0 flex items-center justify-center bg-slate-100">
-        <span class="material-symbols-outlined text-6xl text-slate-300">local_activity</span>
-      </div>
-      <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent hidden" id="detail-modal-image-overlay"></div>
     </div>
-    
-    <div class="bg-white -mt-6 relative z-10 rounded-t-3xl p-6 space-y-5 min-h-[60vh]">
+    <div class="p-5 space-y-5">
       <div>
         <div class="flex items-center gap-2 mb-2">
-          <span id="detail-modal-type" class="text-[11px] font-bold px-2 py-0.5 rounded bg-primary-light text-primary"></span>
+          <span id="detail-modal-type" class="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600"></span>
           <span id="detail-modal-fee" class="text-[11px] font-bold px-2 py-0.5 rounded"></span>
         </div>
-        <h2 id="detail-modal-title" class="text-[20px] font-bold text-slate-800 leading-snug"></h2>
+        <h2 id="detail-modal-title" class="text-[20px] font-bold text-text-main leading-snug"></h2>
       </div>
-      
-      <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-3">
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-slate-400 shrink-0"><span class="material-symbols-outlined text-[16px]">event</span></div>
-          <div>
-            <p class="text-[10px] text-slate-400 tracking-wide mb-0.5">開始時間</p>
-            <p id="detail-modal-start" class="text-[14px] text-slate-700"></p>
-          </div>
-        </div>
-        <div id="detail-modal-end-container" class="flex items-center gap-3 hidden">
-          <div class="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-slate-400 shrink-0"><span class="material-symbols-outlined text-[16px]">event_busy</span></div>
-          <div>
-            <p class="text-[10px] text-slate-400 tracking-wide mb-0.5">結束時間</p>
-            <p id="detail-modal-end" class="text-[14px] text-slate-700"></p>
-          </div>
-        </div>
+      <div class="bg-slate-50 p-3 rounded-lg space-y-2">
+        <div class="flex items-center gap-2"><span class="material-symbols-outlined text-slate-400 text-[18px]">event</span><p id="detail-modal-start" class="text-[14px] text-text-main"></p></div>
+        <div id="detail-modal-end-container" class="flex items-center gap-2 hidden"><span class="material-symbols-outlined text-slate-400 text-[18px]">event_busy</span><p id="detail-modal-end" class="text-[14px] text-text-main"></p></div>
       </div>
-
       <div>
-        <h3 class="text-[15px] font-bold text-slate-800 mb-2 flex items-center gap-1.5">
-          <span class="material-symbols-outlined text-primary text-[18px]">subject</span> 內容說明
-        </h3>
         <p id="detail-modal-desc" class="text-[14px] text-slate-600 leading-relaxed whitespace-pre-wrap"></p>
       </div>
     </div>
   </div>
-
-  <div class="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-200 p-4 pb-safe z-50">
-    <button id="detail-modal-join-btn" class="btn-primary">
-      我要報名 <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
-    </button>
+  <div class="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-100 p-4 pb-safe z-50">
+    <button id="detail-modal-join-btn" class="btn-primary">報名活動</button>
   </div>
 </div>
 
-<!-- 後台：現場報名 Modal -->
-<div id="walkin-modal" class="hidden fixed inset-0 z-[1060] bg-slate-900/40 backdrop-blur-sm flex items-end justify-center animate-in fade-in duration-200 w-full max-w-md mx-auto left-0 right-0">
-  <div class="bg-white w-full rounded-t-3xl p-6 pb-safe">
-    <div class="flex justify-between items-center mb-5">
-      <h3 class="text-[18px] font-bold text-slate-800 flex items-center gap-2"><span class="material-symbols-outlined text-primary">person_add</span> 現場來賓登記</h3>
-      <button onclick="document.getElementById('walkin-modal').classList.add('hidden')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center active:scale-90 transition-all"><span class="material-symbols-outlined text-[18px]">close</span></button>
+<!-- 後台：單一活動核銷名單 Modal (原生 Flat List) -->
+<div id="admin-registrants-modal" class="hidden fixed inset-0 z-50 bg-background flex flex-col animate-in slide-in-from-right-full duration-200 w-full max-w-md mx-auto left-0 right-0">
+  <div class="bg-white px-2 pt-12 pb-2 flex justify-between items-center shrink-0 border-b border-slate-200">
+    <div class="flex items-center gap-1">
+      <button onclick="closeAdminRegistrants()" class="p-2 text-text-main active:opacity-50"><span class="material-symbols-outlined text-[24px]">arrow_back</span></button>
+      <h3 id="admin-reg-title" class="text-[16px] font-bold text-text-main truncate max-w-[160px]"></h3>
     </div>
-    <div class="mb-5"><label class="input-label">來賓姓名</label><input type="text" id="f-walkin-name" class="custom-input" placeholder="請輸入姓名"></div>
-    <button onclick="submitWalkIn()" class="btn-primary">新增並自動簽到</button>
+    <div class="flex gap-1 pr-2">
+      <button onclick="document.getElementById('walkin-modal').classList.remove('hidden')" class="p-2 text-text-main active:opacity-50"><span class="material-symbols-outlined text-[24px]">person_add</span></button>
+      <button onclick="startScanner()" class="p-2 text-text-main active:opacity-50"><span class="material-symbols-outlined text-[24px]">qr_code_scanner</span></button>
+    </div>
+  </div>
+  <div class="bg-white px-4 py-2 shrink-0 border-b border-slate-100">
+    <input type="text" id="admin-search-reg" onkeyup="filterAdminReg()" class="custom-input !py-2 !rounded-lg !bg-slate-100 border-none" placeholder="搜尋姓名或電話...">
+  </div>
+  <div class="flex-1 overflow-y-auto pb-safe" id="admin-reg-list"></div>
+</div>
+
+<!-- 現場報名 Modal -->
+<div id="walkin-modal" class="hidden fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200 w-full max-w-md mx-auto px-4">
+  <div class="bg-white w-full rounded-2xl p-5">
+    <h3 class="text-[16px] font-bold text-text-main mb-4">現場來賓登記</h3>
+    <input type="text" id="f-walkin-name" class="custom-input mb-4" placeholder="輸入姓名">
+    <div class="flex gap-3">
+      <button onclick="document.getElementById('walkin-modal').classList.add('hidden')" class="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold">取消</button>
+      <button onclick="submitWalkIn()" class="flex-1 py-3 bg-primary text-white rounded-xl font-bold">登記並簽到</button>
+    </div>
   </div>
 </div>
 
-<!-- 掃碼器 Modal -->
-<div id="qr-scanner-modal" class="hidden fixed inset-0 z-[1070] bg-black flex flex-col animate-in fade-in duration-300 w-full max-w-md mx-auto left-0 right-0">
-  <div class="flex justify-between items-center p-4 bg-gradient-to-b from-black/80 to-transparent absolute top-0 w-full z-10">
-    <span class="text-white text-[13px]">請對準學員 QR Code</span>
-    <button onclick="stopScanner()" class="w-9 h-9 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white active:scale-90 transition-transform"><span class="material-symbols-outlined text-[20px]">close</span></button>
+<!-- 動態掃碼器 Modal -->
+<div id="qr-scanner-modal" class="hidden fixed inset-0 z-[60] bg-black flex flex-col w-full max-w-md mx-auto">
+  <div class="p-4 bg-gradient-to-b from-black/80 to-transparent absolute top-0 w-full z-10 flex justify-end">
+    <button onclick="stopScanner()" class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-white"><span class="material-symbols-outlined">close</span></button>
   </div>
-  <div class="flex-1 flex items-center justify-center relative"><div id="qr-reader" class="w-full h-full max-h-[80vh]"></div></div>
+  <div class="flex-1 flex items-center justify-center relative"><div id="qr-reader" class="w-full"></div></div>
 </div>
 
 <!-- Toast & Custom Modal -->
-<div id="toast" class="fixed top-14 left-1/2 -translate-x-1/2 px-5 py-2.5 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-medium transform translate-y-0 opacity-0 pointer-events-none flex items-center gap-2 w-max max-w-[90vw]"></div>
-
-<div id="custom-modal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-6">
-  <div class="bg-white w-full max-w-[300px] rounded-3xl p-6 shadow-2xl text-center scale-95 transition-all duration-200">
-    <div class="w-14 h-14 bg-blue-50 text-primary rounded-full flex items-center justify-center mx-auto mb-4"><span class="material-symbols-outlined text-[28px] icon-filled">info</span></div>
-    <h3 id="modal-title" class="text-[18px] font-bold mb-2 text-slate-800 tracking-tight">通知</h3>
-    <p id="modal-desc" class="text-slate-500 mb-6 text-[14px] leading-relaxed"></p>
-    <button onclick="closeModalAndGo()" class="btn-primary !py-2.5 text-[15px]">我知道了</button>
+<div id="toast" class="fixed top-14 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full text-[13px] shadow-lg transition-all z-[10000] font-medium transform translate-y-0 opacity-0 pointer-events-none flex items-center gap-1.5 w-max max-w-[90vw]"></div>
+<div id="custom-modal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm p-6">
+  <div class="bg-white w-full max-w-[280px] rounded-2xl p-6 text-center scale-95 transition-all duration-200">
+    <h3 id="modal-title" class="text-[16px] font-bold mb-2 text-text-main">通知</h3>
+    <p id="modal-desc" class="text-slate-500 mb-5 text-[14px] leading-relaxed"></p>
+    <button onclick="closeModalAndGo()" class="btn-primary !py-2.5 !text-[14px]">確定</button>
   </div>
 </div>
 
@@ -465,32 +330,35 @@
   const WORKER_URL = "https://actmaster.fangwl591021.workers.dev"; 
   const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55", "U8932b891ad24da512afb9c1a6f41567b"]; 
 
-  // ⭐ 確保所有變數都有宣告，避免 ReferenceError
   let userProfile = null, isAdmin = false, isViewModeAdmin = false, isRegistered = false, registeredInfo = null;
-  let globalPublicActivities = [], currentActivities = [], currentRegistrants = [], activeActivityName = '', modalTargetView = '';
+  let globalPublicActivities = [], currentRegistrants = [], activeActivityName = '', modalTargetView = '';
   let globalCrmData = []; 
   let isProcessing = false;
 
+  // 懶加載邏輯
+  let regStep1Data = {};
+  let regCompressedBase64 = "";
+  let regCropperInstance = null;
   let html5QrcodeScanner = null;
+
+  const loadScript = (src) => new Promise((res, rej) => {
+    if (document.querySelector(`script[src="${src}"]`)) return res();
+    const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s);
+  });
+  const loadCSS = (href) => new Promise((res, rej) => {
+    if (document.querySelector(`link[href="${href}"]`)) return res();
+    const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; l.onload = res; l.onerror = rej; document.head.appendChild(l);
+  });
 
   async function fetchAPI(action, payload = {}) {
     try {
-      const response = await fetch(WORKER_URL, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, payload })
-      });
+      const response = await fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, payload }) });
       const resText = await response.text();
       let result;
-      try { 
-        result = JSON.parse(resText); 
-      } catch(e) { 
-        throw new Error(`系統連線錯誤，請確認 GAS 已發佈為「所有人」。`); 
-      }
+      try { result = JSON.parse(resText); } catch(e) { throw new Error(`連線錯誤`); }
       if (!result.success) throw new Error(result.error);
       return result.data;
-    } catch (err) {
-      showToast(err.message, true); throw err;
-    }
+    } catch (err) { showToast(err.message, true); throw err; }
   }
 
   window.onload = async () => {
@@ -501,7 +369,6 @@
       document.getElementById('user-avatar').src = userProfile.pictureUrl || '';
       document.getElementById('user-profile-badge').classList.remove('hidden');
       isAdmin = ADMIN_IDS.includes(userProfile.userId);
-
       const res = await fetchAPI('checkUser', { userId: userProfile.userId });
       isRegistered = res.isRegistered; registeredInfo = res.info;
       
@@ -510,55 +377,29 @@
         document.getElementById('header-admin-badge').classList.remove('hidden');
         isViewModeAdmin = true; switchView('admin-activities');
       } else {
-        if (isRegistered) {
-          switchView('user-activities'); 
-        } else { 
-          document.getElementById('bottom-nav-user').classList.add('hidden');
-          document.getElementById('reg-name').value = userProfile.displayName; 
-          switchView('user-register'); 
-        }
+        if (isRegistered) switchView('user-activities'); else { document.getElementById('bottom-nav-user').classList.add('hidden'); document.getElementById('reg-name').value = userProfile.displayName; switchView('user-register'); }
       }
-    } catch (err) { 
-      const container = document.getElementById('user-activities-container');
-      if (container) container.innerHTML = `<div class="text-center py-20"><span class="text-error font-bold text-lg">載入中斷</span><p class="text-sm text-slate-400 mt-2 px-6">${err.toString()}</p></div>`;
-    }
+    } catch (err) { document.getElementById('main-content').innerHTML = `<div class="text-center py-20 text-slate-400">載入失敗</div>`; }
   };
 
   function toggleRoleMode() {
     isViewModeAdmin = !isViewModeAdmin;
-    if (isViewModeAdmin) {
-      document.getElementById('header-admin-badge').classList.remove('hidden');
-      switchView('admin-activities');
-    } else { 
-      document.getElementById('header-admin-badge').classList.add('hidden');
-      if (isRegistered) switchView('user-activities'); else switchView('user-register'); 
-    }
+    document.getElementById('header-admin-badge').classList.toggle('hidden', !isViewModeAdmin);
+    if (isViewModeAdmin) switchView('admin-activities'); else switchView(isRegistered ? 'user-activities' : 'user-register');
   }
 
   function switchView(view) {
-    ['view-loading', 'view-user-register', 'view-user-activities', 'view-user-profile', 'view-user-history', 'view-admin-activities', 'view-admin-crm', 'view-admin-settings', 'view-admin-create', 'view-admin-edit'].forEach(v => {
-      const el = document.getElementById(v); if(el) el.classList.add('hidden');
-    });
+    ['view-loading', 'view-user-register', 'view-user-activities', 'view-user-profile', 'view-user-history', 'view-admin-activities', 'view-admin-crm', 'view-admin-settings', 'view-admin-create'].forEach(v => { const el = document.getElementById(v); if(el) el.classList.add('hidden'); });
     const activeEl = document.getElementById(`view-${view}`); if (activeEl) activeEl.classList.remove('hidden');
-    
-    const navAdmin = document.getElementById('bottom-nav-admin');
-    const navUser = document.getElementById('bottom-nav-user');
+    const navAdmin = document.getElementById('bottom-nav-admin'); const navUser = document.getElementById('bottom-nav-user');
     navAdmin.classList.add('hidden'); navUser.classList.add('hidden');
-    
-    if (isAdmin && isViewModeAdmin && (view.startsWith('admin') || view === 'admin-activities')) {
+    if (isAdmin && isViewModeAdmin && view.startsWith('admin')) {
       navAdmin.classList.remove('hidden');
-      ['activities', 'create', 'crm', 'settings'].forEach(k => {
-        const btn = document.getElementById('nav-admin-'+k);
-        if(btn) btn.className = `nav-btn ${view==='admin-'+k ? 'nav-active' : ''}`;
-      });
+      ['activities', 'create', 'crm', 'settings'].forEach(k => { const btn = document.getElementById('nav-admin-'+k); if(btn) btn.className = `nav-btn ${view==='admin-'+k ? 'nav-active' : ''}`; });
     } else if (isRegistered && (!isAdmin || !isViewModeAdmin) && view.startsWith('user')) {
       navUser.classList.remove('hidden');
-      ['activities', 'history', 'profile'].forEach(k => {
-        const btn = document.getElementById('nav-user-'+k);
-        if(btn) btn.className = `nav-btn ${view==='user-'+k ? 'nav-active' : ''}`;
-      });
+      ['activities', 'history', 'profile'].forEach(k => { const btn = document.getElementById('nav-user-'+k); if(btn) btn.className = `nav-btn ${view==='user-'+k ? 'nav-active' : ''}`; });
     }
-
     if (view === 'admin-activities') loadAdminActivities();
     else if (view === 'admin-settings') loadAdminSettings();
     else if (view === 'admin-crm') loadCrmData();
@@ -567,491 +408,232 @@
     else if (view === 'user-history') loadUserHistory();
   }
 
-  async function reloadActivities() {
-    const btn = document.getElementById('btn-refresh-activities');
-    btn.classList.add('btn-disabled');
-    btn.querySelector('span').classList.add('refresh-spin');
-    try {
-      await loadUserActivities();
-      showToast("最新活動已同步");
-    } finally {
-      setTimeout(() => {
-        btn.classList.remove('btn-disabled');
-        btn.querySelector('span').classList.remove('refresh-spin');
-      }, 500);
-    }
+  // --- 註冊與懶加載裁切 ---
+  async function submitUserRegistrationStep1() {
+    const p = { userId: userProfile.userId, name: document.getElementById('reg-name').value.trim() || userProfile.displayName, gender: document.getElementById('reg-gender').value, industry: document.getElementById('reg-industry').value.trim(), phone: document.getElementById('reg-phone').value.trim(), birthday: document.getElementById('reg-birthday').value, region: document.getElementById('reg-region').value.trim(), address: document.getElementById('reg-address').value.trim() };
+    const btn = document.getElementById('btn-reg-step1'); btn.innerHTML = '儲存中...'; btn.classList.add('btn-disabled');
+    try { await fetchAPI('registerUser', p); regStep1Data = p; document.getElementById('reg-step-1').classList.add('hidden'); document.getElementById('reg-step-2').classList.remove('opacity-30', 'pointer-events-none'); showToast("基礎資料已建立"); } catch(e) {} finally { btn.innerHTML = '儲存並繼續'; btn.classList.remove('btn-disabled'); }
   }
 
+  async function openRegCropper(input) {
+    const file = input.files[0]; if (!file) return;
+    if (!window.Cropper) {
+       showToast("載入影像模組中...", false);
+       await loadCSS("https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css");
+       await loadScript("https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js");
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = document.getElementById('reg-cropper-image'); img.src = e.target.result; img.style.opacity = '0';
+      document.getElementById('section-reg-cropper').classList.remove('hidden');
+      if (regCropperInstance) regCropperInstance.destroy();
+      setTimeout(() => { img.style.opacity = '1'; regCropperInstance = new Cropper(img, { viewMode: 1, dragMode: 'move', autoCropArea: 0.9, guides: true, center: true, highlight: false }); }, 100);
+    }; reader.readAsDataURL(file); input.value = ""; 
+  }
+
+  function cancelRegCrop() { if (regCropperInstance) { regCropperInstance.destroy(); regCropperInstance = null; } document.getElementById('section-reg-cropper').classList.add('hidden'); }
+  function confirmRegCrop() { if (!regCropperInstance) return; regCompressedBase64 = regCropperInstance.getCroppedCanvas({ maxWidth: 1000, maxHeight: 1000 }).toDataURL('image/jpeg', 0.8); cancelRegCrop(); recognizeAndSaveRegCard(); }
+
+  async function recognizeAndSaveRegCard() {
+    showToast("AI 辨識中...", false); document.getElementById('reg-step-2').classList.add('pointer-events-none', 'opacity-50');
+    try {
+      const data = await fetchAPI('recognizeCard', { base64Image: regCompressedBase64, Birthday: regStep1Data.birthday });
+      const payload = { base64Image: regCompressedBase64, userId: userProfile.userId, Name: regStep1Data.name, EnglishName: data.EnglishName || '', Title: data.Title || '', Department: data.Department || '', CompanyName: data.CompanyName || '', TaxID: data.TaxID || '', Mobile: regStep1Data.phone, Tel: data.Tel || '', Ext: data.Ext || '', Fax: data.Fax || '', Address: data.Address || regStep1Data.address || '', Email: data.Email || '', Website: data.Website || '', SocialMedia: data.SocialMedia || '', Slogan: data.Slogan || '', Notes: '註冊自動建檔', Birthday: regStep1Data.birthday || '', Personality: data.Personality || '', Hobbies: data.Hobbies || '', Wealth: data.Wealth || '', Health: data.Health || '', Career: data.Career || '' };
+      await fetchAPI('saveCard', payload); showToast("名片建檔成功！"); finishRegistration();
+    } catch(err) { finishRegistration(); }
+  }
+
+  function finishRegistration() { isRegistered = true; registeredInfo = regStep1Data; document.getElementById('bottom-nav-user').classList.remove('hidden'); switchView('user-activities'); }
+
+  // --- 活動探索 ---
+  async function reloadActivities() { document.getElementById('btn-refresh-activities').classList.add('opacity-50'); await loadUserActivities(); document.getElementById('btn-refresh-activities').classList.remove('opacity-50'); }
   async function loadUserActivities() {
     const container = document.getElementById('user-activities-container');
-    const data = await fetchAPI('getPublicActivities');
-    globalPublicActivities = data || [];
-    
-    if (globalPublicActivities.length === 0) { container.innerHTML = '<div class="col-span-2 text-center py-16 text-slate-400">目前暫無開放的活動</div>'; return; }
-    
-    container.innerHTML = globalPublicActivities.map((act, index) => {
-      const bgImg = act.imageUrl || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80';
-      const safeName = act.name.replace(/'/g, "\\'");
-      return `
-      <div onclick="openActivityDetailByName('${safeName}')" class="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm flex flex-col h-full cursor-pointer active:scale-[0.98] transition-transform animate-in fade-in zoom-in-95 hover:shadow-md" style="animation-delay: ${index*50}ms">
-        <div class="relative w-full aspect-[4/3] shrink-0 bg-slate-100">
-          <img src="${bgImg}" class="w-full h-full object-cover">
-          <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-          <div class="absolute top-2 left-2 flex gap-1">
-            <span class="bg-primary text-white text-[10px] px-1.5 py-0.5 rounded shadow-sm">${act.type}</span>
-            <span class="bg-white/95 text-slate-700 text-[10px] px-1.5 py-0.5 rounded shadow-sm">${act.feeType === '收費' ? 'NT$ '+act.price : '免費'}</span>
+    container.innerHTML = '<div class="col-span-2 text-center py-10 text-slate-400">讀取中...</div>';
+    const data = await fetchAPI('getPublicActivities'); globalPublicActivities = data || [];
+    if (!globalPublicActivities.length) return container.innerHTML = '<div class="col-span-2 text-center py-10 text-slate-400">目前無開放活動</div>'; 
+    renderActivityList(globalPublicActivities, 'user');
+  }
+
+  function renderActivityList(data, mode) {
+    const list = document.getElementById(mode === 'user' ? 'user-activities-container' : 'admin-activity-list-container');
+    if (!data.length) return list.innerHTML = `<div class="${mode==='user'?'col-span-2':''} text-center py-10 text-slate-400">無活動</div>`;
+    let html = mode === 'admin' ? '<div class="native-list">' : '';
+    data.forEach((a, i) => {
+      const safeName = a.name.replace(/'/g, "\\'");
+      if (mode === 'user') {
+        const bgImg = a.imageUrl || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80';
+        html += `
+        <div class="bg-white rounded-xl overflow-hidden border border-slate-200 flex flex-col h-full cursor-pointer active:bg-slate-50 transition-colors" onclick="openActivityDetailByName('${safeName}')">
+          <div class="relative w-full aspect-video bg-slate-100 shrink-0"><img src="${bgImg}" class="w-full h-full object-cover"><div class="absolute inset-0 bg-black/10"></div></div>
+          <div class="p-3 flex flex-col flex-1">
+            <span class="text-[10px] text-primary font-bold mb-1">${a.type} · ${a.feeType==='收費'?'NT$'+a.price:'免費'}</span>
+            <h3 class="text-[14px] font-bold text-text-main leading-snug line-clamp-2">${a.name}</h3>
+            <p class="text-[11px] text-text-muted mt-auto pt-2">${formatTimeShort(a.startTime)}</p>
           </div>
-        </div>
-        <div class="p-3 flex flex-col flex-1 bg-white">
-          <p class="text-[10px] text-primary flex items-center gap-1 mb-1">
-            <span class="material-symbols-outlined text-[12px]">calendar_today</span>
-            ${formatTimeShort(act.startTime)}
-          </p>
-          <h3 class="text-[14px] text-slate-800 leading-snug line-clamp-2 mb-3 flex-1">${act.name}</h3>
-          <div class="flex gap-2 mt-auto">
-            <button onclick="event.stopPropagation(); openActivityDetailByName('${safeName}')" class="flex-[1] py-1.5 bg-slate-50 text-slate-600 rounded text-[12px] hover:bg-slate-100 transition-colors border border-slate-200">
-              說明
-            </button>
-            <button onclick="event.stopPropagation(); userJoinActivity(this, '${safeName}', '${act.feeType}', '${act.price}')" class="flex-[1.5] py-1.5 bg-primary text-white rounded text-[12px] hover:bg-blue-700 transition-colors shadow-sm">
-              報名
-            </button>
+        </div>`;
+      } else {
+        html += `
+        <div class="native-item active:bg-slate-50 transition-colors cursor-pointer" onclick="openAdminRegistrants('${safeName}')">
+          <div class="flex justify-between items-center mb-1">
+            <h3 class="text-[16px] font-bold text-text-main line-clamp-1 flex-1 pr-2">${a.name}</h3>
+            <span class="text-[13px] font-bold text-slate-400 shrink-0">${a.total} 人</span>
           </div>
-        </div>
-      </div>`;
-    }).join('');
+          <div class="flex justify-between items-center">
+            <span class="text-[12px] text-slate-500">${a.type} · <span class="${a.status==='上架'?'text-emerald-500':'text-slate-400'}">${a.status}</span></span>
+            <span class="text-[12px] text-emerald-600">到 ${a.attended}</span>
+          </div>
+        </div>`;
+      }
+    });
+    html += mode === 'admin' ? '</div>' : '';
+    list.innerHTML = html;
   }
 
   function openActivityDetailByName(name) {
-    const act = globalPublicActivities.find(a => a.name === name);
-    if (!act) return;
-
+    const act = globalPublicActivities.find(a => a.name === name); if (!act) return;
     const imgEl = document.getElementById('detail-modal-image');
-    const noImgEl = document.getElementById('detail-modal-no-image');
-    const overlay = document.getElementById('detail-modal-image-overlay');
-    if (act.imageUrl) {
-      imgEl.src = act.imageUrl;
-      imgEl.classList.remove('hidden');
-      noImgEl.classList.add('hidden');
-      overlay.classList.remove('hidden');
-    } else {
-      imgEl.src = '';
-      imgEl.classList.add('hidden');
-      noImgEl.classList.remove('hidden');
-      overlay.classList.add('hidden');
-    }
-
+    if (act.imageUrl) { imgEl.src = act.imageUrl; imgEl.classList.remove('hidden'); document.getElementById('detail-modal-no-image').classList.add('hidden'); } 
+    else { imgEl.src = ''; imgEl.classList.add('hidden'); document.getElementById('detail-modal-no-image').classList.remove('hidden'); }
     document.getElementById('detail-modal-type').innerText = act.type;
-    const feeEl = document.getElementById('detail-modal-fee');
-    feeEl.innerText = act.feeType === '收費' ? `NT$ ${act.price}` : '免費';
-    feeEl.className = `text-[11px] font-bold px-2 py-0.5 rounded ${act.feeType === '收費' ? 'bg-orange-50 text-orange-600' : 'bg-emerald-50 text-emerald-600'}`;
+    document.getElementById('detail-modal-fee').innerText = act.feeType === '收費' ? `NT$ ${act.price}` : '免費';
+    document.getElementById('detail-modal-fee').className = `text-[11px] font-bold px-2 py-0.5 rounded ${act.feeType === '收費' ? 'bg-orange-50 text-orange-600' : 'bg-emerald-50 text-emerald-600'}`;
     document.getElementById('detail-modal-title').innerText = act.name;
-
-    document.getElementById('detail-modal-start').innerText = act.startTime ? formatTime(act.startTime) : '未指定時間';
-    const endContainer = document.getElementById('detail-modal-end-container');
-    if (act.endTime) {
-      document.getElementById('detail-modal-end').innerText = formatTime(act.endTime);
-      endContainer.classList.remove('hidden');
-    } else {
-      endContainer.classList.add('hidden');
-    }
-
-    document.getElementById('detail-modal-desc').innerText = act.description || '主辦單位尚未提供詳細活動說明。';
-
-    const joinBtn = document.getElementById('detail-modal-join-btn');
-    joinBtn.onclick = async function() {
-      closeActivityDetail(); 
-      await userJoinActivity(this, act.name, act.feeType, act.price);
-    };
-
+    document.getElementById('detail-modal-start').innerText = formatTime(act.startTime);
+    document.getElementById('detail-modal-desc').innerText = act.description || '無詳細說明';
+    document.getElementById('detail-modal-join-btn').onclick = async function() { closeActivityDetail(); await userJoinActivity(this, act.name, act.feeType, act.price); };
     document.getElementById('activity-detail-modal').classList.remove('hidden');
   }
-
-  function closeActivityDetail() {
-    document.getElementById('activity-detail-modal').classList.add('hidden');
-  }
+  function closeActivityDetail() { document.getElementById('activity-detail-modal').classList.add('hidden'); }
 
   async function userJoinActivity(btn, name, feeType, price) {
-    if (isProcessing) return;
-    if (!confirm(`確定報名「${name}」？`)) return;
-    isProcessing = true; 
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[16px]">refresh</span>';
-    btn.classList.add('btn-disabled');
+    if (isProcessing) return; if (!confirm(`確定報名「${name}」？`)) return; isProcessing = true;
     try {
       await fetchAPI('joinActivity', { userId: userProfile.userId, activityName: name });
-      if (feeType === '收費') showModal("報名成功", `此為收費活動，請完成匯款 \nNT$ ${price} 後，至「報名查詢」填寫帳號後五碼。`, "history");
-      else showModal("報名成功", `您已成功報名！期待現場見到您。`, "activities");
-    } catch(e) {
-      console.error(e);
-    } finally { 
-      isProcessing = false; 
-      btn.classList.remove('btn-disabled'); 
-      btn.innerHTML = originalText;
-    }
+      if (feeType === '收費') showModal("報名成功", `此為收費活動，請至「報名紀錄」填寫後五碼。`, "history"); else showModal("報名成功", `您已成功報名！`, "activities");
+    } catch(e) {} finally { isProcessing = false; }
   }
 
-  // ⭐ 模擬 LINE OA 資訊流的「報名紀錄」
+  // --- 報名紀錄 (原生 Flat List) ---
   async function loadUserHistory() {
     const container = document.getElementById('user-history-container');
-    container.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>';
+    container.innerHTML = '<div class="text-center py-10"><span class="text-slate-400">讀取中...</span></div>';
     const history = await fetchAPI('getUserHistory', { userId: userProfile.userId });
-    if (!history || history.length === 0) { 
-      container.innerHTML = '<div class="text-center py-10 text-slate-400">尚無報名紀錄</div>'; 
-      return; 
-    }
-    
-    let html = '<div class="bg-white border-y border-slate-200 divide-y divide-slate-100">';
+    if (!history.length) return container.innerHTML = '<div class="text-center py-10 text-slate-400">無紀錄</div>'; 
+    let html = '<div class="native-list">';
     history.forEach(item => {
-      let payStatusColor = item.payStatus === '已完款' ? 'text-emerald-600' : (item.payStatus === '匯款審核中' ? 'text-amber-500' : 'text-orange-500');
-      const isPendingAudit = item.payStatus === '匯款審核中';
-      const safeName = item.name.replace(/'/g, "\\'");
-      const isCanceled = item.regStatus === '已取消';
-      
+      const isCanceled = item.regStatus === '已取消'; const safeName = item.name.replace(/'/g, "\\'");
+      let pC = item.payStatus==='已完款'?'text-emerald-600':(item.payStatus==='匯款審核中'?'text-amber-500':'text-orange-500');
       html += `
-      <div class="flex flex-col p-4 bg-white ${isCanceled ? 'opacity-50 grayscale' : ''}">
+      <div class="px-4 py-4 bg-white ${isCanceled ? 'opacity-50 grayscale' : ''}">
         <div class="flex justify-between items-start mb-2">
-           <div class="flex flex-col">
-              <span class="text-[15px] text-slate-800">${item.name}</span>
-              <span class="text-[12px] text-slate-500 mt-0.5">${item.startTime ? item.startTime.substring(0,10) : '未定'}</span>
+           <div class="flex flex-col flex-1 pr-2">
+              <span class="text-[15px] font-bold text-text-main line-clamp-1">${item.name}</span>
+              <span class="text-[12px] text-text-muted mt-0.5">${formatTimeShort(item.startTime)}</span>
            </div>
-           <div class="flex flex-col items-end gap-1 shrink-0">
-              <span class="text-[12px] ${item.checkedIn ? 'text-emerald-600' : 'text-slate-500'}">${item.checkedIn ? '已簽到' : '待簽到'}</span>
-              ${item.isPaidAct && !isCanceled ? `<span class="text-[12px] ${payStatusColor}">${item.payStatus}</span>` : ''}
+           <div class="flex flex-col items-end gap-1 shrink-0 text-[12px]">
+              <span class="${item.checkedIn ? 'text-emerald-600 font-bold' : 'text-slate-400'}">${item.checkedIn ? '已簽到' : '待簽到'}</span>
+              ${item.isPaidAct && !isCanceled ? `<span class="${pC}">${item.payStatus}</span>` : ''}
            </div>
         </div>
         ${item.isPaidAct && item.payStatus === '未繳費' && !isCanceled ? `
-          <div class="flex items-center gap-2 mt-2">
-             <input type="text" id="pay-${item.name.replace(/\s+/g,'')}" class="flex-1 bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-[13px] outline-none" placeholder="輸入末五碼" maxlength="5">
-             <button onclick="submitLast5('${safeName}', '${item.name.replace(/\s+/g,'')}')" class="bg-slate-800 text-white px-4 py-1.5 rounded text-[13px] active:bg-slate-700">回報</button>
-          </div>
-        ` : ''}
-        ${!isCanceled ? `
-          <div class="flex justify-end mt-1">
-             <button onclick="userCancelRegistration('${safeName}')" class="text-[12px] text-slate-400 underline">取消報名</button>
-          </div>
-        ` : ''}
+          <div class="flex items-center gap-2 mt-3 bg-slate-50 p-1.5 rounded-lg border border-slate-100">
+             <input type="text" id="pay-${item.name.replace(/\s+/g,'')}" class="flex-1 bg-transparent border-none text-[13px] px-2 outline-none" placeholder="輸入末五碼" maxlength="5">
+             <button onclick="submitLast5('${safeName}', '${item.name.replace(/\s+/g,'')}')" class="bg-primary text-white px-3 py-1.5 rounded text-[12px] font-bold">回報</button>
+          </div>` : ''}
+        ${!isCanceled ? `<div class="flex justify-end mt-2"><button onclick="userCancelRegistration('${safeName}')" class="text-[12px] text-slate-400 underline">取消報名</button></div>` : ''}
       </div>`;
     });
-    html += '</div>';
-    container.innerHTML = html;
+    container.innerHTML = html + '</div>';
   }
 
-  async function submitLast5(actName, inputId) {
-    const val = document.getElementById(`pay-${inputId}`).value;
-    if(!val || val.length < 4) return showToast("請輸入正確後五碼", true);
-    try {
-      showToast("回報中...", false);
-      await fetchAPI('updateLast5Digits', { userId: userProfile.userId, activityName: actName, last5Digits: val });
-      showToast("回報成功");
-      loadUserHistory();
-    } catch(e) { showToast("回報失敗", true); }
-  }
+  async function submitLast5(actName, inputId) { const val = document.getElementById(`pay-${inputId}`).value; if(!val || val.length < 4) return; await fetchAPI('updateLast5Digits', { userId: userProfile.userId, activityName: actName, last5Digits: val }); showToast("回報成功"); loadUserHistory(); }
+  async function userCancelRegistration(actName) { if(!confirm(`確定要取消？`)) return; await fetchAPI('cancelRegistration', { userId: userProfile.userId, activityName: actName }); showToast("已取消"); loadUserHistory(); }
+  function populateUserProfile() { if(registeredInfo) { ['name','gender','phone','industry','birthday','region','address'].forEach(k => { if(document.getElementById('edit-'+k)) document.getElementById('edit-'+k).value=registeredInfo[k]||''; }); } }
+  async function submitProfileUpdate() { const p = { userId: userProfile.userId, name: document.getElementById('edit-name').value.trim() || userProfile.displayName, gender: document.getElementById('edit-gender').value, phone: document.getElementById('edit-phone').value.trim(), industry: document.getElementById('edit-industry').value.trim(), birthday: document.getElementById('edit-birthday').value, region: document.getElementById('edit-region').value.trim(), address: document.getElementById('edit-address').value.trim() }; await fetchAPI('updateUser', p); registeredInfo = p; showToast("儲存成功"); }
 
-  async function cancelUserReg(actName) {
-    if(!confirm(`確定要取消報名「${actName}」？`)) return;
-    try {
-      await fetchAPI('cancelRegistration', { userId: userProfile.userId, activityName: actName });
-      showToast("已取消");
-      loadUserHistory();
-    } catch(e) { showToast("取消失敗", true); }
-  }
-
-  function populateUserProfile() { 
-    if(registeredInfo) { 
-        document.getElementById('edit-name').value=registeredInfo.name || ''; 
-        document.getElementById('edit-gender').value=registeredInfo.gender || '男'; 
-        document.getElementById('edit-phone').value=registeredInfo.phone || ''; 
-        document.getElementById('edit-industry').value=registeredInfo.industry || ''; 
-    } 
-  }
-
-  async function submitProfileUpdate() { 
-    const p = { 
-        userId: userProfile.userId, 
-        name: document.getElementById('edit-name').value.trim() || userProfile.displayName, 
-        gender: document.getElementById('edit-gender').value, 
-        phone: document.getElementById('edit-phone').value.trim(), 
-        industry: document.getElementById('edit-industry').value.trim()
-    }; 
-    await fetchAPI('updateUser', p); 
-    registeredInfo = p; 
-    showToast("資料已儲存"); 
-  }
-
-  // ⭐ 模擬 LINE OA 資訊流的「管理核銷清單」
-  async function loadAdminActivities() { 
-    const list = document.getElementById('admin-activity-list-container');
-    list.innerHTML = `<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>`;
-    try {
-      currentActivities = await fetchAPI('getActivityDashboard');
-      if (!currentActivities.length) {
-          list.innerHTML = `<div class="text-center py-10 text-slate-400">無活動</div>`;
-          return;
-      }
-      
-      let html = `<div class="bg-white border-y border-slate-200 divide-y divide-slate-100">`;
-      currentActivities.forEach(a => {
-        const safeName = a.name.replace(/'/g, "\\'");
-        html += `
-        <div class="px-4 py-3 flex flex-col gap-2 bg-white">
-          <div class="flex justify-between items-start">
-            <div class="flex flex-col">
-              <span class="text-[15px] text-slate-800">${a.name}</span>
-              <span class="text-[12px] text-slate-500 mt-0.5">${a.type} · ${a.status}</span>
-            </div>
-            <div class="flex flex-col items-end text-[12px] text-slate-500">
-              <span>報名 ${a.total}</span>
-              <span class="text-emerald-600">實到 ${a.attended}</span>
-            </div>
-          </div>
-          <div class="flex gap-2 pt-1.5">
-            <button onclick="toggleActivityStatus('${safeName}')" class="flex-1 py-1.5 bg-slate-100 text-slate-600 rounded text-[13px] active:bg-slate-200 transition-colors">${a.status==='上架'?'設為下架':'設為上架'}</button>
-            <button onclick="openAdminRegistrants('${safeName}')" class="flex-1 py-1.5 bg-slate-800 text-white rounded text-[13px] active:bg-slate-700 transition-colors">名單核銷</button>
-          </div>
-        </div>`;
-      });
-      html += `</div>`;
-      list.innerHTML = html;
-    } catch(e) { list.innerHTML = `<p class="text-center text-error">載入失敗</p>`; }
-  }
-
-  async function toggleActivityStatus(actName) {
-    try {
-      await fetchAPI('toggleActivityStatus', { activityName: actName });
-      loadAdminActivities();
-    } catch(e) { showToast("更新失敗", true); }
-  }
-
+  // --- 管理員：活動與核銷 (原生 Flat List) ---
+  async function loadAdminActivities() { document.getElementById('admin-activity-list-container').innerHTML = '<div class="text-center py-10"><span class="text-slate-400">讀取中...</span></div>'; currentActivities = await fetchAPI('getActivityDashboard'); renderActivityList(currentActivities, 'admin'); }
   async function openAdminRegistrants(actName) {
-    activeActivityName = actName;
-    document.getElementById('admin-reg-title').innerText = actName;
-    document.getElementById('admin-reg-list').innerHTML = `<div class="flex justify-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>`;
-    document.getElementById('admin-registrants-modal').classList.remove('hidden');
-    
-    try {
-      currentRegistrants = await fetchAPI('getRegistrants', { activityName: actName });
-      renderAdminRegList(currentRegistrants);
-    } catch(e) { document.getElementById('admin-reg-list').innerHTML = `<p class="text-center text-red-400">讀取失敗</p>`; }
+    activeActivityName = actName; document.getElementById('admin-reg-title').innerText = actName; document.getElementById('admin-reg-list').innerHTML = '<div class="text-center py-10"><span class="text-slate-400">讀取中...</span></div>'; document.getElementById('admin-registrants-modal').classList.remove('hidden');
+    try { currentRegistrants = await fetchAPI('getRegistrants', { activityName: actName }); renderAdminRegList(currentRegistrants); } catch(e) { document.getElementById('admin-reg-list').innerHTML = `<p class="text-center text-slate-400">讀取失敗</p>`; }
   }
+  function closeAdminRegistrants() { document.getElementById('admin-registrants-modal').classList.add('hidden'); stopScanner(); document.getElementById('admin-search-reg').value=''; }
+  function filterAdminReg() { const term = document.getElementById('admin-search-reg').value.toLowerCase(); renderAdminRegList(currentRegistrants.filter(r => (r['姓名']||'').toLowerCase().includes(term) || String(r['電話']||'').includes(term))); }
 
-  function closeAdminRegistrants() { document.getElementById('admin-registrants-modal').classList.add('hidden'); stopScanner(); }
-
-  function filterAdminReg() {
-    const term = document.getElementById('admin-search-reg').value.toLowerCase();
-    const filtered = currentRegistrants.filter(r => (r['姓名']||'').toLowerCase().includes(term) || String(r['電話']||'').includes(term));
-    renderAdminRegList(filtered);
-  }
-
-  // ⭐ 模擬 LINE OA 資訊流的「核銷名單列表」
   function renderAdminRegList(data) {
     const list = document.getElementById('admin-reg-list');
-    if(!data.length) {
-      list.innerHTML = `<div class="text-center py-10 text-slate-400">尚無名單</div>`;
-      return;
-    }
-    
-    let html = '<div class="bg-white border-y border-slate-200 divide-y divide-slate-100">';
+    if(!data.length) return list.innerHTML = `<div class="text-center py-10 text-slate-400">無名單</div>`;
+    let html = '<div class="native-list">';
     data.forEach(r => {
-      const isCanceled = r.regStatus === '已取消';
-      const cIn = r.checkedIn;
-      
+      const isCanceled = r.regStatus === '已取消'; const cIn = r.checkedIn;
       html += `
-      <div class="flex items-center justify-between px-4 py-3 bg-white ${isCanceled ? 'opacity-50' : ''}">
-        <div class="flex-1 flex flex-col">
-          <div class="flex items-center gap-2">
-            <span class="text-[15px] text-slate-800 leading-none">${r['姓名']}</span>
+      <div class="native-item ${isCanceled ? 'opacity-40 grayscale' : ''}">
+        <div class="flex items-center justify-between mb-1.5">
+          <div class="flex items-center gap-1 flex-1 overflow-hidden pr-2">
+            <span class="text-[15px] font-bold text-text-main truncate">${r['姓名']}</span>
             ${cIn ? '<span class="material-symbols-outlined text-[16px] text-emerald-500 icon-filled">check_circle</span>' : ''}
-            ${isCanceled ? '<span class="text-[10px] bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded">已取消</span>' : ''}
+            ${isCanceled ? '<span class="text-[10px] bg-slate-100 text-slate-400 px-1 rounded">已取消</span>' : ''}
           </div>
-          <span class="text-[12px] text-slate-500 mt-1 leading-none">${r['電話'] || '無電話'}</span>
+          <button ${isCanceled ? 'disabled' : ''} onclick="toggleCheckIn(${r.rowId}, ${cIn})" class="shrink-0 px-3 py-1 rounded text-[12px] font-bold transition-colors ${cIn ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}">${cIn ? '已簽到' : '手動簽到'}</button>
         </div>
-        <div class="flex flex-col items-end gap-1.5 shrink-0">
-          <button ${isCanceled ? 'disabled' : ''} onclick="toggleCheckIn(${r.rowId}, ${cIn})" class="px-3 py-1 rounded border transition-all text-[12px] ${cIn ? 'border-emerald-500 text-emerald-500 bg-emerald-50' : 'border-slate-300 text-slate-600 bg-white active:bg-slate-50'}">
-            ${cIn ? '已簽到' : '手動簽到'}
-          </button>
-          <select onchange="updatePayStatus(${r.rowId}, this.value)" class="text-[12px] border-none bg-transparent text-right p-0 outline-none w-auto ${r.payStatus==='已繳費' || r.payStatus==='已完款' ? 'text-emerald-600' : (r.payStatus==='匯款審核中'?'text-amber-500':'text-red-500')}" ${isCanceled ? 'disabled' : ''} dir="rtl">
-             <option value="未繳費" ${r.payStatus==='未繳費'?'selected':''}>未繳費</option>
-             <option value="匯款審核中" ${r.payStatus==='匯款審核中'?'selected':''}>審核中</option>
-             <option value="已完款" ${r.payStatus==='已完款'?'selected':''}>已完款</option>
+        <div class="flex justify-between items-center">
+          <span class="text-[12px] text-slate-400">${r['電話'] || '無電話'}</span>
+          <select onchange="updatePayStatus(${r.rowId}, this.value)" class="text-[12px] border-none bg-transparent text-right p-0 pr-4 outline-none w-auto ${r.payStatus==='已繳費'||r.payStatus==='已完款'?'text-emerald-600':(r.payStatus==='匯款審核中'?'text-amber-500':'text-slate-400')}" ${isCanceled ? 'disabled' : ''} dir="rtl">
+             <option value="未繳費" ${r.payStatus==='未繳費'?'selected':''}>未繳費</option><option value="匯款審核中" ${r.payStatus==='匯款審核中'?'selected':''}>審核中</option><option value="已完款" ${r.payStatus==='已完款'?'selected':''}>已完款</option>
           </select>
         </div>
       </div>`;
     });
-    html += '</div>';
-    list.innerHTML = html;
+    list.innerHTML = html + '</div>';
   }
 
-  async function toggleCheckIn(rowId, currentStatus) {
-    try {
-      await fetchAPI('toggleStatus', { activityName: activeActivityName, rowId: rowId, currentStatus: currentStatus });
-      const reg = currentRegistrants.find(r => r.rowId === rowId);
-      if(reg) reg.checkedIn = !currentStatus;
-      filterAdminReg();
-      if(!currentStatus && navigator.vibrate) navigator.vibrate([100, 50, 100]); 
-    } catch(e) { showToast("簽到失敗", true); }
-  }
+  async function toggleCheckIn(rowId, currentStatus) { try { await fetchAPI('toggleStatus', { activityName: activeActivityName, rowId: rowId, currentStatus: currentStatus }); const reg = currentRegistrants.find(r => r.rowId === rowId); if(reg) reg.checkedIn = !currentStatus; filterAdminReg(); } catch(e) { showToast("錯誤", true); } }
+  async function updatePayStatus(rowId, val) { try { await fetchAPI('updateCellStatus', { activityName: activeActivityName, rowId: rowId, colName: '繳費', val: val }); const reg = currentRegistrants.find(r => r.rowId === rowId); if(reg) reg.payStatus = val; } catch(e) {} }
+  async function submitWalkIn() { const name = document.getElementById('f-walkin-name').value; if(!name) return; await fetchAPI('addWalkIn', { activityName: activeActivityName, name: name }); document.getElementById('f-walkin-name').value = ''; document.getElementById('walkin-modal').classList.add('hidden'); openAdminRegistrants(activeActivityName); }
 
-  async function updatePayStatus(rowId, val) {
-    try {
-      await fetchAPI('updateCellStatus', { activityName: activeActivityName, rowId: rowId, colName: '繳費', val: val });
-      const reg = currentRegistrants.find(r => r.rowId === rowId);
-      if(reg) reg.payStatus = val;
-    } catch(e) { showToast("更新失敗", true); }
-  }
-
-  async function submitWalkIn() {
-    const name = document.getElementById('f-walkin-name').value;
-    if(!name) return showToast("請輸入姓名", true);
-    try {
-      await fetchAPI('addWalkIn', { activityName: activeActivityName, name: name });
-      document.getElementById('f-walkin-name').value = '';
-      document.getElementById('walkin-modal').classList.add('hidden');
-      openAdminRegistrants(activeActivityName); 
-    } catch(e) { showToast("新增失敗", true); }
-  }
-
-  function startScanner() {
-    if(html5QrcodeScanner) return;
+  // --- 掃碼器懶加載 ---
+  async function startScanner() {
+    if (html5QrcodeScanner) return;
+    if (!window.Html5Qrcode) {
+       showToast("載入掃描器...", false);
+       await loadScript("https://unpkg.com/html5-qrcode");
+    }
+    document.getElementById('qr-scanner-modal').classList.remove('hidden');
     html5QrcodeScanner = new Html5Qrcode("qr-reader");
     html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
-      async (decodedText) => {
-        stopScanner();
-        try {
-          const uRes = await fetchAPI('checkUser', { userId: decodedText });
-          if(!uRes.isRegistered) return showToast("❌ 非本系統會員", true);
-          const name = uRes.info.name;
-          const reg = currentRegistrants.find(r => r['姓名'] === name);
-          if(reg) {
-            if(reg.checkedIn) return showToast(`⚠️ ${name} 已簽到`);
-            await toggleCheckIn(reg.rowId, false);
-            showToast(`✅ ${name} 簽到成功！`);
-          } else {
-             if(confirm(`找不到 ${name}，是否現場報名並簽到？`)) {
-                await fetchAPI('addWalkIn', { activityName: activeActivityName, name: name });
-                openAdminRegistrants(activeActivityName);
-             }
-          }
-        } catch(e) { showToast("查驗失敗", true); }
-      },
-      (errorMessage) => { }
-    ).catch(err => { showToast("無法開啟相機", true); stopScanner(); });
+      async (decodedText) => { stopScanner(); try { const uRes = await fetchAPI('checkUser', { userId: decodedText }); if(!uRes.isRegistered) return showToast("非會員", true); const name = uRes.info.name; const reg = currentRegistrants.find(r => r['姓名'] === name); if(reg) { if(!reg.checkedIn) { await toggleCheckIn(reg.rowId, false); showToast(`${name} 簽到成功`); } else showToast("已簽到過"); } else { if(confirm(`未報名，是否現場報名簽到？`)) { await fetchAPI('addWalkIn', { activityName: activeActivityName, name: name }); openAdminRegistrants(activeActivityName); } } } catch(e) {} },
+      () => {}
+    ).catch(err => { showToast("相機錯誤", true); stopScanner(); });
   }
+  function stopScanner() { if(html5QrcodeScanner) { html5QrcodeScanner.stop().then(() => { html5QrcodeScanner.clear(); html5QrcodeScanner = null; }); } document.getElementById('qr-scanner-modal').classList.add('hidden'); }
 
-  function stopScanner() {
-    if(html5QrcodeScanner) {
-      html5QrcodeScanner.stop().then(() => { html5QrcodeScanner.clear(); html5QrcodeScanner = null; }).catch(e => console.log(e));
-    }
-    document.getElementById('qr-scanner-modal').classList.add('hidden');
-  }
-
-  // ⭐ 模擬 LINE OA 資訊流的「會員 CRM」
-  async function loadCrmData() {
-    const list = document.getElementById('admin-crm-list-container');
-    list.innerHTML = `<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>`;
-    try {
-      globalCrmData = await fetchAPI('getAllCrmData');
-      renderCrmList(globalCrmData);
-    } catch(e) { list.innerHTML = `<p class="text-center text-error">載入失敗</p>`; }
-  }
-
+  // --- CRM 與設定 ---
+  async function loadCrmData() { document.getElementById('admin-crm-list-container').innerHTML = '<div class="text-center py-10"><span class="text-slate-400">讀取中...</span></div>'; globalCrmData = await fetchAPI('getAllCrmData'); renderCrmList(globalCrmData); }
+  function filterCrmList() { const term = document.getElementById('crm-search-input').value.toLowerCase(); renderCrmList(globalCrmData.filter(u => u.name.toLowerCase().includes(term))); }
   function renderCrmList(data) {
     const list = document.getElementById('admin-crm-list-container');
-    if(!data.length) return list.innerHTML = `<p class="text-center text-slate-400 mt-10">找不到結果</p>`;
-    
-    let html = `<div class="bg-white border-y border-slate-200 divide-y divide-slate-100">`;
-    data.forEach((r, i) => {
-       const medal = i===0?'🥇':(i===1?'🥈':(i===2?'🥉':`<span class="text-slate-400 text-[12px] w-5 inline-block text-center">${i+1}</span>`));
-       html += `<div class="px-4 py-3 flex justify-between items-center bg-white">
-          <div class="flex items-center gap-3"><span class="text-lg">${medal}</span><span class="text-[15px] text-slate-800">${r.name}</span></div>
-          <div class="text-slate-500 text-[13px]">${r.attended} 次</div>
-       </div>`;
-    });
-    html += `</div>`;
-    list.innerHTML = html;
+    if(!data.length) return list.innerHTML = `<p class="text-center text-slate-400 py-10">無資料</p>`;
+    let html = `<div class="native-list">`;
+    data.forEach((r, i) => { const medal = i===0?'🥇':(i===1?'🥈':(i===2?'🥉':`<span class="text-slate-400 text-[11px] w-5 text-center inline-block">${i+1}</span>`)); html += `<div class="native-item flex-row justify-between"><div class="flex items-center gap-2"><span class="text-lg w-6">${medal}</span><span class="font-bold text-[15px] text-text-main">${r.name}</span></div><div class="text-slate-500 text-[13px] font-bold">${r.attended} 次</div></div>`; });
+    list.innerHTML = html + `</div>`;
   }
 
-  function filterCrmList() {
-    const term = document.getElementById('crm-search-input').value.toLowerCase();
-    const filtered = globalCrmData.filter(u => u.name.toLowerCase().includes(term));
-    renderCrmList(filtered);
-  }
-
-  async function autoFetchTgChatId() { const token = document.getElementById('set-tg-token').value.trim(); if (!token) return showToast("⚠️ 請先輸入 Token", true); const btn = document.getElementById('btn-fetch-tg'); btn.disabled = true; try { const chatId = await fetchAPI('getTgChatId', { token }); document.getElementById('set-tg-chat').value = chatId; showToast("獲取成功"); } catch(err) { showToast(err.message, true); } btn.disabled = false; }
   async function loadAdminSettings() { const s = await fetchAPI('getSettings'); document.getElementById('set-tg-token').value = s.TG_BOT_TOKEN; document.getElementById('set-tg-chat').value = s.TG_CHAT_ID; document.getElementById('set-line-link').value = s.LINE_LINK; }
-  async function submitSettings() { if (isProcessing) return; isProcessing = true; try { await fetchAPI('saveSettings', { TG_BOT_TOKEN: document.getElementById('set-tg-token').value.trim(), TG_CHAT_ID: document.getElementById('set-tg-chat').value.trim(), LINE_LINK: document.getElementById('set-line-link').value.trim() }); showToast("設定已儲存"); } catch(e) { console.error(e); } finally { isProcessing = false; } }
+  async function autoFetchTgChatId() { const token = document.getElementById('set-tg-token').value; if(!token) return; document.getElementById('set-tg-chat').value = "獲取中..."; try { document.getElementById('set-tg-chat').value = await fetchAPI('getTgChatId', { token }); } catch(e) { document.getElementById('set-tg-chat').value = ""; } }
+  async function submitSettings() { await fetchAPI('saveSettings', { TG_BOT_TOKEN: document.getElementById('set-tg-token').value, TG_CHAT_ID: document.getElementById('set-tg-chat').value, LINE_LINK: document.getElementById('set-line-link').value }); showToast("已儲存"); }
 
-  function showToast(m, e=false) { 
-    const t = document.getElementById('toast'); if(!t) return; 
-    t.innerHTML = m; 
-    t.className = `fixed top-14 left-1/2 -translate-x-1/2 px-5 py-2.5 rounded text-[14px] shadow-lg transition-all z-[10000] font-medium transform translate-y-0 opacity-100 ${e ? 'bg-red-500 text-white' : 'bg-slate-800 text-white'} w-max max-w-[90vw] text-center`; 
-    setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -1rem)'; }, 3000); 
-  }
-  function showModal(title, desc, target) { document.getElementById('modal-title').innerText = title; document.getElementById('modal-desc').innerHTML = desc; modalTargetView = target; document.getElementById('custom-modal').classList.remove('hidden'); }
-  function closeModalAndGo() { document.getElementById('custom-modal').classList.add('hidden'); if (modalTargetView === 'history') switchView('user-history'); else if (modalTargetView === 'activities') switchView('user-activities'); }
-  function formatTime(t) { return t ? new Date(t).toLocaleString('zh-TW', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false }) : ''; }
-  function formatTimeShort(t) { if(!t) return '未定'; const d = new Date(t); const days = ['日','一','二','三','四','五','六']; return `${d.getMonth()+1}/${d.getDate()} (${days[d.getDay()]}) ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`; }
+  // --- 建立活動 ---
+  function toggleCreateMode(m) { document.getElementById('tab-quick').className = `flex-1 py-2 rounded text-[14px] font-bold transition-all ${m==='quick'?'bg-white text-text-main shadow-sm':'text-slate-500'}`; document.getElementById('tab-detailed').className = `flex-1 py-2 rounded text-[14px] font-bold transition-all ${m==='detailed'?'bg-white text-text-main shadow-sm':'text-slate-500'}`; document.getElementById('form-quick').classList.toggle('hidden', m!=='quick'); document.getElementById('form-detailed').classList.toggle('hidden', m!=='detailed'); }
   function toggleFeeInput() { document.getElementById('detail-price').classList.toggle('hidden', document.querySelector('input[name="fee-type"]:checked').value !== '收費'); }
-  
-  function toggleCreateMode(m) { 
-      document.getElementById('tab-quick').className = `flex-1 py-2.5 rounded-lg text-[14px] font-bold transition-all ${m==='quick'?'bg-white text-slate-800 shadow-sm border border-slate-200':'text-slate-500 hover:text-slate-700'}`; 
-      document.getElementById('tab-detailed').className = `flex-1 py-2.5 rounded-lg text-[14px] font-bold transition-all ${m==='detailed'?'bg-white text-slate-800 shadow-sm border border-slate-200':'text-slate-500 hover:text-slate-700'}`; 
-      document.getElementById('form-quick').classList.toggle('hidden', m!=='quick'); 
-      document.getElementById('form-detailed').classList.toggle('hidden', m!=='detailed'); 
-  }
-  
+  function previewFile(mode) { const f = document.getElementById(`file-input-${mode}`).files[0]; if(!f) return; showToast("壓縮中...", false); const r = new FileReader(); r.onloadend = () => { const img = new Image(); img.onload = () => { let w = img.width, h = img.height, max = 500; if(w > max){h=Math.round(h*(max/w)); w=max;} const cvs = document.createElement('canvas'); cvs.width=w; cvs.height=h; const ctx=cvs.getContext('2d'); ctx.fillStyle='#FFF'; ctx.fillRect(0,0,w,h); ctx.drawImage(img,0,0,w,h); let b64=cvs.toDataURL('image/jpeg', 0.6); if(b64.length>45000) return showToast("圖片過大", true); document.getElementById(`image-preview-${mode}`).src=b64; document.getElementById(`image-preview-${mode}`).classList.remove('hidden'); document.getElementById(`preview-placeholder-${mode}`).classList.add('hidden'); document.getElementById(`in-image-url-${mode}`).value=b64; showToast("完成"); }; img.src=r.result; }; r.readAsDataURL(f); }
   async function handleCreateActivity(mode) { 
-    if(isProcessing) return; 
-    const btn = document.getElementById(mode === 'quick' ? 'btn-quick-create' : 'btn-detail-create'); 
-    isProcessing=true; btn.classList.add('btn-disabled'); 
-    let payload = { 
-      activityName: document.getElementById(mode === 'quick' ? 'quick-name' : 'detail-name').value.trim(), 
-      activityType: document.getElementById(mode === 'quick' ? 'quick-type' : 'detail-type').value, 
-      feeType: '免費', price: '', startTime: '', endTime: '', description: '', imageUrl: '', names: [], 
-      defaultIdentity: mode === 'quick' ? document.getElementById('quick-identity').value : '來賓' 
-    }; 
-    if (!payload.activityName) { isProcessing=false; btn.classList.remove('btn-disabled'); return showToast("⚠️ 活動名稱必填", true); } 
-    if (mode === 'quick') { 
-      const raw = document.getElementById('quick-names').value.trim(); 
-      if(raw) payload.names = raw.split(/[\n,，、]+/).map(n => n.replace(/^\d+[\.\s]*/, '').trim()).filter(n => n); 
-    } else { 
-      payload.feeType = document.querySelector('input[name="fee-type"]:checked').value; 
-      payload.price = document.getElementById('detail-price').value; 
-      payload.startTime = document.getElementById('detail-start').value; 
-      payload.endTime = document.getElementById('detail-end').value;
-      payload.description = document.getElementById('detail-desc').value; 
-      payload.imageUrl = document.getElementById('in-image-url-create').value; 
-    } 
-    try { 
-      await fetchAPI('bulkAddRegistrants', payload); 
-      showToast("✅ 活動已建立"); 
-      setTimeout(()=>switchView('admin-activities'), 1000); 
-    } catch(e) { showToast(e.message, true); } finally { isProcessing=false; btn.classList.remove('btn-disabled'); } 
-  }
-  
-  function previewFile(mode) { 
-    const f = document.getElementById(`file-input-${mode}`).files[0]; 
-    if(!f) return; 
-    showToast("壓縮中...", false);
-    const r = new FileReader(); 
-    r.onloadend = () => { 
-      const img = new Image(); 
-      img.onload = () => { 
-        let w = img.width, h = img.height, maxWidth = 650; 
-        if (w > maxWidth) { h = Math.round(h * (maxWidth/w)); w = maxWidth; } 
-        const cvs = document.createElement('canvas'); cvs.width = w; cvs.height = h; 
-        const ctx = cvs.getContext('2d'); ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, w, h); ctx.drawImage(img, 0, 0, w, h); 
-        let quality = 0.8, b64 = cvs.toDataURL('image/jpeg', quality); 
-        while (b64.length > 40000 && quality > 0.1) { quality -= 0.1; b64 = cvs.toDataURL('image/jpeg', quality); }
-        if (b64.length > 49000) return showToast("⚠️ 圖片過大", true);
-        document.getElementById(`image-preview-${mode}`).src = b64; 
-        document.getElementById(`image-preview-${mode}`).classList.remove('hidden'); 
-        document.getElementById(`preview-placeholder-${mode}`).classList.add('hidden'); 
-        document.getElementById(`in-image-url-${mode}`).value = b64; 
-        showToast("上傳成功");
-      }; 
-      img.src = r.result; 
-    }; 
-    r.readAsDataURL(f); 
+    if(isProcessing) return; isProcessing=true; 
+    let p = { activityName: document.getElementById(mode === 'quick' ? 'quick-name' : 'detail-name').value.trim(), activityType: document.getElementById(mode === 'quick' ? 'quick-type' : 'detail-type').value, feeType: '免費', price: '', startTime: '', endTime: '', description: '', imageUrl: '', names: [], defaultIdentity: mode === 'quick' ? document.getElementById('quick-identity').value : '來賓' }; 
+    if(!p.activityName) { isProcessing=false; return showToast("名稱必填", true); }
+    if(mode==='quick') p.names = document.getElementById('quick-names').value.split('\n').filter(n=>n.trim()); 
+    else { p.feeType = document.querySelector('input[name="fee-type"]:checked').value; p.price = document.getElementById('detail-price').value; p.startTime = document.getElementById('detail-start').value; p.endTime = document.getElementById('detail-end').value; p.description = document.getElementById('detail-desc').value; p.imageUrl = document.getElementById('in-image-url-create').value; }
+    try { await fetchAPI('bulkAddRegistrants', p); showToast("已建立"); setTimeout(()=>switchView('admin-activities'),1000); } catch(e){} finally{ isProcessing=false; }
   }
 </script>
 </body>

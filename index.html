@@ -44,21 +44,17 @@
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1.5rem); }
     
-    /* ⭐ 表單風格：移除 appearance-none，讓選單回歸原生，避免雙箭頭 */
     .input-label { @apply block text-[14px] text-slate-700 mb-1.5 font-medium tracking-wide; }
     .custom-input { @apply w-full py-2.5 px-3 bg-white border border-slate-300 rounded-xl outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all font-medium text-text-main text-[15px] shadow-sm; }
     .custom-input::placeholder { @apply text-slate-400 font-normal; }
     
-    /* ⭐ 多行輸入框專屬樣式 (仿照圖片區塊風格) */
     .textarea-block { @apply w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all text-[15px] font-medium text-text-main resize-none leading-relaxed shadow-sm; }
     .textarea-block::placeholder { @apply text-slate-400 font-normal; }
 
-    /* 按鈕風格 */
     .btn-primary { @apply w-full py-3.5 bg-primary text-white rounded-xl font-bold text-[16px] shadow-floating active:scale-[0.98] transition-all flex items-center justify-center gap-2 hover:bg-blue-700; }
     .btn-secondary { @apply w-full py-3.5 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold text-[16px] hover:bg-slate-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-sm; }
     .btn-disabled { pointer-events: none; opacity: 0.6; filter: grayscale(50%); }
     
-    /* 底部導覽列 */
     .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-slate-400 h-full; }
     .nav-btn .icon-box { @apply px-4 py-1.5 rounded-full transition-all flex items-center justify-center mb-0.5; }
     .nav-active { @apply text-primary font-bold; }
@@ -124,7 +120,6 @@
               </div>
               <div class="flex flex-col">
                 <label class="input-label">性別</label>
-                <!-- ⭐ 拔除 custom icon，全面擁抱原生下拉選單 -->
                 <select id="reg-gender" class="custom-input cursor-pointer">
                   <option value="" disabled selected>選擇性別</option>
                   <option value="男">男</option>
@@ -198,6 +193,7 @@
       </div>
       
       <div class="flex gap-2.5 overflow-x-auto hide-scrollbar px-2 pb-2" id="activity-categories"></div>
+
       <div id="user-activities-container" class="grid grid-cols-2 gap-3 px-1"></div>
     </div>
 
@@ -276,7 +272,6 @@
         <button onclick="toggleCreateMode('detailed')" id="tab-detailed" class="flex-1 py-2.5 rounded-lg text-[14px] font-bold text-slate-500 transition-all hover:text-slate-700">完整發佈</button>
       </div>
       
-      <!-- ⭐ 快速匯入模式 (修復排版) -->
       <div id="form-quick" class="space-y-5 mt-6 px-1">
         <div class="flex flex-col"><label class="input-label">活動名稱</label><input type="text" id="quick-name" class="custom-input" placeholder="輸入活動標題..."></div>
         <div class="grid grid-cols-2 gap-3">
@@ -299,7 +294,6 @@
         <button onclick="handleCreateActivity('quick')" id="btn-quick-create" class="btn-primary mt-2">建立活動 <span class="material-symbols-outlined text-[20px]">add_circle</span></button>
       </div>
       
-      <!-- ⭐ 完整發佈模式 (修復排版) -->
       <div id="form-detailed" class="hidden space-y-5 mt-6 px-1">
          <div class="flex flex-col"><label class="input-label">正式標題</label><input type="text" id="detail-name" class="custom-input" placeholder="輸入活動標題..."></div>
          <div class="grid grid-cols-2 gap-3">
@@ -324,13 +318,11 @@
          
          <div class="flex flex-col mt-2">
            <label class="input-label">活動說明</label>
-           <!-- 使用專屬 textarea-block 樣式 -->
            <textarea id="detail-desc" class="textarea-block h-32" placeholder="輸入詳盡說明..."></textarea>
          </div>
          
          <div class="flex flex-col mt-2">
            <label class="input-label">宣傳大圖</label>
-           <!-- 外框改為 bg-slate-50 以統一風格 -->
            <div onclick="document.getElementById('file-input-create').click()" class="w-full h-40 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-all hover:bg-slate-100 relative">
              <div id="preview-placeholder-create" class="text-center text-slate-400 flex flex-col items-center">
                <span class="material-symbols-outlined text-3xl mb-1">add_photo_alternate</span>
@@ -477,6 +469,14 @@
   let regCropperInstance = null;
   let html5QrcodeScanner = null;
 
+  function formatPhoneStr(val) {
+    if (val === null || val === undefined) return '';
+    let s = String(val).trim();
+    if (/^9\d{8}$/.test(s)) return '0' + s;
+    if (/^[2-8]\d{7,8}$/.test(s)) return '0' + s;
+    return s;
+  }
+
   const loadScript = (src) => new Promise((res, rej) => {
     if (document.querySelector(`script[src="${src}"]`)) return res();
     const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s);
@@ -532,12 +532,49 @@
       const res = await fetchAPI('checkUser', { userId: userProfile.userId });
       isRegistered = res.isRegistered; registeredInfo = res.info;
       
+      const params = new URLSearchParams(window.location.search);
+      const targetView = params.get('view');
+      const claimCardId = params.get('claimCardId');
+      const referrer = params.get('referrer');
+
+      // 儲存引薦人供註冊時綁定
+      if (referrer) window.claimReferrer = referrer;
+      else window.claimReferrer = '';
+      
       if (isAdmin) {
         document.getElementById('role-switch-btn').classList.remove('hidden');
         document.getElementById('header-admin-badge').classList.remove('hidden');
-        isViewModeAdmin = true; switchView('admin-activities');
+        isViewModeAdmin = true; 
+        switchView(targetView || 'admin-activities');
       } else {
-        if (isRegistered) switchView('user-activities'); else { document.getElementById('bottom-nav-user').classList.add('hidden'); document.getElementById('reg-name').value = userProfile.displayName; switchView('user-register'); }
+        if (isRegistered) {
+          switchView(targetView || 'user-activities'); 
+        } else { 
+          document.getElementById('bottom-nav-user').classList.add('hidden');
+          document.getElementById('reg-name').value = userProfile.displayName; 
+          switchView('user-register'); 
+          
+          // ⭐ 認領名片自動帶入資料邏輯
+          if (claimCardId) {
+             showToast("正在載入專屬名片資料...", false);
+             try {
+                const cardData = await fetchAPI('getCardById', { rowId: claimCardId });
+                if (cardData) {
+                    document.getElementById('reg-name').value = cardData['姓名'] || userProfile.displayName;
+                    if (cardData['手機號碼']) {
+                        document.getElementById('reg-phone').value = formatPhoneStr(cardData['手機號碼']);
+                    }
+                    if (cardData['公司名稱'] || cardData['業種']) {
+                        document.getElementById('reg-industry').value = cardData['公司名稱'] || cardData['業種'] || '';
+                    }
+                    showToast("✅ 名片資料已預填，請確認完成註冊");
+                }
+             } catch(e) {
+                console.log("Claim Error:", e);
+                showToast("名片載入失敗，請手動輸入", true);
+             }
+          }
+        }
       }
     } catch (err) { 
       const container = document.getElementById('user-activities-container');
@@ -581,7 +618,17 @@
   }
 
   async function submitUserRegistrationStep1() {
-    const p = { userId: userProfile.userId, name: document.getElementById('reg-name').value.trim() || userProfile.displayName, gender: document.getElementById('reg-gender').value, industry: document.getElementById('reg-industry').value.trim(), phone: document.getElementById('reg-phone').value.trim(), birthday: document.getElementById('reg-birthday').value, region: document.getElementById('reg-region').value.trim(), address: document.getElementById('reg-address').value.trim() };
+    const p = { 
+      userId: userProfile.userId, 
+      name: document.getElementById('reg-name').value.trim() || userProfile.displayName, 
+      gender: document.getElementById('reg-gender').value, 
+      industry: document.getElementById('reg-industry').value.trim(), 
+      phone: document.getElementById('reg-phone').value.trim(), 
+      birthday: document.getElementById('reg-birthday').value, 
+      region: document.getElementById('reg-region').value.trim(), 
+      address: document.getElementById('reg-address').value.trim(),
+      referrerId: window.claimReferrer || '' // ⭐ 送出認領的介紹人 UID
+    };
     const btn = document.getElementById('btn-reg-step1'); btn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> 儲存中...'; btn.classList.add('btn-disabled');
     try { await fetchAPI('registerUser', p); regStep1Data = p; document.getElementById('reg-step-1').classList.add('hidden'); document.getElementById('reg-step-2').classList.remove('opacity-30', 'pointer-events-none'); showToast("基礎資料已建立"); } catch(e) {} finally { btn.innerHTML = '儲存並繼續'; btn.classList.remove('btn-disabled'); }
   }

@@ -1,4 +1,4 @@
-<!-- Version: v1.1.8 -->
+<!-- Version: v1.1.9 -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -392,27 +392,44 @@
               <!-- 動作按鈕 -->
               <div class="w-full pt-4 border-t border-slate-200">
                 <label class="input-label font-bold mb-3 text-slate-800">動作按鈕配置 <span class="text-slate-400 font-normal text-[13px]">(最多4個)</span></label>
-                <div class="space-y-3">
-                  <div class="flex items-center gap-2">
-                    <input type="color" id="ec-btn1-color" value="#1e293b" class="w-9 h-[44px] rounded cursor-pointer border border-slate-300 p-0.5 bg-white shrink-0" oninput="updateECardPreview()">
-                    <input type="text" id="ec-btn1-label" class="custom-input !w-[30%] !px-2" placeholder="按鈕文字" oninput="updateECardPreview()">
-                    <input type="text" id="ec-btn1-url" class="custom-input !w-full !px-2" placeholder="連結網址" oninput="updateECardPreview()">
+                <div class="space-y-0">
+                  
+                  <!-- Button 1 -->
+                  <div class="space-y-2 pb-4 mb-4 border-b border-slate-100 last:border-0 last:pb-0 last:mb-0">
+                    <div class="flex items-center gap-2">
+                      <input type="color" id="ec-btn1-color" value="#1e293b" class="w-9 h-[44px] rounded cursor-pointer border border-slate-300 p-0.5 bg-white shrink-0" oninput="updateECardPreview()">
+                      <input type="text" id="ec-btn1-label" class="custom-input flex-1 !px-3" placeholder="按鈕文字 (例如：撥打手機)" oninput="updateECardPreview()">
+                    </div>
+                    <input type="text" id="ec-btn1-url" class="custom-input w-full !px-3 text-slate-600" placeholder="連結網址 (例如：tel:09...)" oninput="updateECardPreview()">
                   </div>
-                  <div class="flex items-center gap-2">
-                    <input type="color" id="ec-btn2-color" value="#1e293b" class="w-9 h-[44px] rounded cursor-pointer border border-slate-300 p-0.5 bg-white shrink-0" oninput="updateECardPreview()">
-                    <input type="text" id="ec-btn2-label" class="custom-input !w-[30%] !px-2" placeholder="按鈕文字" oninput="updateECardPreview()">
-                    <input type="text" id="ec-btn2-url" class="custom-input !w-full !px-2" placeholder="連結網址" oninput="updateECardPreview()">
+
+                  <!-- Button 2 -->
+                  <div class="space-y-2 pb-4 mb-4 border-b border-slate-100 last:border-0 last:pb-0 last:mb-0">
+                    <div class="flex items-center gap-2">
+                      <input type="color" id="ec-btn2-color" value="#1e293b" class="w-9 h-[44px] rounded cursor-pointer border border-slate-300 p-0.5 bg-white shrink-0" oninput="updateECardPreview()">
+                      <input type="text" id="ec-btn2-label" class="custom-input flex-1 !px-3" placeholder="按鈕文字 (例如：發送信箱)" oninput="updateECardPreview()">
+                    </div>
+                    <input type="text" id="ec-btn2-url" class="custom-input w-full !px-3 text-slate-600" placeholder="連結網址 (例如：mailto:...)" oninput="updateECardPreview()">
                   </div>
-                  <div class="flex items-center gap-2">
-                    <input type="color" id="ec-btn3-color" value="#1e293b" class="w-9 h-[44px] rounded cursor-pointer border border-slate-300 p-0.5 bg-white shrink-0" oninput="updateECardPreview()">
-                    <input type="text" id="ec-btn3-label" class="custom-input !w-[30%] !px-2" placeholder="按鈕文字" oninput="updateECardPreview()">
-                    <input type="text" id="ec-btn3-url" class="custom-input !w-full !px-2" placeholder="連結網址" oninput="updateECardPreview()">
+
+                  <!-- Button 3 -->
+                  <div class="space-y-2 pb-4 mb-4 border-b border-slate-100 last:border-0 last:pb-0 last:mb-0">
+                    <div class="flex items-center gap-2">
+                      <input type="color" id="ec-btn3-color" value="#1e293b" class="w-9 h-[44px] rounded cursor-pointer border border-slate-300 p-0.5 bg-white shrink-0" oninput="updateECardPreview()">
+                      <input type="text" id="ec-btn3-label" class="custom-input flex-1 !px-3" placeholder="按鈕文字" oninput="updateECardPreview()">
+                    </div>
+                    <input type="text" id="ec-btn3-url" class="custom-input w-full !px-3 text-slate-600" placeholder="連結網址" oninput="updateECardPreview()">
                   </div>
-                  <div class="flex items-center gap-2">
-                    <input type="color" id="ec-btn4-color" value="#1e293b" class="w-9 h-[44px] rounded cursor-pointer border border-slate-300 p-0.5 bg-white shrink-0" oninput="updateECardPreview()">
-                    <input type="text" id="ec-btn4-label" class="custom-input !w-[30%] !px-2" placeholder="按鈕文字" oninput="updateECardPreview()">
-                    <input type="text" id="ec-btn4-url" class="custom-input !w-full !px-2" placeholder="連結網址" oninput="updateECardPreview()">
+
+                  <!-- Button 4 -->
+                  <div class="space-y-2 pb-4 mb-4 border-b border-slate-100 last:border-0 last:pb-0 last:mb-0">
+                    <div class="flex items-center gap-2">
+                      <input type="color" id="ec-btn4-color" value="#1e293b" class="w-9 h-[44px] rounded cursor-pointer border border-slate-300 p-0.5 bg-white shrink-0" oninput="updateECardPreview()">
+                      <input type="text" id="ec-btn4-label" class="custom-input flex-1 !px-3" placeholder="按鈕文字" oninput="updateECardPreview()">
+                    </div>
+                    <input type="text" id="ec-btn4-url" class="custom-input w-full !px-3 text-slate-600" placeholder="連結網址" oninput="updateECardPreview()">
                   </div>
+
                 </div>
               </div>
               

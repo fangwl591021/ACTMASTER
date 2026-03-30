@@ -1,4 +1,4 @@
-<!-- Version: v1.0.1 (獨立建立活動模組 - 新增快速上架時間與原生風格) -->
+<!-- Version: v1.0.2 (獨立建立活動模組 - 修正雙重下勾與選單跑版問題) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -46,13 +46,6 @@
     
     /* 模擬 LINE 原生資訊流風格：不加粗、文字適中、無多餘邊距 */
     .input-label { @apply block text-[15px] text-slate-800 mb-1.5 font-normal; }
-    
-    select.custom-input {
-      -webkit-appearance: none !important;
-      -moz-appearance: none !important;
-      appearance: none !important;
-      background-image: none !important;
-    }
 
     /* 原生輸入框：白底、明確邊框、小圓角、無陰影 */
     .custom-input { @apply w-full h-[44px] px-3 bg-white border border-slate-400 rounded outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors text-text-main text-[15px] shadow-none; }
@@ -110,22 +103,19 @@
       <!-- 快速模式 -->
       <div id="form-quick" class="space-y-6 animate-in fade-in">
         <div class="flex flex-col"><label class="input-label">活動名稱</label><input type="text" id="quick-name" class="custom-input" placeholder="輸入活動標題..."></div>
+        
+        <!-- 修正的下拉選單 (去除多餘的外框與雙重箭頭，完全依賴 Tailwind Forms) -->
         <div class="grid grid-cols-2 gap-4">
-          <div class="flex flex-col"><label class="input-label">活動類型</label>
-            <div class="relative w-full">
-                <select id="quick-type" class="custom-input appearance-none px-3 cursor-pointer"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option></select>
-                <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">expand_more</span>
-            </div>
+          <div class="flex flex-col">
+            <label class="input-label">活動類型</label>
+            <select id="quick-type" class="custom-input cursor-pointer"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option></select>
           </div>
-          <div class="flex flex-col"><label class="input-label">預設身份</label>
-            <div class="relative w-full">
-                <select id="quick-identity" class="custom-input appearance-none px-3 cursor-pointer"><option>會員</option><option>來賓</option></select>
-                <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">expand_more</span>
-            </div>
+          <div class="flex flex-col">
+            <label class="input-label">預設身份</label>
+            <select id="quick-identity" class="custom-input cursor-pointer"><option>會員</option><option>來賓</option></select>
           </div>
         </div>
 
-        <!-- 新增的快速上架：開始與結束時間 -->
         <div class="grid grid-cols-2 gap-4">
           <div class="flex flex-col"><label class="input-label">開始時間</label><input type="datetime-local" id="quick-start" class="custom-input !px-2 text-[14px] text-slate-700"></div>
           <div class="flex flex-col"><label class="input-label">結束時間</label><input type="datetime-local" id="quick-end" class="custom-input !px-2 text-[14px] text-slate-700"></div>
@@ -156,18 +146,16 @@
       <!-- 完整模式 -->
       <div id="form-detailed" class="hidden space-y-6 animate-in fade-in">
          <div class="flex flex-col"><label class="input-label">正式標題</label><input type="text" id="detail-name" class="custom-input" placeholder="輸入活動標題..."></div>
+         
+         <!-- 修正的下拉選單 -->
          <div class="grid grid-cols-2 gap-4">
-           <div class="flex flex-col"><label class="input-label">活動類型</label>
-             <div class="relative w-full">
-                <select id="detail-type" class="custom-input appearance-none px-3 cursor-pointer"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option></select>
-                <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">expand_more</span>
-             </div>
+           <div class="flex flex-col">
+             <label class="input-label">活動類型</label>
+             <select id="detail-type" class="custom-input cursor-pointer"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option></select>
            </div>
-           <div class="flex flex-col"><label class="input-label">預設身份</label>
-             <div class="relative w-full">
-                <select id="detail-identity" class="custom-input appearance-none px-3 cursor-pointer"><option>會員</option><option>來賓</option></select>
-                <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">expand_more</span>
-             </div>
+           <div class="flex flex-col">
+             <label class="input-label">預設身份</label>
+             <select id="detail-identity" class="custom-input cursor-pointer"><option>會員</option><option>來賓</option></select>
            </div>
          </div>
          

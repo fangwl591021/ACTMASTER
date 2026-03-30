@@ -1,4 +1,3 @@
-<!-- Version: v1.1.6 -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -100,7 +99,6 @@
       <p class="text-slate-500 font-bold tracking-widest text-[13px]">系統載入中</p>
     </div>
 
-    <!-- 註冊畫面 -->
     <div id="view-user-register" class="hidden animate-in fade-in duration-500 pt-4 pb-10 space-y-6">
       <div class="mb-2">
         <h1 class="text-2xl font-extrabold font-headline text-slate-800 tracking-tight">建立會員檔案</h1>
@@ -141,7 +139,6 @@
       </div>
     </div>
 
-    <!-- 探索活動 -->
     <div id="view-user-activities" class="hidden animate-in fade-in duration-500 pt-2 space-y-4">
       <div class="flex justify-between items-center mb-1">
         <div>
@@ -156,13 +153,11 @@
       <div id="user-activities-container" class="grid grid-cols-2 gap-3"></div>
     </div>
 
-    <!-- 報名紀錄 -->
     <div id="view-user-history" class="hidden space-y-4 animate-in fade-in pt-4">
       <h2 class="text-2xl font-extrabold font-headline text-slate-800">報名紀錄</h2>
       <div id="user-history-container" class="space-y-4"></div>
     </div>
 
-    <!-- 個人資料與專屬名片入口 -->
     <div id="view-user-profile" class="hidden animate-in fade-in pt-4 pb-10 space-y-4">
       <h2 class="text-2xl font-extrabold font-headline mb-4 text-slate-800">個人資料</h2>
       <div class="flex flex-col"><label class="input-label">姓名</label><input type="text" id="edit-name" class="custom-input"></div>
@@ -180,7 +175,6 @@
       </div>
       <button id="btn-save-profile" onclick="submitProfileUpdate()" class="btn-primary mt-4">儲存變更</button>
 
-      <!-- 專屬名片入口橫幅 -->
       <div id="my-card-entry" class="hidden mt-8 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-5 text-white shadow-xl shadow-slate-900/20 flex justify-between items-center relative overflow-hidden cursor-pointer active:scale-[0.98] transition-transform" onclick="window.location.href='card.html?mode=mycard'">
           <div class="absolute -right-4 -top-4 opacity-10"><span class="material-symbols-outlined text-[100px]">contact_mail</span></div>
           <div class="relative z-10">
@@ -197,13 +191,11 @@
       </div>
     </div>
 
-    <!-- 後台：管理核銷 -->
     <div id="view-admin-activities" class="hidden space-y-4 animate-in fade-in pt-4">
       <h2 class="text-2xl font-extrabold font-headline text-slate-800">管理核銷</h2>
       <div id="admin-activity-list-container" class="space-y-4"></div>
     </div>
 
-    <!-- 後台：CRM -->
     <div id="view-admin-crm" class="hidden space-y-2 animate-in fade-in pt-4">
       <div class="px-1 mb-4">
         <h2 class="text-2xl font-extrabold font-headline text-slate-800 tracking-tight">會員 CRM</h2>
@@ -217,7 +209,6 @@
       <div id="crm-load-more-box" class="hidden py-6 text-center"><button onclick="loadMoreCrm()" class="text-primary font-bold text-[14px] px-6 py-2 border border-primary/20 rounded-full hover:bg-primary-light transition-all">顯示更多</button></div>
     </div>
 
-    <!-- 後台：系統參數 -->
     <div id="view-admin-settings" class="hidden animate-in fade-in pt-4 space-y-4">
       <h2 class="text-2xl font-extrabold font-headline mb-4 text-slate-800">系統參數</h2>
       <div class="flex flex-col"><label class="input-label">Telegram Bot Token</label><div class="flex gap-2"><input type="text" id="set-tg-token" class="custom-input flex-1"><button onclick="autoFetchTgChatId()" id="btn-fetch-tg" class="bg-white text-slate-600 px-4 rounded-lg font-bold border border-slate-300 hover:bg-slate-50 active:scale-95 transition-all shadow-sm">轉換</button></div></div>
@@ -226,78 +217,6 @@
       <button id="btn-submit-settings" onclick="submitSettings()" class="btn-primary mt-2">儲存設定</button>
     </div>
 
-    <!-- 後台：建立活動 -->
-    <div id="view-admin-create" class="hidden space-y-5 animate-in fade-in pt-4">
-      <div class="mb-4">
-        <h2 class="text-2xl font-extrabold font-headline text-slate-800 tracking-tight">建立新活動</h2>
-        <p class="text-slate-500 text-[13px] font-medium mt-1">快速部署您的活動報名流程。</p>
-      </div>
-
-      <div class="flex p-1 rounded-lg border border-slate-200 bg-slate-100 mb-6">
-        <button onclick="toggleCreateMode('quick')" id="tab-quick" class="flex-1 py-2 rounded-md text-[14px] font-bold bg-white text-primary shadow-sm transition-all">快速匯入</button>
-        <button onclick="toggleCreateMode('detailed')" id="tab-detailed" class="flex-1 py-2 rounded-md text-[14px] font-bold text-slate-500 transition-all hover:text-slate-700">完整發佈</button>
-      </div>
-      
-      <!-- 快速模式 -->
-      <div id="form-quick" class="space-y-4 animate-in fade-in">
-        <div class="flex flex-col"><label class="input-label">活動名稱</label><input type="text" id="quick-name" class="custom-input" placeholder="輸入活動標題..."></div>
-        <div class="grid grid-cols-2 gap-3">
-          <div class="flex flex-col"><label class="input-label">活動類型</label><select id="quick-type" class="custom-input cursor-pointer"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option></select></div>
-          <div class="flex flex-col"><label class="input-label">預設身份</label><select id="quick-identity" class="custom-input cursor-pointer"><option>會員</option><option>來賓</option></select></div>
-        </div>
-        <div class="flex flex-col mt-2">
-          <label class="input-label">宣傳大圖 (選填)</label>
-          <div onclick="document.getElementById('file-input-quick').click()" class="w-full h-36 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-all hover:bg-slate-100 relative group">
-            <div id="preview-placeholder-quick" class="text-center text-slate-400 flex flex-col items-center"><span class="material-symbols-outlined text-3xl mb-1">add_photo_alternate</span><p class="text-[12px] font-bold">點擊上傳圖片</p></div>
-            <img id="image-preview-quick" class="hidden w-full h-full object-cover absolute inset-0">
-            <input type="file" id="file-input-quick" class="hidden" accept="image/*" onchange="previewFile('quick')">
-          </div>
-          <input type="hidden" id="in-image-url-quick">
-        </div>
-        <div class="flex flex-col mt-2">
-          <div class="flex justify-between items-center mb-1"><label class="input-label !mb-0">名單內容</label><span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">支援批次輸入</span></div>
-          <textarea id="quick-names" class="w-full p-4 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all text-[14px] text-slate-700 resize-none h-36" placeholder="請貼上參與者姓名，每行一位..."></textarea>
-        </div>
-        <button onclick="handleCreateActivity('quick')" id="btn-quick-create" class="btn-primary mt-2">建立活動 <span class="material-symbols-outlined text-[20px]">add_circle</span></button>
-      </div>
-      
-      <!-- 完整模式 -->
-      <div id="form-detailed" class="hidden space-y-4 animate-in fade-in">
-         <div class="flex flex-col"><label class="input-label">正式標題</label><input type="text" id="detail-name" class="custom-input" placeholder="輸入活動標題..."></div>
-         <div class="grid grid-cols-2 gap-3">
-           <div class="flex flex-col"><label class="input-label">活動類型</label><select id="detail-type" class="custom-input cursor-pointer"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option></select></div>
-           <div class="flex flex-col"><label class="input-label">預設身份</label><select id="detail-identity" class="custom-input cursor-pointer"><option>會員</option><option>來賓</option></select></div>
-         </div>
-         <div class="grid grid-cols-2 gap-3 border-t border-slate-100 pt-4 mt-1">
-           <div class="flex flex-col">
-             <label class="input-label">收費方式</label>
-             <div class="flex gap-4 items-center h-[46px] px-3 bg-white border border-slate-300 rounded-lg shadow-sm">
-               <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="fee-type" value="免費" checked onchange="toggleFeeInput()" class="w-4 h-4 text-primary bg-white border-slate-300 focus:ring-primary focus:ring-2"><span class="font-bold text-[14px] text-slate-700">免費</span></label>
-               <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="fee-type" value="收費" onchange="toggleFeeInput()" class="w-4 h-4 text-primary bg-white border-slate-300 focus:ring-primary focus:ring-2"><span class="font-bold text-[14px] text-slate-700">收費</span></label>
-             </div>
-           </div>
-           <div class="flex flex-col justify-end"><input type="number" id="detail-price" class="custom-input hidden h-[46px]" placeholder="金額 (NT$)"></div>
-         </div>
-         <div class="grid grid-cols-2 gap-3 border-t border-slate-100 pt-4 mt-1">
-           <div class="flex flex-col"><label class="input-label">開始時間</label><input type="datetime-local" id="detail-start" class="custom-input !px-2 text-[13px] text-slate-600"></div>
-           <div class="flex flex-col"><label class="input-label">結束時間</label><input type="datetime-local" id="detail-end" class="custom-input !px-2 text-[13px] text-slate-600"></div>
-         </div>
-         <div class="flex flex-col mt-2">
-           <label class="input-label">活動說明</label>
-           <textarea id="detail-desc" class="w-full p-4 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all text-[14px] text-slate-700 resize-none h-32" placeholder="輸入詳盡說明..."></textarea>
-         </div>
-         <div class="flex flex-col mt-2">
-           <label class="input-label">宣傳大圖</label>
-           <div onclick="document.getElementById('file-input-create').click()" class="w-full h-36 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-all hover:bg-slate-100 relative group">
-             <div id="preview-placeholder-create" class="text-center text-slate-400 flex flex-col items-center"><span class="material-symbols-outlined text-3xl mb-1">add_photo_alternate</span><p class="text-[12px] font-bold">點擊上傳圖片</p></div>
-             <img id="image-preview-create" class="hidden w-full h-full object-cover absolute inset-0">
-             <input type="file" id="file-input-create" class="hidden" accept="image/*" onchange="previewFile('create')">
-           </div>
-           <input type="hidden" id="in-image-url-create">
-         </div>
-         <button onclick="handleCreateActivity('detailed')" id="btn-detail-create" class="btn-primary mt-4">發布活動頁面 <span class="material-symbols-outlined text-[20px]">rocket_launch</span></button>
-      </div>
-    </div>
   </main>
 
   <nav id="bottom-nav-user" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-around items-center px-2 py-2 z-40 pb-safe shadow-app-nav left-1/2 -translate-x-1/2 h-[72px]">
@@ -308,7 +227,7 @@
 
   <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-evenly items-center px-1 py-2 z-40 pb-safe shadow-app-nav left-1/2 -translate-x-1/2 h-[72px]">
     <button onclick="switchView('admin-activities')" class="nav-btn" id="nav-admin-activities"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">fact_check</span></div><span class="text-[10px] font-bold mt-0.5">核銷</span></button>
-    <button onclick="switchView('admin-create')" class="nav-btn" id="nav-admin-create"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">add_circle</span></div><span class="text-[10px] font-bold mt-0.5">建立</span></button>
+    <button onclick="window.location.href='active.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">add_circle</span></div><span class="text-[10px] font-bold mt-0.5">建立</span></button>
     <button onclick="switchView('admin-crm')" class="nav-btn" id="nav-admin-crm"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">groups</span></div><span class="text-[10px] font-bold mt-0.5">CRM</span></button>
     <button onclick="window.location.href='fate.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px] text-pink-500">psychology</span></div><span class="text-[10px] font-bold mt-0.5 text-pink-600">配對</span></button>
     <button onclick="window.location.href='card.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">recent_patient</span></div><span class="text-[10px] font-bold mt-0.5">名片</span></button>
@@ -316,7 +235,6 @@
   </nav>
 </div>
 
-<!-- Modals -->
 <div id="section-reg-cropper" class="hidden fixed inset-0 bg-slate-900 flex flex-col animate-in fade-in duration-200 w-full max-w-md mx-auto z-[1030]">
   <div class="flex justify-between items-center p-4 bg-slate-900 text-white shrink-0 border-b border-slate-800 shadow-sm">
     <button onclick="cancelRegCrop()" class="text-slate-400 font-bold text-sm px-3 py-2 active:scale-90 transition-transform">取消</button>
@@ -606,14 +524,14 @@
   }
 
   function switchView(view) {
-    ['view-loading', 'view-user-register', 'view-user-activities', 'view-user-profile', 'view-user-history', 'view-admin-activities', 'view-admin-crm', 'view-admin-settings', 'view-admin-create'].forEach(v => { const el = document.getElementById(v); if(el) el.classList.add('hidden'); });
+    ['view-loading', 'view-user-register', 'view-user-activities', 'view-user-profile', 'view-user-history', 'view-admin-activities', 'view-admin-crm', 'view-admin-settings'].forEach(v => { const el = document.getElementById(v); if(el) el.classList.add('hidden'); });
     const activeEl = document.getElementById(`view-${view}`); if (activeEl) activeEl.classList.remove('hidden');
     const navAdmin = document.getElementById('bottom-nav-admin'); const navUser = document.getElementById('bottom-nav-user');
     navAdmin.classList.add('hidden'); navUser.classList.add('hidden');
     
     if (isAdmin && isViewModeAdmin && view.startsWith('admin')) {
       navAdmin.classList.remove('hidden');
-      ['activities', 'create', 'crm', 'settings'].forEach(k => { const btn = document.getElementById('nav-admin-'+k); if(btn) btn.className = `nav-btn ${view==='admin-'+k ? 'nav-active' : ''}`; });
+      ['activities', 'crm', 'settings'].forEach(k => { const btn = document.getElementById('nav-admin-'+k); if(btn) btn.className = `nav-btn ${view==='admin-'+k ? 'nav-active' : ''}`; });
     } else if (isRegistered && (!isAdmin || !isViewModeAdmin) && view.startsWith('user')) {
       navUser.classList.remove('hidden');
       ['activities', 'history', 'profile'].forEach(k => { const btn = document.getElementById('nav-user-'+k); if(btn) btn.className = `nav-btn ${view==='user-'+k ? 'nav-active' : ''}`; });
@@ -1222,123 +1140,6 @@
       await fetchAPI('saveSettings', { TG_BOT_TOKEN: document.getElementById('set-tg-token').value, TG_CHAT_ID: document.getElementById('set-tg-chat').value, LINE_LINK: document.getElementById('set-line-link').value }); showToast("已儲存"); 
     } catch(e) { console.error(e); } finally { isProcessing = false; setButtonLoading('btn-submit-settings', false, '儲存設定'); }
   }
-
-  function toggleCreateMode(m) { 
-    document.getElementById('tab-quick').className = `flex-1 py-2 rounded-md text-[14px] font-bold transition-all ${m==='quick'?'bg-white text-primary shadow-sm':'text-slate-500 hover:text-slate-700'}`; 
-    document.getElementById('tab-detailed').className = `flex-1 py-2 rounded-md text-[14px] font-bold transition-all ${m==='detailed'?'bg-white text-primary shadow-sm':'text-slate-500 hover:text-slate-700'}`; 
-    document.getElementById('form-quick').classList.toggle('hidden', m!=='quick'); 
-    document.getElementById('form-detailed').classList.toggle('hidden', m!=='detailed'); 
-  }
-  function toggleFeeInput() { document.getElementById('detail-price').classList.toggle('hidden', document.querySelector('input[name="fee-type"]:checked').value !== '收費'); }
-  
-  function previewFile(mode) { 
-    const f = document.getElementById(`file-input-${mode}`).files[0]; 
-    if(!f) return; 
-    showToast("壓縮中...", false);
-    const r = new FileReader(); 
-    r.onloadend = () => { 
-      const img = new Image(); 
-      img.onload = () => { 
-        let w = img.width, h = img.height, max = 500; 
-        if(w > max){h=Math.round(h*(max/w)); w=max;} 
-        const cvs = document.createElement('canvas'); cvs.width=w; cvs.height=h; 
-        const ctx=cvs.getContext('2d'); ctx.fillStyle='#FFF'; ctx.fillRect(0,0,w,h); ctx.drawImage(img,0,0,w,h); 
-        
-        let quality = 0.8;
-        let b64=cvs.toDataURL('image/webp', quality); 
-        
-        while (b64.length > 40000 && quality > 0.1) { quality -= 0.1; b64 = cvs.toDataURL('image/webp', quality); }
-        if (b64.length > 49000) return showToast("圖片過大", true);
-        
-        document.getElementById(`image-preview-${mode}`).src=b64; 
-        document.getElementById(`image-preview-${mode}`).classList.remove('hidden'); 
-        document.getElementById(`preview-placeholder-${mode}`).classList.add('hidden'); 
-        document.getElementById(`in-image-url-${mode}`).value=b64; 
-        showToast("完成");
-      }; 
-      img.src=r.result; 
-    }; 
-    r.readAsDataURL(f); 
-  }
-
-  async function handleCreateActivity(mode) { 
-    if(isProcessing) return; isProcessing=true; 
-    const btnId = mode === 'quick' ? 'btn-quick-create' : 'btn-detail-create';
-    const btnHtml = mode === 'quick' ? '建立活動 <span class="material-symbols-outlined text-[20px]">add_circle</span>' : '發布活動頁面 <span class="material-symbols-outlined text-[20px]">rocket_launch</span>';
-    setButtonLoading(btnId, true);
-    
-    let p = { 
-        activityName: document.getElementById(mode === 'quick' ? 'quick-name' : 'detail-name').value.trim(), 
-        activityType: document.getElementById(mode === 'quick' ? 'quick-type' : 'detail-type').value, 
-        feeType: '免費', 
-        price: '', 
-        startTime: '', 
-        endTime: '', 
-        description: '', 
-        imageUrl: '', 
-        names: [], 
-        defaultIdentity: document.getElementById(mode === 'quick' ? 'quick-identity' : 'detail-identity').value 
-    }; 
-    
-    if(!p.activityName) { isProcessing=false; setButtonLoading(btnId, false, btnHtml); return showToast("名稱必填", true); }
-    
-    if(mode==='quick') {
-        p.names = document.getElementById('quick-names').value.split('\n').filter(n=>n.trim()); 
-        p.imageUrl = document.getElementById('in-image-url-quick').value;
-    } else { 
-        p.feeType = document.querySelector('input[name="fee-type"]:checked').value; 
-        p.price = document.getElementById('detail-price').value; 
-        p.startTime = document.getElementById('detail-start').value; 
-        p.endTime = document.getElementById('detail-end').value; 
-        p.description = document.getElementById('detail-desc').value; 
-        p.imageUrl = document.getElementById('in-image-url-create').value; 
-    }
-    
-    try { 
-      await fetchAPI('bulkAddRegistrants', p); 
-      showToast("已建立"); 
-      sessionStorage.removeItem('getActivityDashboard{}'); 
-      setTimeout(()=>switchView('admin-activities'),1000); 
-    } catch(e){
-      console.error(e);
-    } finally{ 
-      isProcessing=false; setButtonLoading(btnId, false, btnHtml); 
-    }
-  }
-
-  // 終極實戰指南：完全綁定在 window 上解決 is not defined 並結合防呆機制
-  window.triggerFlexSharing = async function(flexContents, altText) {
-      if (!liff.isLoggedIn()) { 
-          liff.login({ redirectUri: window.location.href }); 
-          return; 
-      }
-      
-      try {
-          // 信任官方 SDK，讓底層自行進行 POST 與 ott 轉換，打破長度限制
-          const message = { type: "flex", altText: altText || "您收到一張數位名片", contents: flexContents };
-          const res = await liff.shareTargetPicker([message]);
-          
-          if (res) {
-              showToast('🚀 數位名片已成功轉發！');
-              setTimeout(() => liff.closeWindow(), 1500);
-          } else {
-              showToast('取消傳送', true);
-          }
-      } catch (error) {
-          console.error("LIFF SDK Share Error:", error);
-          
-          // 終極防呆機制：攔截過期 Token 導致的 "not allowed" 報錯
-          if (error.message && error.message.includes('not allowed')) {
-              showToast("⚠️ 系統權限已更新！即將為您重新登入...", true);
-              setTimeout(() => {
-                  liff.logout(); // 清除舊 Token
-                  window.location.reload(); // 重新整理換發新 Token
-              }, 2000);
-          } else {
-              showToast('發送取消或發生未知錯誤: ' + error.message, true);
-          }
-      }
-  };
 </script>
 </body>
 </html>

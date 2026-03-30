@@ -1,4 +1,4 @@
-<!-- Version: v1.2.0 -->
+<!-- Version: v1.2.1 -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -328,7 +328,7 @@
   </div>
 
   <!-- 內容區 -->
-  <div class="flex-1 overflow-y-auto w-full bg-white lg:bg-white">
+  <div class="flex-1 overflow-y-auto w-full bg-slate-50 lg:bg-white">
     <div class="container mx-auto max-w-5xl h-full">
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-0 lg:gap-8 h-full">
         
@@ -340,8 +340,8 @@
               
               <!-- 圖片設定：虛線框直觀上傳 -->
               <div class="w-full">
-                <div class="flex justify-between items-end mb-1.5">
-                  <label class="input-label !mb-0">宣傳大圖 <span class="text-slate-400 text-[13px]">(選填)</span></label>
+                <div class="flex justify-between items-center mb-1.5">
+                  <label class="input-label !mb-0 flex items-center">點擊圖片變更 <span class="ml-1.5 px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[11px] font-medium">選填</span></label>
                   <div class="relative inline-block">
                     <select id="ec-img-size" class="appearance-none !bg-transparent text-blue-600 font-bold text-[15px] pr-5 outline-none border-none cursor-pointer focus:ring-0" onchange="updateECardPreview()">
                       <option value="mega" selected>Mega 滿版</option>
@@ -350,7 +350,7 @@
                     <span class="material-symbols-outlined absolute right-0 top-1/2 -translate-y-1/2 text-blue-600 pointer-events-none text-[18px]">expand_more</span>
                   </div>
                 </div>
-                <div class="w-full relative">
+                <div class="w-full relative mt-1">
                     <div id="ec-upload-trigger" onclick="document.getElementById('ec-upload-input').click()" class="w-full h-40 border border-slate-300 rounded flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-colors hover:bg-slate-100 group relative">
                         <div class="text-center text-slate-400 flex flex-col items-center z-10" id="ec-upload-placeholder">
                             <span class="material-symbols-outlined text-[32px] mb-1">add_photo_alternate</span>
@@ -375,12 +375,12 @@
                 <div class="col-span-1">
                   <label class="input-label">標題對齊</label>
                   <div class="relative w-full">
-                    <select id="ec-title-align" class="custom-input appearance-none px-3" onchange="updateECardPreview()">
+                    <select id="ec-title-align" class="custom-input appearance-none px-3 text-center" onchange="updateECardPreview()">
                       <option value="start">靠左</option>
                       <option value="center" selected>置中</option>
                       <option value="end">靠右</option>
                     </select>
-                    <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">expand_more</span>
+                    <span class="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">expand_more</span>
                   </div>
                 </div>
               </div>
@@ -392,11 +392,11 @@
 
               <div class="w-full">
                 <label class="input-label">點圖預設連結 <span class="text-slate-400 text-[13px]">(點選大圖的跳轉網址)</span></label>
-                <input type="text" id="ec-img-action-url" class="custom-input text-blue-600" value="https://liff.line.me/2009367829-DLtYBDUm" oninput="updateECardPreview()">
+                <input type="text" id="ec-img-action-url" class="custom-input text-blue-600 w-[92%]" value="https://liff.line.me/2009367829-DLtYBDUm" oninput="updateECardPreview()">
               </div>
 
               <!-- 動作按鈕 -->
-              <div class="w-full pt-6 border-t border-slate-200">
+              <div class="w-full pt-4 border-t border-slate-200">
                 <label class="input-label font-bold mb-3 text-slate-800 text-[16px]">動作按鈕配置 <span class="text-slate-400 font-normal text-[13px]">(最多4個)</span></label>
                 <div class="space-y-4">
                   
@@ -406,7 +406,7 @@
                       <input type="color" id="ec-btn1-color" value="#1e293b" class="w-9 h-[44px] rounded cursor-pointer border border-slate-300 p-0.5 bg-white shrink-0" oninput="updateECardPreview()">
                       <input type="text" id="ec-btn1-label" class="custom-input flex-1 !px-3" placeholder="按鈕文字 (例如: 撥打手機)" oninput="updateECardPreview()">
                     </div>
-                    <input type="text" id="ec-btn1-url" class="custom-input w-full !px-3 text-slate-600" placeholder="連結網址 (例如: tel:09...)" oninput="updateECardPreview()">
+                    <input type="text" id="ec-btn1-url" class="custom-input w-[92%] !px-3 text-slate-600" placeholder="連結網址 (例如: tel:09...)" oninput="updateECardPreview()">
                   </div>
 
                   <!-- Button 2 -->
@@ -415,7 +415,7 @@
                       <input type="color" id="ec-btn2-color" value="#1e293b" class="w-9 h-[44px] rounded cursor-pointer border border-slate-300 p-0.5 bg-white shrink-0" oninput="updateECardPreview()">
                       <input type="text" id="ec-btn2-label" class="custom-input flex-1 !px-3" placeholder="按鈕文字 (例如: 發送信箱)" oninput="updateECardPreview()">
                     </div>
-                    <input type="text" id="ec-btn2-url" class="custom-input w-full !px-3 text-slate-600" placeholder="連結網址 (例如: mailto:...)" oninput="updateECardPreview()">
+                    <input type="text" id="ec-btn2-url" class="custom-input w-[92%] !px-3 text-slate-600" placeholder="連結網址 (例如: mailto:...)" oninput="updateECardPreview()">
                   </div>
 
                   <!-- Button 3 -->
@@ -424,7 +424,7 @@
                       <input type="color" id="ec-btn3-color" value="#1e293b" class="w-9 h-[44px] rounded cursor-pointer border border-slate-300 p-0.5 bg-white shrink-0" oninput="updateECardPreview()">
                       <input type="text" id="ec-btn3-label" class="custom-input flex-1 !px-3" placeholder="按鈕文字" oninput="updateECardPreview()">
                     </div>
-                    <input type="text" id="ec-btn3-url" class="custom-input w-full !px-3 text-slate-600" placeholder="連結網址" oninput="updateECardPreview()">
+                    <input type="text" id="ec-btn3-url" class="custom-input w-[92%] !px-3 text-slate-600" placeholder="連結網址" oninput="updateECardPreview()">
                   </div>
 
                   <!-- Button 4 -->
@@ -433,7 +433,7 @@
                       <input type="color" id="ec-btn4-color" value="#1e293b" class="w-9 h-[44px] rounded cursor-pointer border border-slate-300 p-0.5 bg-white shrink-0" oninput="updateECardPreview()">
                       <input type="text" id="ec-btn4-label" class="custom-input flex-1 !px-3" placeholder="按鈕文字" oninput="updateECardPreview()">
                     </div>
-                    <input type="text" id="ec-btn4-url" class="custom-input w-full !px-3 text-slate-600" placeholder="連結網址" oninput="updateECardPreview()">
+                    <input type="text" id="ec-btn4-url" class="custom-input w-[92%] !px-3 text-slate-600" placeholder="連結網址" oninput="updateECardPreview()">
                   </div>
 
                 </div>

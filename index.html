@@ -1,4 +1,4 @@
-<!-- Version: v1.1.10 (修復時間顯示版) -->
+<!-- Version: v1.1.11 (修復梯次選擇與報名) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -284,6 +284,15 @@
           <div class="w-8 h-8 rounded bg-white shadow-sm flex items-center justify-center text-slate-400 shrink-0"><span class="material-symbols-outlined text-[18px]">event_busy</span></div>
           <div><p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">結束時間</p><p id="detail-modal-end" class="text-[14px] font-bold text-slate-700"></p></div>
         </div>
+
+        <!-- 梯次選擇下拉選單 (極簡原生風格) -->
+        <div id="detail-modal-batch-container" class="hidden border-t border-slate-200 pt-3">
+          <p class="text-[10px] font-bold text-primary uppercase tracking-widest mb-1.5">選擇梯次 / 場次</p>
+          <div class="relative w-full">
+            <select id="detail-modal-batch-select" class="w-full appearance-none bg-white border border-slate-300 rounded px-3 py-2 text-[14px] text-slate-700 outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer"></select>
+            <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">expand_more</span>
+          </div>
+        </div>
       </div>
       <div>
         <h3 class="text-[15px] font-bold text-slate-800 mb-2 flex items-center gap-1.5"><span class="material-symbols-outlined text-primary text-[20px]">subject</span> 內容說明</h3>
@@ -385,7 +394,14 @@
     const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; l.onload = res; l.onerror = rej; document.head.appendChild(l);
   });
 
-  async function fetchAPI(action, payload = {}) {
+  async function fetchAPI(action, payload = {}, useCache = false) {
+    const cacheKey = action + JSON.stringify(payload);
+    if (useCache && sessionStorage.getItem(cacheKey)) {
+      fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, payload }) })
+        .then(r => r.json()).then(res => { if (res.success) sessionStorage.setItem(cacheKey, JSON.stringify(res.data)); })
+        .catch(e => console.log('Cache update failed', e));
+      return JSON.parse(sessionStorage.getItem(cacheKey));
+    }
     try {
       const response = await fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, payload }) });
       const resText = await response.text();
@@ -396,6 +412,7 @@
         throw new Error(`連線錯誤，請確認 GAS 權限。`); 
       }
       if (!result.success) throw new Error(result.error);
+      if (useCache) sessionStorage.setItem(cacheKey, JSON.stringify(result.data));
       return result.data;
     } catch (err) { 
       showToast(err.message, true); 
@@ -403,17 +420,16 @@
     }
   }
 
-  // Update formatTime and formatTimeShort
   function formatTime(isoString) {
     if(!isoString) return '';
     const d = new Date(isoString);
-    if (isNaN(d.getTime())) return String(isoString); // 防呆
+    if (isNaN(d.getTime())) return String(isoString);
     return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   }
   function formatTimeShort(isoString) {
     if(!isoString) return '';
     const d = new Date(isoString);
-    if (isNaN(d.getTime())) return String(isoString).substring(0, 16); // 防呆
+    if (isNaN(d.getTime())) return String(isoString).substring(0, 16);
     return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   }
 
@@ -783,7 +799,7 @@
           </div>
 
           <div class="flex gap-2">
-            <button onclick="toggleActivityStatus('${safeName}')" class="flex-1 py-2.5 bg-white border border-slate-300 text-slate-600 rounded-xl font-bold text-[13px] active:scale-95 transition-all flex items-center justify-center hover:bg-slate-50 shadow-sm">${a.status==='上架'?'下架':'上架'}</button>
+            <button onclick="toggleActivityStatus('${safeName}')" class="flex-1 py-2.5 rounded-xl font-bold text-[13px] active:scale-95 transition-all flex items-center justify-center shadow-sm ${a.status==='上架' ? 'bg-blue-50 border border-blue-200 text-blue-600 hover:bg-blue-100' : 'bg-white border border-slate-300 text-slate-400 hover:bg-slate-50'}">${a.status==='上架' ? '上架中' : '已下架'}</button>
             <button onclick="openAdminRegistrants('${safeName}')" class="flex-1 py-2.5 bg-slate-800 text-white rounded-xl font-bold text-[13px] shadow-sm active:scale-95 transition-all flex items-center justify-center hover:bg-slate-700">名單核銷</button>
           </div>
         </div>`;
@@ -806,20 +822,66 @@
 
     document.getElementById('detail-modal-type').innerText = act.type || '活動';
     const feeEl = document.getElementById('detail-modal-fee');
-    feeEl.innerText = act.feeType === '收費' ? `NT$ ${act.price || 0}` : '免費';
-    feeEl.className = `px-2.5 py-0.5 text-[11px] font-bold rounded-md shadow-sm ${act.feeType === '收費' ? 'bg-orange-50 text-orange-600 border border-orange-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`;
+    
+    // Parse batches if present
+    let parsedBatches = [];
+    if (act.isBatch || act.batches || act['梯次']) {
+        let rawBatches = act.batches || act['梯次'];
+        if (typeof rawBatches === 'string') {
+            try { parsedBatches = JSON.parse(rawBatches); } catch(e) {}
+        } else if (Array.isArray(rawBatches)) {
+            parsedBatches = rawBatches;
+        }
+    }
+
+    const batchContainer = document.getElementById('detail-modal-batch-container');
+    const batchSelect = document.getElementById('detail-modal-batch-select');
+    const startEl = document.getElementById('detail-modal-start');
+    const endEl = document.getElementById('detail-modal-end');
+    const endContainer = document.getElementById('detail-modal-end-container');
+    
     document.getElementById('detail-modal-title').innerText = act.name;
 
-    const startT = act.startTime || act['開始時間'] || act.StartTime || act.start || '';
-    const endT = act.endTime || act['結束時間'] || act.EndTime || act.end || '';
+    if (parsedBatches && parsedBatches.length > 0) {
+        batchContainer.classList.remove('hidden');
+        batchSelect.innerHTML = parsedBatches.map(b => {
+            let priceText = b.price && parseInt(b.price) > 0 ? `(NT$ ${b.price})` : '(免費)';
+            return `<option value="${b.name}" data-price="${b.price || 0}" data-start="${b.startTime || ''}" data-end="${b.endTime || ''}">${b.name} ${priceText}</option>`;
+        }).join('');
 
-    document.getElementById('detail-modal-start').innerText = startT ? formatTime(startT) : '未定';
-    const endContainer = document.getElementById('detail-modal-end-container');
-    if (endT) {
-      document.getElementById('detail-modal-end').innerText = formatTime(endT);
-      endContainer.classList.remove('hidden');
+        batchSelect.onchange = () => {
+            const opt = batchSelect.options[batchSelect.selectedIndex];
+            const bPrice = parseInt(opt.getAttribute('data-price') || 0);
+            const bStart = opt.getAttribute('data-start');
+            const bEnd = opt.getAttribute('data-end');
+
+            feeEl.innerText = bPrice > 0 ? `NT$ ${bPrice}` : '免費';
+            feeEl.className = `px-2.5 py-0.5 text-[11px] font-bold rounded-md shadow-sm ${bPrice > 0 ? 'bg-orange-50 text-orange-600 border border-orange-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`;
+
+            startEl.innerText = bStart ? formatTime(bStart) : '未定';
+            if (bEnd) {
+                endEl.innerText = formatTime(bEnd);
+                endContainer.classList.remove('hidden');
+            } else {
+                endContainer.classList.add('hidden');
+            }
+        };
+        batchSelect.dispatchEvent(new Event('change'));
     } else {
-      endContainer.classList.add('hidden');
+        batchContainer.classList.add('hidden');
+        feeEl.innerText = act.feeType === '收費' ? `NT$ ${act.price || 0}` : '免費';
+        feeEl.className = `px-2.5 py-0.5 text-[11px] font-bold rounded-md shadow-sm ${act.feeType === '收費' ? 'bg-orange-50 text-orange-600 border border-orange-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`;
+
+        const startT = act.startTime || act['開始時間'] || act.StartTime || act.start || '';
+        const endT = act.endTime || act['結束時間'] || act.EndTime || act.end || '';
+
+        startEl.innerText = startT ? formatTime(startT) : '未定';
+        if (endT) {
+          endEl.innerText = formatTime(endT);
+          endContainer.classList.remove('hidden');
+        } else {
+          endContainer.classList.add('hidden');
+        }
     }
 
     const desc = act.description || act['活動說明'] || act['說明'] || act.Description || '主辦單位尚未提供說明。';
@@ -828,7 +890,17 @@
     const joinBtn = document.getElementById('detail-modal-join-btn');
     joinBtn.onclick = async function() {
       closeActivityDetail(); 
-      await userJoinActivity(this, act.name, act.feeType, act.price);
+      let selectedBatch = '';
+      let finalPrice = act.price || 0;
+      let finalFeeType = act.feeType || '免費';
+
+      if (parsedBatches && parsedBatches.length > 0) {
+          const opt = batchSelect.options[batchSelect.selectedIndex];
+          selectedBatch = opt.value;
+          finalPrice = parseInt(opt.getAttribute('data-price') || 0);
+          finalFeeType = finalPrice > 0 ? '收費' : '免費';
+      }
+      await userJoinActivity(this, act.name, finalFeeType, finalPrice, selectedBatch);
     };
 
     document.getElementById('activity-detail-modal').classList.remove('hidden');
@@ -838,13 +910,14 @@
     document.getElementById('activity-detail-modal').classList.add('hidden');
   }
 
-  async function userJoinActivity(btn, name, feeType, price) {
+  async function userJoinActivity(btn, name, feeType, price, batchName = '') {
     if (isProcessing) return;
-    if (!confirm(`確定報名「${name}」？`)) return;
+    let confirmMsg = batchName ? `確定報名「${name} - ${batchName}」？` : `確定報名「${name}」？`;
+    if (!confirm(confirmMsg)) return;
     isProcessing = true; 
     setButtonLoading('detail-modal-join-btn', true);
     try {
-      await fetchAPI('joinActivity', { userId: userProfile.userId, activityName: name });
+      await fetchAPI('joinActivity', { userId: userProfile.userId, activityName: name, batchName: batchName });
       if (feeType === '收費') showModal("報名成功", `此為收費活動，請完成匯款 \nNT$ ${price} 後，至「報名紀錄」填寫後五碼。`, "history");
       else showModal("報名成功", `您已成功報名！期待現場見到您。`, "activities");
       sessionStorage.removeItem('getUserHistory{"userId":"' + userProfile.userId + '"}');
@@ -965,7 +1038,6 @@
     }
   }
 
-  // 👇 修復的 toggleActivityStatus 函數
   async function toggleActivityStatus(actName) {
     if(isProcessing) return;
     isProcessing = true;

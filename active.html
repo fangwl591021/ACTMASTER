@@ -1,4 +1,4 @@
-<!-- Version: v1.0.3 (獨立建立活動模組 - 新增動態梯次建立功能) -->
+<!-- Version: v1.0.4 (獨立建立活動模組 - 修復時間寫入與欄位對應) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -478,6 +478,11 @@
                 limit: item.querySelector('.batch-limit-input').value
             });
         });
+
+        if(p.batches.length > 0) {
+            p.startTime = p.batches[0].startTime || '';
+            p.endTime = p.batches[p.batches.length-1].endTime || p.batches[0].endTime || '';
+        }
     }
     
     if(!p.activityName) { isProcessing=false; setButtonLoading(btnId, false, btnHtml); return showToast("標題名稱必填", true); }
@@ -493,6 +498,15 @@
         }
     }
     
+    // 強制寫入中文鍵值以對應 Google Sheets 欄位
+    p['開始時間'] = p.startTime;
+    p['結束時間'] = p.endTime;
+    p['活動名稱'] = p.activityName;
+    p['活動類型'] = p.activityType;
+    p['活動說明'] = p.description;
+    p['宣傳大圖'] = p.imageUrl;
+    p['梯次'] = JSON.stringify(p.batches); // 若為梯次活動，確保將資料序列化
+
     try { 
       await fetchAPI('bulkAddRegistrants', p); 
       showToast("✅ 已建立成功"); 

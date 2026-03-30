@@ -1,3 +1,4 @@
+<!-- Version: v1.1.8 (徹底瘦身版) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -99,6 +100,7 @@
       <p class="text-slate-500 font-bold tracking-widest text-[13px]">系統載入中</p>
     </div>
 
+    <!-- 註冊畫面 -->
     <div id="view-user-register" class="hidden animate-in fade-in duration-500 pt-4 pb-10 space-y-6">
       <div class="mb-2">
         <h1 class="text-2xl font-extrabold font-headline text-slate-800 tracking-tight">建立會員檔案</h1>
@@ -139,6 +141,7 @@
       </div>
     </div>
 
+    <!-- 探索活動 -->
     <div id="view-user-activities" class="hidden animate-in fade-in duration-500 pt-2 space-y-4">
       <div class="flex justify-between items-center mb-1">
         <div>
@@ -153,11 +156,13 @@
       <div id="user-activities-container" class="grid grid-cols-2 gap-3"></div>
     </div>
 
+    <!-- 報名紀錄 -->
     <div id="view-user-history" class="hidden space-y-4 animate-in fade-in pt-4">
       <h2 class="text-2xl font-extrabold font-headline text-slate-800">報名紀錄</h2>
       <div id="user-history-container" class="space-y-4"></div>
     </div>
 
+    <!-- 個人資料與專屬名片入口 -->
     <div id="view-user-profile" class="hidden animate-in fade-in pt-4 pb-10 space-y-4">
       <h2 class="text-2xl font-extrabold font-headline mb-4 text-slate-800">個人資料</h2>
       <div class="flex flex-col"><label class="input-label">姓名</label><input type="text" id="edit-name" class="custom-input"></div>
@@ -175,6 +180,7 @@
       </div>
       <button id="btn-save-profile" onclick="submitProfileUpdate()" class="btn-primary mt-4">儲存變更</button>
 
+      <!-- 專屬名片入口橫幅 -->
       <div id="my-card-entry" class="hidden mt-8 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-5 text-white shadow-xl shadow-slate-900/20 flex justify-between items-center relative overflow-hidden cursor-pointer active:scale-[0.98] transition-transform" onclick="window.location.href='card.html?mode=mycard'">
           <div class="absolute -right-4 -top-4 opacity-10"><span class="material-symbols-outlined text-[100px]">contact_mail</span></div>
           <div class="relative z-10">
@@ -191,11 +197,13 @@
       </div>
     </div>
 
+    <!-- 後台：管理核銷 -->
     <div id="view-admin-activities" class="hidden space-y-4 animate-in fade-in pt-4">
       <h2 class="text-2xl font-extrabold font-headline text-slate-800">管理核銷</h2>
       <div id="admin-activity-list-container" class="space-y-4"></div>
     </div>
 
+    <!-- 後台：CRM -->
     <div id="view-admin-crm" class="hidden space-y-2 animate-in fade-in pt-4">
       <div class="px-1 mb-4">
         <h2 class="text-2xl font-extrabold font-headline text-slate-800 tracking-tight">會員 CRM</h2>
@@ -209,6 +217,7 @@
       <div id="crm-load-more-box" class="hidden py-6 text-center"><button onclick="loadMoreCrm()" class="text-primary font-bold text-[14px] px-6 py-2 border border-primary/20 rounded-full hover:bg-primary-light transition-all">顯示更多</button></div>
     </div>
 
+    <!-- 後台：系統參數 -->
     <div id="view-admin-settings" class="hidden animate-in fade-in pt-4 space-y-4">
       <h2 class="text-2xl font-extrabold font-headline mb-4 text-slate-800">系統參數</h2>
       <div class="flex flex-col"><label class="input-label">Telegram Bot Token</label><div class="flex gap-2"><input type="text" id="set-tg-token" class="custom-input flex-1"><button onclick="autoFetchTgChatId()" id="btn-fetch-tg" class="bg-white text-slate-600 px-4 rounded-lg font-bold border border-slate-300 hover:bg-slate-50 active:scale-95 transition-all shadow-sm">轉換</button></div></div>
@@ -235,6 +244,7 @@
   </nav>
 </div>
 
+<!-- Modals -->
 <div id="section-reg-cropper" class="hidden fixed inset-0 bg-slate-900 flex flex-col animate-in fade-in duration-200 w-full max-w-md mx-auto z-[1030]">
   <div class="flex justify-between items-center p-4 bg-slate-900 text-white shrink-0 border-b border-slate-800 shadow-sm">
     <button onclick="cancelRegCrop()" class="text-slate-400 font-bold text-sm px-3 py-2 active:scale-90 transition-transform">取消</button>

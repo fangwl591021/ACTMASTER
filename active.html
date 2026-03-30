@@ -1,4 +1,4 @@
-<!-- Version: v1.0.2 (獨立建立活動模組 - 修正雙重下勾與選單跑版問題) -->
+<!-- Version: v1.0.3 (獨立建立活動模組 - 新增動態梯次建立功能) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -96,15 +96,15 @@
       </div>
 
       <div class="flex p-1 rounded border border-slate-200 bg-slate-100 mb-6">
-        <button onclick="toggleCreateMode('quick')" id="tab-quick" class="flex-1 py-2 rounded text-[15px] font-bold bg-white text-primary shadow-sm transition-all">快速匯入</button>
-        <button onclick="toggleCreateMode('detailed')" id="tab-detailed" class="flex-1 py-2 rounded text-[15px] font-bold text-slate-500 transition-all hover:text-slate-700">完整發佈</button>
+        <button onclick="toggleCreateMode('quick')" id="tab-quick" class="flex-1 py-2 rounded text-[14px] font-bold bg-white text-primary shadow-sm transition-all border border-slate-200">快速匯入</button>
+        <button onclick="toggleCreateMode('detailed')" id="tab-detailed" class="flex-1 py-2 rounded text-[14px] font-bold text-slate-500 transition-all hover:text-slate-700 border border-transparent">單場發佈</button>
+        <button onclick="toggleCreateMode('batch')" id="tab-batch" class="flex-1 py-2 rounded text-[14px] font-bold text-slate-500 transition-all hover:text-slate-700 border border-transparent">梯次建立</button>
       </div>
       
       <!-- 快速模式 -->
       <div id="form-quick" class="space-y-6 animate-in fade-in">
         <div class="flex flex-col"><label class="input-label">活動名稱</label><input type="text" id="quick-name" class="custom-input" placeholder="輸入活動標題..."></div>
         
-        <!-- 修正的下拉選單 (去除多餘的外框與雙重箭頭，完全依賴 Tailwind Forms) -->
         <div class="grid grid-cols-2 gap-4">
           <div class="flex flex-col">
             <label class="input-label">活動類型</label>
@@ -143,11 +143,10 @@
         <button onclick="handleCreateActivity('quick')" id="btn-quick-create" class="btn-primary mt-4">建立活動</button>
       </div>
       
-      <!-- 完整模式 -->
+      <!-- 完整單場模式 -->
       <div id="form-detailed" class="hidden space-y-6 animate-in fade-in">
          <div class="flex flex-col"><label class="input-label">正式標題</label><input type="text" id="detail-name" class="custom-input" placeholder="輸入活動標題..."></div>
          
-         <!-- 修正的下拉選單 -->
          <div class="grid grid-cols-2 gap-4">
            <div class="flex flex-col">
              <label class="input-label">活動類型</label>
@@ -163,8 +162,8 @@
            <div class="flex flex-col">
              <label class="input-label">收費方式</label>
              <div class="flex gap-4 items-center h-[44px] px-3 bg-white border border-slate-300 rounded shadow-sm">
-               <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="fee-type" value="免費" checked onchange="toggleFeeInput()" class="w-4 h-4 text-primary bg-white border-slate-300 focus:ring-primary focus:ring-2"><span class="font-normal text-[15px] text-slate-700">免費</span></label>
-               <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="fee-type" value="收費" onchange="toggleFeeInput()" class="w-4 h-4 text-primary bg-white border-slate-300 focus:ring-primary focus:ring-2"><span class="font-normal text-[15px] text-slate-700">收費</span></label>
+               <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="fee-type" value="免費" checked onchange="toggleFeeInput('detail')" class="w-4 h-4 text-primary bg-white border-slate-300 focus:ring-primary focus:ring-2"><span class="font-normal text-[15px] text-slate-700">免費</span></label>
+               <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="fee-type" value="收費" onchange="toggleFeeInput('detail')" class="w-4 h-4 text-primary bg-white border-slate-300 focus:ring-primary focus:ring-2"><span class="font-normal text-[15px] text-slate-700">收費</span></label>
              </div>
            </div>
            <div class="flex flex-col justify-end"><input type="number" id="detail-price" class="custom-input hidden h-[44px]" placeholder="金額 (NT$)"></div>
@@ -197,6 +196,73 @@
          
          <button onclick="handleCreateActivity('detailed')" id="btn-detail-create" class="btn-primary mt-6 mb-8">發布活動頁面</button>
       </div>
+
+      <!-- 梯次建立模式 -->
+      <div id="form-batch" class="hidden space-y-6 animate-in fade-in">
+        <div class="flex flex-col"><label class="input-label">主活動標題</label><input type="text" id="batch-name" class="custom-input" placeholder="例如：夏季游泳訓練營..."></div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="flex flex-col">
+            <label class="input-label">活動類型</label>
+            <select id="batch-type" class="custom-input cursor-pointer"><option>課程</option><option>教學</option><option>講座</option><option>例會</option><option>聯誼</option><option>參訪</option><option>其他</option></select>
+          </div>
+          <div class="flex flex-col">
+            <label class="input-label">預設身份</label>
+            <select id="batch-identity" class="custom-input cursor-pointer"><option>會員</option><option>來賓</option></select>
+          </div>
+        </div>
+
+        <div class="flex flex-col mt-2 border-t border-slate-100 pt-5">
+          <div class="flex justify-between items-center mb-1.5">
+           <label class="input-label !mb-0 flex items-center">點擊圖片變更 <span class="ml-1.5 px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[11px] font-medium">選填</span></label>
+          </div>
+          <div onclick="document.getElementById('file-input-batch').click()" class="w-full h-40 border border-slate-300 rounded flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-colors hover:bg-slate-100 relative group">
+            <div id="preview-placeholder-batch" class="text-center text-slate-400 flex flex-col items-center z-10"><span class="material-symbols-outlined text-[32px] mb-1">add_photo_alternate</span><p class="text-[14px] font-medium">點圖更換</p></div>
+            <img id="image-preview-batch" class="hidden w-full h-full object-cover absolute inset-0 z-0">
+            <div id="upload-badge-batch" class="hidden absolute bottom-2 right-2 bg-black/60 text-white text-[11px] px-2 py-1 rounded backdrop-blur-sm z-10 font-bold flex items-center gap-1 shadow-sm">
+               <span class="material-symbols-outlined text-[13px]">edit</span> 點圖更換
+            </div>
+            <input type="file" id="file-input-batch" class="hidden" accept="image/*" onchange="previewFile('batch')">
+          </div>
+          <input type="hidden" id="in-image-url-batch">
+        </div>
+
+        <div class="flex flex-col mt-2 border-t border-slate-100 pt-5">
+          <label class="input-label">活動說明</label>
+          <textarea id="batch-desc" class="textarea-block h-32" placeholder="輸入活動統整介紹..."></textarea>
+        </div>
+
+        <!-- 動態梯次列表區塊 -->
+        <div class="flex flex-col mt-2 border-t border-slate-100 pt-5">
+          <div class="flex justify-between items-center mb-4">
+              <label class="input-label !mb-0 font-bold text-slate-800 text-[16px]">梯次與場次設定</label>
+              <button onclick="addBatchItem()" class="px-3 py-1.5 bg-blue-50 text-blue-600 font-bold text-[13px] rounded flex items-center gap-1 active:bg-blue-100 transition-colors shadow-sm border border-blue-100">
+                <span class="material-symbols-outlined text-[16px]">add</span> 新增梯次
+              </button>
+          </div>
+          <div id="batch-list-container" class="space-y-4">
+              <!-- 預設給一個梯次欄位 -->
+              <div id="batch-item-default" class="bg-slate-50 border border-slate-300 rounded p-4 relative">
+                  <button onclick="removeBatchItem('default')" class="absolute top-2.5 right-2.5 w-7 h-7 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors bg-white border border-slate-200 rounded shadow-sm"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+                  <div class="flex flex-col mb-4 pr-8">
+                      <label class="input-label !text-[13px] !text-slate-600">梯次名稱</label>
+                      <input type="text" class="custom-input batch-name-input !h-[38px] !text-[14px]" placeholder="例如：第一梯次 (7/1~7/5)">
+                  </div>
+                  <div class="grid grid-cols-2 gap-3 mb-4">
+                      <div class="flex flex-col"><label class="input-label !text-[13px] !text-slate-600">開始時間</label><input type="datetime-local" class="custom-input batch-start-input !h-[38px] !px-2 !text-[13px] text-slate-700"></div>
+                      <div class="flex flex-col"><label class="input-label !text-[13px] !text-slate-600">結束時間</label><input type="datetime-local" class="custom-input batch-end-input !h-[38px] !px-2 !text-[13px] text-slate-700"></div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-3">
+                      <div class="flex flex-col"><label class="input-label !text-[13px] !text-slate-600">收費 (NT$)</label><input type="number" class="custom-input batch-price-input !h-[38px] !text-[14px]" placeholder="免費請留空或0"></div>
+                      <div class="flex flex-col"><label class="input-label !text-[13px] !text-slate-600">人數限制</label><input type="number" class="custom-input batch-limit-input !h-[38px] !text-[14px]" placeholder="無限制請留空"></div>
+                  </div>
+              </div>
+          </div>
+        </div>
+
+        <button onclick="handleCreateActivity('batch')" id="btn-batch-create" class="btn-primary mt-6 mb-8">發布梯次活動</button>
+      </div>
+
     </div>
   </main>
 
@@ -276,16 +342,52 @@
   };
 
   function toggleCreateMode(m) { 
-    document.getElementById('tab-quick').className = `flex-1 py-2 rounded text-[15px] font-bold transition-all ${m==='quick'?'bg-white text-primary shadow-sm border border-slate-200':'text-slate-500 hover:text-slate-700 border border-transparent'}`; 
-    document.getElementById('tab-detailed').className = `flex-1 py-2 rounded text-[15px] font-bold transition-all ${m==='detailed'?'bg-white text-primary shadow-sm border border-slate-200':'text-slate-500 hover:text-slate-700 border border-transparent'}`; 
-    document.getElementById('form-quick').classList.toggle('hidden', m!=='quick'); 
-    document.getElementById('form-detailed').classList.toggle('hidden', m!=='detailed'); 
+    const tabs = ['quick', 'detailed', 'batch'];
+    tabs.forEach(t => {
+        const btn = document.getElementById('tab-' + t);
+        const form = document.getElementById('form-' + t);
+        if (m === t) {
+            btn.className = `flex-1 py-2 rounded text-[14px] font-bold transition-all bg-white text-primary shadow-sm border border-slate-200`;
+            form.classList.remove('hidden');
+        } else {
+            btn.className = `flex-1 py-2 rounded text-[14px] font-bold transition-all text-slate-500 hover:text-slate-700 border border-transparent`;
+            form.classList.add('hidden');
+        }
+    });
   }
   
-  function toggleFeeInput() { 
-      document.getElementById('detail-price').classList.toggle('hidden', document.querySelector('input[name="fee-type"]:checked').value !== '收費'); 
+  function toggleFeeInput(modeStr) { 
+      document.getElementById(modeStr + '-price').classList.toggle('hidden', document.querySelector('input[name="fee-type"]:checked').value !== '收費'); 
   }
   
+  function addBatchItem() {
+      const container = document.getElementById('batch-list-container');
+      const id = Date.now();
+      const html = `
+      <div id="batch-item-${id}" class="bg-slate-50 border border-slate-300 rounded p-4 relative animate-in fade-in zoom-in-95 duration-200">
+          <button onclick="removeBatchItem(${id})" class="absolute top-2.5 right-2.5 w-7 h-7 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors bg-white border border-slate-200 rounded shadow-sm"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+          <div class="flex flex-col mb-4 pr-8">
+              <label class="input-label !text-[13px] !text-slate-600">梯次名稱</label>
+              <input type="text" class="custom-input batch-name-input !h-[38px] !text-[14px]" placeholder="例如：第一梯次 (7/1~7/5)">
+          </div>
+          <div class="grid grid-cols-2 gap-3 mb-4">
+              <div class="flex flex-col"><label class="input-label !text-[13px] !text-slate-600">開始時間</label><input type="datetime-local" class="custom-input batch-start-input !h-[38px] !px-2 !text-[13px] text-slate-700"></div>
+              <div class="flex flex-col"><label class="input-label !text-[13px] !text-slate-600">結束時間</label><input type="datetime-local" class="custom-input batch-end-input !h-[38px] !px-2 !text-[13px] text-slate-700"></div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+              <div class="flex flex-col"><label class="input-label !text-[13px] !text-slate-600">收費 (NT$)</label><input type="number" class="custom-input batch-price-input !h-[38px] !text-[14px]" placeholder="免費請留空或0"></div>
+              <div class="flex flex-col"><label class="input-label !text-[13px] !text-slate-600">人數限制</label><input type="number" class="custom-input batch-limit-input !h-[38px] !text-[14px]" placeholder="無限制請留空"></div>
+          </div>
+      </div>
+      `;
+      container.insertAdjacentHTML('beforeend', html);
+  }
+
+  function removeBatchItem(id) {
+      const item = document.getElementById(`batch-item-${id}`);
+      if (item) item.remove();
+  }
+
   function previewFile(mode) { 
     const f = document.getElementById(`file-input-${mode}`).files[0]; 
     if(!f) return; 
@@ -320,13 +422,13 @@
 
   async function handleCreateActivity(mode) { 
     if(isProcessing) return; isProcessing=true; 
-    const btnId = mode === 'quick' ? 'btn-quick-create' : 'btn-detail-create';
-    const btnHtml = mode === 'quick' ? '建立活動' : '發布活動頁面';
+    const btnId = `btn-${mode}-create`;
+    const btnHtml = document.getElementById(btnId).innerHTML;
     setButtonLoading(btnId, true);
     
     let p = { 
-        activityName: document.getElementById(mode === 'quick' ? 'quick-name' : 'detail-name').value.trim(), 
-        activityType: document.getElementById(mode === 'quick' ? 'quick-type' : 'detail-type').value, 
+        activityName: '', 
+        activityType: '', 
         feeType: '免費', 
         price: '', 
         startTime: '', 
@@ -334,23 +436,61 @@
         description: '', 
         imageUrl: '', 
         names: [], 
-        defaultIdentity: document.getElementById(mode === 'quick' ? 'quick-identity' : 'detail-identity').value 
+        defaultIdentity: '會員',
+        isBatch: false,
+        batches: []
     }; 
     
-    if(!p.activityName) { isProcessing=false; setButtonLoading(btnId, false, btnHtml); return showToast("名稱必填", true); }
-    
-    if(mode==='quick') {
+    if(mode === 'quick') {
+        p.activityName = document.getElementById('quick-name').value.trim();
+        p.activityType = document.getElementById('quick-type').value;
+        p.defaultIdentity = document.getElementById('quick-identity').value;
         p.names = document.getElementById('quick-names').value.split('\n').filter(n=>n.trim()); 
         p.imageUrl = document.getElementById('in-image-url-quick').value;
         p.startTime = document.getElementById('quick-start').value;
         p.endTime = document.getElementById('quick-end').value;
-    } else { 
+    } else if(mode === 'detailed') { 
+        p.activityName = document.getElementById('detail-name').value.trim();
+        p.activityType = document.getElementById('detail-type').value;
+        p.defaultIdentity = document.getElementById('detail-identity').value;
         p.feeType = document.querySelector('input[name="fee-type"]:checked').value; 
         p.price = document.getElementById('detail-price').value; 
         p.startTime = document.getElementById('detail-start').value; 
         p.endTime = document.getElementById('detail-end').value; 
         p.description = document.getElementById('detail-desc').value; 
         p.imageUrl = document.getElementById('in-image-url-create').value; 
+    } else if(mode === 'batch') {
+        p.activityName = document.getElementById('batch-name').value.trim();
+        p.activityType = document.getElementById('batch-type').value;
+        p.defaultIdentity = document.getElementById('batch-identity').value;
+        p.description = document.getElementById('batch-desc').value;
+        p.imageUrl = document.getElementById('in-image-url-batch').value;
+        p.isBatch = true;
+        
+        const container = document.getElementById('batch-list-container');
+        const items = container.querySelectorAll('[id^="batch-item-"]');
+        items.forEach(item => {
+            p.batches.push({
+                name: item.querySelector('.batch-name-input').value.trim(),
+                startTime: item.querySelector('.batch-start-input').value,
+                endTime: item.querySelector('.batch-end-input').value,
+                price: item.querySelector('.batch-price-input').value,
+                limit: item.querySelector('.batch-limit-input').value
+            });
+        });
+    }
+    
+    if(!p.activityName) { isProcessing=false; setButtonLoading(btnId, false, btnHtml); return showToast("標題名稱必填", true); }
+
+    if (mode === 'batch') {
+        if (p.batches.length === 0) {
+            isProcessing=false; setButtonLoading(btnId, false, btnHtml); return showToast("至少需新增一個梯次", true);
+        }
+        for(let b of p.batches) {
+            if(!b.name) {
+                isProcessing=false; setButtonLoading(btnId, false, btnHtml); return showToast("梯次名稱必填", true);
+            }
+        }
     }
     
     try { 

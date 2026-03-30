@@ -1,4 +1,4 @@
-<!-- Version: v1.1.6 -->
+<!-- Version: v1.1.7 -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -18,7 +18,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
   <script id="tailwind-config">
-    tailwind.config = {
+    window.tailwind = window.tailwind || {};
+    window.tailwind.config = {
       theme: {
         extend: {
           colors: {
@@ -35,7 +36,7 @@
           }
         },
       },
-    }
+    };
   </script>
   <style>
     .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400; vertical-align: middle; }
@@ -82,6 +83,10 @@
     
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* 原生清單風格 - 左邊5px，上下拉開 */
+    .flat-list { @apply bg-white border-y border-slate-200 divide-y divide-slate-100 mt-2; }
+    .flat-item { @apply pl-[5px] pr-4 py-5 bg-white flex items-center gap-3 active:bg-slate-50 cursor-pointer transition-colors; }
   </style>
 </head>
 <body class="font-sans text-text-main min-h-screen flex flex-col items-center">
@@ -237,7 +242,7 @@
       <div>
         <div class="flex items-center gap-2 mb-1">
           <h2 id="ro-name" class="text-[24px] font-bold text-slate-800">姓名</h2>
-          <span id="ro-claim-status" class="hidden px-2 py-0.5 rounded-md text-[11px] border"></span>
+          <span id="ro-claim-status" class="hidden px-2 py-0.5 rounded-md text-[11px] font-bold border"></span>
         </div>
         <p id="ro-title" class="text-[15px] font-medium text-primary">職稱 / 部門</p>
       </div>

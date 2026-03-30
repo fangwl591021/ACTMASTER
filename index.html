@@ -1,4 +1,4 @@
-<!-- Version: v1.1.9 (瘦身修復版) -->
+<!-- Version: v1.1.10 (修復時間顯示版) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -385,14 +385,7 @@
     const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; l.onload = res; l.onerror = rej; document.head.appendChild(l);
   });
 
-  async function fetchAPI(action, payload = {}, useCache = false) {
-    const cacheKey = action + JSON.stringify(payload);
-    if (useCache && sessionStorage.getItem(cacheKey)) {
-      fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, payload }) })
-        .then(r => r.json()).then(res => { if (res.success) sessionStorage.setItem(cacheKey, JSON.stringify(res.data)); })
-        .catch(e => console.log('Cache update failed', e));
-      return JSON.parse(sessionStorage.getItem(cacheKey));
-    }
+  async function fetchAPI(action, payload = {}) {
     try {
       const response = await fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, payload }) });
       const resText = await response.text();
@@ -403,7 +396,6 @@
         throw new Error(`連線錯誤，請確認 GAS 權限。`); 
       }
       if (!result.success) throw new Error(result.error);
-      if (useCache) sessionStorage.setItem(cacheKey, JSON.stringify(result.data));
       return result.data;
     } catch (err) { 
       showToast(err.message, true); 
@@ -411,14 +403,17 @@
     }
   }
 
+  // Update formatTime and formatTimeShort
   function formatTime(isoString) {
     if(!isoString) return '';
     const d = new Date(isoString);
+    if (isNaN(d.getTime())) return String(isoString); // 防呆
     return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   }
   function formatTimeShort(isoString) {
     if(!isoString) return '';
     const d = new Date(isoString);
+    if (isNaN(d.getTime())) return String(isoString).substring(0, 16); // 防呆
     return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   }
 
@@ -725,6 +720,7 @@
   }
 
   function filterByCategory(type) { currentCategory = type; renderCategories(); filterActivities(); }
+
   function filterActivities() { renderActivityList(globalPublicActivities.filter(a => currentCategory === '全部活動' || a.type === currentCategory), 'user'); }
 
   function renderActivityList(data, mode) {
@@ -737,22 +733,23 @@
     let html = '';
     data.forEach((a, i) => {
       const safeName = a.name.replace(/'/g, "\\'");
+      const startT = a.startTime || a['開始時間'] || a.StartTime || a.start || '';
       if (mode === 'user') {
-        const bgImg = a.imageUrl || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80';
+        const bgImg = a.imageUrl || a['宣傳大圖'] || a.Image || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80';
         html += `
         <div onclick="openActivityDetailByName('${safeName}')" class="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm flex flex-col h-full cursor-pointer active:scale-[0.98] transition-transform animate-in fade-in zoom-in-95 hover:shadow-md" style="animation-delay: ${i*50}ms">
           <div class="relative w-full aspect-[4/3] shrink-0 bg-slate-100">
             <img src="${bgImg}" class="w-full h-full object-cover">
             <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
             <div class="absolute top-2 left-2 flex gap-1">
-              <span class="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm tracking-wide">${a.type}</span>
-              <span class="bg-white/95 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm tracking-wide">${a.feeType === '收費' ? 'NT$ '+a.price : '免費'}</span>
+              <span class="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm tracking-wide">${a.type || '活動'}</span>
+              <span class="bg-white/95 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm tracking-wide">${a.feeType === '收費' ? 'NT$ '+ (a.price || 0) : '免費'}</span>
             </div>
           </div>
           <div class="p-3 flex flex-col flex-1 bg-white">
             <p class="text-[10px] text-primary font-bold flex items-center gap-1 mb-1.5 uppercase tracking-wider">
               <span class="material-symbols-outlined text-[12px]">calendar_today</span>
-              ${formatTimeShort(a.startTime)}
+              ${startT ? formatTimeShort(startT) : '時間未定'}
             </p>
             <h3 class="text-[14px] font-bold text-slate-800 leading-snug line-clamp-2 mb-3 flex-1">${a.name}</h3>
             <div class="flex gap-2 mt-auto">
@@ -770,7 +767,7 @@
         <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 animate-in fade-in slide-in-from-bottom-2 mx-1">
           <div class="flex justify-between items-start mb-4">
             <div>
-              <span class="text-[10px] font-bold text-primary bg-primary-light px-2 py-0.5 rounded uppercase tracking-widest mb-1.5 inline-block">${a.type}</span>
+              <span class="text-[10px] font-bold text-primary bg-primary-light px-2 py-0.5 rounded uppercase tracking-widest mb-1.5 inline-block">${a.type || '活動'}</span>
               <h3 class="font-extrabold text-[17px] text-slate-800 leading-tight">${a.name}</h3>
             </div>
             <div class="flex items-center gap-1 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
@@ -800,28 +797,33 @@
     const act = globalPublicActivities.find(a => a.name === name); if (!act) return;
     const imgEl = document.getElementById('detail-modal-image');
     const noImgEl = document.getElementById('detail-modal-no-image');
-    if (act.imageUrl) {
-      imgEl.src = act.imageUrl; imgEl.classList.remove('hidden'); noImgEl.classList.add('hidden');
+    const bgImg = act.imageUrl || act['宣傳大圖'] || act.Image || '';
+    if (bgImg) {
+      imgEl.src = bgImg; imgEl.classList.remove('hidden'); noImgEl.classList.add('hidden');
     } else {
       imgEl.src = ''; imgEl.classList.add('hidden'); noImgEl.classList.remove('hidden');
     }
 
-    document.getElementById('detail-modal-type').innerText = act.type;
+    document.getElementById('detail-modal-type').innerText = act.type || '活動';
     const feeEl = document.getElementById('detail-modal-fee');
-    feeEl.innerText = act.feeType === '收費' ? `NT$ ${act.price}` : '免費';
+    feeEl.innerText = act.feeType === '收費' ? `NT$ ${act.price || 0}` : '免費';
     feeEl.className = `px-2.5 py-0.5 text-[11px] font-bold rounded-md shadow-sm ${act.feeType === '收費' ? 'bg-orange-50 text-orange-600 border border-orange-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`;
     document.getElementById('detail-modal-title').innerText = act.name;
 
-    document.getElementById('detail-modal-start').innerText = act.startTime ? formatTime(act.startTime) : '未定';
+    const startT = act.startTime || act['開始時間'] || act.StartTime || act.start || '';
+    const endT = act.endTime || act['結束時間'] || act.EndTime || act.end || '';
+
+    document.getElementById('detail-modal-start').innerText = startT ? formatTime(startT) : '未定';
     const endContainer = document.getElementById('detail-modal-end-container');
-    if (act.endTime) {
-      document.getElementById('detail-modal-end').innerText = formatTime(act.endTime);
+    if (endT) {
+      document.getElementById('detail-modal-end').innerText = formatTime(endT);
       endContainer.classList.remove('hidden');
     } else {
       endContainer.classList.add('hidden');
     }
 
-    document.getElementById('detail-modal-desc').innerText = act.description || '主辦單位尚未提供說明。';
+    const desc = act.description || act['活動說明'] || act['說明'] || act.Description || '主辦單位尚未提供說明。';
+    document.getElementById('detail-modal-desc').innerText = desc;
 
     const joinBtn = document.getElementById('detail-modal-join-btn');
     joinBtn.onclick = async function() {
@@ -869,6 +871,7 @@
         container.innerHTML = history.map(item => {
           const isCanceled = item.regStatus === '已取消'; const safeName = item.name.replace(/'/g, "\\'");
           let pC = item.payStatus==='已完款'?'bg-blue-50 text-blue-600 border-blue-100':(item.payStatus==='匯款審核中'?'bg-slate-800 text-white border-slate-800':'bg-orange-50 text-orange-600 border-orange-100');
+          const startT = item.startTime || item['開始時間'] || item.StartTime || item.start || '';
           return `
           <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 relative overflow-hidden animate-in slide-in-from-bottom-2 mx-1">
             ${isCanceled ? '<div class="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold px-3 py-0.5 rounded-bl-lg shadow-sm tracking-wider">已取消</div>' : ''}
@@ -876,7 +879,7 @@
               <div id="qr-${item.name.replace(/\s+/g,'')}" class="w-16 h-16 bg-slate-50 border border-slate-100 rounded-xl p-1.5 shrink-0 ${isCanceled?'opacity-30 grayscale':''}"></div>
               <div class="flex-1 overflow-hidden">
                 <h4 class="font-extrabold text-slate-800 text-[15px] leading-snug mb-1 truncate">${item.name}</h4>
-                <p class="text-[11px] text-slate-500 font-bold flex items-center gap-1"><span class="material-symbols-outlined text-[13px]">event</span> ${item.startTime ? item.startTime.substring(0,10) : '未定'}</p>
+                <p class="text-[11px] text-slate-500 font-bold flex items-center gap-1"><span class="material-symbols-outlined text-[13px]">event</span> ${startT ? formatTimeShort(startT) : '未定'}</p>
                 <div class="flex items-center gap-1.5 mt-2.5">
                   <span class="px-2.5 py-1 text-[10px] font-bold rounded-md tracking-wider uppercase border ${item.checkedIn ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-50 text-slate-500 border-slate-200'}">${item.checkedIn ? '已簽到' : '待簽到'}</span>
                   ${item.isPaidAct && !isCanceled ? `<span class="px-2.5 py-1 text-[10px] font-bold rounded-md tracking-wider uppercase border ${pC}">${item.payStatus}</span>` : ''}

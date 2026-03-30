@@ -560,7 +560,7 @@
 
   async function checkMyCardEntry() {
       try {
-          const data = await fetchAPI('getCardContacts', {}, true);
+          const data = await fetchAPI('getCardContacts');
           const myCard = data.find(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId || c['Line ID'] === userProfile.userId);
           if (myCard) {
               document.getElementById('my-card-entry').classList.remove('hidden');
@@ -698,7 +698,7 @@
     if (!globalPublicActivities.length) renderActivitiesSkeleton();
     
     try {
-      const data = await fetchAPI('getPublicActivities', {}, true); 
+      const data = await fetchAPI('getPublicActivities'); 
       globalPublicActivities = data || [];
       
       if (!globalPublicActivities.length) {
@@ -859,7 +859,7 @@
     container.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>';
     
     try {
-        const history = await fetchAPI('getUserHistory', { userId: userProfile.userId }, true);
+        const history = await fetchAPI('getUserHistory', { userId: userProfile.userId });
         
         if (!history || history.length === 0) {
             container.innerHTML = '<div class="text-center py-16 bg-white shadow-sm border border-slate-200 rounded-3xl text-slate-400 font-bold mx-1">尚無報名紀錄</div>'; 
@@ -955,7 +955,7 @@
     const list = document.getElementById('admin-activity-list-container');
     list.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>'; 
     try {
-      currentActivities = await fetchAPI('getActivityDashboard', {}, true); 
+      currentActivities = await fetchAPI('getActivityDashboard'); 
       renderActivityList(currentActivities, 'admin'); 
     } catch (e) {
       list.innerHTML = `<p class="text-center text-red-400 font-bold py-10">載入失敗</p>`;
@@ -1098,7 +1098,7 @@
     const list = document.getElementById('admin-crm-list-container');
     list.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>'; 
     try {
-      globalCrmData = await fetchAPI('getAllCrmData', {}, true); 
+      globalCrmData = await fetchAPI('getAllCrmData'); 
       filteredCrmData = [...globalCrmData];
       currentCrmViewCount = crmPageLimit;
       renderCrmList(); 

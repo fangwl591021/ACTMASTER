@@ -1,524 +1,347 @@
-<!-- Version: v1.0.4 (獨立建立活動模組 - 修復時間寫入與欄位對應) -->
+<!-- Version: v1.0.5 (獨立建立活動模組 - 完整梯次建立功能) -->
 <!DOCTYPE html>
-<html class="light" lang="zh-TW">
+<html lang="zh-TW">
 <head>
-  <meta charset="utf-8"/>
-  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-  <link rel="icon" href="data:,">
-  <title>建立新活動 - 報名大師</title>
-  
-  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Noto+Sans+TC:wght@400;500;700;800&display=swap" rel="stylesheet"/>
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-
-  <script id="tailwind-config">
-    window.tailwind = window.tailwind || {};
-    window.tailwind.config = {
-      theme: {
-        extend: {
-          colors: { 
-            primary: "#2563eb", 
-            "primary-light": "#eff6ff", 
-            background: "#ffffff", 
-            "text-main": "#0f172a", 
-            "text-muted": "#64748b", 
-            error: "#ef4444" 
-          },
-          fontFamily: { 
-            headline: ["Manrope", "Noto Sans TC", "sans-serif"],
-            sans: ["Inter", "Noto Sans TC", "sans-serif"] 
-          },
-          boxShadow: {
-            'app-card': '0 4px 20px -2px rgba(0,0,0,0.05)',
-            'app-nav': '0 -4px 20px rgba(0,0,0,0.03)',
-          }
-        }
-      }
-    }
-  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>建立新活動 - 服務中台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
-    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400; vertical-align: middle; }
-    .icon-filled { font-variation-settings: 'FILL' 1, 'wght' 400; }
-    
-    body { background-color: #ffffff; -webkit-tap-highlight-color: transparent; }
-    .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1.5rem); }
-    
-    /* 模擬 LINE 原生資訊流風格：不加粗、文字適中、無多餘邊距 */
-    .input-label { @apply block text-[15px] text-slate-800 mb-1.5 font-normal; }
-
-    /* 原生輸入框：白底、明確邊框、小圓角、無陰影 */
-    .custom-input { @apply w-full h-[44px] px-3 bg-white border border-slate-400 rounded outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors text-text-main text-[15px] shadow-none; }
-    .custom-input::placeholder { @apply text-slate-400; }
-    
-    .textarea-block { @apply w-full p-3 bg-white border border-slate-400 rounded outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors text-[15px] text-text-main resize-none leading-relaxed shadow-none; }
-
-    .btn-primary { @apply w-full py-3 bg-primary text-white rounded font-bold text-[16px] shadow-sm active:opacity-80 transition-opacity flex items-center justify-center gap-2 hover:bg-blue-700; }
-    .btn-secondary { @apply w-full py-3 bg-white border border-slate-400 text-slate-700 rounded font-bold text-[16px] hover:bg-slate-50 active:bg-slate-50 transition-colors flex items-center justify-center gap-2 shadow-sm; }
-    
-    .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-slate-400 h-full; min-width: 48px;}
-    .nav-active { @apply text-text-main font-bold; }
-    .nav-active .material-symbols-outlined { font-variation-settings: 'FILL' 1; color: #1e293b; }
-
-    .refresh-spin { animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
-    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    body { font-family: -apple-system, sans-serif; background-color: #f4f4f4; color: #333; }
+    .input-group { margin-bottom: 16px; }
+    .label-text { display: block; font-size: 13px; color: #666; margin-bottom: 6px; font-weight: 500; }
+    .form-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; outline: none; background: #fff; transition: border-color 0.2s; }
+    .form-input:focus { border-color: #06C755; box-shadow: 0 0 0 2px rgba(6, 199, 85, 0.1); }
+    .tab-btn { flex: 1; text-align: center; padding: 12px 10px; font-size: 14px; cursor: pointer; color: #999; border-bottom: 2px solid transparent; transition: all 0.2s; }
+    .tab-btn.active { color: #06C755; border-bottom-color: #06C755; font-weight: bold; background-color: white; }
+    .btn-main { background: #06C755; color: white; border: none; width: 100%; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: opacity 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; }
+    .btn-main:active { opacity: 0.8; }
+    .btn-ai { background: #333; color: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; float: right; margin-top: -24px; cursor: pointer; transition: opacity 0.2s; }
+    .btn-ai:active { opacity: 0.8; }
+    .batch-item { background: #fff; border: 1px solid #eee; padding: 16px; border-radius: 12px; margin-bottom: 12px; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+    .nav { position: fixed; bottom: 0; width: 100%; max-width: 450px; background: white; display: flex; border-top: 1px solid #eee; height: 60px; z-index: 50; padding-bottom: env(safe-area-inset-bottom); }
+    .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: #999; cursor: pointer; transition: color 0.2s; font-weight: 500; }
+    .nav-btn.active { color: #06C755; font-weight: bold; }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
-<body class="font-sans text-text-main min-h-screen flex flex-col items-center bg-slate-50">
+<body class="flex justify-center bg-gray-100">
 
-<div id="app-container" class="w-full max-w-md h-screen relative flex flex-col shadow-2xl overflow-hidden bg-background">
-  
-  <nav id="top-nav" class="fixed top-0 w-full max-w-md z-40 bg-white/95 backdrop-blur-xl px-5 py-3.5 flex justify-between items-center left-1/2 -translate-x-1/2 border-b border-slate-200 shadow-sm">
-    <div class="text-[19px] font-extrabold text-slate-800 flex items-center gap-2 font-headline tracking-tight">
-      <div class="w-8 h-8 rounded bg-primary text-white flex items-center justify-center shadow-sm">
-        <span class="material-symbols-outlined text-[20px]">add_circle</span>
+<div class="w-full max-w-[450px] min-h-screen bg-gray-50 relative pb-24 shadow-xl">
+  <!-- 頂部標題 -->
+  <header class="bg-[#06C755] text-white p-4 text-center sticky top-0 z-40 shadow-sm">
+    <h2 class="text-[17px] font-bold tracking-wider">建立新活動</h2>
+  </header>
+
+  <!-- 頁籤選單 -->
+  <div class="flex bg-gray-50 border-b border-gray-200 sticky top-[56px] z-30">
+    <div onclick="switchTab('quick')" id="tab-quick" class="tab-btn active">快速匯入</div>
+    <div onclick="switchTab('detailed')" id="tab-detailed" class="tab-btn">詳細發佈</div>
+    <div onclick="switchTab('batch')" id="tab-batch" class="tab-btn">梯次建立</div>
+  </div>
+
+  <main class="p-5">
+    <!-- 1. 快速模式 -->
+    <div id="form-quick" class="space-y-5 animate-in fade-in">
+      <div class="input-group">
+        <span class="label-text">活動標題</span>
+        <input type="text" id="q-name" class="form-input" placeholder="例：每週商務例會">
       </div>
-      建立新活動
-      <span class="bg-slate-800 text-white text-[9px] px-2 py-0.5 rounded uppercase tracking-wider font-bold ml-1">Admin</span>
-    </div>
-    <div class="flex items-center gap-3">
-      <div id="user-profile-badge" class="hidden flex items-center gap-2">
-        <img id="user-avatar" src="" class="w-9 h-9 rounded-full object-cover border border-slate-200 shadow-sm">
+      <div class="input-group">
+        <div class="flex justify-between items-center mb-1.5">
+          <span class="label-text !mb-0">名單內容 (每行一位)</span>
+          <span class="text-[10px] bg-gray-200 text-gray-600 px-2 py-0.5 rounded">批次輸入</span>
+        </div>
+        <textarea id="q-names" class="form-input h-48 resize-none" placeholder="請貼上參與者姓名...&#10;王小明&#10;陳大山&#10;林美麗"></textarea>
       </div>
-    </div>
-  </nav>
-
-  <main id="main-content" class="flex-1 overflow-y-auto pb-32 pt-20 px-5 space-y-6 bg-white">
-
-    <div id="view-loading" class="h-full flex flex-col items-center justify-center space-y-4 pb-20">
-      <div class="w-10 h-10 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
-      <p class="text-slate-500 font-bold tracking-widest text-[13px]">權限驗證中</p>
+      <button onclick="submitActivity('quick', this)" class="btn-main mt-6">立即建立並匯入</button>
     </div>
 
-    <div id="view-admin-create" class="hidden space-y-5 animate-in fade-in">
-      <div class="mb-4">
-        <p class="text-slate-500 text-[13px] font-medium mt-1">快速部署您的活動報名流程。</p>
+    <!-- 2. 詳細模式 -->
+    <div id="form-detailed" class="hidden space-y-5 animate-in fade-in">
+      <div class="input-group">
+        <span class="label-text">正式活動標題</span>
+        <input type="text" id="d-name" class="form-input" placeholder="輸入完整的活動名稱">
       </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="input-group !mb-0">
+          <span class="label-text">開始時間</span>
+          <input type="datetime-local" id="d-start" class="form-input !text-[13px] !px-2">
+        </div>
+        <div class="input-group !mb-0">
+          <span class="label-text">結束時間</span>
+          <input type="datetime-local" id="d-end" class="form-input !text-[13px] !px-2">
+        </div>
+      </div>
+      <div class="input-group">
+        <span class="label-text">活動說明</span>
+        <div onclick="aiOptimizeDesc('d-desc')" class="btn-ai shadow-sm hover:bg-gray-800">🤖 AI 優化文案</div>
+        <textarea id="d-desc" class="form-input h-40 resize-none" placeholder="輸入活動介紹、流程或注意事項..."></textarea>
+      </div>
+      <button onclick="submitActivity('detailed', this)" class="btn-main mt-6">發布正式活動</button>
+    </div>
 
-      <div class="flex p-1 rounded border border-slate-200 bg-slate-100 mb-6">
-        <button onclick="toggleCreateMode('quick')" id="tab-quick" class="flex-1 py-2 rounded text-[14px] font-bold bg-white text-primary shadow-sm transition-all border border-slate-200">快速匯入</button>
-        <button onclick="toggleCreateMode('detailed')" id="tab-detailed" class="flex-1 py-2 rounded text-[14px] font-bold text-slate-500 transition-all hover:text-slate-700 border border-transparent">單場發佈</button>
-        <button onclick="toggleCreateMode('batch')" id="tab-batch" class="flex-1 py-2 rounded text-[14px] font-bold text-slate-500 transition-all hover:text-slate-700 border border-transparent">梯次建立</button>
+    <!-- 3. 梯次模式 -->
+    <div id="form-batch" class="hidden space-y-4 animate-in fade-in">
+      <div class="input-group mb-5">
+        <span class="label-text">系列活動標題</span>
+        <input type="text" id="b-name" class="form-input" placeholder="例：2026 AI 應用實戰系列班">
       </div>
       
-      <!-- 快速模式 -->
-      <div id="form-quick" class="space-y-6 animate-in fade-in">
-        <div class="flex flex-col"><label class="input-label">活動名稱</label><input type="text" id="quick-name" class="custom-input" placeholder="輸入活動標題..."></div>
-        
-        <div class="grid grid-cols-2 gap-4">
-          <div class="flex flex-col">
-            <label class="input-label">活動類型</label>
-            <select id="quick-type" class="custom-input cursor-pointer"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option></select>
-          </div>
-          <div class="flex flex-col">
-            <label class="input-label">預設身份</label>
-            <select id="quick-identity" class="custom-input cursor-pointer"><option>會員</option><option>來賓</option></select>
-          </div>
-        </div>
+      <div class="flex justify-between items-center mb-2">
+         <span class="text-[14px] font-bold text-gray-800">設定活動梯次</span>
+         <span class="text-[11px] text-gray-400">可動態增減</span>
+      </div>
 
-        <div class="grid grid-cols-2 gap-4">
-          <div class="flex flex-col"><label class="input-label">開始時間</label><input type="datetime-local" id="quick-start" class="custom-input !px-2 text-[14px] text-slate-700"></div>
-          <div class="flex flex-col"><label class="input-label">結束時間</label><input type="datetime-local" id="quick-end" class="custom-input !px-2 text-[14px] text-slate-700"></div>
-        </div>
-
-        <div class="flex flex-col">
-          <div class="flex justify-between items-center mb-1.5">
-            <label class="input-label !mb-0 flex items-center">點擊圖片變更 <span class="ml-1.5 px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[11px] font-medium">選填</span></label>
+      <div id="batch-container" class="space-y-3">
+        <!-- 預設第一梯次 -->
+        <div class="batch-item">
+          <div class="input-group !mb-3">
+            <span class="label-text">梯次名稱</span>
+            <input type="text" class="form-input b-item-name !py-2" placeholder="例：第一梯次 (10/01)">
           </div>
-          <div onclick="document.getElementById('file-input-quick').click()" class="w-full h-40 border border-slate-300 rounded flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-colors hover:bg-slate-100 relative group">
-            <div id="preview-placeholder-quick" class="text-center text-slate-400 flex flex-col items-center z-10"><span class="material-symbols-outlined text-[32px] mb-1">add_photo_alternate</span><p class="text-[14px] font-medium">點圖更換</p></div>
-            <img id="image-preview-quick" class="hidden w-full h-full object-cover absolute inset-0 z-0">
-            <div id="upload-badge-quick" class="hidden absolute bottom-2 right-2 bg-black/60 text-white text-[11px] px-2 py-1 rounded backdrop-blur-sm z-10 font-bold flex items-center gap-1 shadow-sm">
-                <span class="material-symbols-outlined text-[13px]">edit</span> 點圖更換
-            </div>
-            <input type="file" id="file-input-quick" class="hidden" accept="image/*" onchange="previewFile('quick')">
+          <div class="grid grid-cols-2 gap-3 mb-3">
+             <div>
+               <span class="label-text">開始時間</span>
+               <input type="datetime-local" class="form-input b-item-start !text-[12px] !py-2 !px-1.5">
+             </div>
+             <div>
+               <span class="label-text">結束時間</span>
+               <input type="datetime-local" class="form-input b-item-end !text-[12px] !py-2 !px-1.5">
+             </div>
           </div>
-          <input type="hidden" id="in-image-url-quick">
+          <div class="input-group !mb-0">
+             <span class="label-text">人數限制</span>
+             <input type="number" class="form-input b-item-limit !py-2" placeholder="不限則留空">
+          </div>
         </div>
-
-        <div class="flex flex-col">
-          <div class="flex justify-between items-center mb-1.5"><label class="input-label !mb-0">名單內容</label><span class="text-[11px] font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded">支援批次輸入</span></div>
-          <textarea id="quick-names" class="textarea-block h-36" placeholder="請貼上參與者姓名，每行一位..."></textarea>
-        </div>
-        <button onclick="handleCreateActivity('quick')" id="btn-quick-create" class="btn-primary mt-4">建立活動</button>
       </div>
       
-      <!-- 完整單場模式 -->
-      <div id="form-detailed" class="hidden space-y-6 animate-in fade-in">
-         <div class="flex flex-col"><label class="input-label">正式標題</label><input type="text" id="detail-name" class="custom-input" placeholder="輸入活動標題..."></div>
-         
-         <div class="grid grid-cols-2 gap-4">
-           <div class="flex flex-col">
-             <label class="input-label">活動類型</label>
-             <select id="detail-type" class="custom-input cursor-pointer"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option></select>
-           </div>
-           <div class="flex flex-col">
-             <label class="input-label">預設身份</label>
-             <select id="detail-identity" class="custom-input cursor-pointer"><option>會員</option><option>來賓</option></select>
-           </div>
-         </div>
-         
-         <div class="grid grid-cols-2 gap-4 border-t border-slate-100 pt-5 mt-2">
-           <div class="flex flex-col">
-             <label class="input-label">收費方式</label>
-             <div class="flex gap-4 items-center h-[44px] px-3 bg-white border border-slate-300 rounded shadow-sm">
-               <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="fee-type" value="免費" checked onchange="toggleFeeInput('detail')" class="w-4 h-4 text-primary bg-white border-slate-300 focus:ring-primary focus:ring-2"><span class="font-normal text-[15px] text-slate-700">免費</span></label>
-               <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="fee-type" value="收費" onchange="toggleFeeInput('detail')" class="w-4 h-4 text-primary bg-white border-slate-300 focus:ring-primary focus:ring-2"><span class="font-normal text-[15px] text-slate-700">收費</span></label>
-             </div>
-           </div>
-           <div class="flex flex-col justify-end"><input type="number" id="detail-price" class="custom-input hidden h-[44px]" placeholder="金額 (NT$)"></div>
-         </div>
-         
-         <div class="grid grid-cols-2 gap-4 border-t border-slate-100 pt-5 mt-2">
-           <div class="flex flex-col"><label class="input-label">開始時間</label><input type="datetime-local" id="detail-start" class="custom-input !px-2 text-[14px] text-slate-700"></div>
-           <div class="flex flex-col"><label class="input-label">結束時間</label><input type="datetime-local" id="detail-end" class="custom-input !px-2 text-[14px] text-slate-700"></div>
-         </div>
-         
-         <div class="flex flex-col mt-2 border-t border-slate-100 pt-5">
-           <label class="input-label">活動說明</label>
-           <textarea id="detail-desc" class="textarea-block h-32" placeholder="輸入詳盡說明..."></textarea>
-         </div>
-         
-         <div class="flex flex-col mt-2 border-t border-slate-100 pt-5">
-           <div class="flex justify-between items-center mb-1.5">
-            <label class="input-label !mb-0 flex items-center">點擊圖片變更 <span class="ml-1.5 px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[11px] font-medium">選填</span></label>
-           </div>
-           <div onclick="document.getElementById('file-input-create').click()" class="w-full h-40 border border-slate-300 rounded flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-colors hover:bg-slate-100 relative group">
-             <div id="preview-placeholder-create" class="text-center text-slate-400 flex flex-col items-center z-10"><span class="material-symbols-outlined text-[32px] mb-1">add_photo_alternate</span><p class="text-[14px] font-medium">點圖更換</p></div>
-             <img id="image-preview-create" class="hidden w-full h-full object-cover absolute inset-0 z-0">
-             <div id="upload-badge-create" class="hidden absolute bottom-2 right-2 bg-black/60 text-white text-[11px] px-2 py-1 rounded backdrop-blur-sm z-10 font-bold flex items-center gap-1 shadow-sm">
-                <span class="material-symbols-outlined text-[13px]">edit</span> 點圖更換
-             </div>
-             <input type="file" id="file-input-create" class="hidden" accept="image/*" onchange="previewFile('create')">
-           </div>
-           <input type="hidden" id="in-image-url-create">
-         </div>
-         
-         <button onclick="handleCreateActivity('detailed')" id="btn-detail-create" class="btn-primary mt-6 mb-8">發布活動頁面</button>
+      <button onclick="addBatchRow()" class="w-full py-3 mt-2 border-2 border-dashed border-[#06C755] text-[#06C755] bg-[#06C755]/5 hover:bg-[#06C755]/10 font-bold rounded-xl text-sm transition-colors flex justify-center items-center gap-1">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+        新增梯次
+      </button>
+
+      <div class="input-group mt-6">
+        <span class="label-text">系列說明 (共用)</span>
+        <div onclick="aiOptimizeDesc('b-desc')" class="btn-ai shadow-sm hover:bg-gray-800">🤖 AI 優化文案</div>
+        <textarea id="b-desc" class="form-input h-32 resize-none" placeholder="輸入此系列活動的總體說明..."></textarea>
       </div>
 
-      <!-- 梯次建立模式 -->
-      <div id="form-batch" class="hidden space-y-6 animate-in fade-in">
-        <div class="flex flex-col"><label class="input-label">主活動標題</label><input type="text" id="batch-name" class="custom-input" placeholder="例如：夏季游泳訓練營..."></div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <div class="flex flex-col">
-            <label class="input-label">活動類型</label>
-            <select id="batch-type" class="custom-input cursor-pointer"><option>課程</option><option>教學</option><option>講座</option><option>例會</option><option>聯誼</option><option>參訪</option><option>其他</option></select>
-          </div>
-          <div class="flex flex-col">
-            <label class="input-label">預設身份</label>
-            <select id="batch-identity" class="custom-input cursor-pointer"><option>會員</option><option>來賓</option></select>
-          </div>
-        </div>
-
-        <div class="flex flex-col mt-2 border-t border-slate-100 pt-5">
-          <div class="flex justify-between items-center mb-1.5">
-           <label class="input-label !mb-0 flex items-center">點擊圖片變更 <span class="ml-1.5 px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[11px] font-medium">選填</span></label>
-          </div>
-          <div onclick="document.getElementById('file-input-batch').click()" class="w-full h-40 border border-slate-300 rounded flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-colors hover:bg-slate-100 relative group">
-            <div id="preview-placeholder-batch" class="text-center text-slate-400 flex flex-col items-center z-10"><span class="material-symbols-outlined text-[32px] mb-1">add_photo_alternate</span><p class="text-[14px] font-medium">點圖更換</p></div>
-            <img id="image-preview-batch" class="hidden w-full h-full object-cover absolute inset-0 z-0">
-            <div id="upload-badge-batch" class="hidden absolute bottom-2 right-2 bg-black/60 text-white text-[11px] px-2 py-1 rounded backdrop-blur-sm z-10 font-bold flex items-center gap-1 shadow-sm">
-               <span class="material-symbols-outlined text-[13px]">edit</span> 點圖更換
-            </div>
-            <input type="file" id="file-input-batch" class="hidden" accept="image/*" onchange="previewFile('batch')">
-          </div>
-          <input type="hidden" id="in-image-url-batch">
-        </div>
-
-        <div class="flex flex-col mt-2 border-t border-slate-100 pt-5">
-          <label class="input-label">活動說明</label>
-          <textarea id="batch-desc" class="textarea-block h-32" placeholder="輸入活動統整介紹..."></textarea>
-        </div>
-
-        <!-- 動態梯次列表區塊 -->
-        <div class="flex flex-col mt-2 border-t border-slate-100 pt-5">
-          <div class="flex justify-between items-center mb-4">
-              <label class="input-label !mb-0 font-bold text-slate-800 text-[16px]">梯次與場次設定</label>
-              <button onclick="addBatchItem()" class="px-3 py-1.5 bg-blue-50 text-blue-600 font-bold text-[13px] rounded flex items-center gap-1 active:bg-blue-100 transition-colors shadow-sm border border-blue-100">
-                <span class="material-symbols-outlined text-[16px]">add</span> 新增梯次
-              </button>
-          </div>
-          <div id="batch-list-container" class="space-y-4">
-              <!-- 預設給一個梯次欄位 -->
-              <div id="batch-item-default" class="bg-slate-50 border border-slate-300 rounded p-4 relative">
-                  <button onclick="removeBatchItem('default')" class="absolute top-2.5 right-2.5 w-7 h-7 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors bg-white border border-slate-200 rounded shadow-sm"><span class="material-symbols-outlined text-[18px]">delete</span></button>
-                  <div class="flex flex-col mb-4 pr-8">
-                      <label class="input-label !text-[13px] !text-slate-600">梯次名稱</label>
-                      <input type="text" class="custom-input batch-name-input !h-[38px] !text-[14px]" placeholder="例如：第一梯次 (7/1~7/5)">
-                  </div>
-                  <div class="grid grid-cols-2 gap-3 mb-4">
-                      <div class="flex flex-col"><label class="input-label !text-[13px] !text-slate-600">開始時間</label><input type="datetime-local" class="custom-input batch-start-input !h-[38px] !px-2 !text-[13px] text-slate-700"></div>
-                      <div class="flex flex-col"><label class="input-label !text-[13px] !text-slate-600">結束時間</label><input type="datetime-local" class="custom-input batch-end-input !h-[38px] !px-2 !text-[13px] text-slate-700"></div>
-                  </div>
-                  <div class="grid grid-cols-2 gap-3">
-                      <div class="flex flex-col"><label class="input-label !text-[13px] !text-slate-600">收費 (NT$)</label><input type="number" class="custom-input batch-price-input !h-[38px] !text-[14px]" placeholder="免費請留空或0"></div>
-                      <div class="flex flex-col"><label class="input-label !text-[13px] !text-slate-600">人數限制</label><input type="number" class="custom-input batch-limit-input !h-[38px] !text-[14px]" placeholder="無限制請留空"></div>
-                  </div>
-              </div>
-          </div>
-        </div>
-
-        <button onclick="handleCreateActivity('batch')" id="btn-batch-create" class="btn-primary mt-6 mb-8">發布梯次活動</button>
-      </div>
-
+      <button onclick="submitActivity('batch', this)" class="btn-main mt-6">發布梯次活動</button>
     </div>
   </main>
 
-  <nav id="bottom-nav-admin" class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-evenly items-center px-1 py-2 z-40 pb-safe shadow-app-nav left-1/2 -translate-x-1/2 h-[72px]">
-    <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">fact_check</span></div><span class="text-[10px] font-bold mt-0.5">核銷</span></button>
-    <button class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">add_circle</span></div><span class="text-[10px] font-bold mt-0.5">建立</span></button>
-    <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">groups</span></div><span class="text-[10px] font-bold mt-0.5">CRM</span></button>
-    <button onclick="window.location.href='fate.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px] text-pink-500">psychology</span></div><span class="text-[10px] font-bold mt-0.5 text-pink-600">配對</span></button>
-    <button onclick="window.location.href='card.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">recent_patient</span></div><span class="text-[10px] font-bold mt-0.5">名片</span></button>
-    <button onclick="window.location.href='index.html?view=admin-settings'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">settings</span></div><span class="text-[10px] font-bold mt-0.5">參數</span></button>
+  <!-- 底部導覽 -->
+  <nav class="nav">
+    <div class="nav-btn" onclick="location.href='admin.html'">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+      <span>後台管理</span>
+    </div>
+    <div class="nav-btn active">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+      <span>建立活動</span>
+    </div>
+    <div class="nav-btn" onclick="location.href='service_hub.html?p='+p">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
+      <span>前台預覽</span>
+    </div>
   </nav>
 </div>
 
-<div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded text-[15px] shadow-lg transition-all z-[10000] font-bold flex items-center gap-2 w-max max-w-[90vw] opacity-0 pointer-events-none"></div>
-
 <script>
-  const LIFF_ID = "2009367829-DLtYBDUm"; 
-  const WORKER_URL = "https://actmaster.fangwl591021.workers.dev"; 
-  const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55", "U8932b891ad24da512afb9c1a6f41567b"]; 
+  const LIFF_ID = '2009367829-5bIWGL8O';
+  const WORKER_URL = 'https://saas.ares-co2026.workers.dev/';
+  let uid = '', p = '';
 
-  let userProfile = null;
-  let isProcessing = false;
+  async function init() {
+    const urlParams = new URLSearchParams(window.location.search);
+    p = urlParams.get('p') || '';
 
-  function setButtonLoading(btnId, isLoading, originalText = '') {
-      const btn = document.getElementById(btnId);
-      if (!btn) return false;
-      if (isLoading) {
-          if (!btn.dataset.oriText) btn.dataset.oriText = btn.innerHTML;
-          btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[18px] align-middle">refresh</span> 處理中...';
-          btn.classList.add('opacity-50', 'pointer-events-none');
-          return true;
-      } else {
-          btn.innerHTML = originalText || btn.dataset.oriText || '送出';
-          btn.classList.remove('opacity-50', 'pointer-events-none');
-          return false;
-      }
-  }
-
-  async function fetchAPI(action, payload = {}) {
     try {
-      const response = await fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, payload }) });
-      const resText = await response.text();
-      let result; 
-      try { result = JSON.parse(resText); } catch(e) { throw new Error(`連線錯誤，請確認 GAS 權限。`); }
-      if (!result.success) throw new Error(result.error);
-      return result.data;
-    } catch (err) { 
-      showToast(err.message, true); 
-      throw err; 
+        await liff.init({ liffId: LIFF_ID });
+        if (!liff.isLoggedIn()) { liff.login(); return; }
+        const profile = await liff.getProfile();
+        uid = profile.userId;
+    } catch(err) {
+        console.error('LIFF Error:', err);
     }
   }
 
-  function showToast(m, e=false) { 
-    const t = document.getElementById('toast'); if(!t) return; 
-    t.innerHTML = `<span class="material-symbols-outlined icon-filled">${e?'error':'info'}</span>` + m; 
-    t.className = `fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded text-[15px] shadow-lg transition-all z-[10000] font-bold transform translate-y-0 opacity-100 ${e ? 'bg-red-500 text-white border-red-600' : 'bg-slate-800 text-white border-slate-700'} flex items-center gap-2 w-max max-w-[90vw]`; 
-    setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -1rem)'; }, 3000); 
-  }
-
-  window.onload = async () => {
-    try {
-      await liff.init({ liffId: LIFF_ID });
-      if (!liff.isLoggedIn()) { liff.login(); return; }
-      userProfile = await liff.getProfile();
-      document.getElementById('user-avatar').src = userProfile.pictureUrl || '';
-      document.getElementById('user-profile-badge').classList.remove('hidden');
-      
-      if (ADMIN_IDS.includes(userProfile.userId)) {
-          document.getElementById('view-loading').classList.add('hidden');
-          document.getElementById('view-admin-create').classList.remove('hidden');
-      } else {
-          window.location.href = 'index.html';
-      }
-    } catch (err) { 
-      document.getElementById('view-loading').innerHTML = `<p class="text-error font-bold">${err.message}</p>`;
-    }
-  };
-
-  function toggleCreateMode(m) { 
-    const tabs = ['quick', 'detailed', 'batch'];
-    tabs.forEach(t => {
-        const btn = document.getElementById('tab-' + t);
-        const form = document.getElementById('form-' + t);
-        if (m === t) {
-            btn.className = `flex-1 py-2 rounded text-[14px] font-bold transition-all bg-white text-primary shadow-sm border border-slate-200`;
-            form.classList.remove('hidden');
-        } else {
-            btn.className = `flex-1 py-2 rounded text-[14px] font-bold transition-all text-slate-500 hover:text-slate-700 border border-transparent`;
-            form.classList.add('hidden');
-        }
+  function switchTab(m) {
+    ['quick', 'detailed', 'batch'].forEach(t => {
+      document.getElementById('tab-' + t).classList.toggle('active', t === m);
+      document.getElementById('form-' + t).classList.toggle('hidden', t !== m);
     });
   }
-  
-  function toggleFeeInput(modeStr) { 
-      document.getElementById(modeStr + '-price').classList.toggle('hidden', document.querySelector('input[name="fee-type"]:checked').value !== '收費'); 
-  }
-  
-  function addBatchItem() {
-      const container = document.getElementById('batch-list-container');
-      const id = Date.now();
-      const html = `
-      <div id="batch-item-${id}" class="bg-slate-50 border border-slate-300 rounded p-4 relative animate-in fade-in zoom-in-95 duration-200">
-          <button onclick="removeBatchItem(${id})" class="absolute top-2.5 right-2.5 w-7 h-7 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors bg-white border border-slate-200 rounded shadow-sm"><span class="material-symbols-outlined text-[18px]">delete</span></button>
-          <div class="flex flex-col mb-4 pr-8">
-              <label class="input-label !text-[13px] !text-slate-600">梯次名稱</label>
-              <input type="text" class="custom-input batch-name-input !h-[38px] !text-[14px]" placeholder="例如：第一梯次 (7/1~7/5)">
-          </div>
-          <div class="grid grid-cols-2 gap-3 mb-4">
-              <div class="flex flex-col"><label class="input-label !text-[13px] !text-slate-600">開始時間</label><input type="datetime-local" class="custom-input batch-start-input !h-[38px] !px-2 !text-[13px] text-slate-700"></div>
-              <div class="flex flex-col"><label class="input-label !text-[13px] !text-slate-600">結束時間</label><input type="datetime-local" class="custom-input batch-end-input !h-[38px] !px-2 !text-[13px] text-slate-700"></div>
-          </div>
-          <div class="grid grid-cols-2 gap-3">
-              <div class="flex flex-col"><label class="input-label !text-[13px] !text-slate-600">收費 (NT$)</label><input type="number" class="custom-input batch-price-input !h-[38px] !text-[14px]" placeholder="免費請留空或0"></div>
-              <div class="flex flex-col"><label class="input-label !text-[13px] !text-slate-600">人數限制</label><input type="number" class="custom-input batch-limit-input !h-[38px] !text-[14px]" placeholder="無限制請留空"></div>
-          </div>
+
+  function addBatchRow() {
+    const row = document.createElement('div');
+    row.className = 'batch-item animate-in fade-in slide-in-from-top-4 duration-300';
+    row.innerHTML = `
+      <button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 transition-colors">
+         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+      </button>
+      <div class="input-group !mb-3">
+        <span class="label-text">梯次名稱</span>
+        <input type="text" class="form-input b-item-name !py-2" placeholder="例：第二梯次">
       </div>
-      `;
-      container.insertAdjacentHTML('beforeend', html);
+      <div class="grid grid-cols-2 gap-3 mb-3">
+         <div>
+           <span class="label-text">開始時間</span>
+           <input type="datetime-local" class="form-input b-item-start !text-[12px] !py-2 !px-1.5">
+         </div>
+         <div>
+           <span class="label-text">結束時間</span>
+           <input type="datetime-local" class="form-input b-item-end !text-[12px] !py-2 !px-1.5">
+         </div>
+      </div>
+      <div class="input-group !mb-0">
+         <span class="label-text">人數限制</span>
+         <input type="number" class="form-input b-item-limit !py-2" placeholder="不限則留空">
+      </div>
+    `;
+    document.getElementById('batch-container').appendChild(row);
   }
 
-  function removeBatchItem(id) {
-      const item = document.getElementById(`batch-item-${id}`);
-      if (item) item.remove();
-  }
-
-  function previewFile(mode) { 
-    const f = document.getElementById(`file-input-${mode}`).files[0]; 
-    if(!f) return; 
-    showToast("壓縮中...", false);
-    const r = new FileReader(); 
-    r.onloadend = () => { 
-      const img = new Image(); 
-      img.onload = () => { 
-        let w = img.width, h = img.height, max = 800; 
-        if(w > max){h=Math.round(h*(max/w)); w=max;} 
-        const cvs = document.createElement('canvas'); cvs.width=w; cvs.height=h; 
-        const ctx=cvs.getContext('2d'); ctx.fillStyle='#FFF'; ctx.fillRect(0,0,w,h); ctx.drawImage(img,0,0,w,h); 
-        
-        let quality = 0.8;
-        let b64=cvs.toDataURL('image/jpeg', quality); 
-        
-        while (b64.length > 40000 && quality > 0.1) { quality -= 0.1; b64 = cvs.toDataURL('image/jpeg', quality); }
-        if (b64.length > 49000) return showToast("圖片過大", true);
-        
-        document.getElementById(`image-preview-${mode}`).src=b64; 
-        document.getElementById(`image-preview-${mode}`).classList.remove('hidden'); 
-        document.getElementById(`preview-placeholder-${mode}`).classList.add('hidden'); 
-        const badge = document.getElementById(`upload-badge-${mode}`);
-        if(badge) badge.classList.remove('hidden');
-        document.getElementById(`in-image-url-${mode}`).value=b64; 
-        showToast("✅ 完成");
-      }; 
-      img.src=r.result; 
-    }; 
-    r.readAsDataURL(f); 
-  }
-
-  async function handleCreateActivity(mode) { 
-    if(isProcessing) return; isProcessing=true; 
-    const btnId = `btn-${mode}-create`;
-    const btnHtml = document.getElementById(btnId).innerHTML;
-    setButtonLoading(btnId, true);
+  async function aiOptimizeDesc(id) {
+    const el = document.getElementById(id);
+    if (!el.value) return alert('請先輸入簡短的活動大綱，AI 才能幫您優化喔！');
     
-    let p = { 
-        activityName: '', 
-        activityType: '', 
+    const oriText = el.value;
+    el.value = '';
+    el.placeholder = '🤖 AI 正在為您撰寫吸睛文案，請稍候...';
+    
+    try {
+        const res = await fetch(WORKER_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'ai_optimize_activity', p, content: oriText })
+        });
+        
+        let textResult = await res.text();
+        
+        try {
+            const jsonResult = JSON.parse(textResult);
+            if (jsonResult.success && jsonResult.data) {
+                el.value = jsonResult.data;
+            } else {
+                el.value = textResult; 
+            }
+        } catch(e) {
+            el.value = textResult;
+        }
+        
+    } catch(err) {
+        alert("AI 連線失敗，已恢復原文。");
+        el.value = oriText;
+    }
+  }
+
+  async function submitActivity(mode, btnElement) {
+    const oriBtnText = btnElement.innerHTML;
+    btnElement.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> 處理中...`;
+    btnElement.style.pointerEvents = 'none';
+    btnElement.style.opacity = '0.8';
+
+    let payload = { action: 'create_activity', mode, p, uid };
+    
+    if (mode === 'quick') {
+      payload.name = document.getElementById('q-name').value;
+      payload.names = document.getElementById('q-names').value.split('\n').filter(n => n.trim());
+    } else if (mode === 'detailed') {
+      payload.name = document.getElementById('d-name').value;
+      payload.start = document.getElementById('d-start').value;
+      payload.end = document.getElementById('d-end').value;
+      payload.desc = document.getElementById('d-desc').value;
+    } else if (mode === 'batch') {
+      payload.name = document.getElementById('b-name').value;
+      payload.desc = document.getElementById('b-desc').value;
+      
+      const batchItems = Array.from(document.querySelectorAll('.batch-item'));
+      payload.batches = batchItems.map(item => ({
+        name: item.querySelector('.b-item-name').value,
+        start: item.querySelector('.b-item-start').value,
+        end: item.querySelector('.b-item-end').value,
+        limit: item.querySelector('.b-item-limit').value
+      }));
+
+      // 取出全域開始與結束時間
+      if (payload.batches.length > 0) {
+          payload.start = payload.batches[0].start || '';
+          payload.end = payload.batches[payload.batches.length - 1].end || payload.batches[0].end || '';
+      }
+    }
+    
+    if (!payload.name) {
+        alert('請務必填寫活動標題！');
+        btnElement.innerHTML = oriBtnText;
+        btnElement.style.pointerEvents = 'auto';
+        btnElement.style.opacity = '1';
+        return;
+    }
+
+    if (mode === 'batch' && payload.batches.length === 0) {
+        alert('請至少新增一個活動梯次！');
+        btnElement.innerHTML = oriBtnText;
+        btnElement.style.pointerEvents = 'auto';
+        btnElement.style.opacity = '1';
+        return;
+    }
+
+    // 轉換成後端 GAS 習慣接收的中文鍵值，保證寫入正確
+    let backendPayload = {
+        action: 'bulkAddRegistrants',
+        activityName: payload.name,
+        activityType: '課程', 
         feeType: '免費', 
         price: '', 
-        startTime: '', 
-        endTime: '', 
-        description: '', 
+        startTime: payload.start || '', 
+        endTime: payload.end || '', 
+        description: payload.desc || '', 
         imageUrl: '', 
-        names: [], 
-        defaultIdentity: '會員',
-        isBatch: false,
-        batches: []
-    }; 
-    
-    if(mode === 'quick') {
-        p.activityName = document.getElementById('quick-name').value.trim();
-        p.activityType = document.getElementById('quick-type').value;
-        p.defaultIdentity = document.getElementById('quick-identity').value;
-        p.names = document.getElementById('quick-names').value.split('\n').filter(n=>n.trim()); 
-        p.imageUrl = document.getElementById('in-image-url-quick').value;
-        p.startTime = document.getElementById('quick-start').value;
-        p.endTime = document.getElementById('quick-end').value;
-    } else if(mode === 'detailed') { 
-        p.activityName = document.getElementById('detail-name').value.trim();
-        p.activityType = document.getElementById('detail-type').value;
-        p.defaultIdentity = document.getElementById('detail-identity').value;
-        p.feeType = document.querySelector('input[name="fee-type"]:checked').value; 
-        p.price = document.getElementById('detail-price').value; 
-        p.startTime = document.getElementById('detail-start').value; 
-        p.endTime = document.getElementById('detail-end').value; 
-        p.description = document.getElementById('detail-desc').value; 
-        p.imageUrl = document.getElementById('in-image-url-create').value; 
-    } else if(mode === 'batch') {
-        p.activityName = document.getElementById('batch-name').value.trim();
-        p.activityType = document.getElementById('batch-type').value;
-        p.defaultIdentity = document.getElementById('batch-identity').value;
-        p.description = document.getElementById('batch-desc').value;
-        p.imageUrl = document.getElementById('in-image-url-batch').value;
-        p.isBatch = true;
-        
-        const container = document.getElementById('batch-list-container');
-        const items = container.querySelectorAll('[id^="batch-item-"]');
-        items.forEach(item => {
-            p.batches.push({
-                name: item.querySelector('.batch-name-input').value.trim(),
-                startTime: item.querySelector('.batch-start-input').value,
-                endTime: item.querySelector('.batch-end-input').value,
-                price: item.querySelector('.batch-price-input').value,
-                limit: item.querySelector('.batch-limit-input').value
-            });
-        });
-
-        if(p.batches.length > 0) {
-            p.startTime = p.batches[0].startTime || '';
-            p.endTime = p.batches[p.batches.length-1].endTime || p.batches[0].endTime || '';
-        }
-    }
-    
-    if(!p.activityName) { isProcessing=false; setButtonLoading(btnId, false, btnHtml); return showToast("標題名稱必填", true); }
+        names: payload.names || [], 
+        defaultIdentity: '來賓',
+        '開始時間': payload.start || '',
+        '結束時間': payload.end || '',
+        '活動名稱': payload.name,
+        '活動說明': payload.desc || '',
+    };
 
     if (mode === 'batch') {
-        if (p.batches.length === 0) {
-            isProcessing=false; setButtonLoading(btnId, false, btnHtml); return showToast("至少需新增一個梯次", true);
-        }
-        for(let b of p.batches) {
-            if(!b.name) {
-                isProcessing=false; setButtonLoading(btnId, false, btnHtml); return showToast("梯次名稱必填", true);
-            }
-        }
+        backendPayload['梯次'] = JSON.stringify(payload.batches);
     }
-    
-    // 強制寫入中文鍵值以對應 Google Sheets 欄位
-    p['開始時間'] = p.startTime;
-    p['結束時間'] = p.endTime;
-    p['活動名稱'] = p.activityName;
-    p['活動類型'] = p.activityType;
-    p['活動說明'] = p.description;
-    p['宣傳大圖'] = p.imageUrl;
-    p['梯次'] = JSON.stringify(p.batches); // 若為梯次活動，確保將資料序列化
 
-    try { 
-      await fetchAPI('bulkAddRegistrants', p); 
-      showToast("✅ 已建立成功"); 
-      sessionStorage.removeItem('getActivityDashboard{}'); 
-      sessionStorage.removeItem('getPublicActivities{}');
-      setTimeout(()=> window.location.href = 'index.html?view=admin-activities', 1000); 
-    } catch(e){
-      console.error(e);
-    } finally{ 
-      isProcessing=false; setButtonLoading(btnId, false, btnHtml); 
+    try {
+      const res = await fetch(WORKER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(backendPayload)
+      });
+      
+      const textResponse = await res.text();
+      let result;
+      try {
+          result = JSON.parse(textResponse);
+      } catch(e) {
+          throw new Error('伺服器無回應');
+      }
+
+      alert('✅ 活動建立成功！');
+      location.reload();
+      
+    } catch (err) {
+      console.error(err);
+      alert('發生錯誤：' + err.message);
+      btnElement.innerHTML = oriBtnText;
+      btnElement.style.pointerEvents = 'auto';
+      btnElement.style.opacity = '1';
     }
   }
+
+  init();
 </script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-<!-- Version: v1.1.9 -->
+<!-- Version: v1.1.10 -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -203,7 +203,7 @@
       <div id="admin-activity-list-container" class="space-y-4"></div>
     </div>
 
-    <!-- 後台：CRM -->
+    <!-- 後台：CRM (LINE 原生樣式) -->
     <div id="view-admin-crm" class="hidden space-y-2 animate-in fade-in pt-4">
       <div class="px-1 mb-4">
         <h2 class="text-2xl font-extrabold font-headline text-slate-800 tracking-tight">會員 CRM</h2>
@@ -414,13 +414,12 @@
     <button onclick="closeModalAndGo()" class="btn-primary !py-2.5 !text-[15px]">我知道了</button>
   </div>
 </div>
-<div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-bold flex items-center gap-2 w-max max-w-[90vw] opacity-0 pointer-events-none"></div>
+<div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-bold flex items-center gap-2 w-max max-w-[90vw] opacity-0 pointer-events-none border border-slate-700"></div>
 
 <script>
   const LIFF_ID = "2009367829-DLtYBDUm"; 
   const WORKER_URL = "https://actmaster.fangwl591021.workers.dev"; 
-  const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55", "U8932b891ad24da512afb9c1a6f41567b"]; 
-
+  
   let userProfile = null, isAdmin = false, isViewModeAdmin = false, isRegistered = false, registeredInfo = null;
   let globalPublicActivities = [], currentActivities = [], currentRegistrants = [], activeActivityName = '', modalTargetView = '';
   let globalCrmData = []; 
@@ -434,6 +433,7 @@
   let regCropperInstance = null;
   let html5QrcodeScanner = null;
 
+  // Add the missing setButtonLoading back to index.html
   function setButtonLoading(btnId, isLoading, originalText = '') {
       const btn = document.getElementById(btnId);
       if (!btn) return false;
@@ -448,6 +448,8 @@
           return false;
       }
   }
+
+  const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55", "U8932b891ad24da512afb9c1a6f41567b"]; 
 
   const loadScript = (src) => new Promise((res, rej) => {
     if (document.querySelector(`script[src="${src}"]`)) return res();

@@ -192,12 +192,21 @@
   }
 
   function showToast(msg, isError = false) {
-    const t = document.getElementById('toast');
+    let t = document.getElementById('toast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'toast';
+      document.body.appendChild(t);
+    }
     t.innerHTML = `<span class="material-symbols-outlined icon-filled">${isError ? 'error' : 'info'}</span> ${msg}`;
-    t.className = `fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded text-[15px] shadow-lg transition-all font-bold flex items-center gap-2 w-max max-w-[90vw] ${isError ? 'bg-red-500 text-white border-red-600' : 'bg-slate-800 text-white border-slate-700'} opacity-100`;
+    t.className = `fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded text-[15px] shadow-lg transition-all z-[10000] font-bold flex items-center gap-2 w-max max-w-[90vw] ${isError ? 'bg-red-500 text-white border-red-600' : 'bg-slate-800 text-white border-slate-700'} opacity-100`;
     t.style.zIndex = '10000';
     t.classList.remove('hidden');
-    setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -1rem)'; setTimeout(() => t.classList.add('hidden'), 300); }, 3000); 
+    setTimeout(() => {
+      t.style.opacity = '0';
+      t.style.transform = 'translate(-50%, -1rem)';
+      setTimeout(() => t.classList.add('hidden'), 300);
+    }, 3000);
   }
 
   function openCropper(input, mode = 'card') {

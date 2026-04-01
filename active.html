@@ -17,71 +17,75 @@
     header { background: #2563eb; color: white; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
     .header-left { display: flex; align-items: center; gap: 8px; }
     .header-title { font-size: 18px; font-weight: 400; }
-    .admin-badge { background: #1e293b; color: white; font-size: 10px; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; }
+    .admin-badge { background: rgba(0,0,0,0.2); color: white; font-size: 10px; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; }
     .header-right { display: flex; align-items: center; gap: 12px; }
-    .user-avatar-top { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: #EEE; }
+    .user-avatar-top { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; background: #EEE; border: 1.5px solid rgba(255,255,255,0.3); }
 
-    /* 三模組頁籤選擇器 (灰色底色) */
-    .tab-selector { display: flex; background: #F1F5F9; border-radius: 8px; padding: 4px; margin: 15px 20px; }
-    .tab-item { flex: 1; text-align: center; padding: 10px 0; border-radius: 6px; cursor: pointer; color: #64748b; font-size: 15px; transition: all 0.2s; }
-    .tab-item.active { background: #FFFFFF; color: #2563eb; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    /* 三模組頁籤選擇器 - 確保寬度分配正確 */
+    .tab-selector { display: flex; background: #F1F5F9; border-radius: 8px; padding: 4px; margin: 15px 20px; gap: 4px; }
+    .tab-item { flex: 1; text-align: center; padding: 10px 0; border-radius: 6px; cursor: pointer; color: #64748b; font-size: 14px; transition: all 0.2s; white-space: nowrap; }
+    .tab-item.active { background: #FFFFFF; color: #2563eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
 
-    .field-group { padding: 15px 20px; }
-    .field-label { font-size: 15px; color: #333333; margin-bottom: 8px; display: block; }
-    .field-tag { font-size: 11px; color: #718096; background: #EDF2F7; padding: 2px 8px; border-radius: 4px; float: right; margin-top: -26px; }
+    .field-group { padding: 12px 20px; }
+    .field-label { font-size: 14px; color: #64748b; margin-bottom: 6px; display: block; }
+    .field-tag { font-size: 11px; color: #2563eb; background: #eff6ff; padding: 2px 8px; border-radius: 4px; float: right; margin-top: -24px; }
     
-    .input-box { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; font-size: 15px; outline: none; box-sizing: border-box; background: transparent; color: #333333; -webkit-appearance: none; transition: border-color 0.2s; }
+    .input-box { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; font-size: 15px; outline: none; box-sizing: border-box; background: #fff; color: #333333; -webkit-appearance: none; transition: border-color 0.2s; }
     .input-box:focus { border-color: #2563eb; }
     select.input-box { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 36px; }
-    .row-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 20px 15px 20px; }
+    .row-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 20px 10px 20px; }
 
-    /* 宣傳大圖區 */
-    .image-upload-area { border: 1px dashed #cbd5e1; border-radius: 12px; padding: 40px 20px; text-align: center; background: #f8fafc; cursor: pointer; margin: 10px 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 160px; }
-    .image-upload-area i { color: #94a3b8; margin-bottom: 12px; width: 42px; height: 42px; }
-    .image-upload-text { color: #94a3b8; font-size: 15px; }
-    #preview-image { max-width: 100%; border-radius: 12px; display: none; }
+    /* 宣傳圖區 */
+    .image-upload-area { border: 1px dashed #cbd5e1; border-radius: 12px; padding: 30px 20px; text-align: center; background: #f8fafc; cursor: pointer; margin: 10px 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 140px; overflow: hidden; }
+    .image-upload-area i { color: #94a3b8; margin-bottom: 8px; }
+    .image-upload-text { color: #94a3b8; font-size: 14px; }
+    #preview-image { max-width: 100%; border-radius: 8px; display: none; }
 
-    /* 系列梯次模式項目 */
-    .batch-item { background: #FFFFFF; border: 1px solid #F1F5F9; border-radius: 12px; padding: 20px; position: relative; margin: 0 20px 15px 20px; }
-    .batch-actions { position: absolute; top: 15px; right: 15px; display: flex; gap: 12px; color: #cbd5e1; }
+    /* 系列梯次項目卡片 */
+    .batch-item { background: #FFFFFF; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; position: relative; margin: 0 20px 15px 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+    .batch-actions { position: absolute; top: 12px; right: 12px; display: flex; gap: 12px; color: #cbd5e1; }
     .batch-action-btn { cursor: pointer; transition: color 0.2s; width: 18px; height: 18px; }
     .batch-action-btn:hover { color: #2563eb; }
-    .btn-add-batch { width: calc(100% - 40px); margin: 10px 20px; padding: 14px; border: 1px dashed #06C755; color: #06C755; background: rgba(6, 199, 85, 0.05); border-radius: 12px; font-size: 14px; text-align: center; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .btn-add-batch { width: calc(100% - 40px); margin: 5px 20px 20px 20px; padding: 14px; border: 1px dashed #06C755; color: #06C755; background: rgba(6, 199, 85, 0.03); border-radius: 12px; font-size: 14px; text-align: center; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
 
-    .btn-action { width: calc(100% - 40px); margin: 25px 20px; padding: 18px; background: #06C755; color: white; border: none; font-size: 16px; font-weight: 400; cursor: pointer; text-align: center; border-radius: 8px; display: block; }
-    .section-title { padding: 20px 20px 10px 20px; font-size: 14px; color: #999999; }
+    .btn-action { width: calc(100% - 40px); margin: 25px 20px; padding: 16px; background: #06C755; color: white; border: none; font-size: 16px; font-weight: 500; cursor: pointer; text-align: center; border-radius: 12px; display: block; }
+    .section-title { padding: 15px 20px 10px 20px; font-size: 14px; color: #94a3b8; }
 
     /* 底部導覽 */
-    nav { position: fixed; bottom: 0; width: 100%; max-width: 450px; background: #FFFFFF; display: flex; border-top: 1px solid #EEEEEE; height: 80px; left: 50%; transform: translateX(-50%); z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
-    .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #475569; cursor: pointer; padding-top: 8px; }
+    nav { position: fixed; bottom: 0; width: 100%; max-width: 450px; background: #FFFFFF; display: flex; border-top: 1px solid #f1f5f9; height: 75px; left: 50%; transform: translateX(-50%); z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
+    .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; cursor: pointer; }
     .nav-item.active { color: #0f172a; }
-    .nav-item i { width: 22px; height: 22px; margin-bottom: 5px; }
+    .nav-item i { width: 22px; height: 22px; margin-bottom: 4px; }
     .nav-text { font-size: 11px; }
-    .nav-item.active .icon-box { border: 1.5px solid #0f172a; border-radius: 10px; padding: 6px; display: flex; align-items: center; justify-content: center; }
+    .nav-item.active i { color: #2563eb; }
 
     .hidden { display: none !important; }
-    .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #FFFFFF; z-index: 9999; display: flex; align-items: center; justify-content: center; font-size: 15px; color: #2563eb; }
+    .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #FFFFFF; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 15px; color: #2563eb; }
   </style>
 </head>
 <body>
-  <div id="loader" class="loading-overlay">載入管理中樞...</div>
+  <div id="loader" class="loading-overlay">
+    <div class="mb-4"><i data-lucide="loader-2" class="animate-spin" style="width: 32px; height: 32px;"></i></div>
+    <span>連線管理中樞...</span>
+  </div>
 
   <div class="app-container">
     <header>
       <div class="header-left">
-        <i data-lucide="calendar" style="width: 20px; height: 20px;"></i>
-        <span class="header-title">報名大師</span>
+        <i data-lucide="calendar-plus" style="width: 20px; height: 20px;"></i>
+        <span class="header-title">活動管理系統</span>
         <span class="admin-badge">Admin</span>
       </div>
       <div class="header-right">
-        <img id="user-avatar-top" class="user-avatar-top" src="">
-        <i data-lucide="arrow-left-right" style="color: white; width: 20px; height: 20px; cursor: pointer;" onclick="switchToHub()"></i>
+        <img id="user-avatar-top" class="user-avatar-top" src="https://via.placeholder.com/100">
+        <i data-lucide="external-link" style="color: white; width: 20px; height: 20px; cursor: pointer;" onclick="switchToHub()"></i>
       </div>
     </header>
 
     <main id="main-content">
       <!-- 1. 建立視圖 -->
       <div id="view-create">
+        <!-- 頁籤選單 - 確保 3 個頁籤均分 -->
         <div class="tab-selector">
           <div id="tab-quick" class="tab-item active" onclick="switchCreateMode('quick')">快速匯入</div>
           <div id="tab-full" class="tab-item" onclick="switchCreateMode('full')">完整發佈</div>
@@ -91,7 +95,7 @@
         <div id="create-form">
           <div class="field-group">
             <label class="field-label" id="label-act-name">活動名稱</label>
-            <input id="act-name" class="input-box" placeholder="輸入活動標題...">
+            <input id="act-name" class="input-box" placeholder="例如：2026 商務合作年會">
           </div>
           
           <div class="row-grid">
@@ -102,8 +106,8 @@
           <!-- 模式 1: 快速匯入 -->
           <div id="module-quick">
             <div class="field-group">
-              <div class="field-label-row"><label class="field-label">名單內容</label><span class="field-tag">支援批次輸入</span></div>
-              <textarea id="act-list" class="input-box h-40" placeholder="請貼上參與者姓名，每行一位..." style="resize:none;"></textarea>
+              <label class="field-label">名單內容 <span class="field-tag">每行一位</span></label>
+              <textarea id="act-list" class="input-box h-40" placeholder="王小明&#10;李小華&#10;張大山" style="resize:none;"></textarea>
             </div>
           </div>
 
@@ -114,8 +118,8 @@
               <div><label class="field-label">結束時間</label><input type="datetime-local" id="d-end" class="input-box !text-[12px]"></div>
             </div>
             <div class="field-group">
-              <label class="field-label">活動詳情</label>
-              <textarea id="d-desc" class="input-box h-32" placeholder="詳細流程或報名資訊..." style="resize:none;"></textarea>
+              <label class="field-label">活動說明</label>
+              <textarea id="d-desc" class="input-box h-32" placeholder="詳細內容..." style="resize:none;"></textarea>
             </div>
           </div>
 
@@ -123,58 +127,48 @@
           <div id="module-batch" class="hidden">
             <div class="field-group">
               <label class="field-label">系列課程介紹</label>
-              <textarea id="b-desc" class="input-box h-24 mb-4" placeholder="此系列活動的總體說明..." style="resize:none;"></textarea>
+              <textarea id="b-desc" class="input-box h-24 mb-2" placeholder="此系列活動的統整說明..." style="resize:none;"></textarea>
             </div>
             
-            <div class="section-title">設定活動梯次</div>
+            <div class="section-title">梯次排程設定</div>
             <div id="batch-container">
-              <!-- 梯次項目由 JS 生成 -->
+              <!-- 梯次項目將由 JS 生成 -->
             </div>
             <div class="btn-add-batch" onclick="addBatchRow()">
-              <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
-              新增一個梯次
+              <i data-lucide="plus-circle" style="width: 16px; height: 16px;"></i>
+              新增一個活動梯次
             </div>
           </div>
 
-          <!-- 宣傳圖片區塊 (快速匯入不顯示) -->
+          <!-- 圖片上傳區塊 (快速匯入時隱藏) -->
           <div id="image-section" class="hidden">
-            <div class="field-group" style="padding-bottom:0;"><label class="field-label">宣傳封面</label></div>
+            <div class="field-group" style="padding-bottom:0;"><label class="field-label">活動宣傳圖</label></div>
             <div class="image-upload-area" onclick="document.getElementById('act-image-file').click()">
-              <i data-lucide="image" id="upload-icon"></i>
+              <i data-lucide="image" id="upload-icon" style="width: 32px; height: 32px;"></i>
               <img id="preview-image" src="">
-              <span class="image-upload-text" id="upload-text">點擊上傳圖片</span>
+              <span class="image-upload-text" id="upload-text">點擊上傳大圖</span>
               <input type="file" id="act-image-file" class="hidden" accept="image/*" onchange="previewFile(this)">
             </div>
           </div>
 
-          <button id="btn-submit" class="btn-action" onclick="submitActivity()">確認發布活動</button>
+          <button id="btn-submit" class="btn-action" onclick="submitActivity()">確認並建立活動</button>
         </div>
       </div>
 
-      <!-- 2. 核銷視圖 -->
-      <div id="view-checkin" class="hidden">
-        <div class="section-title">簽到核銷</div>
-        <div id="registrant-list" class="p-5 text-center text-gray-400">尚無活動名單</div>
-      </div>
-
-      <!-- 3. CRM 視圖 -->
-      <div id="view-crm" class="hidden">
-        <div class="section-title">會員總覽</div>
-        <div id="crm-container" class="p-5 text-center text-gray-400">載入 CRM 中...</div>
-      </div>
-      
+      <!-- 其餘視圖佔位 -->
+      <div id="view-checkin" class="hidden"><div class="section-title">簽到核銷模式</div></div>
+      <div id="view-crm" class="hidden"><div class="section-title">CRM 數據總覽</div></div>
       <div id="view-ai" class="hidden"></div>
       <div id="view-card" class="hidden"></div>
       <div id="view-settings" class="hidden"></div>
     </main>
 
     <nav id="bottom-nav">
-      <div class="nav-item active" id="nav-create" onclick="switchNav('create')"><div class="icon-box"><i data-lucide="plus-circle"></i></div><span class="nav-text">建立</span></div>
-      <div class="nav-item" id="nav-checkin" onclick="switchNav('checkin')"><i data-lucide="check-square"></i><span class="nav-text">核銷</span></div>
+      <div class="nav-item active" id="nav-create" onclick="switchNav('create')"><i data-lucide="plus-circle"></i><span class="nav-text">建立</span></div>
+      <div class="nav-item" id="nav-checkin" onclick="switchNav('checkin')"><i data-lucide="user-check"></i><span class="nav-text">核銷</span></div>
       <div class="nav-item" id="nav-crm" onclick="switchNav('crm')"><i data-lucide="users"></i><span class="nav-text">CRM</span></div>
-      <div class="nav-item" id="nav-ai" onclick="switchNav('ai')"><i data-lucide="brain-circuit"></i><span class="nav-text">配對</span></div>
-      <div class="nav-item" id="nav-card" onclick="switchNav('card')"><i data-lucide="contact"></i><span class="nav-text">名片</span></div>
-      <div class="nav-item" id="nav-settings" onclick="switchNav('settings')"><i data-lucide="settings"></i><span class="nav-text">參數</span></div>
+      <div class="nav-item" id="nav-ai" onclick="switchNav('ai')"><i data-lucide="sparkles"></i><span class="nav-text">配對</span></div>
+      <div class="nav-item" id="nav-settings" onclick="switchNav('settings')"><i data-lucide="sliders"></i><span class="nav-text">設定</span></div>
     </nav>
   </div>
 
@@ -192,7 +186,11 @@
         if (!liff.isLoggedIn()) { liff.login(); return; }
         const profile = await liff.getProfile();
         uid = profile.userId;
-        document.getElementById('user-avatar-top').src = profile.pictureUrl || '';
+        document.getElementById('user-avatar-top').src = profile.pictureUrl || 'https://via.placeholder.com/100';
+        
+        // 預設檢查，如果是梯次模式則初始化
+        if(currentMode === 'batch') checkBatchInit();
+
       } catch (err) { 
         console.error(err); 
       } finally { 
@@ -202,6 +200,7 @@
 
     function switchCreateMode(m) {
       currentMode = m;
+      // 更新頁籤 UI
       ['quick', 'full', 'batch'].forEach(id => {
         const tab = document.getElementById('tab-' + id);
         if(tab) tab.classList.toggle('active', id === m);
@@ -209,22 +208,29 @@
         if(mod) mod.classList.toggle('hidden', id !== m);
       });
 
-      // 圖片區塊切換
+      // 圖片區塊切換 (快速匯入不顯示)
       document.getElementById('image-section').classList.toggle('hidden', m === 'quick');
       
       const label = document.getElementById('label-act-name');
       if (m === 'batch') {
         label.innerText = '系列活動標題';
-        // 初始化第一個梯次
-        const container = document.getElementById('batch-container');
-        if(container && container.children.length === 0) addBatchRow();
+        checkBatchInit();
       } else {
         label.innerText = '活動名稱';
       }
     }
 
+    function checkBatchInit() {
+      const container = document.getElementById('batch-container');
+      if (container && container.children.length === 0) {
+        addBatchRow();
+      }
+    }
+
     function addBatchRow(data = null) {
       const container = document.getElementById('batch-container');
+      if(!container) return;
+
       const id = Date.now() + Math.floor(Math.random() * 100);
       const div = document.createElement('div');
       div.id = `batch-item-${id}`;
@@ -234,13 +240,13 @@
           <i data-lucide="copy" class="batch-action-btn" onclick="copyBatch('${id}')"></i>
           <i data-lucide="trash-2" class="batch-action-btn" onclick="removeBatch('${id}')"></i>
         </div>
-        <label class="field-label batch-num-label">梯次名稱與時間</label>
+        <label class="field-label batch-num-label">梯次排程</label>
         <input type="text" class="input-box b-name mb-3" placeholder="梯次名稱，如：第一梯次" value="${data ? data.name : ''}">
         <div class="grid grid-cols-2 gap-3 mb-3">
           <input type="datetime-local" class="input-box b-start !text-[12px]" value="${data ? data.start : ''}">
           <input type="datetime-local" class="input-box b-end !text-[12px]" value="${data ? data.end : ''}">
         </div>
-        <input type="number" class="input-box b-limit" placeholder="人數限制 (不限則留空)" value="${data ? data.limit : ''}">
+        <input type="number" class="input-box b-limit" placeholder="人數上限 (留空則不限)" value="${data ? data.limit : ''}">
       `;
       container.appendChild(div);
       updateBatchNumbers(); 
@@ -250,7 +256,10 @@
     function removeBatch(id) {
       const el = document.getElementById(`batch-item-${id}`);
       if (el) {
-        if (document.querySelectorAll('.batch-item').length <= 1) return;
+        if (document.querySelectorAll('.batch-item').length <= 1) {
+          alert('系列活動至少需要一個梯次。');
+          return;
+        }
         el.remove();
         updateBatchNumbers();
       }
@@ -270,7 +279,7 @@
     }
 
     function updateBatchNumbers() {
-      document.querySelectorAll('.batch-num-label').forEach((lbl, i) => lbl.innerText = `梯次 ${i+1} 名稱與時間`);
+      document.querySelectorAll('.batch-num-label').forEach((lbl, i) => lbl.innerText = `梯次 ${i+1} 設定`);
     }
 
     function previewFile(input) {
@@ -288,8 +297,6 @@
       }
     }
 
-    function switchToHub() { window.location.href = `service_hub.html?p=${p}`; }
-
     function switchNav(v) {
       document.querySelectorAll('#main-content > div').forEach(el => el.classList.add('hidden'));
       const targetView = document.getElementById('view-' + v);
@@ -300,10 +307,12 @@
       if(targetNav) targetNav.classList.add('active');
     }
 
+    function switchToHub() { window.location.href = `service_hub.html?p=${p}`; }
+
     async function submitActivity() {
       const btn = document.getElementById('btn-submit');
       const actName = document.getElementById('act-name').value;
-      if (!actName) return alert('請填寫活動名稱');
+      if (!actName) return alert('請輸入標題');
 
       btn.disabled = true;
       btn.innerText = '處理中...';
@@ -344,12 +353,12 @@
           body: JSON.stringify(payload) 
         });
         const result = await res.json();
-        alert('✅ 活動建立成功！');
+        alert('✅ 成功建立！');
         location.reload();
       } catch (err) {
-        alert('發生錯誤：' + err.message);
+        alert('發布失敗：' + err.message);
         btn.disabled = false;
-        btn.innerText = '確認發布活動';
+        btn.innerText = '確認並發布';
       }
     }
 

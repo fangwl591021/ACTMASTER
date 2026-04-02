@@ -1,4 +1,4 @@
-<!-- Version: v1.2.0 (完整無刪減版 + 生日變更觸發八字/生命靈數重算邏輯) -->
+<!-- Version: v1.3.0 (正式分離 active.html，專注於核銷、報名與 CRM) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -37,19 +37,18 @@
       }
     }
   </script>
-  <style>
+  
+  <style type="text/tailwindcss">
     .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400; vertical-align: middle; }
     .icon-filled { font-variation-settings: 'FILL' 1, 'wght' 400; }
     
-    body { background-color: #ffffff; -webkit-tap-highlight-color: transparent; font-size: 15px; color: #333333; }
+    body { background-color: #ffffff; -webkit-tap-highlight-color: transparent; font-size: 15px; color: #333333; font-weight: 400; }
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1.5rem); }
     
     .input-label { @apply block text-[15px] text-[#64748b] mb-1.5 font-normal tracking-wide; }
-    
     select.custom-input { -webkit-appearance: none !important; appearance: none !important; background-image: none !important; }
-
     .custom-input { @apply w-full py-3 px-3 bg-white border border-slate-300 rounded-lg outline-none focus:border-primary transition-all text-text-main text-[15px]; }
     .custom-input::placeholder { @apply text-slate-400 font-normal; }
     
@@ -58,13 +57,7 @@
 
     .btn-primary { @apply w-full py-4 bg-[#06C755] text-white rounded-xl font-medium text-[16px] active:scale-[0.98] transition-all flex items-center justify-center gap-2; }
     .btn-secondary { @apply w-full py-3 bg-white border border-slate-300 text-slate-700 rounded-xl font-medium text-[16px] hover:bg-slate-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-sm; }
-    .btn-add-row { @apply w-full py-3 border border-dashed border-[#06C755] text-[#06C755] bg-[#06C755]/5 rounded-xl text-[14px] font-medium flex items-center justify-center gap-1; }
     
-    .tab-btn { @apply flex-1 py-2 text-[14px] font-medium transition-all text-slate-500 border-b-2 border-transparent; }
-    .tab-active { @apply text-primary border-primary; }
-
-    .batch-card { @apply bg-white border-b border-slate-100 py-5 relative; }
-
     .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-[#9CA3AF] h-full; min-width: 48px;}
     .nav-btn .icon-box { @apply flex items-center justify-center mb-0.5; }
     .nav-btn .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 300; font-size: 24px; }
@@ -74,10 +67,6 @@
 
     .refresh-spin { animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-    .cropper-view-box, .cropper-face { border-radius: 4px; }
-    .cropper-line { background-color: #2563eb; opacity: 0.5; }
-    .cropper-point { background-color: #2563eb; }
   </style>
 </head>
 <body class="font-sans min-h-screen flex flex-col items-center">
@@ -135,17 +124,18 @@
 
       <div id="reg-step-2" class="space-y-4 opacity-30 pointer-events-none transition-opacity duration-300 border-t border-slate-200 pt-6 mt-6">
         <div>
-           <h3 class="font-medium text-slate-800 text-[15px]">上傳名片建立通訊錄</h3>
+           <h3 class="font-normal text-slate-800 text-[15px]">上傳名片建立通訊錄</h3>
            <p class="text-[12px] text-slate-500 mt-1">系統將自動辨識名片，並生成數位標籤。</p>
         </div>
         <div class="flex gap-3 mt-3">
           <button onclick="document.getElementById('reg-card-camera').click()" class="btn-secondary flex-1 !border-primary text-primary bg-primary-light"><span class="material-symbols-outlined text-[20px]">photo_camera</span> 拍照</button>
           <button onclick="document.getElementById('reg-card-upload').click()" class="btn-secondary flex-1"><span class="material-symbols-outlined text-[20px]">image</span> 相簿</button>
         </div>
+        <!-- 借用 active.html 的上傳機制或後台 API -->
         <input type="file" id="reg-card-camera" accept="image/*" capture="environment" class="hidden" onchange="openCropper(this, 'reg')">
         <input type="file" id="reg-card-upload" accept="image/*" class="hidden" onchange="openCropper(this, 'reg')">
         <div class="text-center mt-3 pt-2">
-          <button onclick="finishRegistration()" class="text-[13px] text-slate-400 font-medium hover:text-slate-600 transition-colors py-2 px-4 rounded-lg">略過上傳，直接進入</button>
+          <button onclick="finishRegistration()" class="text-[13px] text-slate-400 font-normal hover:text-slate-600 transition-colors py-2 px-4 rounded-lg">略過上傳，直接進入</button>
         </div>
       </div>
     </div>
@@ -186,7 +176,7 @@
       </div>
       <button id="btn-save-profile" onclick="submitProfileUpdate()" class="btn-primary mt-4">儲存變更</button>
 
-      <!-- 專屬名片入口橫幅 -->
+      <!-- 專屬名片入口 -->
       <div id="my-card-entry" class="hidden mt-8 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-5 text-white shadow-xl shadow-slate-900/20 flex justify-between items-center relative overflow-hidden cursor-pointer active:scale-[0.98] transition-transform" onclick="window.location.href='card.html?mode=mycard'">
           <div class="absolute -right-4 -top-4 opacity-10"><span class="material-symbols-outlined text-[100px]">contact_mail</span></div>
           <div class="relative z-10">
@@ -230,100 +220,11 @@
       <button id="btn-submit-settings" onclick="submitSettings()" class="btn-primary mt-2">儲存設定</button>
     </div>
 
-    <!-- 後台：建立活動 -->
-    <div id="view-admin-create" class="hidden space-y-6 pt-4">
-      <div class="mb-4">
-        <h2 class="text-xl font-medium text-slate-800 tracking-tight">建立新活動</h2>
-        <p class="text-slate-400 text-[13px] mt-1">選擇適合您的發佈模式。</p>
-      </div>
-
-      <div class="flex border-b border-slate-100">
-        <button onclick="toggleCreateMode('quick')" id="tab-quick" class="tab-btn tab-active">快速匯入</button>
-        <button onclick="toggleCreateMode('detailed')" id="tab-detailed" class="tab-btn">完整發佈</button>
-        <button onclick="toggleCreateMode('batch')" id="tab-batch" class="tab-btn">系列梯次</button>
-      </div>
-      
-      <!-- 1. 快速模式 -->
-      <div id="form-quick" class="space-y-5 animate-in fade-in">
-        <div class="flex flex-col"><label class="input-label">活動名稱</label><input type="text" id="quick-name" class="custom-input" placeholder="例如：2026 商務交流會"></div>
-        <div class="grid grid-cols-2 gap-4">
-          <div><label class="input-label">活動類型</label><select id="quick-type" class="custom-input cursor-pointer"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option></select></div>
-          <div><label class="input-label">預設身份</label><select id="quick-identity" class="custom-input cursor-pointer"><option>會員</option><option>來賓</option></select></div>
-        </div>
-        <div class="flex flex-col"><label class="input-label">名單內容 (每行一位)</label><textarea id="quick-names" class="custom-input h-36 resize-none" placeholder="王小明&#10;李小華"></textarea></div>
-        <button onclick="handleCreateActivity('quick')" id="btn-quick-create" class="btn-primary mt-2">建立並發布</button>
-      </div>
-      
-      <!-- 2. 完整模式 -->
-      <div id="form-detailed" class="hidden space-y-5 animate-in fade-in">
-         <div class="flex flex-col"><label class="input-label">活動標題</label><input type="text" id="detail-name" class="custom-input" placeholder="輸入標題"></div>
-         <div class="grid grid-cols-2 gap-4">
-            <div><label class="input-label">開始時間</label><input type="datetime-local" id="detail-start" class="custom-input !px-1.5 !text-[13px]"></div>
-            <div><label class="input-label">結束時間</label><input type="datetime-local" id="detail-end" class="custom-input !px-1.5 !text-[13px]"></div>
-         </div>
-         <div class="flex flex-col">
-           <label class="input-label">收費方式</label>
-           <div class="flex gap-4 items-center h-[46px] px-3 bg-white border border-slate-300 rounded-lg shadow-sm">
-             <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="fee-type" value="免費" checked onchange="toggleFeeInput()" class="w-4 h-4 text-primary bg-white border-slate-300 focus:ring-primary focus:ring-2"><span class="font-bold text-[14px] text-slate-700">免費</span></label>
-             <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="fee-type" value="收費" onchange="toggleFeeInput()" class="w-4 h-4 text-primary bg-white border-slate-300 focus:ring-primary focus:ring-2"><span class="font-bold text-[14px] text-slate-700">收費</span></label>
-           </div>
-         </div>
-         <div class="flex flex-col"><input type="number" id="detail-price" class="custom-input hidden h-[46px]" placeholder="金額 (NT$)"></div>
-         <div class="flex flex-col"><label class="input-label">活動說明</label><textarea id="detail-desc" class="custom-input h-32 resize-none" placeholder="詳細內容..."></textarea></div>
-         
-         <div class="flex flex-col mt-2">
-           <label class="input-label">宣傳大圖</label>
-           <div onclick="document.getElementById('file-input-create').click()" class="w-full h-36 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-all hover:bg-slate-100 relative group">
-             <div id="preview-placeholder-create" class="text-center text-slate-400 flex flex-col items-center"><span class="material-symbols-outlined text-3xl mb-1">add_photo_alternate</span><p class="text-[12px] font-bold">點擊上傳圖片</p></div>
-             <img id="image-preview-create" class="hidden w-full h-full object-cover absolute inset-0">
-             <input type="file" id="file-input-create" class="hidden" accept="image/*" onchange="openCropper(this, 'detailed')">
-           </div>
-           <input type="hidden" id="in-image-url-create">
-         </div>
-
-         <button onclick="handleCreateActivity('detailed')" id="btn-detailed-create" class="btn-primary mt-4">發布單場活動</button>
-      </div>
-
-      <!-- 3. 系列梯次模式 -->
-      <div id="form-batch" class="hidden space-y-5 animate-in fade-in">
-        <div class="flex flex-col"><label class="input-label">主系列標題</label><input type="text" id="batch-name" class="custom-input" placeholder="例如：2026 AI 應用實戰班"></div>
-        <div class="grid grid-cols-2 gap-4">
-          <div><label class="input-label">活動類型</label><select id="batch-type" class="custom-input cursor-pointer"><option>課程</option><option>教學</option><option>講座</option><option>例會</option><option>聯誼</option><option>參訪</option><option>其他</option></select></div>
-          <div><label class="input-label">預設身份</label><select id="batch-identity" class="custom-input cursor-pointer"><option>會員</option><option>來賓</option></select></div>
-        </div>
-        <div class="flex flex-col"><label class="input-label">系列共同說明</label><textarea id="batch-desc" class="custom-input h-24 resize-none" placeholder="輸入此系列活動的統整說明..."></textarea></div>
-
-        <div class="flex flex-col mt-2">
-          <label class="input-label">宣傳大圖 (系列共用)</label>
-          <div onclick="document.getElementById('file-input-batch').click()" class="w-full h-36 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-all hover:bg-slate-100 relative group">
-            <div id="preview-placeholder-batch" class="text-center text-slate-400 flex flex-col items-center"><span class="material-symbols-outlined text-3xl mb-1">add_photo_alternate</span><p class="text-[12px] font-bold">點擊上傳圖片</p></div>
-            <img id="image-preview-batch" class="hidden w-full h-full object-cover absolute inset-0">
-            <input type="file" id="file-input-batch" class="hidden" accept="image/*" onchange="openCropper(this, 'batch')">
-          </div>
-          <input type="hidden" id="in-image-url-batch">
-        </div>
-
-        <div class="pt-2">
-          <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-2">
-            <span class="text-[15px] font-medium text-slate-800">梯次與排程設定</span>
-          </div>
-          <div id="batch-list-container">
-            <!-- 梯次項目由 JS 動態生成 -->
-          </div>
-          <button onclick="addBatchItem()" class="btn-add-row mt-4">
-            <span class="material-symbols-outlined text-[18px]">add_circle</span> 新增一個梯次
-          </button>
-        </div>
-
-        <button onclick="handleCreateActivity('batch')" id="btn-batch-create" class="btn-primary mt-6">發布系列梯次</button>
-      </div>
-
-    </div>
   </main>
 
-  <!-- 底部導航 Admin (建立排第一) -->
+  <!-- ⭐ 底部導航 Admin：注意建立按鈕改為跳轉到 active.html -->
   <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white border-t border-slate-100 flex justify-evenly items-center h-[72px] pb-safe left-1/2 -translate-x-1/2 z-40">
-    <button onclick="switchView('admin-create')" class="nav-btn" id="nav-admin-create"><div class="icon-box"><span class="material-symbols-outlined">add_circle</span></div><span class="text-[10px] font-medium mt-0.5">建立</span></button>
+    <button onclick="window.location.href='active.html'" class="nav-btn" id="nav-admin-create"><div class="icon-box"><span class="material-symbols-outlined">add_circle</span></div><span class="text-[10px] font-medium mt-0.5">建立</span></button>
     <button onclick="switchView('admin-activities')" class="nav-btn" id="nav-admin-activities"><div class="icon-box"><span class="material-symbols-outlined">fact_check</span></div><span class="text-[10px] font-medium mt-0.5">核銷</span></button>
     <button onclick="switchView('admin-crm')" class="nav-btn" id="nav-admin-crm"><div class="icon-box"><span class="material-symbols-outlined">groups</span></div><span class="text-[10px] font-medium mt-0.5">CRM</span></button>
     <button onclick="window.location.href='fate.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined">psychology</span></div><span class="text-[10px] font-medium mt-0.5">配對</span></button>
@@ -339,56 +240,34 @@
   </nav>
 </div>
 
-<!-- 共同圖片裁切 Modal -->
-<div id="section-image-cropper" class="hidden fixed inset-0 bg-slate-900 flex flex-col animate-in fade-in duration-200 w-full max-w-md mx-auto z-[1080]">
-  <div class="flex justify-between items-center p-4 bg-slate-900 text-white shrink-0 border-b border-slate-800 shadow-sm">
-    <button onclick="cancelCrop()" class="text-slate-400 font-bold text-sm px-3 py-2 active:scale-90 transition-transform">取消</button>
-    <span class="font-bold text-[15px] tracking-wider flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px]">crop</span> 裁切圖片</span>
-    <button onclick="confirmCrop()" class="px-4 py-1.5 font-bold text-white bg-primary rounded-md text-sm active:scale-95 transition-transform shadow-md">完成</button>
-  </div>
-  <div class="flex-1 relative overflow-hidden flex items-center justify-center bg-black"><img id="cropper-image" src="" class="max-w-full max-h-full block opacity-0 transition-opacity duration-300"></div>
-</div>
-
 <!-- 前台：活動詳情 Modal -->
 <div id="activity-detail-modal" class="hidden fixed inset-0 z-[1000] bg-white flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 overflow-hidden shadow-2xl">
   <div class="absolute top-4 right-4 z-[1050]">
-    <button onclick="closeActivityDetail()" class="w-9 h-9 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white shadow-sm active:scale-90 transition-transform">
-      <span class="material-symbols-outlined text-[20px]">close</span>
-    </button>
+    <button onclick="closeActivityDetail()" class="w-9 h-9 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white shadow-sm active:scale-90 transition-transform"><span class="material-symbols-outlined text-[20px]">close</span></button>
   </div>
   <div class="flex-1 overflow-y-auto pb-28">
     <div id="detail-modal-image-container" class="w-full aspect-[4/3] bg-slate-100 relative">
       <img id="detail-modal-image" src="" class="w-full h-full object-cover hidden">
-      <div id="detail-modal-no-image" class="absolute inset-0 flex items-center justify-center bg-slate-100">
-        <span class="material-symbols-outlined text-6xl text-slate-300">local_activity</span>
-      </div>
+      <div id="detail-modal-no-image" class="absolute inset-0 flex items-center justify-center bg-slate-100"><span class="material-symbols-outlined text-6xl text-slate-300">local_activity</span></div>
     </div>
     <div class="bg-white p-6 space-y-5">
       <div>
         <div class="flex items-center gap-2 mb-2.5">
-          <span id="detail-modal-type" class="bg-slate-100 text-slate-600 px-2.5 py-0.5 text-[11px] font-bold rounded"></span>
-          <span id="detail-modal-fee" class="px-2.5 py-0.5 text-[11px] font-bold rounded"></span>
+          <span id="detail-modal-type" class="bg-slate-100 text-slate-600 px-2.5 py-0.5 text-[11px] font-normal rounded"></span>
+          <span id="detail-modal-fee" class="px-2.5 py-0.5 text-[11px] font-normal rounded"></span>
         </div>
-        <h2 id="detail-modal-title" class="text-[20px] font-extrabold text-slate-800 leading-snug"></h2>
+        <h2 id="detail-modal-title" class="text-[20px] font-normal text-slate-800 leading-snug"></h2>
       </div>
       <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-3">
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded bg-white shadow-sm flex items-center justify-center text-slate-400 shrink-0"><span class="material-symbols-outlined text-[18px]">event</span></div>
-          <div><p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">開始時間</p><p id="detail-modal-start" class="text-[14px] font-bold text-slate-700"></p></div>
-        </div>
-        <div id="detail-modal-end-container" class="flex items-center gap-3 hidden border-t border-slate-200 pt-3">
-          <div class="w-8 h-8 rounded bg-white shadow-sm flex items-center justify-center text-slate-400 shrink-0"><span class="material-symbols-outlined text-[18px]">event_busy</span></div>
-          <div><p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">結束時間</p><p id="detail-modal-end" class="text-[14px] font-bold text-slate-700"></p></div>
-        </div>
+        <div class="flex items-center gap-3"><div class="w-8 h-8 rounded bg-white shadow-sm flex items-center justify-center text-slate-400 shrink-0"><span class="material-symbols-outlined text-[18px]">event</span></div><div><p class="text-[10px] font-normal text-slate-400 uppercase tracking-widest mb-0.5">開始時間</p><p id="detail-modal-start" class="text-[14px] font-normal text-slate-700"></p></div></div>
+        <div id="detail-modal-end-container" class="flex items-center gap-3 hidden border-t border-slate-200 pt-3"><div class="w-8 h-8 rounded bg-white shadow-sm flex items-center justify-center text-slate-400 shrink-0"><span class="material-symbols-outlined text-[18px]">event_busy</span></div><div><p class="text-[10px] font-normal text-slate-400 uppercase tracking-widest mb-0.5">結束時間</p><p id="detail-modal-end" class="text-[14px] font-normal text-slate-700"></p></div></div>
       </div>
-      
       <div id="detail-modal-batch-container" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-2 mt-4">
-        <h3 class="text-[13px] font-bold text-slate-800 flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px] text-primary">format_list_bulleted</span> 請選擇報名梯次</h3>
+        <h3 class="text-[13px] font-normal text-slate-800 flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px] text-primary">format_list_bulleted</span> 請選擇報名梯次</h3>
         <select id="detail-modal-batch-select" class="custom-input cursor-pointer !bg-white"></select>
       </div>
-
       <div>
-        <h3 class="text-[15px] font-bold text-slate-800 mb-2 flex items-center gap-1.5"><span class="material-symbols-outlined text-primary text-[20px]">subject</span> 內容說明</h3>
+        <h3 class="text-[15px] font-normal text-slate-800 mb-2 flex items-center gap-1.5"><span class="material-symbols-outlined text-primary text-[20px]">subject</span> 內容說明</h3>
         <p id="detail-modal-desc" class="text-[14px] text-slate-600 leading-relaxed whitespace-pre-wrap"></p>
       </div>
     </div>
@@ -403,15 +282,12 @@
   <div class="bg-white px-4 pt-12 pb-3 flex justify-between items-center shrink-0 border-b border-slate-200 shadow-sm">
     <div class="flex items-center gap-2.5">
       <button onclick="closeAdminRegistrants()" class="w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 active:scale-90 transition-transform"><span class="material-symbols-outlined text-[20px]">arrow_back</span></button>
-      <h3 id="admin-reg-title" class="text-[17px] font-extrabold text-slate-800 truncate max-w-[180px]">活動名單</h3>
+      <h3 id="admin-reg-title" class="text-[17px] font-normal text-slate-800 truncate max-w-[180px]">活動名單</h3>
     </div>
-    <button onclick="document.getElementById('qr-scanner-modal').classList.remove('hidden'); startScanner();" class="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg font-bold text-[13px] flex items-center gap-1 active:scale-95 transition-all shadow-sm"><span class="material-symbols-outlined text-[16px]">qr_code_scanner</span> 掃碼</button>
+    <button onclick="document.getElementById('qr-scanner-modal').classList.remove('hidden'); startScanner();" class="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg font-normal text-[13px] flex items-center gap-1 active:scale-95 transition-all shadow-sm"><span class="material-symbols-outlined text-[16px]">qr_code_scanner</span> 掃碼</button>
   </div>
   <div class="bg-white px-4 py-3 shrink-0 flex gap-2 border-b border-slate-100">
-     <div class="relative flex-1 flex flex-col">
-        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
-        <input type="text" id="admin-search-reg" onkeyup="filterAdminReg()" class="w-full py-2.5 pl-9 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-[13px] outline-none focus:bg-white focus:ring-1 focus:ring-primary placeholder-slate-400 transition-all" placeholder="搜尋姓名或電話...">
-     </div>
+     <div class="relative flex-1 flex flex-col"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span><input type="text" id="admin-search-reg" onkeyup="filterAdminReg()" class="w-full py-2.5 pl-9 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-[13px] outline-none focus:bg-white focus:ring-1 focus:ring-primary placeholder-slate-400 transition-all" placeholder="搜尋姓名或電話..."></div>
      <button onclick="document.getElementById('walkin-modal').classList.remove('hidden')" class="w-10 h-10 bg-primary-light text-primary rounded-lg flex items-center justify-center active:scale-90 transition-all shadow-sm"><span class="material-symbols-outlined text-[20px]">person_add</span></button>
   </div>
   <div class="flex-1 overflow-y-auto p-3 space-y-3 pb-safe bg-slate-50" id="admin-reg-list"></div>
@@ -420,10 +296,7 @@
 <!-- 現場登記 Modal -->
 <div id="walkin-modal" class="hidden fixed inset-0 z-[1060] bg-slate-900/40 backdrop-blur-sm flex items-end justify-center animate-in fade-in duration-200 w-full max-w-md mx-auto left-0 right-0">
   <div class="bg-white w-full rounded-t-3xl p-6 pb-safe shadow-2xl">
-    <div class="flex justify-between items-center mb-5">
-      <h3 class="text-[18px] font-extrabold text-slate-800 flex items-center gap-2"><span class="material-symbols-outlined text-primary">person_add</span> 現場來賓登記</h3>
-      <button onclick="document.getElementById('walkin-modal').classList.add('hidden')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center active:scale-90 transition-all"><span class="material-symbols-outlined text-[18px]">close</span></button>
-    </div>
+    <div class="flex justify-between items-center mb-5"><h3 class="text-[18px] font-normal text-slate-800 flex items-center gap-2"><span class="material-symbols-outlined text-primary">person_add</span> 現場來賓登記</h3><button onclick="document.getElementById('walkin-modal').classList.add('hidden')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center active:scale-90 transition-all"><span class="material-symbols-outlined text-[18px]">close</span></button></div>
     <div class="flex flex-col mb-5"><label class="input-label">來賓姓名</label><input type="text" id="f-walkin-name" class="custom-input" placeholder="請輸入姓名"></div>
     <button id="btn-walkin" onclick="submitWalkIn()" class="btn-primary shadow-floating">新增並自動簽到 <span class="material-symbols-outlined text-[20px]">how_to_reg</span></button>
   </div>
@@ -431,24 +304,16 @@
 
 <!-- QR 掃描 Modal -->
 <div id="qr-scanner-modal" class="hidden fixed inset-0 z-[1070] bg-black flex flex-col animate-in fade-in duration-300 w-full max-w-md mx-auto left-0 right-0">
-  <div class="flex justify-between items-center p-4 bg-gradient-to-b from-black/80 to-transparent absolute top-0 w-full z-10">
-    <span class="text-white font-bold tracking-widest text-[13px]">請對準學員 QR Code</span>
-    <button onclick="stopScanner()" class="w-9 h-9 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white active:scale-90 transition-transform"><span class="material-symbols-outlined text-[20px]">close</span></button>
-  </div>
+  <div class="flex justify-between items-center p-4 bg-gradient-to-b from-black/80 to-transparent absolute top-0 w-full z-10"><span class="text-white font-normal tracking-widest text-[13px]">請對準學員 QR Code</span><button onclick="stopScanner()" class="w-9 h-9 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white active:scale-90 transition-transform"><span class="material-symbols-outlined text-[20px]">close</span></button></div>
   <div class="flex-1 flex items-center justify-center relative"><div id="qr-reader" class="w-full h-full max-h-[80vh]"></div></div>
 </div>
 
 <!-- 系統通知 Modal -->
 <div id="custom-modal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-6">
-  <div class="bg-white w-full max-w-[300px] rounded-3xl p-6 shadow-2xl text-center scale-95 transition-all duration-200 border border-slate-100">
-    <div class="w-14 h-14 bg-blue-50 text-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><span class="material-symbols-outlined text-[28px] icon-filled">info</span></div>
-    <h3 id="modal-title" class="text-[19px] font-extrabold mb-2 text-slate-800 tracking-tight font-headline">系統通知</h3>
-    <p id="modal-desc" class="text-slate-500 font-medium mb-6 leading-relaxed text-[14px]"></p>
-    <button onclick="closeModalAndGo()" class="btn-primary !py-2.5 !text-[15px]">我知道了</button>
-  </div>
+  <div class="bg-white w-full max-w-[300px] rounded-3xl p-6 shadow-2xl text-center scale-95 transition-all duration-200 border border-slate-100"><div class="w-14 h-14 bg-blue-50 text-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><span class="material-symbols-outlined text-[28px] icon-filled">info</span></div><h3 id="modal-title" class="text-[19px] font-normal mb-2 text-slate-800 tracking-tight font-headline">系統通知</h3><p id="modal-desc" class="text-slate-500 font-normal mb-6 leading-relaxed text-[14px]"></p><button onclick="closeModalAndGo()" class="btn-primary !py-2.5 !text-[15px]">我知道了</button></div>
 </div>
 
-<div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-bold flex items-center gap-2 w-max max-w-[90vw] opacity-0 pointer-events-none bg-slate-800 text-white"></div>
+<div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-normal flex items-center gap-2 w-max max-w-[90vw] opacity-0 pointer-events-none bg-slate-800 text-white"></div>
 
 <script>
   const LIFF_ID = "2009367829-DLtYBDUm"; 
@@ -460,7 +325,6 @@
   let globalCrmData = [], filteredCrmData = [], crmPageLimit = 10, currentCrmViewCount = 10;
   let isProcessing = false;
   let regStep1Data = {}, regCompressedBase64 = "";
-  let cropperInstance = null, currentCropTarget = ''; 
   let html5QrcodeScanner = null;
 
   document.addEventListener('wheel', function(e) {
@@ -505,9 +369,7 @@
         const hab = document.getElementById('header-admin-badge');
         if (hab) hab.classList.remove('hidden');
         isViewModeAdmin = true; 
-        switchView(targetView || 'admin-create');
-        const blc = document.getElementById('batch-list-container');
-        if(blc && blc.children.length === 0) addBatchItem();
+        switchView(targetView || 'admin-activities');
       } else {
         if (isRegistered) {
           if (claimCardId) {
@@ -564,7 +426,7 @@
       const vl = document.getElementById('view-loading');
       if (vl) vl.classList.add('hidden');
       const container = document.getElementById('main-content');
-      if (container) container.innerHTML = `<div class="text-center py-20"><span class="text-error font-bold text-lg">載入中斷</span><p class="text-sm text-slate-400 mt-2 px-6">${err.message}</p></div>`;
+      if (container) container.innerHTML = `<div class="text-center py-20"><span class="text-error font-normal text-lg">載入中斷</span><p class="text-sm text-slate-400 mt-2 px-6">${err.message}</p></div>`;
     }
   });
 
@@ -586,10 +448,6 @@
   const loadScript = (src) => new Promise((res, rej) => {
     if (document.querySelector(`script[src="${src}"]`)) return res();
     const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s);
-  });
-  const loadCSS = (href) => new Promise((res, rej) => {
-    if (document.querySelector(`link[href="${href}"]`)) return res();
-    const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; l.onload = res; l.onerror = rej; document.head.appendChild(l);
   });
 
   async function fetchAPI(action, payload = {}, useCache = false) {
@@ -652,14 +510,14 @@
   }
 
   function switchView(view) {
-    ['view-loading', 'view-user-register', 'view-user-activities', 'view-user-profile', 'view-user-history', 'view-admin-activities', 'view-admin-crm', 'view-admin-settings', 'view-admin-create'].forEach(v => { const el = document.getElementById(v); if(el) el.classList.add('hidden'); });
+    ['view-loading', 'view-user-register', 'view-user-activities', 'view-user-profile', 'view-user-history', 'view-admin-activities', 'view-admin-crm', 'view-admin-settings'].forEach(v => { const el = document.getElementById(v); if(el) el.classList.add('hidden'); });
     const activeEl = document.getElementById(`view-${view}`); if (activeEl) activeEl.classList.remove('hidden');
     const navAdmin = document.getElementById('bottom-nav-admin'); const navUser = document.getElementById('bottom-nav-user');
     navAdmin.classList.add('hidden'); navUser.classList.add('hidden');
     
     if (isAdmin && isViewModeAdmin && view.startsWith('admin')) {
       navAdmin.classList.remove('hidden');
-      ['create', 'activities', 'crm', 'settings'].forEach(k => { const btn = document.getElementById('nav-admin-'+k); if(btn) btn.className = `nav-btn ${view==='admin-'+k ? 'nav-active-btn' : ''}`; });
+      ['activities', 'crm', 'settings'].forEach(k => { const btn = document.getElementById('nav-admin-'+k); if(btn) btn.className = `nav-btn ${view==='admin-'+k ? 'nav-active-btn' : ''}`; });
     } else if (isRegistered && (!isAdmin || !isViewModeAdmin) && view.startsWith('user')) {
       navUser.classList.remove('hidden');
       ['activities', 'history', 'profile'].forEach(k => { const btn = document.getElementById('nav-user-'+k); if(btn) btn.className = `nav-btn ${view==='user-'+k ? 'nav-active-btn' : ''}`; });
@@ -706,7 +564,7 @@
   function showToast(m, e=false) { 
     const t = document.getElementById('toast'); if(!t) return; 
     t.innerHTML = `<span class="material-symbols-outlined icon-filled">${e?'error':'check_circle'}</span>` + m; 
-    t.className = `fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-bold transform translate-y-0 opacity-100 ${e ? 'bg-red-500 text-white border-red-600' : 'bg-slate-800 text-white border-slate-700'} flex items-center gap-2 w-max max-w-[90vw]`; 
+    t.className = `fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-normal transform translate-y-0 opacity-100 ${e ? 'bg-red-500 text-white border-red-600' : 'bg-slate-800 text-white border-slate-700'} flex items-center gap-2 w-max max-w-[90vw]`; 
     setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -1rem)'; }, 3000); 
   }
 
@@ -766,428 +624,7 @@
     }
   }
 
-  async function openCropper(input, targetMode) {
-    const file = input.files[0]; if (!file) return;
-    currentCropTarget = targetMode;
-
-    if (!window.Cropper) {
-       showToast("載入影像模組中...", false);
-       await loadCSS("https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css");
-       await loadScript("https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js");
-    }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = document.getElementById('cropper-image'); 
-      img.src = e.target.result; 
-      img.style.opacity = '0';
-      document.getElementById('section-image-cropper').classList.remove('hidden');
-      if (cropperInstance) cropperInstance.destroy();
-      
-      const aspectRatio = currentCropTarget === 'reg' ? NaN : 4 / 3;
-
-      setTimeout(() => { 
-        img.style.opacity = '1'; 
-        cropperInstance = new Cropper(img, { 
-          aspectRatio: aspectRatio,
-          viewMode: 1, 
-          dragMode: 'move', 
-          autoCropArea: 0.9, 
-          guides: true, 
-          center: true, 
-          highlight: false 
-        }); 
-      }, 100);
-    }; 
-    reader.readAsDataURL(file); 
-    input.value = ""; 
-  }
-
-  function cancelCrop() { 
-    if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; } 
-    document.getElementById('section-image-cropper').classList.add('hidden'); 
-  }
-
-  function confirmCrop() { 
-    if (!cropperInstance) return; 
-    let quality = 0.8;
-    let base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1000, maxHeight: 1000 }).toDataURL('image/webp', quality); 
-    
-    while (base64.length > 40000 && quality > 0.1) {
-       quality -= 0.1;
-       base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1000, maxHeight: 1000 }).toDataURL('image/webp', quality);
-    }
-    if (base64.length > 49000) {
-       return showToast("圖片仍過大，請裁切更小的範圍", true);
-    }
-
-    cancelCrop(); 
-
-    if (currentCropTarget === 'reg') {
-      regCompressedBase64 = base64;
-      recognizeAndSaveRegCard();
-    } else {
-      const modeId = currentCropTarget === 'detailed' ? 'create' : currentCropTarget; 
-      document.getElementById(`image-preview-${modeId}`).src = base64; 
-      document.getElementById(`image-preview-${modeId}`).classList.remove('hidden'); 
-      document.getElementById(`preview-placeholder-${modeId}`).classList.add('hidden'); 
-      document.getElementById(`in-image-url-${modeId}`).value = base64; 
-      showToast("圖片裁切成功");
-    }
-  }
-
-  async function recognizeAndSaveRegCard() {
-    showToast("AI 辨識中...", false); document.getElementById('reg-step-2').classList.add('pointer-events-none', 'opacity-50');
-    try {
-      const data = await fetchAPI('recognizeCard', { base64Image: regCompressedBase64, Birthday: regStep1Data.birthday });
-      const payload = { base64Image: regCompressedBase64, userId: userProfile.userId, 'LINE ID': userProfile.userId, Name: regStep1Data.name, EnglishName: data.EnglishName || '', Title: data.Title || '', Department: data.Department || '', CompanyName: data.CompanyName || '', TaxID: data.TaxID || '', Mobile: regStep1Data.phone, Tel: data.Tel || '', Ext: data.Ext || '', Fax: data.Fax || '', Address: data.Address || regStep1Data.address || '', Email: data.Email || '', Website: data.Website || '', SocialMedia: data.SocialMedia || '', Slogan: data.Slogan || '', Notes: '註冊自動建檔', Birthday: regStep1Data.birthday || '', Personality: data.Personality || '', Hobbies: data.Hobbies || '', Wealth: data.Wealth || '', Health: data.Health || '', Career: data.Career || '' };
-      await fetchAPI('saveCard', payload); showToast("名片建檔成功！"); finishRegistration();
-    } catch(err) { finishRegistration(); }
-  }
-
-  function finishRegistration() { isRegistered = true; registeredInfo = regStep1Data; document.getElementById('bottom-nav-user').classList.remove('hidden'); switchView('user-activities'); }
-
-  let currentCategory = '全部活動';
-  
-  async function reloadActivities() { 
-    if(isProcessing) return;
-    const btn = document.getElementById('btn-refresh-activities');
-    isProcessing = true;
-    btn.classList.add('pointer-events-none', 'opacity-50'); btn.querySelector('span').classList.add('refresh-spin');
-    sessionStorage.removeItem('getPublicActivities{}'); 
-    try {
-      await loadUserActivities(); 
-    } finally {
-      isProcessing = false;
-      btn.classList.remove('pointer-events-none', 'opacity-50'); btn.querySelector('span').classList.remove('refresh-spin');
-    }
-  }
-
-  async function loadUserActivities() {
-    const container = document.getElementById('user-activities-container');
-    container.className = 'grid grid-cols-2 gap-3 px-2';
-    if (!globalPublicActivities.length) renderActivitiesSkeleton();
-    
-    try {
-      const data = await fetchAPI('getPublicActivities', {}, true); 
-      globalPublicActivities = data || [];
-      
-      if (!globalPublicActivities.length) {
-        container.className = 'block px-2'; 
-        container.innerHTML = '<div class="text-center py-16 bg-white rounded-3xl shadow-sm border border-slate-100 text-slate-400 font-bold w-full">目前無開放的活動</div>'; 
-        return; 
-      }
-      renderCategories(); filterActivities();
-    } catch(e) {
-      container.className = 'block px-2'; 
-      container.innerHTML = '<div class="text-center py-16 bg-white rounded-3xl shadow-sm border border-slate-100 text-red-400 font-bold w-full">讀取失敗，請重新整理</div>'; 
-    }
-  }
-
-  function renderCategories() {
-      const types = ['全部活動', ...new Set(globalPublicActivities.map(a => a.type).filter(Boolean))];
-      const container = document.getElementById('activity-categories');
-      if (!container) return;
-      container.innerHTML = types.map(t => `
-          <button onclick="filterByCategory('${t}')" class="shrink-0 px-4 py-1.5 rounded-full font-normal text-[13px] transition-all ${currentCategory === t ? 'bg-primary text-white shadow-md shadow-blue-500/30' : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'}">
-              ${t}
-          </button>
-      `).join('');
-  }
-
-  function filterByCategory(type) { currentCategory = type; renderCategories(); filterActivities(); }
-  function filterActivities() { renderActivityList(globalPublicActivities.filter(a => currentCategory === '全部活動' || a.type === currentCategory), 'user'); }
-
-  function renderActivityList(data, mode) {
-    const list = document.getElementById(mode === 'user' ? 'user-activities-container' : 'admin-activity-list-container');
-    if (!data.length) {
-        if(mode === 'user') return list.innerHTML = `<div class="col-span-2 text-center py-10 text-slate-400 font-bold">無符合的活動</div>`;
-        else return list.innerHTML = `<div class="text-center py-16 bg-white rounded-3xl shadow-sm border border-slate-100 text-slate-400 font-bold mx-1">無符合的活動</div>`;
-    }
-    
-    let html = '';
-    data.forEach((a, i) => {
-      const safeName = a.name.replace(/'/g, "\\'");
-      if (mode === 'user') {
-        const bgImg = a.imageUrl || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80';
-        html += `
-        <div onclick="openActivityDetailByName('${safeName}')" class="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm flex flex-col h-full cursor-pointer active:scale-[0.98] transition-transform animate-in fade-in hover:shadow-md" style="animation-delay: ${i*50}ms">
-          <div class="relative w-full aspect-[4/3] shrink-0 bg-slate-100">
-            <img src="${bgImg}" class="w-full h-full object-cover">
-            <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-            <div class="absolute top-2 left-2 flex gap-1">
-              <span class="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm tracking-wide">${a.type}</span>
-              <span class="bg-white/95 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm tracking-wide">${a.feeType === '收費' ? 'NT$ '+a.price : '免費'}</span>
-            </div>
-          </div>
-          <div class="p-3 flex flex-col flex-1 bg-white">
-            <p class="text-[10px] text-primary font-bold flex items-center gap-1 mb-1.5 uppercase tracking-wider">
-              <span class="material-symbols-outlined text-[12px]">calendar_today</span>
-              ${formatTimeShort(a.startTime)}
-            </p>
-            <h3 class="text-[14px] font-bold text-slate-800 leading-snug line-clamp-2 mb-3 flex-1">${a.name}</h3>
-            <div class="flex gap-2 mt-auto">
-              <button onclick="event.stopPropagation(); openActivityDetailByName('${safeName}')" class="flex-[1] py-2 bg-white text-slate-600 rounded font-normal text-[12px] transition-colors flex items-center justify-center border border-slate-300 shadow-sm">
-                說明
-              </button>
-              <button onclick="event.stopPropagation(); userJoinActivity(this, '${safeName}', '${a.feeType}', '${a.price}')" class="flex-[1.5] py-2 bg-primary text-white rounded font-normal text-[12px] transition-colors flex items-center justify-center shadow-sm">
-                報名
-              </button>
-            </div>
-          </div>
-        </div>`;
-      } else {
-        html += `
-        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 animate-in fade-in mx-1">
-          <div class="flex justify-between items-start mb-4">
-            <div>
-              <span class="text-[10px] font-bold text-primary bg-primary-light px-2 py-0.5 rounded uppercase tracking-widest mb-1.5 inline-block">${a.type}</span>
-              <h3 class="font-extrabold text-[17px] text-slate-800 leading-tight">${a.name}</h3>
-            </div>
-            <div class="flex items-center gap-1 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
-              <span class="material-symbols-outlined text-[14px] text-slate-400">group</span>
-              <span class="font-bold text-sm text-slate-700">${a.total}</span>
-            </div>
-          </div>
-          
-          <div class="grid grid-cols-3 gap-2 bg-slate-50 rounded-xl p-3 mb-4 border border-slate-100">
-             <div class="text-center"><p class="text-[10px] text-slate-500 font-bold mb-0.5">狀態</p><p class="font-bold text-xs ${a.status==='上架'?'text-emerald-500':'text-slate-500'}">${a.status}</p></div>
-             <div class="text-center border-l border-slate-200"><p class="text-[10px] text-slate-500 font-bold mb-0.5">已到</p><p class="font-bold text-xs text-primary">${a.attended}</p></div>
-             <div class="text-center border-l border-slate-200"><p class="text-[10px] text-slate-500 font-bold mb-0.5">取消</p><p class="font-bold text-xs text-error">${a.cancelled}</p></div>
-          </div>
-
-          <div class="flex gap-2">
-            <button onclick="toggleActivityStatus('${safeName}')" class="flex-1 py-2.5 bg-white border border-slate-300 text-slate-600 rounded font-normal text-[13px] active:scale-95 transition-all flex items-center justify-center hover:bg-slate-50 shadow-sm">${a.status==='上架'?'下架':'上架'}</button>
-            <button onclick="openAdminRegistrants('${safeName}')" class="flex-1 py-2.5 bg-slate-800 text-white rounded font-normal text-[13px] shadow-sm active:scale-95 transition-all flex items-center justify-center hover:bg-slate-700">名單核銷</button>
-          </div>
-        </div>`;
-      }
-    });
-    list.innerHTML = html;
-    list.className = mode === 'user' ? 'grid grid-cols-2 gap-3 px-1' : 'space-y-4';
-  }
-
-  function openActivityDetailByName(name) {
-    const act = globalPublicActivities.find(a => a.name === name); if (!act) return;
-    const imgEl = document.getElementById('detail-modal-image');
-    const noImgEl = document.getElementById('detail-modal-no-image');
-    if (act.imageUrl) {
-      imgEl.src = act.imageUrl; imgEl.classList.remove('hidden'); noImgEl.classList.add('hidden');
-    } else {
-      imgEl.src = ''; imgEl.classList.add('hidden'); noImgEl.classList.remove('hidden');
-    }
-
-    document.getElementById('detail-modal-type').innerText = act.type;
-    const feeEl = document.getElementById('detail-modal-fee');
-    feeEl.innerText = act.feeType === '收費' ? `NT$ ${act.price}` : '免費';
-    feeEl.className = `px-2.5 py-0.5 text-[11px] font-bold rounded-md shadow-sm ${act.feeType === '收費' ? 'bg-orange-50 text-orange-600 border border-orange-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`;
-    document.getElementById('detail-modal-title').innerText = act.name;
-
-    document.getElementById('detail-modal-start').innerText = act.startTime ? formatTime(act.startTime) : '未定';
-    const endContainer = document.getElementById('detail-modal-end-container');
-    if (act.endTime) {
-      document.getElementById('detail-modal-end').innerText = formatTime(act.endTime);
-      endContainer.classList.remove('hidden');
-    } else {
-      endContainer.classList.add('hidden');
-    }
-
-    document.getElementById('detail-modal-desc').innerText = act.description || '主辦單位尚未提供說明。';
-
-    let batches = [];
-    try { 
-        if (act.batches) batches = typeof act.batches === 'string' ? JSON.parse(act.batches) : act.batches; 
-    } catch(e) {}
-    
-    const batchContainer = document.getElementById('detail-modal-batch-container');
-    const batchSelect = document.getElementById('detail-modal-batch-select');
-    
-    batchSelect.onchange = function() {
-        const selectedOpt = this.options[this.selectedIndex];
-        const bPrice = parseInt(selectedOpt.dataset.price || 0);
-        const bStart = selectedOpt.dataset.start;
-        const bEnd = selectedOpt.dataset.end;
-
-        if (bPrice > 0) {
-            feeEl.innerText = `NT$ ${bPrice}`;
-            feeEl.className = 'px-2.5 py-0.5 text-[11px] font-bold rounded-md shadow-sm bg-orange-50 text-orange-600 border border-orange-100';
-        } else {
-            feeEl.innerText = '免費';
-            feeEl.className = 'px-2.5 py-0.5 text-[11px] font-bold rounded-md shadow-sm bg-emerald-50 text-emerald-600 border border-emerald-100';
-        }
-
-        if (bStart) document.getElementById('detail-modal-start').innerText = formatTime(bStart);
-        if (bEnd) {
-            document.getElementById('detail-modal-end').innerText = formatTime(bEnd);
-            endContainer.classList.remove('hidden');
-        } else {
-            endContainer.classList.add('hidden');
-        }
-    };
-
-    if (act.isBatch || batches.length > 0) {
-        batchSelect.innerHTML = batches.map(b => {
-            const tStr = b.startTime ? formatTimeShort(b.startTime) : '時間未定';
-            const pStr = (b.price && parseInt(b.price) > 0) ? ` - NT$${b.price}` : ' - 免費';
-            return `<option value="${b.name}" data-price="${b.price || 0}" data-start="${b.startTime || ''}" data-end="${b.endTime || ''}">${b.name} (${tStr}${pStr})</option>`;
-        }).join('');
-        batchContainer.classList.remove('hidden');
-        batchSelect.onchange(); 
-    } else {
-        batchContainer.classList.add('hidden');
-    }
-
-    const joinBtn = document.getElementById('detail-modal-join-btn');
-    joinBtn.onclick = async function() {
-      let selectedBatchName = null;
-      let finalFeeType = act.feeType;
-      let finalPrice = act.price;
-
-      if ((act.isBatch || batches.length > 0) && !batchContainer.classList.contains('hidden')) {
-          selectedBatchName = batchSelect.value;
-          const selectedOption = batchSelect.options[batchSelect.selectedIndex];
-          const bPrice = parseInt(selectedOption.dataset.price || 0);
-          if (bPrice > 0) {
-              finalFeeType = '收費';
-              finalPrice = bPrice;
-          } else {
-              finalFeeType = '免費';
-              finalPrice = 0;
-          }
-      }
-
-      closeActivityDetail(); 
-      await userJoinActivity(this, act.name, finalFeeType, finalPrice, selectedBatchName);
-    };
-
-    document.getElementById('activity-detail-modal').classList.remove('hidden');
-  }
-
-  function closeActivityDetail() {
-    document.getElementById('activity-detail-modal').classList.add('hidden');
-  }
-
-  async function userJoinActivity(btn, name, feeType, price, batchName = null) {
-    if (isProcessing) return;
-    
-    const confirmMsg = batchName ? `確定報名「${name} - ${batchName}」？` : `確定報名「${name}」？`;
-    if (!confirm(confirmMsg)) return;
-
-    isProcessing = true; 
-    setButtonLoading('detail-modal-join-btn', true);
-    try {
-      await fetchAPI('joinActivity', { userId: userProfile.userId, activityName: name, batchName: batchName, price: price });
-      
-      if (feeType === '收費' || parseInt(price) > 0) {
-          showModal("報名成功", `此為收費活動，請完成匯款 \nNT$ ${price} 後，至「報名紀錄」填寫後五碼。`, "history");
-      } else {
-          showToast("報名成功！期待現場見到您。");
-          setTimeout(() => { window.minimizeApp(); }, 1500); 
-      }
-      
-      sessionStorage.removeItem('getUserHistory{"userId":"' + userProfile.userId + '"}');
-    } catch(e) {
-      console.error(e);
-    } finally { 
-      isProcessing = false; 
-      setButtonLoading('detail-modal-join-btn', false, '我要報名 <span class="material-symbols-outlined text-[20px]">arrow_forward</span>');
-    }
-  }
-
-  async function loadUserHistory() {
-    const container = document.getElementById('user-history-container');
-    container.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>';
-    
-    try {
-        const history = await fetchAPI('getUserHistory', { userId: userProfile.userId }, true);
-        
-        if (!history || history.length === 0) {
-            container.innerHTML = '<div class="text-center py-16 bg-white shadow-sm border border-slate-200 rounded-3xl text-slate-400 font-bold mx-1">尚無報名紀錄</div>'; 
-            return;
-        }
-        
-        container.innerHTML = history.map(item => {
-          const isCanceled = item.regStatus === '已取消'; const safeName = item.name.replace(/'/g, "\\'");
-          let pC = item.payStatus==='已完款'?'bg-blue-50 text-blue-600 border-blue-100':(item.payStatus==='匯款審核中'?'bg-slate-800 text-white border-slate-800':'bg-orange-50 text-orange-600 border-orange-100');
-          return `
-          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 relative overflow-hidden animate-in slide-in-from-bottom-2 mx-1 mb-3">
-            ${isCanceled ? '<div class="absolute top-0 right-0 bg-slate-500 text-white text-[10px] px-3 py-0.5 rounded-bl-lg tracking-wider">已取消</div>' : ''}
-            
-            <div class="flex gap-3 items-start">
-              <div id="qr-${item.name.replace(/\s+/g,'')}" class="w-[60px] h-[60px] bg-slate-50 border border-slate-100 rounded-lg p-1 shrink-0 ${isCanceled?'opacity-30 grayscale':''}"></div>
-              <div class="flex-1 overflow-hidden pr-6">
-                <h4 class="font-medium text-slate-800 text-[15px] leading-snug mb-1 truncate">${item.name}</h4>
-                <p class="text-[12px] text-slate-500 flex items-center gap-1 mb-2"><span class="material-symbols-outlined text-[14px]">event</span> ${item.startTime ? item.startTime.substring(0,10) : '未定'}</p>
-                <div class="flex items-center gap-1.5 flex-wrap">
-                  <span class="px-2 py-0.5 text-[10px] rounded tracking-wider border ${item.checkedIn ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-50 text-slate-500 border-slate-200'}">${item.checkedIn ? '已簽到' : '待簽到'}</span>
-                  ${item.isPaidAct && !isCanceled ? `<span class="px-2 py-0.5 text-[10px] rounded tracking-wider border ${pC}">${item.payStatus}</span>` : ''}
-                </div>
-              </div>
-            </div>
-            
-            ${!isCanceled ? `<button id="btn-cancel-${item.name.replace(/\s+/g,'')}" onclick="userCancelRegistration(this, '${safeName}')" class="absolute top-3 right-3 text-slate-300 hover:text-red-500 transition-colors bg-white"><span class="material-symbols-outlined text-[20px]">cancel</span></button>` : ''}
-            
-            ${item.isPaidAct && item.payStatus === '未繳費' && !isCanceled ? `
-              <div class="mt-3 pt-3 border-t border-slate-100 flex gap-2 items-center">
-                 <input type="text" id="pay-${item.name.replace(/\s+/g,'')}" class="flex-1 w-0 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-[14px] text-slate-700 outline-none focus:border-primary focus:bg-white" placeholder="輸入末五碼" maxlength="5">
-                 <button id="btn-report-${item.name.replace(/\s+/g,'')}" onclick="submitLast5(this, '${safeName}', '${item.name.replace(/\s+/g,'')}')" class="shrink-0 whitespace-nowrap bg-primary text-white px-4 py-2.5 rounded-lg text-[14px] active:scale-95 transition-transform shadow-sm">回報</button>
-              </div>` : ''}
-          </div>`;
-        }).join('');
-        
-        setTimeout(() => { history.forEach(h => { if(h.regStatus!=='已取消') { const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(userProfile.userId)}`; document.getElementById(`qr-${h.name.replace(/\s+/g,'')}`).innerHTML = `<img src="${qrUrl}" class="w-full h-full object-contain rounded-md">`; } }); }, 100);
-    } catch(err) {
-        container.innerHTML = '<div class="text-center py-16 bg-white shadow-sm border border-slate-200 rounded-3xl text-red-500 font-bold mx-1">載入失敗</div>'; 
-    }
-  }
-
-  async function submitLast5(btn, actName, inputId) { 
-    if(isProcessing) return;
-    const val = document.getElementById(`pay-${inputId}`).value; 
-    if(!val || val.length < 4) return showToast("輸入錯誤",true); 
-    isProcessing = true;
-    setButtonLoading(btn.id, true);
-    try {
-      await fetchAPI('updateLast5Digits', { userId: userProfile.userId, activityName: actName, last5Digits: val }); 
-      showToast("回報成功"); 
-      sessionStorage.removeItem('getUserHistory{"userId":"' + userProfile.userId + '"}'); 
-      await loadUserHistory(); 
-    } catch(e) {
-      console.error(e);
-    } finally {
-      isProcessing = false; 
-      setButtonLoading(btn.id, false, '回報');
-    }
-  }
-
-  async function userCancelRegistration(btn, actName) { 
-    if(isProcessing) return;
-    if(!confirm(`確定要取消？`)) return; 
-    isProcessing = true;
-    setButtonLoading(btn.id, true);
-    try {
-      await fetchAPI('cancelRegistration', { userId: userProfile.userId, activityName: actName }); 
-      showToast("已取消"); 
-      sessionStorage.removeItem('getUserHistory{"userId":"' + userProfile.userId + '"}'); 
-      await loadUserHistory(); 
-    } catch(e) {
-      console.error(e);
-    } finally {
-      isProcessing = false; 
-      setButtonLoading(btn.id, false, '取消');
-    }
-  }
-
-  function populateUserProfile() { 
-      if(registeredInfo) { 
-          ['name','gender','phone','industry','birthday','region','address'].forEach(k => { 
-              if(document.getElementById('edit-'+k)) {
-                  document.getElementById('edit-'+k).value=registeredInfo[k]||''; 
-              }
-          }); 
-      } 
-  }
-
-  // ⭐ 新增：生日變更時，觸發 AI 計算五大標籤並更新名片資料庫
+  // ⭐ 變更生日觸發重算邏輯保留
   async function submitProfileUpdate() {
     if(isProcessing) return; isProcessing = true; setButtonLoading('btn-save-profile', true);
     const p = { 
@@ -1210,51 +647,188 @@
       registeredInfo = p;
       showToast("會員資料儲存成功");
 
-      // 如果生日、姓名或電話有變，觸發名片資料庫的 AI 標籤更新
       if ((p.birthday !== oldBirthday || p.name !== oldName || p.phone !== oldPhone) && p.birthday) {
           const contacts = await fetchAPI('getCardContacts', {}, false);
           const myCard = contacts.find(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId || c['Line ID'] === userProfile.userId);
 
           if (myCard) {
               showToast("偵測到資料變更，啟動八字與靈數精算中...", false);
-              
               const newTags = await fetchAPI('calculateFateTags', { Name: p.name, Mobile: p.phone, Birthday: p.birthday }, false);
-
               const updatePayload = {
-                  rowId: myCard.rowId,
-                  Name: p.name,
-                  Mobile: p.phone,
-                  Personality: newTags.Personality || myCard['個性'],
-                  Hobbies: newTags.Hobbies || myCard['興趣'],
-                  Wealth: newTags.Wealth || myCard['財運'],
-                  Health: newTags.Health || myCard['健康'],
-                  Career: newTags.Career || myCard['事業']
+                  rowId: myCard.rowId, Name: p.name, Mobile: p.phone,
+                  Personality: newTags.Personality || myCard['個性'], Hobbies: newTags.Hobbies || myCard['興趣'],
+                  Wealth: newTags.Wealth || myCard['財運'], Health: newTags.Health || myCard['健康'], Career: newTags.Career || myCard['事業']
               };
-              
               await fetchAPI('updateCard', updatePayload, false);
               sessionStorage.removeItem('getCardContacts{}');
               showToast("✅ 結合八字與靈數的五大命理標籤已更新！");
           }
       }
     } catch(e) {
-      console.error(e);
-      showToast("儲存失敗", true);
+      console.error(e); showToast("儲存失敗", true);
     } finally {
-      isProcessing = false;
-      setButtonLoading('btn-save-profile', false, '儲存變更');
+      isProcessing = false; setButtonLoading('btn-save-profile', false, '儲存變更');
     }
   }
 
-  async function loadAdminActivities() { 
-    const list = document.getElementById('admin-activity-list-container');
-    if(!list) return;
-    list.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>'; 
+  function finishRegistration() { isRegistered = true; registeredInfo = regStep1Data; document.getElementById('bottom-nav-user').classList.remove('hidden'); switchView('user-activities'); }
+
+  let currentCategory = '全部活動';
+  
+  async function reloadActivities() { 
+    if(isProcessing) return;
+    const btn = document.getElementById('btn-refresh-activities');
+    isProcessing = true;
+    btn.classList.add('pointer-events-none', 'opacity-50'); btn.querySelector('span').classList.add('refresh-spin');
+    sessionStorage.removeItem('getPublicActivities{}'); 
+    try { await loadUserActivities(); } finally { isProcessing = false; btn.classList.remove('pointer-events-none', 'opacity-50'); btn.querySelector('span').classList.remove('refresh-spin'); }
+  }
+
+  async function loadUserActivities() {
+    const container = document.getElementById('user-activities-container');
+    container.className = 'grid grid-cols-2 gap-3 px-2';
+    if (!globalPublicActivities.length) renderActivitiesSkeleton();
     try {
-      currentActivities = await fetchAPI('getActivityDashboard', {}, true); 
-      renderActivityList(currentActivities, 'admin'); 
-    } catch (e) {
-      list.innerHTML = `<p class="text-center text-red-400 font-bold py-10">載入失敗</p>`;
+      const data = await fetchAPI('getPublicActivities', {}, true); 
+      globalPublicActivities = data || [];
+      if (!globalPublicActivities.length) { container.className = 'block px-2'; container.innerHTML = '<div class="text-center py-16 bg-white rounded-3xl shadow-sm border border-slate-100 text-slate-400 font-normal w-full">目前無開放的活動</div>'; return; }
+      renderCategories(); filterActivities();
+    } catch(e) { container.className = 'block px-2'; container.innerHTML = '<div class="text-center py-16 bg-white rounded-3xl shadow-sm border border-slate-100 text-red-400 font-normal w-full">讀取失敗，請重新整理</div>'; }
+  }
+
+  function renderCategories() {
+      const types = ['全部活動', ...new Set(globalPublicActivities.map(a => a.type).filter(Boolean))];
+      const container = document.getElementById('activity-categories');
+      if (!container) return;
+      container.innerHTML = types.map(t => `<button onclick="filterByCategory('${t}')" class="shrink-0 px-4 py-1.5 rounded-full font-normal text-[13px] transition-all ${currentCategory === t ? 'bg-primary text-white shadow-md shadow-blue-500/30' : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'}">${t}</button>`).join('');
+  }
+
+  function filterByCategory(type) { currentCategory = type; renderCategories(); filterActivities(); }
+  function filterActivities() { renderActivityList(globalPublicActivities.filter(a => currentCategory === '全部活動' || a.type === currentCategory), 'user'); }
+
+  function renderActivityList(data, mode) {
+    const list = document.getElementById(mode === 'user' ? 'user-activities-container' : 'admin-activity-list-container');
+    if (!data.length) {
+        if(mode === 'user') return list.innerHTML = `<div class="col-span-2 text-center py-10 text-slate-400 font-normal">無符合的活動</div>`;
+        else return list.innerHTML = `<div class="text-center py-16 bg-white rounded-3xl shadow-sm border border-slate-100 text-slate-400 font-normal mx-1">無符合的活動</div>`;
     }
+    let html = '';
+    data.forEach((a, i) => {
+      const safeName = a.name.replace(/'/g, "\\'");
+      if (mode === 'user') {
+        const bgImg = a.imageUrl || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80';
+        html += `<div onclick="openActivityDetailByName('${safeName}')" class="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm flex flex-col h-full cursor-pointer active:scale-[0.98] transition-transform animate-in fade-in hover:shadow-md" style="animation-delay: ${i*50}ms"><div class="relative w-full aspect-[4/3] shrink-0 bg-slate-100"><img src="${bgImg}" class="w-full h-full object-cover"><div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div><div class="absolute top-2 left-2 flex gap-1"><span class="bg-primary text-white text-[10px] font-normal px-2 py-0.5 rounded-md shadow-sm tracking-wide">${a.type}</span><span class="bg-white/95 text-slate-700 text-[10px] font-normal px-2 py-0.5 rounded-md shadow-sm tracking-wide">${a.feeType === '收費' ? 'NT$ '+a.price : '免費'}</span></div></div><div class="p-3 flex flex-col flex-1 bg-white"><p class="text-[10px] text-primary font-normal flex items-center gap-1 mb-1.5 uppercase tracking-wider"><span class="material-symbols-outlined text-[12px]">calendar_today</span>${formatTimeShort(a.startTime)}</p><h3 class="text-[14px] font-medium text-slate-800 leading-snug line-clamp-2 mb-3 flex-1">${a.name}</h3><div class="flex gap-2 mt-auto"><button onclick="event.stopPropagation(); openActivityDetailByName('${safeName}')" class="flex-[1] py-2 bg-white text-slate-600 rounded font-normal text-[12px] transition-colors flex items-center justify-center border border-slate-300 shadow-sm">說明</button><button onclick="event.stopPropagation(); userJoinActivity(this, '${safeName}', '${a.feeType}', '${a.price}')" class="flex-[1.5] py-2 bg-primary text-white rounded font-normal text-[12px] transition-colors flex items-center justify-center shadow-sm">報名</button></div></div></div>`;
+      } else {
+        html += `<div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 animate-in fade-in mx-1"><div class="flex justify-between items-start mb-4"><div><span class="text-[10px] font-normal text-primary bg-primary-light px-2 py-0.5 rounded uppercase tracking-widest mb-1.5 inline-block">${a.type}</span><h3 class="font-medium text-[17px] text-slate-800 leading-tight">${a.name}</h3></div><div class="flex items-center gap-1 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100"><span class="material-symbols-outlined text-[14px] text-slate-400">group</span><span class="font-normal text-sm text-slate-700">${a.total}</span></div></div><div class="grid grid-cols-3 gap-2 bg-slate-50 rounded-xl p-3 mb-4 border border-slate-100"><div class="text-center"><p class="text-[10px] text-slate-500 font-normal mb-0.5">狀態</p><p class="font-normal text-xs ${a.status==='上架'?'text-emerald-500':'text-slate-500'}">${a.status}</p></div><div class="text-center border-l border-slate-200"><p class="text-[10px] text-slate-500 font-normal mb-0.5">已到</p><p class="font-normal text-xs text-primary">${a.attended}</p></div><div class="text-center border-l border-slate-200"><p class="text-[10px] text-slate-500 font-normal mb-0.5">取消</p><p class="font-normal text-xs text-error">${a.cancelled}</p></div></div><div class="flex gap-2"><button onclick="toggleActivityStatus('${safeName}')" class="flex-1 py-2.5 bg-white border border-slate-300 text-slate-600 rounded font-normal text-[13px] active:scale-95 transition-all flex items-center justify-center hover:bg-slate-50 shadow-sm">${a.status==='上架'?'下架':'上架'}</button><button onclick="openAdminRegistrants('${safeName}')" class="flex-1 py-2.5 bg-slate-800 text-white rounded font-normal text-[13px] shadow-sm active:scale-95 transition-all flex items-center justify-center hover:bg-slate-700">名單核銷</button></div></div>`;
+      }
+    });
+    list.innerHTML = html;
+    list.className = mode === 'user' ? 'grid grid-cols-2 gap-3 px-1' : 'space-y-4';
+  }
+
+  function openActivityDetailByName(name) {
+    const act = globalPublicActivities.find(a => a.name === name); if (!act) return;
+    const imgEl = document.getElementById('detail-modal-image');
+    const noImgEl = document.getElementById('detail-modal-no-image');
+    if (act.imageUrl) { imgEl.src = act.imageUrl; imgEl.classList.remove('hidden'); noImgEl.classList.add('hidden'); } else { imgEl.src = ''; imgEl.classList.add('hidden'); noImgEl.classList.remove('hidden'); }
+    document.getElementById('detail-modal-type').innerText = act.type;
+    const feeEl = document.getElementById('detail-modal-fee');
+    feeEl.innerText = act.feeType === '收費' ? `NT$ ${act.price}` : '免費';
+    feeEl.className = `px-2.5 py-0.5 text-[11px] font-normal rounded-md shadow-sm ${act.feeType === '收費' ? 'bg-orange-50 text-orange-600 border border-orange-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`;
+    document.getElementById('detail-modal-title').innerText = act.name;
+    document.getElementById('detail-modal-start').innerText = act.startTime ? formatTime(act.startTime) : '未定';
+    const endContainer = document.getElementById('detail-modal-end-container');
+    if (act.endTime) { document.getElementById('detail-modal-end').innerText = formatTime(act.endTime); endContainer.classList.remove('hidden'); } else { endContainer.classList.add('hidden'); }
+    document.getElementById('detail-modal-desc').innerText = act.description || '主辦單位尚未提供說明。';
+
+    let batches = [];
+    try { if (act.batches) batches = typeof act.batches === 'string' ? JSON.parse(act.batches) : act.batches; } catch(e) {}
+    
+    const batchContainer = document.getElementById('detail-modal-batch-container');
+    const batchSelect = document.getElementById('detail-modal-batch-select');
+    
+    batchSelect.onchange = function() {
+        const selectedOpt = this.options[this.selectedIndex];
+        const bPrice = parseInt(selectedOpt.dataset.price || 0); const bStart = selectedOpt.dataset.start; const bEnd = selectedOpt.dataset.end;
+        if (bPrice > 0) { feeEl.innerText = `NT$ ${bPrice}`; feeEl.className = 'px-2.5 py-0.5 text-[11px] font-normal rounded-md shadow-sm bg-orange-50 text-orange-600 border border-orange-100'; } else { feeEl.innerText = '免費'; feeEl.className = 'px-2.5 py-0.5 text-[11px] font-normal rounded-md shadow-sm bg-emerald-50 text-emerald-600 border border-emerald-100'; }
+        if (bStart) document.getElementById('detail-modal-start').innerText = formatTime(bStart);
+        if (bEnd) { document.getElementById('detail-modal-end').innerText = formatTime(bEnd); endContainer.classList.remove('hidden'); } else { endContainer.classList.add('hidden'); }
+    };
+
+    if (act.isBatch || batches.length > 0) {
+        batchSelect.innerHTML = batches.map(b => {
+            const tStr = b.startTime ? formatTimeShort(b.startTime) : '時間未定';
+            const pStr = (b.price && parseInt(b.price) > 0) ? ` - NT$${b.price}` : ' - 免費';
+            return `<option value="${b.name}" data-price="${b.price || 0}" data-start="${b.startTime || ''}" data-end="${b.endTime || ''}">${b.name} (${tStr}${pStr})</option>`;
+        }).join('');
+        batchContainer.classList.remove('hidden'); batchSelect.onchange(); 
+    } else { batchContainer.classList.add('hidden'); }
+
+    const joinBtn = document.getElementById('detail-modal-join-btn');
+    joinBtn.onclick = async function() {
+      let selectedBatchName = null; let finalFeeType = act.feeType; let finalPrice = act.price;
+      if ((act.isBatch || batches.length > 0) && !batchContainer.classList.contains('hidden')) {
+          selectedBatchName = batchSelect.value;
+          const selectedOption = batchSelect.options[batchSelect.selectedIndex];
+          const bPrice = parseInt(selectedOption.dataset.price || 0);
+          if (bPrice > 0) { finalFeeType = '收費'; finalPrice = bPrice; } else { finalFeeType = '免費'; finalPrice = 0; }
+      }
+      closeActivityDetail(); await userJoinActivity(this, act.name, finalFeeType, finalPrice, selectedBatchName);
+    };
+
+    document.getElementById('activity-detail-modal').classList.remove('hidden');
+  }
+
+  function closeActivityDetail() { document.getElementById('activity-detail-modal').classList.add('hidden'); }
+
+  async function userJoinActivity(btn, name, feeType, price, batchName = null) {
+    if (isProcessing) return;
+    const confirmMsg = batchName ? `確定報名「${name} - ${batchName}」？` : `確定報名「${name}」？`;
+    if (!confirm(confirmMsg)) return;
+
+    isProcessing = true; setButtonLoading('detail-modal-join-btn', true);
+    try {
+      await fetchAPI('joinActivity', { userId: userProfile.userId, activityName: name, batchName: batchName, price: price });
+      if (feeType === '收費' || parseInt(price) > 0) { showModal("報名成功", `此為收費活動，請完成匯款 \nNT$ ${price} 後，至「報名紀錄」填寫後五碼。`, "history"); } 
+      else { showToast("報名成功！期待現場見到您。"); setTimeout(() => { window.minimizeApp(); }, 1500); }
+      sessionStorage.removeItem('getUserHistory{"userId":"' + userProfile.userId + '"}');
+    } catch(e) { console.error(e); } finally { isProcessing = false; setButtonLoading('detail-modal-join-btn', false, '我要報名 <span class="material-symbols-outlined text-[20px]">arrow_forward</span>'); }
+  }
+
+  async function loadUserHistory() {
+    const container = document.getElementById('user-history-container');
+    container.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>';
+    try {
+        const history = await fetchAPI('getUserHistory', { userId: userProfile.userId }, true);
+        if (!history || history.length === 0) { container.innerHTML = '<div class="text-center py-16 bg-white shadow-sm border border-slate-200 rounded-3xl text-slate-400 font-normal mx-1">尚無報名紀錄</div>'; return; }
+        container.innerHTML = history.map(item => {
+          const isCanceled = item.regStatus === '已取消'; const safeName = item.name.replace(/'/g, "\\'");
+          let pC = item.payStatus==='已完款'?'bg-blue-50 text-blue-600 border-blue-100':(item.payStatus==='匯款審核中'?'bg-slate-800 text-white border-slate-800':'bg-orange-50 text-orange-600 border-orange-100');
+          return `<div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 relative overflow-hidden animate-in slide-in-from-bottom-2 mx-1 mb-3">${isCanceled ? '<div class="absolute top-0 right-0 bg-slate-500 text-white text-[10px] px-3 py-0.5 rounded-bl-lg tracking-wider">已取消</div>' : ''}<div class="flex gap-3 items-start"><div id="qr-${item.name.replace(/\s+/g,'')}" class="w-[60px] h-[60px] bg-slate-50 border border-slate-100 rounded-lg p-1 shrink-0 ${isCanceled?'opacity-30 grayscale':''}"></div><div class="flex-1 overflow-hidden pr-6"><h4 class="font-medium text-slate-800 text-[15px] leading-snug mb-1 truncate">${item.name}</h4><p class="text-[12px] text-slate-500 flex items-center gap-1 mb-2"><span class="material-symbols-outlined text-[14px]">event</span> ${item.startTime ? item.startTime.substring(0,10) : '未定'}</p><div class="flex items-center gap-1.5 flex-wrap"><span class="px-2 py-0.5 text-[10px] rounded tracking-wider border ${item.checkedIn ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-50 text-slate-500 border-slate-200'}">${item.checkedIn ? '已簽到' : '待簽到'}</span>${item.isPaidAct && !isCanceled ? `<span class="px-2 py-0.5 text-[10px] rounded tracking-wider border ${pC}">${item.payStatus}</span>` : ''}</div></div></div>${!isCanceled ? `<button id="btn-cancel-${item.name.replace(/\s+/g,'')}" onclick="userCancelRegistration(this, '${safeName}')" class="absolute top-3 right-3 text-slate-300 hover:text-red-500 transition-colors bg-white"><span class="material-symbols-outlined text-[20px]">cancel</span></button>` : ''}${item.isPaidAct && item.payStatus === '未繳費' && !isCanceled ? `<div class="mt-3 pt-3 border-t border-slate-100 flex gap-2 items-center"><input type="text" id="pay-${item.name.replace(/\s+/g,'')}" class="flex-1 w-0 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-[14px] text-slate-700 outline-none focus:border-primary focus:bg-white" placeholder="輸入末五碼" maxlength="5"><button id="btn-report-${item.name.replace(/\s+/g,'')}" onclick="submitLast5(this, '${safeName}', '${item.name.replace(/\s+/g,'')}')" class="shrink-0 whitespace-nowrap bg-primary text-white px-4 py-2.5 rounded-lg text-[14px] active:scale-95 transition-transform shadow-sm">回報</button></div>` : ''}</div>`;
+        }).join('');
+        setTimeout(() => { history.forEach(h => { if(h.regStatus!=='已取消') { const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(userProfile.userId)}`; document.getElementById(`qr-${h.name.replace(/\s+/g,'')}`).innerHTML = `<img src="${qrUrl}" class="w-full h-full object-contain rounded-md">`; } }); }, 100);
+    } catch(err) { container.innerHTML = '<div class="text-center py-16 bg-white shadow-sm border border-slate-200 rounded-3xl text-red-500 font-normal mx-1">載入失敗</div>'; }
+  }
+
+  async function submitLast5(btn, actName, inputId) { 
+    if(isProcessing) return; const val = document.getElementById(`pay-${inputId}`).value; 
+    if(!val || val.length < 4) return showToast("輸入錯誤",true); 
+    isProcessing = true; setButtonLoading(btn.id, true);
+    try { await fetchAPI('updateLast5Digits', { userId: userProfile.userId, activityName: actName, last5Digits: val }); showToast("回報成功"); sessionStorage.removeItem('getUserHistory{"userId":"' + userProfile.userId + '"}'); await loadUserHistory(); } catch(e) { console.error(e); } finally { isProcessing = false; setButtonLoading(btn.id, false, '回報'); }
+  }
+
+  async function userCancelRegistration(btn, actName) { 
+    if(isProcessing) return; if(!confirm(`確定要取消？`)) return; 
+    isProcessing = true; setButtonLoading(btn.id, true);
+    try { await fetchAPI('cancelRegistration', { userId: userProfile.userId, activityName: actName }); showToast("已取消"); sessionStorage.removeItem('getUserHistory{"userId":"' + userProfile.userId + '"}'); await loadUserHistory(); } catch(e) { console.error(e); } finally { isProcessing = false; setButtonLoading(btn.id, false, '取消'); }
+  }
+
+  function populateUserProfile() { if(registeredInfo) { ['name','gender','phone','industry','birthday','region','address'].forEach(k => { if(document.getElementById('edit-'+k)) { document.getElementById('edit-'+k).value=registeredInfo[k]||''; } }); } }
+
+  async function loadAdminActivities() { 
+    const list = document.getElementById('admin-activity-list-container'); if(!list) return;
+    list.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>'; 
+    try { currentActivities = await fetchAPI('getActivityDashboard', {}, true); renderActivityList(currentActivities, 'admin'); } catch (e) { list.innerHTML = `<p class="text-center text-red-400 font-normal py-10">載入失敗</p>`; }
   }
 
   async function openAdminRegistrants(actName) {
@@ -1262,12 +836,7 @@
     const list = document.getElementById('admin-reg-list');
     list.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>'; 
     document.getElementById('admin-registrants-modal').classList.remove('hidden');
-    try { 
-      currentRegistrants = await fetchAPI('getRegistrants', { activityName: actName }); 
-      renderAdminRegList(currentRegistrants); 
-    } catch(e) { 
-      list.innerHTML = `<p class="text-center text-red-400 font-bold py-10">讀取失敗</p>`; 
-    }
+    try { currentRegistrants = await fetchAPI('getRegistrants', { activityName: actName }); renderAdminRegList(currentRegistrants); } catch(e) { list.innerHTML = `<p class="text-center text-red-400 font-normal py-10">讀取失敗</p>`; }
   }
 
   function closeAdminRegistrants() { document.getElementById('admin-registrants-modal').classList.add('hidden'); stopScanner(); document.getElementById('admin-search-reg').value=''; }
@@ -1275,74 +844,31 @@
 
   function renderAdminRegList(data) {
     const list = document.getElementById('admin-reg-list');
-    if(!data.length) return list.innerHTML = `<div class="text-center py-16 bg-white rounded-3xl shadow-sm border border-slate-200 text-slate-400 font-bold mx-1">尚無名單或找不到符合者</div>`;
-    
+    if(!data.length) return list.innerHTML = `<div class="text-center py-16 bg-white rounded-3xl shadow-sm border border-slate-200 text-slate-400 font-normal mx-1">尚無名單或找不到符合者</div>`;
     let html = '';
     data.forEach(r => {
       const isCanceled = r.regStatus === '已取消'; const cIn = r.checkedIn;
-      html += `
-      <div class="bg-white rounded-2xl shadow-sm border ${cIn ? 'border-emerald-300 bg-emerald-50/50' : 'border-slate-200'} p-4 relative overflow-hidden transition-all ${isCanceled ? 'opacity-50 grayscale' : ''} mx-1">
-        ${isCanceled ? '<div class="absolute top-0 right-0 bg-slate-500 text-white text-[10px] px-3 py-0.5 rounded-bl-lg">已取消</div>' : ''}
-        <div class="flex justify-between items-start mb-3">
-          <div class="flex flex-col">
-            <h4 class="font-bold text-[15px] text-slate-800 flex items-center gap-1">${r['姓名']} ${cIn ? '<span class="material-symbols-outlined text-[15px] text-emerald-500 icon-filled">check_circle</span>' : ''}</h4>
-            <p class="text-[11px] text-slate-500 font-medium mt-1">${r['電話'] || '無電話'}</p>
-          </div>
-          <button id="btn-chk-${r.rowId}" ${isCanceled ? 'disabled' : ''} onclick="toggleCheckIn(this, ${r.rowId}, ${cIn})" class="px-3 py-1.5 rounded-md flex items-center justify-center gap-1 transition-all font-bold text-[12px] ${cIn ? 'bg-emerald-500 text-white shadow-sm' : 'bg-white border border-slate-300 text-slate-600 active:scale-95 hover:bg-slate-50'}">
-            <span class="material-symbols-outlined text-[16px] ${cIn?'icon-filled':''}">${cIn ? 'check_circle' : 'touch_app'}</span>
-            ${cIn ? '已簽到' : '手動簽到'}
-          </button>
-        </div>
-        <div class="flex items-center gap-2 pt-3 border-t ${cIn?'border-emerald-100':'border-slate-100'}">
-           <select onchange="updatePayStatus(${r.rowId}, this.value)" class="text-[12px] font-bold border border-slate-300 bg-white rounded-md py-1.5 px-2 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer ${r.payStatus==='已繳費'?'text-emerald-600':(r.payStatus==='匯款審核中'?'text-amber-500':'text-red-500')}" ${isCanceled ? 'disabled' : ''}>
-             <option value="未繳費" ${r.payStatus==='未繳費'?'selected':''}>未繳費</option><option value="匯款審核中" ${r.payStatus==='匯款審核中'?'selected':''}>審核中</option><option value="已完款" ${r.payStatus==='已完款'?'selected':''}>已完款</option>
-           </select>
-        </div>
-      </div>`;
+      html += `<div class="bg-white rounded-2xl shadow-sm border ${cIn ? 'border-emerald-300 bg-emerald-50/50' : 'border-slate-200'} p-4 relative overflow-hidden transition-all ${isCanceled ? 'opacity-50 grayscale' : ''} mx-1">${isCanceled ? '<div class="absolute top-0 right-0 bg-slate-500 text-white text-[10px] px-3 py-0.5 rounded-bl-lg">已取消</div>' : ''}<div class="flex justify-between items-start mb-3"><div class="flex flex-col"><h4 class="font-bold text-[15px] text-slate-800 flex items-center gap-1">${r['姓名']} ${cIn ? '<span class="material-symbols-outlined text-[15px] text-emerald-500 icon-filled">check_circle</span>' : ''}</h4><p class="text-[11px] text-slate-500 font-normal mt-1">${r['電話'] || '無電話'}</p></div><button id="btn-chk-${r.rowId}" ${isCanceled ? 'disabled' : ''} onclick="toggleCheckIn(this, ${r.rowId}, ${cIn})" class="px-3 py-1.5 rounded-md flex items-center justify-center gap-1 transition-all font-medium text-[12px] ${cIn ? 'bg-emerald-500 text-white shadow-sm' : 'bg-white border border-slate-300 text-slate-600 active:scale-95 hover:bg-slate-50'}"><span class="material-symbols-outlined text-[16px] ${cIn?'icon-filled':''}">${cIn ? 'check_circle' : 'touch_app'}</span>${cIn ? '已簽到' : '手動簽到'}</button></div><div class="flex items-center gap-2 pt-3 border-t ${cIn?'border-emerald-100':'border-slate-100'}"><select onchange="updatePayStatus(${r.rowId}, this.value)" class="text-[12px] font-medium border border-slate-300 bg-white rounded-md py-1.5 px-2 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer ${r.payStatus==='已繳費'?'text-emerald-600':(r.payStatus==='匯款審核中'?'text-amber-500':'text-red-500')}" ${isCanceled ? 'disabled' : ''}><option value="未繳費" ${r.payStatus==='未繳費'?'selected':''}>未繳費</option><option value="匯款審核中" ${r.payStatus==='匯款審核中'?'selected':''}>審核中</option><option value="已完款" ${r.payStatus==='已完款'?'selected':''}>已完款</option></select></div></div>`;
     });
     list.innerHTML = html;
   }
 
   async function toggleCheckIn(btn, rowId, currentStatus) { 
-    if(isProcessing) return; isProcessing = true;
-    setButtonLoading(btn.id, true);
-    try { 
-      await fetchAPI('toggleStatus', { activityName: activeActivityName, rowId: rowId, currentStatus: currentStatus }); 
-      const reg = currentRegistrants.find(r => r.rowId === rowId); if(reg) reg.checkedIn = !currentStatus; 
-      filterAdminReg(); 
-    } catch(e) { 
-      console.error(e); showToast("錯誤", true); 
-    } finally { 
-      isProcessing = false; 
-    }
+    if(isProcessing) return; isProcessing = true; setButtonLoading(btn.id, true);
+    try { await fetchAPI('toggleStatus', { activityName: activeActivityName, rowId: rowId, currentStatus: currentStatus }); const reg = currentRegistrants.find(r => r.rowId === rowId); if(reg) reg.checkedIn = !currentStatus; filterAdminReg(); } catch(e) { console.error(e); showToast("錯誤", true); } finally { isProcessing = false; }
   }
 
   async function updatePayStatus(rowId, val) { try { await fetchAPI('updateCellStatus', { activityName: activeActivityName, rowId: rowId, colName: '繳費', val: val }); const reg = currentRegistrants.find(r => r.rowId === rowId); if(reg) reg.payStatus = val; } catch(e) {} }
 
   async function submitWalkIn() { 
-    if(isProcessing) return;
-    const name = document.getElementById('f-walkin-name').value; if(!name) return; 
-    isProcessing = true;
-    setButtonLoading('btn-walkin', true);
-    try {
-      await fetchAPI('addWalkIn', { activityName: activeActivityName, name: name }); 
-      document.getElementById('f-walkin-name').value = ''; 
-      document.getElementById('walkin-modal').classList.add('hidden'); 
-      await openAdminRegistrants(activeActivityName); 
-    } catch(e) { 
-      console.error(e); 
-    } finally { 
-      isProcessing = false; 
-      setButtonLoading('btn-walkin', false, '新增並自動簽到 <span class="material-symbols-outlined text-[20px]">how_to_reg</span>');
-    }
+    if(isProcessing) return; const name = document.getElementById('f-walkin-name').value; if(!name) return; 
+    isProcessing = true; setButtonLoading('btn-walkin', true);
+    try { await fetchAPI('addWalkIn', { activityName: activeActivityName, name: name }); document.getElementById('f-walkin-name').value = ''; document.getElementById('walkin-modal').classList.add('hidden'); await openAdminRegistrants(activeActivityName); } catch(e) { console.error(e); } finally { isProcessing = false; setButtonLoading('btn-walkin', false, '新增並自動簽到 <span class="material-symbols-outlined text-[20px]">how_to_reg</span>'); }
   }
 
   async function startScanner() {
     if (html5QrcodeScanner) return;
-    if (!window.Html5Qrcode) {
-       showToast("載入掃描器...", false);
-       await loadScript("https://unpkg.com/html5-qrcode");
-    }
+    if (!window.Html5Qrcode) { showToast("載入掃描器...", false); await loadScript("https://unpkg.com/html5-qrcode"); }
     document.getElementById('qr-scanner-modal').classList.remove('hidden');
     html5QrcodeScanner = new Html5Qrcode("qr-reader");
     html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
@@ -1351,19 +877,11 @@
         try { 
           const uRes = await fetchAPI('checkUser', { userId: decodedText }); 
           if(!uRes.isRegistered) return showToast("非會員", true); 
-          const name = uRes.info.name; 
-          const reg = currentRegistrants.find(r => r['姓名'] === name); 
+          const name = uRes.info.name; const reg = currentRegistrants.find(r => r['姓名'] === name); 
           if(reg) { 
-            if(!reg.checkedIn) { 
-              await fetchAPI('toggleStatus', { activityName: activeActivityName, rowId: reg.rowId, currentStatus: false }); 
-              showToast(`${name} 簽到成功`); 
-              openAdminRegistrants(activeActivityName);
-            } else showToast("已簽到過"); 
+            if(!reg.checkedIn) { await fetchAPI('toggleStatus', { activityName: activeActivityName, rowId: reg.rowId, currentStatus: false }); showToast(`${name} 簽到成功`); openAdminRegistrants(activeActivityName); } else showToast("已簽到過"); 
           } else { 
-            if(confirm(`未報名，是否現場報名簽到？`)) { 
-              await fetchAPI('addWalkIn', { activityName: activeActivityName, name: name }); 
-              openAdminRegistrants(activeActivityName); 
-            } 
+            if(confirm(`未報名，是否現場報名簽到？`)) { await fetchAPI('addWalkIn', { activityName: activeActivityName, name: name }); openAdminRegistrants(activeActivityName); } 
           } 
         } catch(e) {} 
       },
@@ -1375,237 +893,31 @@
   async function loadCrmData() { 
     const list = document.getElementById('admin-crm-list-container');
     list.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>'; 
-    try {
-      globalCrmData = await fetchAPI('getAllCrmData', {}, true); 
-      filteredCrmData = [...globalCrmData];
-      currentCrmViewCount = crmPageLimit;
-      renderCrmList(); 
-    } catch(e) {
-      list.innerHTML = `<p class="text-center text-red-400 font-bold py-10">載入失敗</p>`;
-    }
+    try { globalCrmData = await fetchAPI('getAllCrmData', {}, true); filteredCrmData = [...globalCrmData]; currentCrmViewCount = crmPageLimit; renderCrmList(); } catch(e) { list.innerHTML = `<p class="text-center text-red-400 font-normal py-10">載入失敗</p>`; }
   }
 
-  function filterCrmList() { 
-    const term = document.getElementById('crm-search-input').value.toLowerCase(); 
-    filteredCrmData = globalCrmData.filter(u => u.name.toLowerCase().includes(term));
-    currentCrmViewCount = crmPageLimit;
-    renderCrmList(); 
-  }
-
-  function loadMoreCrm() {
-    currentCrmViewCount += crmPageLimit;
-    renderCrmList();
-  }
+  function filterCrmList() { const term = document.getElementById('crm-search-input').value.toLowerCase(); filteredCrmData = globalCrmData.filter(u => u.name.toLowerCase().includes(term)); currentCrmViewCount = crmPageLimit; renderCrmList(); }
+  function loadMoreCrm() { currentCrmViewCount += crmPageLimit; renderCrmList(); }
 
   function renderCrmList() {
-    const list = document.getElementById('admin-crm-list-container');
-    const moreBtnBox = document.getElementById('crm-load-more-box');
-    
-    if(!filteredCrmData.length) {
-      moreBtnBox.classList.add('hidden');
-      return list.innerHTML = `<div class="text-center text-slate-400 py-16 text-[14px]">找不到符合的會員</div>`;
-    }
-
+    const list = document.getElementById('admin-crm-list-container'); const moreBtnBox = document.getElementById('crm-load-more-box');
+    if(!filteredCrmData.length) { moreBtnBox.classList.add('hidden'); return list.innerHTML = `<div class="text-center text-slate-400 py-16 text-[14px]">找不到符合的會員</div>`; }
     const displayItems = filteredCrmData.slice(0, currentCrmViewCount);
-    
     let html = '';
     displayItems.forEach((r, i) => {
-      html += `
-      <div class="px-4 py-4 flex justify-between items-center border-b border-slate-100 active:bg-slate-50 transition-colors">
-        <div class="flex items-center gap-4">
-          <span class="text-[13px] text-slate-400 w-5 text-center">${i + 1}</span>
-          <div class="flex flex-col">
-            <span class="text-[16px] text-slate-800 font-medium">${r.name}</span>
-            <span class="text-[11px] text-slate-400 uppercase tracking-tight">VIP Member</span>
-          </div>
-        </div>
-        <div class="flex flex-col items-end">
-          <span class="text-[15px] text-slate-700">${r.attended} 次</span>
-          <span class="text-[10px] text-slate-400 font-medium uppercase">出席總計</span>
-        </div>
-      </div>`;
+      html += `<div class="px-4 py-4 flex justify-between items-center border-b border-slate-100 active:bg-slate-50 transition-colors"><div class="flex items-center gap-4"><span class="text-[13px] text-slate-400 w-5 text-center">${i + 1}</span><div class="flex flex-col"><span class="text-[16px] text-slate-800 font-medium">${r.name}</span><span class="text-[11px] text-slate-400 uppercase tracking-tight">VIP Member</span></div></div><div class="flex flex-col items-end"><span class="text-[15px] text-slate-700">${r.attended} 次</span><span class="text-[10px] text-slate-400 font-normal uppercase">出席總計</span></div></div>`;
     });
-    
     list.innerHTML = html;
-
-    if (filteredCrmData.length > currentCrmViewCount) {
-      moreBtnBox.classList.remove('hidden');
-    } else {
-      moreBtnBox.classList.add('hidden');
-    }
+    if (filteredCrmData.length > currentCrmViewCount) { moreBtnBox.classList.remove('hidden'); } else { moreBtnBox.classList.add('hidden'); }
   }
 
   async function loadAdminSettings() { const s = await fetchAPI('getSettings'); document.getElementById('set-tg-token').value = s.TG_BOT_TOKEN || ''; document.getElementById('set-tg-chat').value = s.TG_CHAT_ID || ''; document.getElementById('set-line-link').value = s.LINE_LINK || ''; }
   async function autoFetchTgChatId() { const token = document.getElementById('set-tg-token').value; if(!token) return; document.getElementById('set-tg-chat').value = "獲取中..."; try { document.getElementById('set-tg-chat').value = await fetchAPI('getTgChatId', { token }); } catch(e) { document.getElementById('set-tg-chat').value = ""; } }
   
   async function submitSettings() { 
-    if(isProcessing) return; isProcessing = true;
-    setButtonLoading('btn-submit-settings', true);
-    try {
-      await fetchAPI('saveSettings', { TG_BOT_TOKEN: document.getElementById('set-tg-token').value, TG_CHAT_ID: document.getElementById('set-tg-chat').value, LINE_LINK: document.getElementById('set-line-link').value }); showToast("已儲存"); 
-    } catch(e) { console.error(e); } finally { isProcessing = false; setButtonLoading('btn-submit-settings', false, '儲存設定'); }
+    if(isProcessing) return; isProcessing = true; setButtonLoading('btn-submit-settings', true);
+    try { await fetchAPI('saveSettings', { TG_BOT_TOKEN: document.getElementById('set-tg-token').value, TG_CHAT_ID: document.getElementById('set-tg-chat').value, LINE_LINK: document.getElementById('set-line-link').value }); showToast("已儲存"); } catch(e) { console.error(e); } finally { isProcessing = false; setButtonLoading('btn-submit-settings', false, '儲存設定'); }
   }
-
-  function toggleCreateMode(m) { 
-    ['quick', 'detailed', 'batch'].forEach(t => {
-      const btn = document.getElementById('tab-' + t);
-      const form = document.getElementById('form-' + t);
-      if(btn) btn.className = `flex-1 py-2 text-[14px] font-medium transition-all text-slate-500 border-b-2 border-transparent ${m===t?'tab-active':''}`;
-      if(form) form.classList.toggle('hidden', m !== t);
-    });
-
-    if (m === 'batch' && document.getElementById('batch-list-container').children.length === 0) {
-      addBatchItem();
-    }
-  }
-
-  function toggleFeeInput() { document.getElementById('detail-price').classList.toggle('hidden', document.querySelector('input[name="fee-type"]:checked').value !== '收費'); }
-  
-  function addBatchItem(data = null) {
-    const container = document.getElementById('batch-list-container');
-    const id = Date.now() + Math.floor(Math.random() * 100);
-    const html = `
-      <div id="batch-item-${id}" class="batch-card animate-in fade-in slide-in-from-top-2">
-        <div class="flex justify-between items-center mb-3">
-          <span class="text-[13px] text-slate-400">梯次排程</span>
-          <div class="flex gap-4">
-            <button onclick="copyBatchItem('${id}')" class="text-slate-300 hover:text-primary"><span class="material-symbols-outlined text-[18px]">content_copy</span></button>
-            <button onclick="removeBatchItem('${id}')" class="text-slate-300 hover:text-red-500"><span class="material-symbols-outlined text-[18px]">delete</span></button>
-          </div>
-        </div>
-        <div class="mb-3">
-          <input type="text" class="custom-input batch-name-input" placeholder="梯次名稱，如：第一梯次 (10/01)" value="${data?.name || ''}">
-        </div>
-        <div class="grid grid-cols-2 gap-3 mb-3">
-          <div><label class="text-[12px] text-slate-400 block mb-1 ml-1">開始時間</label><input type="datetime-local" class="custom-input batch-start-input !py-2 !text-[13px]" value="${data?.start || ''}"></div>
-          <div><label class="text-[12px] text-slate-400 block mb-1 ml-1">結束時間</label><input type="datetime-local" class="custom-input batch-end-input !py-2 !text-[13px]" value="${data?.end || ''}"></div>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div><label class="text-[12px] text-slate-400 block mb-1 ml-1">費用</label><input type="number" class="custom-input batch-price-input !py-2 !text-[13px]" placeholder="免費填0" value="${data?.price || ''}"></div>
-          <div><label class="text-[12px] text-slate-400 block mb-1 ml-1">名額限制</label><input type="number" class="custom-input batch-limit-input !py-2 !text-[13px]" placeholder="不限留空" value="${data?.limit || ''}"></div>
-        </div>
-      </div>
-    `;
-    container.insertAdjacentHTML('beforeend', html);
-  }
-
-  function removeBatchItem(id) {
-    const el = document.getElementById(`batch-item-${id}`);
-    if (el) {
-      if (document.querySelectorAll('[id^="batch-item-"]').length <= 1) return alert('系列活動至少需要一個梯次');
-      el.remove();
-    }
-  }
-
-  function copyBatchItem(id) {
-    const el = document.getElementById(`batch-item-${id}`);
-    if (!el) return;
-    addBatchItem({
-      name: el.querySelector('.batch-name-input').value,
-      start: el.querySelector('.batch-start-input').value,
-      end: el.querySelector('.batch-end-input').value,
-      price: el.querySelector('.batch-price-input').value,
-      limit: el.querySelector('.batch-limit-input').value
-    });
-  }
-
-  async function handleCreateActivity(mode) { 
-    if(isProcessing) return; 
-
-    let btnId = 'btn-quick-create';
-    let btnHtml = '確認發佈';
-    if(mode === 'detailed') {
-       btnId = 'btn-detailed-create';
-       btnHtml = '發佈活動';
-    } else if (mode === 'batch') {
-       btnId = 'btn-batch-create';
-       btnHtml = '確認建立系列活動';
-    }
-
-    const nameInput = document.getElementById(mode === 'batch' ? 'batch-name' : (mode === 'quick' ? 'quick-name' : 'detail-name'));
-    const actName = nameInput ? nameInput.value.trim() : '';
-
-    if(!actName) return alert("名稱必填");
-
-    isProcessing = true; 
-    setButtonLoading(btnId, true);
-    
-    let p = { 
-        activityName: actName, 
-        activityType: '例會', 
-        feeType: '免費', 
-        price: '', 
-        startTime: '', 
-        endTime: '', 
-        description: '', 
-        imageUrl: '', 
-        names: [], 
-        defaultIdentity: '來賓',
-        isBatch: false
-    }; 
-    
-    if(mode==='quick') {
-        p.activityType = document.getElementById('quick-type').value;
-        p.defaultIdentity = document.getElementById('quick-identity').value;
-        p.names = document.getElementById('quick-names').value.split('\n').filter(n=>n.trim()); 
-        p.imageUrl = document.getElementById('in-image-url-quick') ? document.getElementById('in-image-url-quick').value : '';
-    } else if(mode==='detailed') { 
-        p.activityType = document.getElementById('detail-type') ? document.getElementById('detail-type').value : '例會';
-        p.defaultIdentity = document.getElementById('detail-identity') ? document.getElementById('detail-identity').value : '來賓';
-        
-        const feeRadio = document.querySelector('input[name="fee-type"]:checked');
-        p.feeType = feeRadio ? feeRadio.value : '免費'; 
-        p.price = document.getElementById('detail-price') ? document.getElementById('detail-price').value : ''; 
-        p.startTime = document.getElementById('detail-start').value; 
-        p.endTime = document.getElementById('detail-end').value; 
-        p.description = document.getElementById('detail-desc').value; 
-        p.imageUrl = document.getElementById('in-image-url-create') ? document.getElementById('in-image-url-create').value : ''; 
-    } else if(mode==='batch') {
-        p.activityType = document.getElementById('batch-type').value;
-        p.defaultIdentity = document.getElementById('batch-identity').value;
-        p.description = document.getElementById('batch-desc').value;
-        p.imageUrl = document.getElementById('in-image-url-batch') ? document.getElementById('in-image-url-batch').value : '';
-        p.isBatch = true;
-        p.batches = [];
-
-        const rows = document.querySelectorAll('[id^="batch-item-"]');
-        rows.forEach(row => {
-          p.batches.push({
-            name: row.querySelector('.batch-name-input').value.trim(),
-            startTime: row.querySelector('.batch-start-input').value,
-            endTime: row.querySelector('.batch-end-input').value,
-            price: row.querySelector('.batch-price-input').value,
-            limit: row.querySelector('.batch-limit-input').value
-          });
-        });
-
-        if(p.batches.length === 0) { isProcessing=false; setButtonLoading(btnId, false, btnHtml); return alert("至少需新增一個梯次"); }
-        for(let b of p.batches) { if(!b.name) { isProcessing=false; setButtonLoading(btnId, false, btnHtml); return alert("梯次名稱必填"); } }
-
-        if(p.batches.length > 0) {
-           p.startTime = p.batches[0].startTime;
-           p.endTime = p.batches[p.batches.length - 1].endTime;
-           
-           const hasPaid = p.batches.some(b => parseInt(b.price) > 0);
-           if (hasPaid) {
-               p.feeType = '收費';
-               p.price = Math.max(...p.batches.map(b => parseInt(b.price) || 0)); 
-           }
-        }
-    }
-    
-    try { 
-      await fetchAPI('bulkAddRegistrants', p); 
-      alert("已建立"); 
-      sessionStorage.removeItem('getActivityDashboard{}'); 
-      setTimeout(()=>switchView('admin-activities'),1000); 
-    } catch(e){
-      console.error(e);
-    } finally{ 
-      isProcessing=false; setButtonLoading(btnId, false, btnHtml); 
-    }
-  }
-
 </script>
 </body>
 </html>

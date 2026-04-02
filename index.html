@@ -1,4 +1,4 @@
-<!-- Version: v1.5.0 (專注核銷與會員，移除建立功能) -->
+<!-- Version: v1.5.1 (嚴格路由隔離，徹底封鎖非管理員越權存取後台) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -58,7 +58,7 @@
     .btn-primary { @apply w-full py-4 bg-[#06C755] text-white rounded-xl font-medium text-[16px] active:scale-[0.98] transition-all flex items-center justify-center gap-2; }
     .btn-secondary { @apply w-full py-3 bg-white border border-slate-300 text-slate-700 rounded-xl font-medium text-[16px] hover:bg-slate-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-sm; }
     
-    /* ⭐ 底部選單樣式：全黑與原生灰的對比 */
+    /* 底部選單樣式：純黑與原生灰的極致對比 */
     .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-slate-500 h-full font-medium; min-width: 48px;}
     .nav-btn .icon-box { @apply flex items-center justify-center mb-0.5; }
     .nav-btn .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400; font-size: 24px; color: inherit; }
@@ -216,7 +216,6 @@
 
   </main>
 
-  <!-- ⭐ 底部導航 Admin：確保「建立」按鈕導向 active.html -->
   <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white border-t border-slate-100 flex justify-evenly items-center h-[72px] pb-safe left-1/2 -translate-x-1/2 z-40">
     <button onclick="window.location.href='active.html'" class="nav-btn" id="nav-admin-create"><div class="icon-box"><span class="material-symbols-outlined">add_circle</span></div><span class="text-[10px] mt-0.5">建立</span></button>
     <button onclick="switchView('admin-activities')" class="nav-btn" id="nav-admin-activities"><div class="icon-box"><span class="material-symbols-outlined">fact_check</span></div><span class="text-[10px] mt-0.5">核銷</span></button>
@@ -226,7 +225,6 @@
     <button onclick="switchView('admin-settings')" class="nav-btn" id="nav-admin-settings"><div class="icon-box"><span class="material-symbols-outlined">settings</span></div><span class="text-[10px] mt-0.5">參數</span></button>
   </nav>
 
-  <!-- 底部導航 User -->
   <nav id="bottom-nav-user" class="hidden fixed bottom-0 w-full max-w-md bg-white border-t border-slate-100 flex justify-around items-center h-[72px] pb-safe left-1/2 -translate-x-1/2 z-40">
     <button onclick="switchView('user-activities')" class="nav-btn" id="nav-user-activities"><div class="icon-box"><span class="material-symbols-outlined">explore</span></div><span class="text-[11px] mt-0.5">活動</span></button>
     <button onclick="switchView('user-history')" class="nav-btn" id="nav-user-history"><div class="icon-box"><span class="material-symbols-outlined">receipt_long</span></div><span class="text-[11px] mt-0.5">紀錄</span></button>
@@ -347,9 +345,14 @@
       isRegistered = res.isRegistered; registeredInfo = res.info;
       
       const params = new URLSearchParams(window.location.search);
-      const targetView = params.get('view');
       const claimCardId = params.get('claimCardId');
       const referrer = params.get('referrer');
+
+      // ⭐ 核心安全防呆：攔截非管理員手動篡改 view 參數存取後台
+      let targetView = params.get('view');
+      if (!isAdmin && targetView && targetView.startsWith('admin')) {
+          targetView = isRegistered ? 'user-activities' : 'user-register';
+      }
 
       window.claimReferrer = referrer || '';
       if (claimCardId) window.claimCardId = claimCardId;
@@ -503,7 +506,12 @@
     if (isViewModeAdmin) switchView('admin-activities'); else switchView(isRegistered ? 'user-activities' : 'user-register');
   }
 
+  // ⭐ 核心安全防呆：攔截 switchView 防止非管理員顯示後台畫面
   function switchView(view) {
+    if (!isAdmin && view.startsWith('admin')) {
+        view = isRegistered ? 'user-activities' : 'user-register';
+    }
+
     ['view-loading', 'view-user-register', 'view-user-activities', 'view-user-profile', 'view-user-history', 'view-admin-activities', 'view-admin-crm', 'view-admin-settings'].forEach(v => { const el = document.getElementById(v); if(el) el.classList.add('hidden'); });
     const activeEl = document.getElementById(`view-${view}`); if (activeEl) activeEl.classList.remove('hidden');
     const navAdmin = document.getElementById('bottom-nav-admin'); const navUser = document.getElementById('bottom-nav-user');
@@ -619,7 +627,6 @@
     }
   }
 
-  // ⭐ 核心修復：修改生日觸發 AI 重算，如果沒有名片則自動建立
   async function submitProfileUpdate() {
     if(isProcessing) return; isProcessing = true; setButtonLoading('btn-save-profile', true);
     const p = { 
@@ -646,7 +653,6 @@
           let contacts = await fetchAPI('getCardContacts', {}, false);
           let myCard = contacts.find(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId || c['Line ID'] === userProfile.userId);
 
-          // 核心邏輯：如果之前略過上傳導致沒有名片，自動建立一張基礎名片
           if (!myCard) {
               showToast("正在為您建立專屬數位名片...", false);
               await fetchAPI('saveCard', {
@@ -658,7 +664,6 @@
                   Notes: '會員輸入生日自動建檔'
               }, false);
               
-              // 重抓一次通訊錄，確保能拿到剛建好的 rowId
               contacts = await fetchAPI('getCardContacts', {}, false);
               myCard = contacts.find(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId || c['Line ID'] === userProfile.userId);
           }
@@ -675,7 +680,6 @@
               sessionStorage.removeItem('getCardContacts{}');
               showToast("✅ 結合八字與靈數的五大命理標籤已寫入名片！");
               
-              // 解鎖專屬名片入口
               document.getElementById('my-card-entry').classList.remove('hidden');
           }
       }

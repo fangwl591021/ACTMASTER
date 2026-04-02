@@ -1,4 +1,4 @@
-<!-- Version: v1.6.4 (修復 404 資源錯誤與空 src 標籤) -->
+<!-- Version: v1.6.5 (修復腳本衝突與導航列遺失問題) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -24,7 +24,7 @@
             primary: "#2563eb", 
             "primary-light": "#eff6ff",
             background: "#ffffff",
-            "text-main": "#333333",
+            "text-main": "#0f172a",
             "text-muted": "#64748b",
             error: "#ef4444" 
           },
@@ -90,9 +90,9 @@
     </div>
     <div class="flex items-center gap-3">
       <div id="user-profile-badge" class="hidden flex items-center gap-2">
-        <img id="user-avatar" class="w-9 h-9 rounded-full object-cover border border-slate-200 shadow-sm">
+        <img id="user-avatar" src="" class="w-8 h-8 rounded-full object-cover border border-slate-200 shadow-sm">
       </div>
-      <button id="role-switch-btn" onclick="window.location.href='index.html'" class="w-9 h-9 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center active:scale-95 transition-all hover:bg-slate-200">
+      <button id="role-switch-btn" onclick="window.location.href='index.html'" class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center active:scale-95 transition-all hover:bg-slate-200">
         <span class="material-symbols-outlined text-[20px]">swap_horiz</span>
       </button>
     </div>
@@ -105,6 +105,7 @@
       <p id="loading-text" class="text-slate-500 font-medium text-[13px]">資料載入中</p>
     </div>
 
+    <!-- 主畫面 -->
     <div id="view-list" class="hidden animate-in fade-in">
       <div id="admin-tools-container" class="px-5 pt-4">
         <div class="bg-white rounded-xl shadow-sm p-6 text-center border border-slate-200">
@@ -144,6 +145,7 @@
       </div>
     </div>
 
+    <!-- AI 處理與確認表單 -->
     <div id="view-process" class="hidden space-y-6 animate-in fade-in pt-4 px-5">
       <div class="flex items-center gap-3 mb-2">
         <button onclick="resetUI()" class="w-9 h-9 bg-white rounded-full flex items-center justify-center text-slate-600 shadow-sm active:scale-90 transition-all border border-slate-300"><span class="material-symbols-outlined text-[20px]">arrow_back</span></button>
@@ -159,7 +161,7 @@
       <div id="section-form" class="hidden space-y-6">
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
           <div class="mb-5 rounded border border-slate-300 overflow-hidden bg-slate-50 flex items-center justify-center min-h-[150px]">
-            <img id="process-preview-image" class="w-full h-auto object-contain max-h-[200px]">
+            <img id="process-preview-image" src="" class="w-full h-auto object-contain max-h-[200px]">
           </div>
 
           <div class="space-y-4">
@@ -201,7 +203,7 @@
     </div>
   </main>
 
-  <nav id="bottom-nav-admin" class="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-100 flex justify-evenly items-center h-[72px] pb-safe left-1/2 -translate-x-1/2 z-40 hidden">
+  <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white border-t border-slate-100 flex justify-evenly items-center h-[72px] pb-safe left-1/2 -translate-x-1/2 z-40">
     <button onclick="window.location.href='active.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined">add_circle</span></div><span class="text-[10px] mt-0.5">建立</span></button>
     <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn" id="nav-admin-activities"><div class="icon-box"><span class="material-symbols-outlined">fact_check</span></div><span class="text-[10px] mt-0.5">核銷</span></button>
     <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn" id="nav-admin-crm"><div class="icon-box"><span class="material-symbols-outlined">groups</span></div><span class="text-[10px] mt-0.5">CRM</span></button>
@@ -212,6 +214,7 @@
 
 </div>
 
+<!-- 名片詳情 Modal -->
 <div id="readonly-card-modal" class="hidden fixed inset-0 bg-white flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl overflow-hidden" style="z-index: 1000;">
   <div class="absolute top-4 right-4 z-50 flex gap-2">
     <button onclick="openCardEdit()" class="w-9 h-9 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-primary shadow-sm border border-slate-300"><span class="material-symbols-outlined text-[18px]">edit</span></button>
@@ -220,7 +223,7 @@
 
   <div class="flex-1 overflow-y-auto pb-24 bg-white">
     <div class="w-full h-64 bg-slate-100 border-b border-slate-200 relative flex items-center justify-center shrink-0">
-      <img id="ro-image" class="w-full h-full object-cover hidden">
+      <img id="ro-image" src="" class="w-full h-full object-cover hidden">
       <div id="ro-no-image" class="absolute inset-0 flex items-center justify-center bg-slate-100"><span class="material-symbols-outlined text-6xl text-slate-300">contact_mail</span></div>
     </div>
     
@@ -236,9 +239,9 @@
       <div class="border border-slate-200 rounded-xl bg-white p-5 space-y-4">
         <div class="flex items-center gap-4"><span class="material-symbols-outlined text-slate-400 text-[20px]">apartment</span><span id="ro-company" class="text-slate-800 text-[15px]"></span></div>
         <div class="flex items-center gap-4"><span class="material-symbols-outlined text-slate-400 text-[20px]">tag</span><span id="ro-taxid" class="text-slate-800 text-[15px]"></span></div>
-        <div class="flex items-center gap-4"><span class="material-symbols-outlined text-slate-400 text-[20px]">smartphone</span><a id="ro-mobile-link" class="text-blue-600 text-[15px]"></a></div>
+        <div class="flex items-center gap-4"><span class="material-symbols-outlined text-slate-400 text-[20px]">smartphone</span><a href="" id="ro-mobile-link" class="text-blue-600 text-[15px]"></a></div>
         <div class="flex items-center gap-4"><span class="material-symbols-outlined text-slate-400 text-[20px]">call</span><span id="ro-tel" class="text-slate-800 text-[15px]"></span></div>
-        <div class="flex items-center gap-4"><span class="material-symbols-outlined text-slate-400 text-[20px]">email</span><a id="ro-email-link" class="text-blue-600 text-[15px] truncate"></a></div>
+        <div class="flex items-center gap-4"><span class="material-symbols-outlined text-slate-400 text-[20px]">email</span><a href="" id="ro-email-link" class="text-blue-600 text-[15px] truncate"></a></div>
         <div class="flex items-start gap-4"><span class="material-symbols-outlined text-slate-400 text-[20px] mt-0.5">location_on</span><span id="ro-address" class="text-slate-800 text-[15px] leading-snug"></span></div>
       </div>
       
@@ -255,6 +258,7 @@
   </div>
 </div>
 
+<!-- 名片編輯 Modal -->
 <div id="card-edit-modal" class="hidden fixed inset-0 bg-white flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl overflow-hidden" style="z-index: 1010;">
   <div class="bg-white px-5 py-4 flex justify-between items-center border-b border-slate-200 shrink-0 shadow-sm">
     <h3 class="text-[18px] font-medium text-slate-800">編輯名片資料</h3>
@@ -334,7 +338,7 @@
                 <div class="flex justify-between items-center mb-1.5">
                   <label class="input-label !mb-0 flex items-center" id="ec-upload-label">點擊更換封面圖 <span class="ml-1.5 px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[11px] font-medium">選填</span></label>
                   <div class="relative inline-block">
-                    <select id="ec-img-size" class="appearance-none !bg-transparent text-blue-600 font-medium text-[15px] pr-5 outline-none border-none cursor-pointer focus:ring-0" onchange="updateECardPreview()">
+                    <select id="ec-img-size" class="appearance-none !bg-transparent text-blue-600 font-bold text-[15px] pr-5 outline-none border-none cursor-pointer focus:ring-0" onchange="updateECardPreview()">
                       <option value="mega" selected>Mega 滿版</option>
                       <option value="giga">Giga 超大版</option>
                     </select>
@@ -461,7 +465,7 @@
               <div class="flex-1 bg-[#849ebf] overflow-y-auto p-4 flex flex-col gap-4 hide-scrollbar">
                   <div class="flex items-start gap-2">
                       <div class="w-9 h-9 rounded-full bg-slate-200 shrink-0 flex items-center justify-center text-slate-500 border border-white/50 overflow-hidden shadow-sm">
-                         <img id="preview-user-avatar" class="w-full h-full object-cover hidden">
+                         <img id="preview-user-avatar" src="" class="w-full h-full object-cover hidden">
                          <span class="material-symbols-outlined text-[20px] avatar-fallback">person</span>
                       </div>
                       <div class="flex flex-col gap-1.5 max-w-[88%] w-full">
@@ -473,7 +477,7 @@
                                   <div class="bg-red-500 text-white text-[10px] font-bold w-[65px] h-[25px] flex items-center justify-center rounded-full shadow-sm">分享</div>
                               </div>
                               <div id="preview-ec-hero" class="relative w-full overflow-hidden bg-slate-100 shrink-0 flex items-center justify-center">
-                                  <img id="preview-ec-img" class="absolute inset-0 w-full h-full object-cover z-0 hidden">
+                                  <img id="preview-ec-img" src="" class="absolute inset-0 w-full h-full object-cover z-0 hidden">
                                   <video id="preview-ec-video" muted loop playsinline class="absolute inset-0 w-full h-full object-cover z-10 hidden"></video>
                                   <div id="preview-ec-play-icon" class="absolute inset-0 z-20 flex items-center justify-center text-white/80 hidden pointer-events-none">
                                       <span class="material-symbols-outlined text-[48px] drop-shadow-md">play_circle</span>
@@ -507,11 +511,11 @@
       <button onclick="confirmCrop()" class="px-4 py-1.5 font-medium text-white bg-primary rounded-md active:scale-95 transition-transform text-[15px] shadow-sm">完成</button>
     </div>
     <div class="flex-1 relative bg-black flex items-center justify-center overflow-hidden">
-      <img id="cropper-image" class="max-w-full max-h-full block opacity-0 transition-opacity duration-300">
+      <img id="cropper-image" src="" class="max-w-full max-h-full block opacity-0 transition-opacity duration-300">
     </div>
 </div>
 
-<div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-medium flex items-center gap-2 w-max max-w-[90vw] bg-slate-800 text-white opacity-0 pointer-events-none border border-slate-700"></div>
+<div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded text-[15px] shadow-lg transition-all z-[10000] font-medium flex items-center gap-2 w-max max-w-[90vw] bg-slate-800 text-white opacity-0 pointer-events-none border border-slate-700"></div>
 
 <script src="card.js"></script>
 <script src="card-ecard.js"></script>

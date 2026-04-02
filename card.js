@@ -1,7 +1,7 @@
 /**
  * card.js 
  * 名片管理中樞核心邏輯
- * Version: v1.4.4 (修復 shareTargetPicker 權限報錯、強制路由隔離防止跳轉後台)
+ * Version: v1.4.5 (完美解決 PC 網頁版 shareTargetPicker 失效問題，加入智慧複製與備用分享機制)
  */
 
 const LIFF_ID = "2009367829-DLtYBDUm"; 
@@ -23,8 +23,28 @@ let uploadTargetMode = 'card';
 const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55", "U8932b891ad24da512afb9c1a6f41567b"];
 let isAdmin = false;
 
+// ⭐ 共用的 PC 版 / 外部瀏覽器備用分享機制 (Fallback)
+function fallbackShare(url, altText) {
+    const fullText = `${altText}\n${url}`;
+    const fallbackInput = document.createElement('textarea');
+    fallbackInput.value = fullText;
+    fallbackInput.style.position = 'fixed';
+    fallbackInput.style.opacity = '0';
+    document.body.appendChild(fallbackInput);
+    fallbackInput.select();
+    try {
+        document.execCommand('copy');
+        alert("⚠️ 電腦版或外部瀏覽器無法直接傳送圖文訊息。\n\n✅ 系統已為您複製「專屬連結」至剪貼簿！\n您可以直接貼上給好友，或在跳出的視窗中選擇好友分享。");
+    } catch(err) {
+        alert("請複製以下連結分享給好友：\n\n" + url);
+    }
+    document.body.removeChild(fallbackInput);
+    // 自動打開 LINE 網頁版分享介面
+    window.open(`https://lineit.line.me/share/ui?url=${encodeURIComponent(url)}&text=${encodeURIComponent(altText)}`, '_blank');
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
-  // ⭐ 防呆機制：若當前頁面不是名片頁(card.html)，則靜默退出，絕不干擾 index.html
+  // 防呆機制：若當前頁面不是名片頁(card.html)，則靜默退出，絕不干擾 index.html
   if (!document.getElementById('card-search-input')) return;
 
   try {
@@ -55,23 +75,27 @@ document.addEventListener("DOMContentLoaded", async () => {
           const flexContents = buildFlexMessageFromCard(card, config, detectedAr);
           const title = config && config.title ? config.title : card['姓名'] || card['Name'];
           const altText = `您收到一張數位名片：${title || '商務名片'}`;
+          const shareUrl = `https://liff.line.me/${LIFF_ID}/card.html?shareCardId=${shareCardId}`;
           
-          // 執行轉發機制 (若外部腳本失效，提供原生 fallback)
-          try {
-              if (window.triggerFlexSharing) {
-                  await window.triggerFlexSharing(flexContents, altText);
-              } else {
-                  await liff.shareTargetPicker([{ type: "flex", altText: altText, contents: flexContents }]);
+          // ⭐ 執行轉發機制 (支援 PC 降級)
+          if (liff.isApiAvailable('shareTargetPicker')) {
+              try {
+                  if (window.triggerFlexSharing) {
+                      await window.triggerFlexSharing(flexContents, altText);
+                  } else {
+                      await liff.shareTargetPicker([{ type: "flex", altText: altText, contents: flexContents }]);
+                  }
+                  setTimeout(() => { liff.closeWindow(); }, 500);
+              } catch(e) {
+                  fallbackShare(shareUrl, altText);
               }
-              // 轉發完畢後，關閉 LIFF 視窗
-              liff.closeWindow();
-          } catch(e) {
-              alert("轉發失敗！\n請至 LINE Developer Console 確認是否已啟用「ShareTargetPicker」權限。");
+          } else {
+              fallbackShare(shareUrl, altText);
           }
       } catch (e) {
           alert('名片讀取失敗: ' + e.message); 
       }
-      return; // 終止後續一般渲染
+      return; 
     }
 
     // ==========================================
@@ -256,7 +280,7 @@ async function confirmCrop() {
           btn.classList.remove('pointer-events-none');
       }
   } else {
-      document.getElementById('process-preview-image').src = compressedBase64;
+      document.getElementById('preview-image').src = compressedBase64;
       switchView('process');
       switchProcessSection('section-loading');
       recognizeCardData();
@@ -555,7 +579,7 @@ function closeReadOnlyCard() {
     }
 }
 
-// ⭐ 修復：認領連結強制指定到 index.html
+// ⭐ 修復：認領連結強制指定到 index.html，並加入 PC 降級支援
 async function shareClaimLink() {
   if (!currentActiveCard || isProcessing) return;
   isProcessing = true;
@@ -583,13 +607,17 @@ async function shareClaimLink() {
 
       if (!liff.isLoggedIn()) { liff.login(); return; }
       
-      // 提供權限檢測的提示
-      try {
-          const message = { type: "flex", altText: "您的專屬數位名片認領邀請", contents: flexMessage };
-          const res = await liff.shareTargetPicker([message]);
-          if (res) showToast('✅ 認領連結已發送！');
-      } catch (err) {
-          alert("發送失敗！\n請確認 LINE Developer 後台已開啟 ShareTargetPicker 權限。");
+      const altText = "您的專屬數位名片認領邀請";
+
+      if (liff.isApiAvailable('shareTargetPicker')) {
+          try {
+              const res = await liff.shareTargetPicker([{ type: "flex", altText: altText, contents: flexMessage }]);
+              if (res) showToast('✅ 認領連結已發送！');
+          } catch (err) {
+              fallbackShare(url, altText);
+          }
+      } else {
+          fallbackShare(url, altText);
       }
   } catch (error) {
       console.error(error);
@@ -736,7 +764,6 @@ window.toggleECardType = function(type) {
   updateECardPreview();
 };
 
-// ⭐ 修復：強制加上 /card.html 防止跑到後台
 function buildFlexMessageFromCard(card, config, dynamicAr = null) {
   let imgUrl, imgActionUrl, imgSize, aspectMode, ar, title, desc, buttons = [];
   let cardType = config && config.cardType ? config.cardType : 'image';
@@ -850,6 +877,7 @@ function buildFlexMessageFromCard(card, config, dynamicAr = null) {
 
   let heroBlock;
   if (cardType === 'video' && videoUrl && videoUrl.match(/^https:\/\//i)) {
+      // ⭐ 影片元件不能包含 action 屬性！
       heroBlock = {
           "type": "video",
           "url": videoUrl,
@@ -1084,6 +1112,7 @@ function checkFormat(showAlert = false) {
       const vUrl = document.getElementById('ec-video-url').value.trim();
       if (!vUrl) errors.push("❌ 【動態影片版】必須填寫影片網址。");
       else if (!vUrl.match(/^https:\/\//i)) errors.push("❌ 【影片網址】必須以 https:// 開頭。");
+      // 支援 LINE OBS
       else if (!vUrl.toLowerCase().includes('mp4')) errors.push("❌ 【影片網址】目前僅支援 MP4 格式。");
   }
 
@@ -1184,6 +1213,7 @@ async function saveECardConfig(isSilent = false) {
   return config;
 }
 
+// ⭐ 加入 PC 網頁版降級支援
 async function shareECardToLine() {
   if (!checkFormat(true)) return;
 
@@ -1204,18 +1234,23 @@ async function shareECardToLine() {
     const config = await saveECardConfig(true); 
     const flexMessageObj = buildFlexMessageFromCard(currentActiveCard, config, detectedAr);
     const altText = `您收到一張數位名片：${config ? config.title : currentActiveCard['姓名'] || currentActiveCard['Name'] || '商務名片'}`;
+    const shareUrl = `https://liff.line.me/${LIFF_ID}/card.html?shareCardId=${currentActiveCard.rowId}`;
 
-    // ⭐ 加入原生 shareTargetPicker 的錯誤擷取與提示
-    try {
-        if (window.triggerFlexSharing) {
-            await window.triggerFlexSharing(flexMessageObj, altText);
-        } else {
-            await liff.shareTargetPicker([{ type: "flex", altText: altText, contents: flexMessageObj }]);
+    // ⭐ 執行轉發機制 (支援 PC 降級)
+    if (liff.isApiAvailable('shareTargetPicker')) {
+        try {
+            if (window.triggerFlexSharing) {
+                await window.triggerFlexSharing(flexMessageObj, altText);
+            } else {
+                await liff.shareTargetPicker([{ type: "flex", altText: altText, contents: flexMessageObj }]);
+            }
+            showToast('✅ 數位名片已發送！');
+        } catch(e) {
+            fallbackShare(shareUrl, altText);
         }
-    } catch(e) {
-        alert("發送失敗！\n請至 LINE Developer Console 確認是否已啟用「ShareTargetPicker」權限。");
+    } else {
+        fallbackShare(shareUrl, altText);
     }
-
   } catch(err) {
     alert("錯誤：" + err.message);
   } finally {

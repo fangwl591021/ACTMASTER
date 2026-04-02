@@ -1,4 +1,4 @@
-<!-- Version: v1.4.0 (完美還原版：修復圖片上傳遺失、完整裁切邏輯與獨立運作環境) -->
+<!-- Version: v1.4.1 (修復選單全黑與跳轉邏輯) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -54,12 +54,13 @@
 
     .batch-card { @apply bg-white border border-slate-200 rounded-xl p-4 mb-4 relative shadow-sm; }
 
-    .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-slate-500 h-full; min-width: 48px;}
+    /* ⭐ 底部選單樣式：全黑與原生灰的極致對比 */
+    .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-slate-500 h-full font-medium; min-width: 48px;}
     .nav-btn .icon-box { @apply flex items-center justify-center mb-0.5; }
-    .nav-btn .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400; font-size: 24px; }
+    .nav-btn .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400; font-size: 24px; color: inherit; }
     
-    .nav-active-btn { @apply text-slate-800 font-bold; }
-    .nav-active-btn .material-symbols-outlined { font-variation-settings: 'FILL' 1, 'wght' 400; color: #1e293b; }
+    .nav-active-btn { @apply text-black font-bold; }
+    .nav-active-btn .material-symbols-outlined { font-variation-settings: 'FILL' 1, 'wght' 400; color: #000000; }
 
     .refresh-spin { animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -197,9 +198,9 @@
     </div>
   </main>
 
-  <!-- 底部導航 Admin：完全同步 index.html 外觀，點擊對應按鈕進行跳轉 -->
-  <nav id="bottom-nav-admin" class="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-100 flex justify-evenly items-center h-[72px] pb-safe left-1/2 -translate-x-1/2 z-40 hidden">
-    <button onclick="window.location.href='active.html'" class="nav-btn nav-active-btn" id="nav-admin-create"><div class="icon-box"><span class="material-symbols-outlined">add_circle</span></div><span class="text-[10px] font-bold mt-0.5">建立</span></button>
+  <!-- 底部導航 Admin：完全同步 index.html，跳轉正確連結 -->
+  <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white border-t border-slate-100 flex justify-evenly items-center h-[72px] pb-safe left-1/2 -translate-x-1/2 z-40">
+    <button onclick="window.location.href='active.html'" class="nav-btn nav-active-btn" id="nav-admin-create"><div class="icon-box"><span class="material-symbols-outlined">add_circle</span></div><span class="text-[10px] mt-0.5">建立</span></button>
     <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn" id="nav-admin-activities"><div class="icon-box"><span class="material-symbols-outlined">fact_check</span></div><span class="text-[10px] mt-0.5">核銷</span></button>
     <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn" id="nav-admin-crm"><div class="icon-box"><span class="material-symbols-outlined">groups</span></div><span class="text-[10px] mt-0.5">CRM</span></button>
     <button onclick="window.location.href='fate.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined">psychology</span></div><span class="text-[10px] mt-0.5">配對</span></button>

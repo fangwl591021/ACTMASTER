@@ -1,4 +1,4 @@
-<!-- Version: v1.4.2 (底部導航列位置同步、修復顏色) -->
+<!-- Version: v1.6.0 (正式模組化分離版) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -49,9 +49,13 @@
     .textarea-block { @apply w-full p-3 bg-white border border-slate-400 rounded outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors text-[15px] text-text-main resize-none leading-relaxed shadow-none; }
     .btn-primary { @apply w-full py-3 bg-primary text-white rounded font-bold text-[16px] shadow-sm active:opacity-80 transition-opacity flex items-center justify-center gap-2 hover:bg-blue-700; }
     .btn-secondary { @apply w-full py-3 bg-white border border-slate-400 text-slate-700 rounded font-bold text-[16px] hover:bg-slate-50 active:bg-slate-50 transition-colors flex items-center justify-center gap-2 shadow-sm; }
+    
+    .tab-btn { @apply flex-1 py-3 text-[14px] font-normal transition-all text-slate-500 border-b-2 border-transparent; }
+    .tab-active { @apply text-primary border-primary font-bold; }
+
     .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-slate-400 h-full; min-width: 48px; }
-    .nav-active { @apply text-text-main font-bold; }
-    .nav-active .material-symbols-outlined { font-variation-settings: 'FILL' 1; color: #1e293b; }
+    .nav-active-btn { @apply text-text-main font-bold; }
+    .nav-active-btn .material-symbols-outlined { font-variation-settings: 'FILL' 1; color: #1e293b; }
 
     .cropper-view-box, .cropper-face { border-radius: 4px; }
     .cropper-line { background-color: #2563eb; opacity: 0.5; }
@@ -195,13 +199,12 @@
     </div>
   </main>
 
-  <!-- ⭐ 統一底部導航列位置與顏色 -->
-  <nav id="bottom-nav-admin" class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-evenly items-center px-1 py-2 z-40 pb-safe shadow-app-nav left-1/2 -translate-x-1/2 h-[72px]">
+  <nav id="bottom-nav-admin" class="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-100 flex justify-evenly items-center px-1 py-2 z-40 pb-safe shadow-app-nav left-1/2 -translate-x-1/2 h-[72px]">
     <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">fact_check</span></div><span class="text-[10px] font-normal mt-0.5">核銷</span></button>
     <button onclick="window.location.href='index.html?view=admin-create'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">add_circle</span></div><span class="text-[10px] font-normal mt-0.5">建立</span></button>
     <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">groups</span></div><span class="text-[10px] font-normal mt-0.5">CRM</span></button>
     <button onclick="window.location.href='fate.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">psychology</span></div><span class="text-[10px] font-normal mt-0.5">配對</span></button>
-    <button onclick="window.location.href='card.html'" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">recent_patient</span></div><span class="text-[10px] font-normal mt-0.5">名片</span></button>
+    <button onclick="window.location.href='card.html'" class="nav-btn nav-active-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">recent_patient</span></div><span class="text-[10px] font-normal mt-0.5">名片</span></button>
     <button onclick="window.location.href='index.html?view=admin-settings'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">settings</span></div><span class="text-[10px] font-normal mt-0.5">參數</span></button>
   </nav>
 </div>
@@ -289,7 +292,7 @@
   </div>
 </div>
 
-<!-- ⭐ 數位電子名片產生器 -->
+<!-- ⭐ 數位電子名片產生器 (ECard 模組接管) -->
 <div id="ecard-generator-modal" class="hidden fixed inset-0 bg-white flex flex-col animate-in fade-in duration-300 w-full z-[1020] overflow-hidden">
   
   <div class="bg-white px-5 py-4 border-b border-slate-200 flex justify-between items-center shadow-sm shrink-0 w-full z-20">
@@ -509,8 +512,9 @@
 
 <div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded text-[15px] shadow-lg transition-all z-[10000] font-bold flex items-center gap-2 w-max max-w-[90vw] bg-slate-800 text-white opacity-0 pointer-events-none border border-slate-700"></div>
 
-<!-- 獨立抽出的外部 JavaScript 邏輯 -->
+<!-- ⭐ 引入兩支核心腳本 -->
 <script src="card.js"></script>
+<script src="card-ecard.js"></script>
 
 </body>
 </html>

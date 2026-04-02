@@ -1,7 +1,7 @@
 /**
  * card.js 
  * 名片管理核心邏輯 (輕量化，不含電子名片 ECard)
- * Version: v1.6.0
+ * Version: v1.6.4 (修復 404 URL 與空 src 標籤問題)
  */
 
 const LIFF_ID = "2009367829-DLtYBDUm"; 
@@ -22,7 +22,7 @@ let uploadTargetMode = 'card';
 const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55", "U8932b891ad24da512afb9c1a6f41567b"];
 let isAdmin = false;
 
-// ⭐ 共用的 PC 版 / 外部瀏覽器備用分享機制
+// 共用的 PC 版 / 外部瀏覽器備用分享機制
 window.fallbackShare = function(url, altText) {
     const fullText = `${altText}\n${url}`;
     const fallbackInput = document.createElement('textarea');
@@ -96,7 +96,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (liff.isLoggedIn()) {
       userProfile = await liff.getProfile();
-      document.getElementById('user-avatar').src = userProfile.pictureUrl || '';
+      const avatarEl = document.getElementById('user-avatar');
+      if (avatarEl && userProfile.pictureUrl) {
+          avatarEl.src = userProfile.pictureUrl;
+      }
       document.getElementById('user-profile-badge').classList.remove('hidden');
       isAdmin = ADMIN_IDS.includes(userProfile.userId);
       switchView('list');
@@ -215,7 +218,7 @@ function resetUI() {
 window.showToast = function(msg, isError = false) {
   const t = document.getElementById('toast');
   t.innerHTML = `<span class="material-symbols-outlined icon-filled">${isError ? 'error' : 'info'}</span> ${msg}`;
-  t.className = `fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded text-[15px] shadow-lg transition-all font-bold flex items-center gap-2 w-max max-w-[90vw] ${isError ? 'bg-red-500 text-white border-red-600' : 'bg-slate-800 text-white border-slate-700'} opacity-100`;
+  t.className = `fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all font-medium flex items-center gap-2 w-max max-w-[90vw] ${isError ? 'bg-red-500 text-white border-red-600' : 'bg-slate-800 text-white border-slate-700'} opacity-100`;
   t.style.zIndex = '10000';
   t.classList.remove('hidden');
   setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -1rem)'; setTimeout(() => t.classList.add('hidden'), 300); }, 3000); 

@@ -1,7 +1,7 @@
 /**
  * card.js 
- * 名片管理中樞核心邏輯
- * Version: v1.4.5 (完美解決 PC 網頁版 shareTargetPicker 失效問題，加入智慧複製與備用分享機制)
+ * 名片管理核心邏輯 (不含電子名片 ECard)
+ * Version: v1.5.1
  */
 
 const LIFF_ID = "2009367829-DLtYBDUm"; 
@@ -16,7 +16,6 @@ let currentPage = 1;
 const PAGE_LIMIT = 10;
 let currentActiveCard = null; 
 let isProcessing = false;
-let dynamicAspectRatio = "20:13"; 
 let currentFateTags = null; 
 let uploadTargetMode = 'card'; 
 
@@ -24,7 +23,7 @@ const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce133
 let isAdmin = false;
 
 // ⭐ 共用的 PC 版 / 外部瀏覽器備用分享機制 (Fallback)
-function fallbackShare(url, altText) {
+window.fallbackShare = function(url, altText) {
     const fullText = `${altText}\n${url}`;
     const fallbackInput = document.createElement('textarea');
     fallbackInput.value = fullText;
@@ -39,12 +38,10 @@ function fallbackShare(url, altText) {
         alert("請複製以下連結分享給好友：\n\n" + url);
     }
     document.body.removeChild(fallbackInput);
-    // 自動打開 LINE 網頁版分享介面
     window.open(`https://lineit.line.me/share/ui?url=${encodeURIComponent(url)}&text=${encodeURIComponent(altText)}`, '_blank');
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // 防呆機制：若當前頁面不是名片頁(card.html)，則靜默退出，絕不干擾 index.html
   if (!document.getElementById('card-search-input')) return;
 
   try {
@@ -52,9 +49,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const params = new URLSearchParams(window.location.search);
     const shareCardId = params.get('shareCardId');
     
-    // ==========================================
-    // 收到名片並點擊「分享」按鈕的轉發邏輯
-    // ==========================================
     if (shareCardId) {
       if (!liff.isLoggedIn()) { liff.login({ redirectUri: window.location.href }); return; }
       
@@ -72,25 +66,29 @@ document.addEventListener("DOMContentLoaded", async () => {
           const imgUrlForAr = config && config.imgUrl ? getDirectImageUrl(config.imgUrl) : getDirectImageUrl(card['名片圖檔']);
           const detectedAr = await getTrueAspectRatio(imgUrlForAr);
 
-          const flexContents = buildFlexMessageFromCard(card, config, detectedAr);
-          const title = config && config.title ? config.title : card['姓名'] || card['Name'];
-          const altText = `您收到一張數位名片：${title || '商務名片'}`;
-          const shareUrl = `https://liff.line.me/${LIFF_ID}/card.html?shareCardId=${shareCardId}`;
-          
-          // ⭐ 執行轉發機制 (支援 PC 降級)
-          if (liff.isApiAvailable('shareTargetPicker')) {
-              try {
-                  if (window.triggerFlexSharing) {
-                      await window.triggerFlexSharing(flexContents, altText);
-                  } else {
-                      await liff.shareTargetPicker([{ type: "flex", altText: altText, contents: flexContents }]);
-                  }
-                  setTimeout(() => { liff.closeWindow(); }, 500);
-              } catch(e) {
-                  fallbackShare(shareUrl, altText);
-              }
+          // 調用 card-ecard.js 中的 buildFlexMessageFromCard
+          if (typeof window.buildFlexMessageFromCard === 'function') {
+             const flexContents = window.buildFlexMessageFromCard(card, config, detectedAr);
+             const title = config && config.title ? config.title : card['姓名'] || card['Name'];
+             const altText = `您收到一張數位名片：${title || '商務名片'}`;
+             const shareUrl = `https://liff.line.me/${LIFF_ID}/card.html?shareCardId=${shareCardId}`;
+             
+             if (liff.isApiAvailable('shareTargetPicker')) {
+                 try {
+                     if (window.triggerFlexSharing) {
+                         await window.triggerFlexSharing(flexContents, altText);
+                     } else {
+                         await liff.shareTargetPicker([{ type: "flex", altText: altText, contents: flexContents }]);
+                     }
+                     setTimeout(() => { liff.closeWindow(); }, 500);
+                 } catch(e) {
+                     window.fallbackShare(shareUrl, altText);
+                 }
+             } else {
+                 window.fallbackShare(shareUrl, altText);
+             }
           } else {
-              fallbackShare(shareUrl, altText);
+             alert('無法載入電子名片模組');
           }
       } catch (e) {
           alert('名片讀取失敗: ' + e.message); 
@@ -98,9 +96,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       return; 
     }
 
-    // ==========================================
-    // 一般進入名片系統邏輯
-    // ==========================================
     if (liff.isLoggedIn()) {
       userProfile = await liff.getProfile();
       document.getElementById('user-avatar').src = userProfile.pictureUrl || '';
@@ -145,14 +140,14 @@ function formatPhoneStr(val) {
   return s;
 }
 
-function getDirectImageUrl(url) { 
+window.getDirectImageUrl = function(url) { 
   if (!url) return url;
   const driveMatch = url.match(/id=([a-zA-Z0-9_-]+)/) || url.match(/d\/([a-zA-Z0-9_-]+)/);
   if (driveMatch && url.includes('drive.google.com')) return `https://drive.google.com/thumbnail?id=${driveMatch[1]}&sz=w1000`;
   return url;
 }
 
-const getTrueAspectRatio = (url) => new Promise((resolve) => {
+window.getTrueAspectRatio = (url) => new Promise((resolve) => {
     if (!url) return resolve('20:13');
     const img = new Image();
     img.onload = function() {
@@ -165,7 +160,7 @@ const getTrueAspectRatio = (url) => new Promise((resolve) => {
     img.src = url;
 });
 
-async function fetchAPI(action, payload = {}, silent = false) {
+window.fetchAPI = async function(action, payload = {}, silent = false) {
   try {
     const response = await fetch(WORKER_URL, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -219,7 +214,7 @@ function resetUI() {
   }
 }
 
-function showToast(msg, isError = false) {
+window.showToast = function(msg, isError = false) {
   const t = document.getElementById('toast');
   t.innerHTML = `<span class="material-symbols-outlined icon-filled">${isError ? 'error' : 'info'}</span> ${msg}`;
   t.className = `fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded text-[15px] shadow-lg transition-all font-bold flex items-center gap-2 w-max max-w-[90vw] ${isError ? 'bg-red-500 text-white border-red-600' : 'bg-slate-800 text-white border-slate-700'} opacity-100`;
@@ -271,7 +266,7 @@ async function confirmCrop() {
           showToast("圖片上傳中...", false);
           const url = await fetchAPI('uploadImage', { base64Image: compressedBase64 });
           document.getElementById('ec-img-input').value = url;
-          updateECardPreview();
+          if (typeof window.updateECardPreview === 'function') window.updateECardPreview();
           showToast("✅ 圖片上傳成功");
       } catch (err) {
           showToast("⚠️ 上傳失敗：" + err.message, true);
@@ -280,7 +275,7 @@ async function confirmCrop() {
           btn.classList.remove('pointer-events-none');
       }
   } else {
-      document.getElementById('preview-image').src = compressedBase64;
+      document.getElementById('process-preview-image').src = compressedBase64;
       switchView('process');
       switchProcessSection('section-loading');
       recognizeCardData();
@@ -579,7 +574,6 @@ function closeReadOnlyCard() {
     }
 }
 
-// ⭐ 修復：認領連結強制指定到 index.html，並加入 PC 降級支援
 async function shareClaimLink() {
   if (!currentActiveCard || isProcessing) return;
   isProcessing = true;
@@ -614,10 +608,10 @@ async function shareClaimLink() {
               const res = await liff.shareTargetPicker([{ type: "flex", altText: altText, contents: flexMessage }]);
               if (res) showToast('✅ 認領連結已發送！');
           } catch (err) {
-              fallbackShare(url, altText);
+              window.fallbackShare(url, altText);
           }
       } else {
-          fallbackShare(url, altText);
+          window.fallbackShare(url, altText);
       }
   } catch (error) {
       console.error(error);
@@ -739,526 +733,4 @@ async function submitCardEdit() {
     setButtonLoading('btn-save-card-edit', false, '儲存變更');
     isProcessing = false;
   }
-}
-
-window.toggleECardType = function(type) {
-  document.getElementById('ec-card-type').value = type;
-  const tabImg = document.getElementById('ec-tab-image');
-  const tabVid = document.getElementById('ec-tab-video');
-  const vidGroup = document.getElementById('ec-video-input-group');
-  
-  if (type === 'video') {
-    tabImg.className = 'flex-1 py-2 rounded-md text-[14px] font-bold text-slate-500 transition-all hover:text-slate-700';
-    tabVid.className = 'flex-1 py-2 rounded-md text-[14px] font-bold bg-white text-primary shadow-sm transition-all';
-    vidGroup.classList.remove('hidden');
-    document.getElementById('ec-upload-label').innerHTML = '點擊上傳封面圖縮圖 <span class="ml-1.5 px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[11px] font-medium">選填</span>';
-    document.getElementById('ec-upload-hint').innerText = '※ 影片必須有封面縮圖，若未上傳系統將自動代入名片圖或預設底圖。';
-  } else {
-    tabImg.className = 'flex-1 py-2 rounded-md text-[14px] font-bold bg-white text-primary shadow-sm transition-all';
-    tabVid.className = 'flex-1 py-2 rounded-md text-[14px] font-bold text-slate-500 transition-all hover:text-slate-700';
-    vidGroup.classList.add('hidden');
-    document.getElementById('ec-upload-label').innerHTML = '點擊圖片變更 <span class="ml-1.5 px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[11px] font-medium">選填</span>';
-    document.getElementById('ec-upload-hint').innerText = '※ 若未上傳，系統將智能代入您原先的名片圖檔作為底圖。';
-  }
-  
-  updateECardPreview();
-};
-
-function buildFlexMessageFromCard(card, config, dynamicAr = null) {
-  let imgUrl, imgActionUrl, imgSize, aspectMode, ar, title, desc, buttons = [];
-  let cardType = config && config.cardType ? config.cardType : 'image';
-  let videoUrl = config && config.videoUrl ? config.videoUrl : '';
-  let titleAlign = config && config.titleAlign ? config.titleAlign : 'center';
-  let rawImg = (config && config.imgUrl) ? config.imgUrl : (card && card['名片圖檔'] ? card['名片圖檔'] : '');
-  
-  if (!rawImg || typeof rawImg !== 'string' || !rawImg.startsWith('http')) {
-      rawImg = 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png'; 
-  }
-  imgUrl = getDirectImageUrl(rawImg);
-  
-  if (config) {
-      imgActionUrl = config.imgActionUrl || 'https://liff.line.me/2009367829-DLtYBDUm';
-      imgSize = config.imgSize || 'mega';
-      aspectMode = config.aspectMode || 'cover';
-      let arSetting = config.ar || 'auto';
-      ar = (arSetting === 'auto') ? (dynamicAr || '20:13') : arSetting;
-      title = config.title || '-';
-      desc = config.desc || '-'; 
-      buttons = config.buttons || [];
-  } else {
-      imgActionUrl = 'https://liff.line.me/2009367829-DLtYBDUm';
-      imgSize = 'mega';
-      aspectMode = 'cover';
-      ar = dynamicAr || '20:13';
-      title = [card['公司名稱'], card['姓名']].filter(Boolean).join(' - ') || card['姓名'] || card['Name'] || '商務名片';
-      desc = card['服務項目/品牌標語'] || '點擊下方按鈕與我聯繫';
-
-      const rawPhone = card['手機號碼'] || card['Mobile'];
-      if (rawPhone) {
-          let phone = formatPhoneStr(rawPhone);
-          if (phone) buttons.push({ l: '撥打手機', u: `tel:${phone}`, c: '#1e293b' });
-      }
-      
-      const rawTel = card['公司電話'] || card['Tel'];
-      if (rawTel) {
-          let tel = formatPhoneStr(rawTel);
-          if (tel) buttons.push({ l: '撥打電話', u: `tel:${tel}`, c: '#1e293b' });
-      }
-      
-      const rawEmail = card['電子郵件'] || card['Email'];
-      if (rawEmail) {
-          let email = String(rawEmail).split(/[\s,]+/)[0];
-          if (email.includes('@')) buttons.push({ l: '發送信箱', u: `mailto:${email}`, c: '#1e293b' });
-      }
-      
-      const rawAddress = card['公司地址'] || card['Address'];
-      if (rawAddress) {
-          buttons.push({ l: 'Google 導航', u: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(rawAddress.split(',')[0])}`, c: '#1e293b' });
-      }
-
-      const rawWebsite = card['公司網址'] || card['Website'];
-      if (rawWebsite) {
-          let wUrl = String(rawWebsite).trim();
-          if (wUrl && !wUrl.startsWith('http')) wUrl = 'https://' + wUrl;
-          if (wUrl) buttons.push({ l: '公司網站', u: wUrl, c: '#1e293b' });
-      }
-  }
-
-  const validSizes = ['nano', 'micro', 'kilo', 'mega', 'giga'];
-  if (!validSizes.includes(imgSize)) imgSize = 'mega';
-  if (!/^\d+:\d+$/.test(ar)) ar = '20:13';
-
-  let safeImgActionUrl = imgActionUrl ? String(imgActionUrl).trim() : 'https://liff.line.me/2009367829-DLtYBDUm';
-  if (!safeImgActionUrl.match(/^(http|https|tel|mailto|line):/i)) { safeImgActionUrl = 'https://' + safeImgActionUrl; }
-
-  const btnContents = [];
-  for (let i=0; i<buttons.length; i++) {
-      let label = buttons[i].l ? String(buttons[i].l).trim() : '查看';
-      let safeU = buttons[i].u ? String(buttons[i].u).trim() : 'https://line.me';
-      let btnColor = buttons[i].c || '#1e293b';
-      btnContents.push({ "type": "button", "style": "primary", "color": btnColor, "height": "sm", "margin": "sm", "action": { "type": "uri", "label": label.substring(0, 20), "uri": safeU.substring(0, 1000) } });
-  }
-
-  // ⭐ 強制指定到 card.html 防止導回 index.html 後台
-  const badgeUrl = `https://liff.line.me/${LIFF_ID}/card.html?shareCardId=${card.rowId}`;
-
-  const headerBlock = {
-      "type": "box",
-      "layout": "horizontal",
-      "justifyContent": "flex-end",
-      "paddingAll": "7px",
-      "contents": [
-          {
-              "type": "box",
-              "layout": "vertical",
-              "justifyContent": "center",
-              "backgroundColor": "#FF0000",
-              "width": "65px",
-              "height": "25px",
-              "cornerRadius": "25px",
-              "contents": [
-                  {
-                      "type": "text",
-                      "text": "分享",
-                      "weight": "bold",
-                      "align": "center",
-                      "color": "#FFFFFF",
-                      "size": "xs"
-                  }
-              ],
-              "action": {
-                  "type": "uri",
-                  "label": "share",
-                  "uri": badgeUrl
-              }
-          }
-      ]
-  };
-
-  let heroBlock;
-  if (cardType === 'video' && videoUrl && videoUrl.match(/^https:\/\//i)) {
-      // ⭐ 影片元件不能包含 action 屬性！
-      heroBlock = {
-          "type": "video",
-          "url": videoUrl,
-          "previewUrl": imgUrl,
-          "altContent": {
-              "type": "image",
-              "size": "full",
-              "aspectRatio": ar,
-              "aspectMode": aspectMode,
-              "url": imgUrl
-          },
-          "aspectRatio": ar
-      };
-  } else {
-      heroBlock = {
-          "type": "image",
-          "url": imgUrl,
-          "size": "full",
-          "aspectRatio": ar,
-          "aspectMode": aspectMode,
-          "action": { "type": "uri", "label": "cover", "uri": safeImgActionUrl.substring(0, 1000) }
-      };
-  }
-
-  const flexContents = {
-      "type": "bubble", "size": imgSize,
-      "header": headerBlock,
-      "hero": heroBlock,
-      "body": {
-          "type": "box", "layout": "vertical", "paddingAll": "0px",
-          "contents": [
-              { "type": "box", "layout": "vertical", "paddingAll": "7px", "contents": [ { "type": "text", "text": title, "weight": "bold", "size": "xl", "align": titleAlign, "wrap": true }, { "type": "text", "text": desc, "size": "xs", "margin": "sm", "color": "#666666", "wrap": true } ] }
-          ]
-      }
-  };
-  
-  if (btnContents.length > 0) flexContents.footer = { "type": "box", "layout": "vertical", "spacing": "sm", "paddingAll": "7px", "backgroundColor": "#FFFFFF", "contents": btnContents };
-  return flexContents;
-}
-
-function openECardGenerator() {
-  if (!currentActiveCard) return;
-  const c = currentActiveCard;
-
-  if (userProfile && userProfile.pictureUrl) {
-      document.getElementById('preview-user-avatar').src = userProfile.pictureUrl;
-      document.getElementById('preview-user-avatar').classList.remove('hidden');
-      document.querySelector('.avatar-fallback').classList.add('hidden');
-  }
-
-  let savedConfig = null;
-  if (c['自訂名片設定']) { try { savedConfig = JSON.parse(c['自訂名片設定']); } catch(e){} }
-
-  if (savedConfig) {
-    document.getElementById('ec-card-type').value = savedConfig.cardType || 'image';
-    document.getElementById('ec-video-url').value = savedConfig.videoUrl || '';
-    
-    document.getElementById('ec-img-input').value = savedConfig.imgUrl || '';
-    document.getElementById('ec-img-action-url').value = savedConfig.imgActionUrl || 'https://liff.line.me/2009367829-DLtYBDUm';
-    
-    const sizeEl = document.getElementById('ec-img-size');
-    if (sizeEl) sizeEl.value = savedConfig.imgSize || 'mega';
-    
-    const arEl = document.getElementById('ec-aspect-ratio');
-    if (arEl) arEl.value = savedConfig.ar || 'auto';
-    
-    document.getElementById('ec-title-align').value = savedConfig.titleAlign || 'center';
-    
-    dynamicAspectRatio = savedConfig.ar === 'auto' ? "20:13" : (savedConfig.ar || '20:13');
-    document.getElementById('ec-title-input').value = savedConfig.title || '';
-    document.getElementById('ec-desc-input').value = savedConfig.desc || '';
-
-    for(let i=1; i<=4; i++) {
-      const btn = savedConfig.buttons[i-1];
-      document.getElementById(`ec-btn${i}-label`).value = btn ? btn.l : '';
-      document.getElementById(`ec-btn${i}-url`).value = btn ? btn.u : '';
-      document.getElementById(`ec-btn${i}-color`).value = btn && btn.c ? btn.c : '#1e293b';
-    }
-  } else {
-    const defaultFlex = buildFlexMessageFromCard(c, null);
-    document.getElementById('ec-card-type').value = 'image';
-    document.getElementById('ec-video-url').value = '';
-    
-    document.getElementById('ec-img-input').value = defaultFlex.hero.url || '';
-    document.getElementById('ec-img-action-url').value = 'https://liff.line.me/2009367829-DLtYBDUm';
-    
-    const sizeEl = document.getElementById('ec-img-size');
-    if (sizeEl) sizeEl.value = defaultFlex.size;
-    
-    const arEl = document.getElementById('ec-aspect-ratio');
-    if (arEl) arEl.value = 'auto';
-
-    document.getElementById('ec-title-align').value = 'center';
-    
-    dynamicAspectRatio = defaultFlex.hero.aspectRatio || '20:13';
-    document.getElementById('ec-title-input').value = defaultFlex.body.contents[0].contents[0].text;
-    document.getElementById('ec-desc-input').value = defaultFlex.body.contents[0].contents[1].text;
-    
-    const buttons = defaultFlex.footer ? defaultFlex.footer.contents : [];
-    for(let i=1; i<=4; i++) {
-      const btn = buttons[i-1];
-      document.getElementById(`ec-btn${i}-label`).value = btn ? btn.action.label : '';
-      document.getElementById(`ec-btn${i}-url`).value = btn ? btn.action.uri : '';
-      document.getElementById(`ec-btn${i}-color`).value = '#1e293b';
-    }
-  }
-  
-  toggleECardType(document.getElementById('ec-card-type').value);
-  document.getElementById('preview-ec-img').removeAttribute('data-current-src');
-  document.getElementById('ecard-generator-modal').classList.remove('hidden');
-}
-
-function closeECardGenerator() { document.getElementById('ecard-generator-modal').classList.add('hidden'); }
-
-function updateECardPreview() {
-  const cardType = document.getElementById('ec-card-type').value || 'image';
-  const videoUrl = document.getElementById('ec-video-url').value.trim();
-  const arSetting = document.getElementById('ec-aspect-ratio') ? document.getElementById('ec-aspect-ratio').value : 'auto';
-
-  let rawUrl = document.getElementById('ec-img-input').value;
-  if (!rawUrl) {
-      rawUrl = (currentActiveCard && currentActiveCard['名片圖檔']) ? currentActiveCard['名片圖檔'] : '';
-      if (!rawUrl || !rawUrl.startsWith('http')) {
-          rawUrl = 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
-      }
-  }
-  let imgUrl = getDirectImageUrl(rawUrl);
-  
-  const heroEl = document.getElementById('preview-ec-hero');
-  const imgEl = document.getElementById('preview-ec-img');
-  const videoEl = document.getElementById('preview-ec-video');
-  const playIcon = document.getElementById('preview-ec-play-icon');
-  const bubbleEl = document.getElementById('preview-ec-bubble');
-  
-  const sizeEl = document.getElementById('ec-img-size');
-  const imgSize = sizeEl ? sizeEl.value : 'mega';
-  if (imgSize === 'giga') bubbleEl.style.maxWidth = '360px';
-  else if (imgSize === 'kilo') bubbleEl.style.maxWidth = '260px';
-  else bubbleEl.style.maxWidth = '300px'; 
-  
-  const previewBox = document.getElementById('ec-img-preview-box');
-  const placeholder = document.getElementById('ec-upload-placeholder');
-
-  if (cardType === 'video') {
-      if (videoUrl) {
-          videoEl.src = videoUrl;
-          videoEl.classList.remove('hidden');
-          videoEl.play().catch(e => {});
-      } else {
-          videoEl.src = '';
-          videoEl.classList.add('hidden');
-      }
-      playIcon.classList.remove('hidden');
-  } else {
-      videoEl.src = '';
-      videoEl.classList.add('hidden');
-      playIcon.classList.add('hidden');
-  }
-
-  const applyAspectRatio = (ratioStr) => {
-      let [w, h] = ratioStr.split(':');
-      if(w && h) {
-          heroEl.style.aspectRatio = `${w} / ${h}`;
-          imgEl.style.aspectRatio = `${w} / ${h}`;
-          imgEl.style.objectFit = 'cover';
-      }
-  };
-
-  if (imgEl.getAttribute('data-current-src') !== imgUrl || arSetting !== 'auto') {
-      imgEl.setAttribute('data-current-src', imgUrl);
-      const tempImg = new Image();
-      tempImg.onload = function() {
-          if (arSetting === 'auto') {
-              let w = this.width; let h = this.height; let ratio = w / h;
-              if (ratio > 3) { w = 300; h = 100; }
-              else if (ratio < 0.334) { w = 100; h = 300; }
-              dynamicAspectRatio = `${Math.round(w)}:${Math.round(h)}`;
-              applyAspectRatio(dynamicAspectRatio);
-          } else {
-              applyAspectRatio(arSetting);
-          }
-          imgEl.src = imgUrl;
-          imgEl.classList.remove('hidden');
-          
-          if (previewBox && placeholder) {
-              previewBox.src = imgUrl;
-              previewBox.classList.remove('hidden');
-              placeholder.classList.add('hidden');
-          }
-      };
-      tempImg.onerror = function() {
-          dynamicAspectRatio = "20:13";
-          applyAspectRatio(arSetting === 'auto' ? dynamicAspectRatio : arSetting);
-          imgEl.src = imgUrl;
-          imgEl.classList.remove('hidden');
-          
-          if (previewBox && placeholder) {
-              previewBox.src = '';
-              previewBox.classList.add('hidden');
-              placeholder.classList.remove('hidden');
-          }
-      };
-      tempImg.src = imgUrl;
-  } else {
-      applyAspectRatio(arSetting === 'auto' ? dynamicAspectRatio : arSetting);
-  }
-
-  const titleAlign = document.getElementById('ec-title-align').value;
-  const cssAlign = titleAlign === 'start' ? 'left' : (titleAlign === 'end' ? 'right' : 'center');
-  document.getElementById('preview-ec-title').style.textAlign = cssAlign;
-
-  document.getElementById('preview-ec-title').innerText = document.getElementById('ec-title-input').value || '未命名的標題';
-  document.getElementById('preview-ec-desc').innerText = document.getElementById('ec-desc-input').value || '請輸入描述內容...';
-  
-  const btnContainer = document.getElementById('preview-ec-buttons');
-  btnContainer.innerHTML = '';
-  for(let i=1; i<=4; i++) {
-    const label = document.getElementById(`ec-btn${i}-label`).value;
-    const url = document.getElementById(`ec-btn${i}-url`).value;
-    const color = document.getElementById(`ec-btn${i}-color`).value;
-    if(label && url) {
-      btnContainer.innerHTML += `<div class="w-full text-white text-[13px] font-bold text-center py-2.5 rounded-lg mb-2 shadow-sm" style="background-color: ${color}">${label}</div>`;
-    }
-  }
-}
-
-function checkFormat(showAlert = false) {
-  let errors = [];
-  
-  const cardType = document.getElementById('ec-card-type').value;
-  if (cardType === 'video') {
-      const vUrl = document.getElementById('ec-video-url').value.trim();
-      if (!vUrl) errors.push("❌ 【動態影片版】必須填寫影片網址。");
-      else if (!vUrl.match(/^https:\/\//i)) errors.push("❌ 【影片網址】必須以 https:// 開頭。");
-      // 支援 LINE OBS
-      else if (!vUrl.toLowerCase().includes('mp4')) errors.push("❌ 【影片網址】目前僅支援 MP4 格式。");
-  }
-
-  for (let i = 1; i <= 4; i++) {
-      let urlInput = document.getElementById(`ec-btn${i}-url`);
-      let url = urlInput.value.trim();
-      if (url) {
-          if (/^[\d\-\+\s()]+$/.test(url) && !url.startsWith('tel:')) {
-              let pureNum = url.replace(/[^\d+]/g, '');
-              if (pureNum.startsWith('+886')) pureNum = '0' + pureNum.substring(4);
-              if (pureNum.startsWith('886')) pureNum = '0' + pureNum.substring(3);
-              if (pureNum) urlInput.value = 'tel:' + pureNum;
-          } 
-          else if (url.includes('@') && !url.startsWith('mailto:') && !url.startsWith('http')) {
-              urlInput.value = 'mailto:' + url.replace(/\s/g, '');
-          } 
-          else if (!url.startsWith('http') && !url.startsWith('tel:') && !url.startsWith('mailto:') && !url.startsWith('line:')) {
-              if (url.includes('.')) {
-                  urlInput.value = 'https://' + url.replace(/\s/g, '');
-              }
-          }
-          urlInput.value = urlInput.value.replace(/\s/g, ''); 
-      }
-  }
-
-  const imgUrl = document.getElementById('ec-img-input').value.trim();
-  if (imgUrl && !imgUrl.match(/^https?:\/\//i)) {
-      errors.push("❌ 【封面圖片網址】若要填寫，必須以 http:// 或 https:// 開頭。");
-  }
-
-  const actionUrl = document.getElementById('ec-img-action-url').value.trim();
-  if (!actionUrl) errors.push("❌ 【點圖預設連結】不得為空。");
-  else if (!actionUrl.match(/^(https?|tel|mailto|line):/i)) errors.push("❌ 【點圖預設連結】必須為有效網址。");
-
-  for (let i = 1; i <= 4; i++) {
-      const label = document.getElementById(`ec-btn${i}-label`).value.trim();
-      const url = document.getElementById(`ec-btn${i}-url`).value.trim();
-      if (label || url) {
-          if (!label) errors.push(`❌ 【按鈕 ${i}】缺少文字。`);
-          else if (label.length > 20) errors.push(`❌ 【按鈕 ${i}】文字過長。`);
-          if (!url) errors.push(`❌ 【按鈕 ${i}】缺少連結。`);
-          else if (!url.match(/^(https?|tel|mailto|line):/i)) errors.push(`❌ 【按鈕 ${i}】連結開頭錯誤。`);
-      }
-  }
-
-  if (errors.length > 0) {
-      if (showAlert) alert("⚠️ 發現格式錯誤：\n\n" + errors.join("\n"));
-      return false;
-  } else {
-      if (showAlert) showToast("✅ 格式檢查無誤");
-      return true;
-  }
-}
-
-async function saveECardConfig(isSilent = false) {
-  if(!currentActiveCard) return;
-  const btn = document.getElementById('btn-save-ecard');
-  const originalText = btn ? btn.innerHTML : '';
-  
-  if (!isSilent && btn) {
-      btn.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin">refresh</span>';
-      btn.classList.add('pointer-events-none', 'opacity-50');
-  }
-
-  const config = {
-    cardType: document.getElementById('ec-card-type').value,
-    videoUrl: document.getElementById('ec-video-url').value.trim(),
-    imgUrl: document.getElementById('ec-img-input').value,
-    imgActionUrl: document.getElementById('ec-img-action-url').value,
-    imgSize: document.getElementById('ec-img-size') ? document.getElementById('ec-img-size').value : 'mega',
-    ar: document.getElementById('ec-aspect-ratio') ? document.getElementById('ec-aspect-ratio').value : 'auto',
-    aspectMode: 'cover',
-    titleAlign: document.getElementById('ec-title-align').value,
-    title: document.getElementById('ec-title-input').value,
-    desc: document.getElementById('ec-desc-input').value,
-    buttons: []
-  };
-  for(let i=1; i<=4; i++) {
-    const l = document.getElementById(`ec-btn${i}-label`).value;
-    const u = document.getElementById(`ec-btn${i}-url`).value;
-    const c = document.getElementById(`ec-btn${i}-color`).value;
-    if(l && u) config.buttons.push({l, u, c});
-  }
-
-  try {
-    await fetchAPI('updateECardConfig', { rowId: currentActiveCard.rowId, config: config }, true);
-    currentActiveCard['自訂名片設定'] = JSON.stringify(config); 
-    if(config.imgUrl) currentActiveCard['名片圖檔'] = config.imgUrl; 
-    if(!isSilent) showToast('✅ 名片設定已儲存');
-  } catch(e) {
-    if(!isSilent) showToast('⚠️ 儲存失敗', true);
-  } finally {
-    if (!isSilent && btn) {
-        btn.innerHTML = originalText;
-        btn.classList.remove('pointer-events-none', 'opacity-50');
-    }
-  }
-  return config;
-}
-
-// ⭐ 加入 PC 網頁版降級支援
-async function shareECardToLine() {
-  if (!checkFormat(true)) return;
-
-  const btnShare = document.getElementById('btn-share-line');
-  const oriHtml = btnShare.innerHTML;
-  btnShare.innerHTML = '<span class="material-symbols-outlined animate-spin text-[18px]">refresh</span> 發送中...';
-  btnShare.classList.add('pointer-events-none');
-
-  try {
-    let rawUrl = document.getElementById('ec-img-input').value;
-    if (!rawUrl) {
-        rawUrl = currentActiveCard['名片圖檔'] ? currentActiveCard['名片圖檔'] : 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
-    }
-    const currentImgUrl = getDirectImageUrl(rawUrl);
-    const detectedAr = await getTrueAspectRatio(currentImgUrl);
-    dynamicAspectRatio = detectedAr; 
-
-    const config = await saveECardConfig(true); 
-    const flexMessageObj = buildFlexMessageFromCard(currentActiveCard, config, detectedAr);
-    const altText = `您收到一張數位名片：${config ? config.title : currentActiveCard['姓名'] || currentActiveCard['Name'] || '商務名片'}`;
-    const shareUrl = `https://liff.line.me/${LIFF_ID}/card.html?shareCardId=${currentActiveCard.rowId}`;
-
-    // ⭐ 執行轉發機制 (支援 PC 降級)
-    if (liff.isApiAvailable('shareTargetPicker')) {
-        try {
-            if (window.triggerFlexSharing) {
-                await window.triggerFlexSharing(flexMessageObj, altText);
-            } else {
-                await liff.shareTargetPicker([{ type: "flex", altText: altText, contents: flexMessageObj }]);
-            }
-            showToast('✅ 數位名片已發送！');
-        } catch(e) {
-            fallbackShare(shareUrl, altText);
-        }
-    } else {
-        fallbackShare(shareUrl, altText);
-    }
-  } catch(err) {
-    alert("錯誤：" + err.message);
-  } finally {
-    btnShare.innerHTML = oriHtml;
-    btnShare.classList.remove('pointer-events-none');
-  }
-}
-
-function handleECardImageUpload(input) {
-  openCropper(input, 'ecard');
 }

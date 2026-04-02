@@ -2,6 +2,7 @@
  * card.js 
  * 名片管理中樞核心邏輯
  * 負責處理 API 請求、名片 OCR、裁切、數位電子名片 (Flex Message) 的生成與分享
+ * Version: v1.3.1 (修復名片自動認領、電話 +886 轉譯、網址自動補全 https:// 與 tel:)
  */
 
 const LIFF_ID = "2009367829-DLtYBDUm"; 
@@ -38,9 +39,13 @@ function setButtonLoading(btnId, isLoading, originalText = '') {
     }
 }
 
+// ⭐ 修復 +886 國碼轉譯與空白處理
 function formatPhoneStr(val) {
   if (!val) return '';
   let s = String(val).trim();
+  s = s.replace(/[^\d+]/g, ''); // 移除空格與連字號，保留數字與 +
+  if (s.startsWith('+886')) s = '0' + s.substring(4);
+  if (s.startsWith('886')) s = '0' + s.substring(3);
   if (/^9\d{8}$/.test(s)) return '0' + s;
   if (/^[2-8]\d{7,8}$/.test(s)) return '0' + s;
   return s;
@@ -198,12 +203,11 @@ function openCropper(input, mode = 'card') {
       setTimeout(() => {
         img.style.opacity = '1';
         
-        // 完全解除比例限制 (Free Aspect Ratio)
         cropperInstance = new Cropper(img, { 
           viewMode: 1, 
           dragMode: 'move', 
           autoCropArea: 0.9, 
-          aspectRatio: NaN, // 讓使用者可以自由拖拉任何尺寸比例
+          aspectRatio: NaN, 
           restore: false, guides: true, center: true, highlight: false, cropBoxMovable: true, cropBoxResizable: true, toggleDragModeOnDblclick: false 
         });
       }, 100);
@@ -278,7 +282,8 @@ async function saveToCloud() {
   const payload = {
     base64Image: compressedBase64,
     Notes: document.getElementById('f-Notes').value,
-    userId: userProfile ? userProfile.userId : '',
+    // ⭐ 修復：管理員 OCR 建立名片時，不應該自動綁定為管理員的 userId，否則會變成已認領
+    userId: '', 
     ...(currentFateTags || {})
   };
   
@@ -471,6 +476,7 @@ function openCardDetailByRowId(rowId) {
       document.getElementById('ro-company').innerText = [card['公司名稱']||card['CompanyName'], card['英文名/別名']||card['EnglishName']].filter(Boolean).join(' - ') || '未提供';
       document.getElementById('ro-taxid').innerText = card['統一編號'] || card['TaxID'] || '未提供';
       
+      // ⭐ 修復：確保有 tel:，並且如果是台灣號碼自動轉譯為 09 開頭
       const mobileLink = document.getElementById('ro-mobile-link');
       let phoneStr = card['手機號碼'] || card['Mobile'] ? formatPhoneStr(card['手機號碼'] || card['Mobile']) : '';
       mobileLink.innerText = phoneStr || '未提供';
@@ -680,6 +686,7 @@ async function submitCardEdit() {
   }
 }
 
+// ⭐ 修復：產生數位名片時自動帶入正確格式 (自動補上 https:// 與 tel:)
 function buildFlexMessageFromCard(card, config, dynamicAr = null) {
   let imgUrl, imgActionUrl, imgSize, aspectMode, ar, title, desc, buttons = [];
   let titleAlign = config && config.titleAlign ? config.titleAlign : 'center';
@@ -708,15 +715,13 @@ function buildFlexMessageFromCard(card, config, dynamicAr = null) {
 
       const rawPhone = card['手機號碼'] || card['Mobile'];
       if (rawPhone) {
-          let phone = String(rawPhone).split(',')[0].replace(/[^\d+]/g, '');
-          if (phone.startsWith('886')) phone = '0' + phone.substring(3);
+          let phone = formatPhoneStr(rawPhone);
           if (phone) buttons.push({ l: '撥打手機', u: `tel:${phone}`, c: '#1e293b' });
       }
       
       const rawTel = card['公司電話'] || card['Tel'];
       if (rawTel) {
-          let tel = String(rawTel).split(',')[0].replace(/[^\d+]/g, '');
-          if (tel.startsWith('886')) tel = '0' + tel.substring(3);
+          let tel = formatPhoneStr(rawTel);
           if (tel) buttons.push({ l: '撥打電話', u: `tel:${tel}`, c: '#1e293b' });
       }
       
@@ -729,6 +734,14 @@ function buildFlexMessageFromCard(card, config, dynamicAr = null) {
       const rawAddress = card['公司地址'] || card['Address'];
       if (rawAddress) {
           buttons.push({ l: 'Google 導航', u: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(rawAddress.split(',')[0])}`, c: '#1e293b' });
+      }
+
+      // 自動帶入網址 (補上 https://)
+      const rawWebsite = card['公司網址'] || card['Website'];
+      if (rawWebsite) {
+          let wUrl = String(rawWebsite).trim();
+          if (wUrl && !wUrl.startsWith('http')) wUrl = 'https://' + wUrl;
+          if (wUrl) buttons.push({ l: '公司網站', u: wUrl, c: '#1e293b' });
       }
   }
 
@@ -764,6 +777,7 @@ function buildFlexMessageFromCard(card, config, dynamicAr = null) {
   return flexContents;
 }
 
+// ⭐ 修復：不要再把設定檔中的 url 自動削掉前綴，否則使用者不知道這是什麼格式
 function openECardGenerator() {
   if (!currentActiveCard) return;
   const c = currentActiveCard;
@@ -814,7 +828,8 @@ function openECardGenerator() {
     for(let i=1; i<=4; i++) {
       const btn = buttons[i-1];
       document.getElementById(`ec-btn${i}-label`).value = btn ? btn.action.label : '';
-      document.getElementById(`ec-btn${i}-url`).value = btn ? btn.action.uri.replace(/^(tel|mailto|https):\/\//, '').replace(/^(tel|mailto):/, '') : '';
+      // ⭐ 不再替除前綴，讓輸入框直接顯示 tel: 或 https://
+      document.getElementById(`ec-btn${i}-url`).value = btn ? btn.action.uri : '';
       document.getElementById(`ec-btn${i}-color`).value = '#1e293b';
     }
   }
@@ -895,20 +910,31 @@ function updateECardPreview() {
   }
 }
 
+// ⭐ 修復：強化網址防呆，自動補齊 https:// 以及 tel:，並修復 886
 function checkFormat(showAlert = false) {
   let errors = [];
   for (let i = 1; i <= 4; i++) {
       let urlInput = document.getElementById(`ec-btn${i}-url`);
       let url = urlInput.value.trim();
       if (url) {
+          // 如果全是數字或 + 號等，自動判定為電話
           if (/^[\d\-\+\s()]+$/.test(url) && !url.startsWith('tel:')) {
               let pureNum = url.replace(/[^\d+]/g, '');
+              if (pureNum.startsWith('+886')) pureNum = '0' + pureNum.substring(4);
               if (pureNum.startsWith('886')) pureNum = '0' + pureNum.substring(3);
               if (pureNum) urlInput.value = 'tel:' + pureNum;
-          } else if (url.includes('@') && !url.startsWith('mailto:') && !url.startsWith('http')) {
+          } 
+          // 如果有 @ 但沒有 mailto 或 http，自動判定為信箱
+          else if (url.includes('@') && !url.startsWith('mailto:') && !url.startsWith('http')) {
               urlInput.value = 'mailto:' + url.replace(/\s/g, '');
+          } 
+          // 如果是網域，自動補上 https://
+          else if (!url.startsWith('http') && !url.startsWith('tel:') && !url.startsWith('mailto:') && !url.startsWith('line:')) {
+              if (url.includes('.')) {
+                  urlInput.value = 'https://' + url.replace(/\s/g, '');
+              }
           }
-          urlInput.value = urlInput.value.replace(/\s/g, '');
+          urlInput.value = urlInput.value.replace(/\s/g, ''); // 移除中間所有的空白
       }
   }
 

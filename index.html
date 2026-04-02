@@ -1,4 +1,4 @@
-<!-- Version: v1.1.11 -->
+<!-- Version: v1.1.12 (加入全局裁切降檔與前台梯次選擇功能) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -133,8 +133,8 @@
           <button onclick="document.getElementById('reg-card-camera').click()" class="btn-secondary flex-1 border-primary/30 text-primary bg-blue-50/50"><span class="material-symbols-outlined text-[20px]">photo_camera</span> 拍照</button>
           <button onclick="document.getElementById('reg-card-upload').click()" class="btn-secondary flex-1"><span class="material-symbols-outlined text-[20px]">image</span> 相簿</button>
         </div>
-        <input type="file" id="reg-card-camera" accept="image/*" capture="environment" class="hidden" onchange="openRegCropper(this)">
-        <input type="file" id="reg-card-upload" accept="image/*" class="hidden" onchange="openRegCropper(this)">
+        <input type="file" id="reg-card-camera" accept="image/*" capture="environment" class="hidden" onchange="openCropper(this, 'reg')">
+        <input type="file" id="reg-card-upload" accept="image/*" class="hidden" onchange="openCropper(this, 'reg')">
         <div class="text-center mt-3 pt-2">
           <button onclick="finishRegistration()" class="text-[13px] text-slate-400 font-bold hover:text-slate-600 transition-colors py-2 px-4 rounded-lg">略過上傳，直接進入系統</button>
         </div>
@@ -226,14 +226,13 @@
       <button id="btn-submit-settings" onclick="submitSettings()" class="btn-primary mt-2">儲存設定</button>
     </div>
 
-    <!-- 後台：建立活動 (整合系列梯次功能) -->
+    <!-- 後台：建立活動 (整合系列梯次與裁切功能) -->
     <div id="view-admin-create" class="hidden space-y-5 animate-in fade-in pt-4">
       <div class="mb-4">
         <h2 class="text-2xl font-extrabold font-headline text-slate-800 tracking-tight">建立新活動</h2>
         <p class="text-slate-500 text-[13px] font-medium mt-1">快速部署您的活動報名流程。</p>
       </div>
 
-      <!-- 3個頁籤: 快速匯入, 完整發佈, 系列梯次 -->
       <div class="flex p-1 rounded-lg border border-slate-200 bg-slate-100 mb-6">
         <button onclick="toggleCreateMode('quick')" id="tab-quick" class="flex-1 py-2 rounded-md text-[14px] font-bold bg-white text-primary shadow-sm transition-all">快速匯入</button>
         <button onclick="toggleCreateMode('detailed')" id="tab-detailed" class="flex-1 py-2 rounded-md text-[14px] font-bold text-slate-500 transition-all hover:text-slate-700">完整發佈</button>
@@ -252,7 +251,7 @@
           <div onclick="document.getElementById('file-input-quick').click()" class="w-full h-36 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-all hover:bg-slate-100 relative group">
             <div id="preview-placeholder-quick" class="text-center text-slate-400 flex flex-col items-center"><span class="material-symbols-outlined text-3xl mb-1">add_photo_alternate</span><p class="text-[12px] font-bold">點擊上傳圖片</p></div>
             <img id="image-preview-quick" class="hidden w-full h-full object-cover absolute inset-0">
-            <input type="file" id="file-input-quick" class="hidden" accept="image/*" onchange="previewFile('quick')">
+            <input type="file" id="file-input-quick" class="hidden" accept="image/*" onchange="openCropper(this, 'quick')">
           </div>
           <input type="hidden" id="in-image-url-quick">
         </div>
@@ -293,14 +292,14 @@
            <div onclick="document.getElementById('file-input-create').click()" class="w-full h-36 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-all hover:bg-slate-100 relative group">
              <div id="preview-placeholder-create" class="text-center text-slate-400 flex flex-col items-center"><span class="material-symbols-outlined text-3xl mb-1">add_photo_alternate</span><p class="text-[12px] font-bold">點擊上傳圖片</p></div>
              <img id="image-preview-create" class="hidden w-full h-full object-cover absolute inset-0">
-             <input type="file" id="file-input-create" class="hidden" accept="image/*" onchange="previewFile('create')">
+             <input type="file" id="file-input-create" class="hidden" accept="image/*" onchange="openCropper(this, 'detailed')">
            </div>
            <input type="hidden" id="in-image-url-create">
          </div>
          <button onclick="handleCreateActivity('detailed')" id="btn-detail-create" class="btn-primary mt-4">發布活動頁面 <span class="material-symbols-outlined text-[20px]">rocket_launch</span></button>
       </div>
 
-      <!-- 系列梯次模式 (新增) -->
+      <!-- 系列梯次模式 -->
       <div id="form-batch" class="hidden space-y-4 animate-in fade-in">
         <div class="flex flex-col"><label class="input-label">主系列標題</label><input type="text" id="batch-name" class="custom-input" placeholder="例如：2026 AI 實戰班"></div>
         <div class="grid grid-cols-2 gap-3">
@@ -313,7 +312,7 @@
           <div onclick="document.getElementById('file-input-batch').click()" class="w-full h-36 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-all hover:bg-slate-100 relative group">
             <div id="preview-placeholder-batch" class="text-center text-slate-400 flex flex-col items-center"><span class="material-symbols-outlined text-3xl mb-1">add_photo_alternate</span><p class="text-[12px] font-bold">點擊上傳圖片</p></div>
             <img id="image-preview-batch" class="hidden w-full h-full object-cover absolute inset-0">
-            <input type="file" id="file-input-batch" class="hidden" accept="image/*" onchange="previewFile('batch')">
+            <input type="file" id="file-input-batch" class="hidden" accept="image/*" onchange="openCropper(this, 'batch')">
           </div>
           <input type="hidden" id="in-image-url-batch">
         </div>
@@ -357,14 +356,14 @@
   </nav>
 </div>
 
-<!-- Modals -->
-<div id="section-reg-cropper" class="hidden fixed inset-0 bg-slate-900 flex flex-col animate-in fade-in duration-200 w-full max-w-md mx-auto z-[1030]">
+<!-- 共同的圖片裁切 Modal (取代原本只針對註冊名片的裁切) -->
+<div id="section-image-cropper" class="hidden fixed inset-0 bg-slate-900 flex flex-col animate-in fade-in duration-200 w-full max-w-md mx-auto z-[1080]">
   <div class="flex justify-between items-center p-4 bg-slate-900 text-white shrink-0 border-b border-slate-800 shadow-sm">
-    <button onclick="cancelRegCrop()" class="text-slate-400 font-bold text-sm px-3 py-2 active:scale-90 transition-transform">取消</button>
-    <span class="font-bold text-[15px] tracking-wider flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px]">crop</span> 裁切名片</span>
-    <button onclick="confirmRegCrop()" class="px-4 py-1.5 font-bold text-white bg-primary rounded-md text-sm active:scale-95 transition-transform shadow-md">完成</button>
+    <button onclick="cancelCrop()" class="text-slate-400 font-bold text-sm px-3 py-2 active:scale-90 transition-transform">取消</button>
+    <span class="font-bold text-[15px] tracking-wider flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px]">crop</span> 裁切圖片</span>
+    <button onclick="confirmCrop()" class="px-4 py-1.5 font-bold text-white bg-primary rounded-md text-sm active:scale-95 transition-transform shadow-md">完成</button>
   </div>
-  <div class="flex-1 relative overflow-hidden flex items-center justify-center bg-black"><img id="reg-cropper-image" src="" class="max-w-full max-h-full block opacity-0"></div>
+  <div class="flex-1 relative overflow-hidden flex items-center justify-center bg-black"><img id="cropper-image" src="" class="max-w-full max-h-full block opacity-0"></div>
 </div>
 
 <div id="activity-detail-modal" class="hidden fixed inset-0 z-[1000] bg-white flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 overflow-hidden shadow-2xl">
@@ -398,6 +397,13 @@
           <div><p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">結束時間</p><p id="detail-modal-end" class="text-[14px] font-bold text-slate-700"></p></div>
         </div>
       </div>
+      
+      <!-- ⭐ 梯次選擇區塊 -->
+      <div id="detail-modal-batch-container" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-2 mt-4">
+        <h3 class="text-[13px] font-bold text-slate-800 flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px] text-primary">format_list_bulleted</span> 請選擇報名梯次</h3>
+        <select id="detail-modal-batch-select" class="custom-input cursor-pointer !bg-white"></select>
+      </div>
+
       <div>
         <h3 class="text-[15px] font-bold text-slate-800 mb-2 flex items-center gap-1.5"><span class="material-symbols-outlined text-primary text-[20px]">subject</span> 內容說明</h3>
         <p id="detail-modal-desc" class="text-[14px] text-slate-600 leading-relaxed whitespace-pre-wrap"></p>
@@ -470,7 +476,11 @@
 
   let regStep1Data = {};
   let regCompressedBase64 = "";
-  let regCropperInstance = null;
+  
+  // Cropper Variables (共用)
+  let cropperInstance = null;
+  let currentCropTarget = ''; // 'reg', 'quick', 'detailed', 'batch'
+  
   let html5QrcodeScanner = null;
 
   function setButtonLoading(btnId, isLoading, originalText = '') {
@@ -582,6 +592,8 @@
         document.getElementById('header-admin-badge').classList.remove('hidden');
         isViewModeAdmin = true; 
         switchView(targetView || 'admin-activities');
+        // 初始化第一個梯次
+        if(document.getElementById('batch-list-container').children.length === 0) addBatchItem();
       } else {
         if (isRegistered) {
           if (claimCardId) {
@@ -761,8 +773,11 @@
     }
   }
 
-  async function openRegCropper(input) {
+  // ⭐ ⭐ 共用影像裁切模組 (取代原本的 RegCropper)
+  async function openCropper(input, targetMode) {
     const file = input.files[0]; if (!file) return;
+    currentCropTarget = targetMode; // 'reg', 'quick', 'detailed', 'batch'
+
     if (!window.Cropper) {
        showToast("載入影像模組中...", false);
        await loadCSS("https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css");
@@ -770,15 +785,68 @@
     }
     const reader = new FileReader();
     reader.onload = (e) => {
-      const img = document.getElementById('reg-cropper-image'); img.src = e.target.result; img.style.opacity = '0';
-      document.getElementById('section-reg-cropper').classList.remove('hidden');
-      if (regCropperInstance) regCropperInstance.destroy();
-      setTimeout(() => { img.style.opacity = '1'; regCropperInstance = new Cropper(img, { viewMode: 1, dragMode: 'move', autoCropArea: 0.9, guides: true, center: true, highlight: false }); }, 100);
-    }; reader.readAsDataURL(file); input.value = ""; 
+      const img = document.getElementById('cropper-image'); 
+      img.src = e.target.result; 
+      img.style.opacity = '0';
+      document.getElementById('section-image-cropper').classList.remove('hidden');
+      if (cropperInstance) cropperInstance.destroy();
+      
+      // 根據上傳目標決定裁切比例 (名片不限比例，活動圖 4:3)
+      const aspectRatio = currentCropTarget === 'reg' ? NaN : 4 / 3;
+
+      setTimeout(() => { 
+        img.style.opacity = '1'; 
+        cropperInstance = new Cropper(img, { 
+          aspectRatio: aspectRatio,
+          viewMode: 1, 
+          dragMode: 'move', 
+          autoCropArea: 0.9, 
+          guides: true, 
+          center: true, 
+          highlight: false 
+        }); 
+      }, 100);
+    }; 
+    reader.readAsDataURL(file); 
+    input.value = ""; 
   }
 
-  function cancelRegCrop() { if (regCropperInstance) { regCropperInstance.destroy(); regCropperInstance = null; } document.getElementById('section-reg-cropper').classList.add('hidden'); }
-  function confirmRegCrop() { if (!regCropperInstance) return; regCompressedBase64 = regCropperInstance.getCroppedCanvas({ maxWidth: 1000, maxHeight: 1000 }).toDataURL('image/webp', 0.8); cancelRegCrop(); recognizeAndSaveRegCard(); }
+  function cancelCrop() { 
+    if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; } 
+    document.getElementById('section-image-cropper').classList.add('hidden'); 
+  }
+
+  function confirmCrop() { 
+    if (!cropperInstance) return; 
+    let quality = 0.8;
+    // 取得降檔轉換的 Base64 格式
+    let base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1000, maxHeight: 1000 }).toDataURL('image/webp', quality); 
+    
+    // 若像素仍然過大則自動調降畫質，確保不超過 GAS 的限制
+    while (base64.length > 40000 && quality > 0.1) {
+       quality -= 0.1;
+       base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1000, maxHeight: 1000 }).toDataURL('image/webp', quality);
+    }
+    if (base64.length > 49000) {
+       return showToast("圖片仍過大，請裁切更小的範圍", true);
+    }
+
+    cancelCrop(); 
+
+    if (currentCropTarget === 'reg') {
+      // 註冊名片流程
+      regCompressedBase64 = base64;
+      recognizeAndSaveRegCard();
+    } else {
+      // 活動圖上傳流程 (quick, detailed, batch)
+      const modeId = currentCropTarget === 'detailed' ? 'create' : currentCropTarget; // detailed 對應的 ID 是 create
+      document.getElementById(`image-preview-${modeId}`).src = base64; 
+      document.getElementById(`image-preview-${modeId}`).classList.remove('hidden'); 
+      document.getElementById(`preview-placeholder-${modeId}`).classList.add('hidden'); 
+      document.getElementById(`in-image-url-${modeId}`).value = base64; 
+      showToast("圖片裁切成功");
+    }
+  }
 
   async function recognizeAndSaveRegCard() {
     showToast("AI 辨識中...", false); document.getElementById('reg-step-2').classList.add('pointer-events-none', 'opacity-50');
@@ -870,10 +938,10 @@
             </p>
             <h3 class="text-[14px] font-bold text-slate-800 leading-snug line-clamp-2 mb-3 flex-1">${a.name}</h3>
             <div class="flex gap-2 mt-auto">
-              <button onclick="event.stopPropagation(); openActivityDetailByName('${safeName}')" class="flex-[1] py-2 bg-white text-slate-600 rounded-lg font-bold text-[12px] hover:bg-slate-50 transition-colors flex items-center justify-center border border-slate-300 shadow-sm">
+              <button class="flex-[1] py-2 bg-white text-slate-600 rounded-lg font-bold text-[12px] transition-colors flex items-center justify-center border border-slate-300 shadow-sm">
                 說明
               </button>
-              <button onclick="event.stopPropagation(); userJoinActivity(this, '${safeName}', '${a.feeType}', '${a.price}')" class="flex-[1.5] py-2 bg-primary text-white rounded-lg font-bold text-[12px] hover:bg-blue-700 transition-colors flex items-center justify-center shadow-sm">
+              <button class="flex-[1.5] py-2 bg-primary text-white rounded-lg font-bold text-[12px] transition-colors flex items-center justify-center shadow-sm">
                 報名
               </button>
             </div>
@@ -937,10 +1005,48 @@
 
     document.getElementById('detail-modal-desc').innerText = act.description || '主辦單位尚未提供說明。';
 
+    // ⭐ 梯次選擇功能處理
+    let batches = [];
+    try { 
+        if (act.batches) batches = typeof act.batches === 'string' ? JSON.parse(act.batches) : act.batches; 
+    } catch(e) {}
+    
+    const batchContainer = document.getElementById('detail-modal-batch-container');
+    const batchSelect = document.getElementById('detail-modal-batch-select');
+    
+    if (act.isBatch || batches.length > 0) {
+        batchSelect.innerHTML = batches.map(b => {
+            const tStr = b.startTime ? formatTimeShort(b.startTime) : '時間未定';
+            const pStr = (b.price && b.price > 0) ? ` - NT$${b.price}` : ' - 免費';
+            return `<option value="${b.name}" data-price="${b.price || 0}">${b.name} (${tStr}${pStr})</option>`;
+        }).join('');
+        batchContainer.classList.remove('hidden');
+    } else {
+        batchContainer.classList.add('hidden');
+    }
+
     const joinBtn = document.getElementById('detail-modal-join-btn');
     joinBtn.onclick = async function() {
+      let selectedBatchName = null;
+      let finalFeeType = act.feeType;
+      let finalPrice = act.price;
+
+      if ((act.isBatch || batches.length > 0) && !batchContainer.classList.contains('hidden')) {
+          selectedBatchName = batchSelect.value;
+          const selectedOption = batchSelect.options[batchSelect.selectedIndex];
+          const bPrice = parseInt(selectedOption.dataset.price || 0);
+          if (bPrice > 0) {
+              finalFeeType = '收費';
+              finalPrice = bPrice;
+          } else {
+              finalFeeType = '免費';
+              finalPrice = 0;
+          }
+      }
+
       closeActivityDetail(); 
-      await userJoinActivity(this, act.name, act.feeType, act.price);
+      // 傳遞梯次參數給 userJoinActivity
+      await userJoinActivity(this, act.name, finalFeeType, finalPrice, selectedBatchName);
     };
 
     document.getElementById('activity-detail-modal').classList.remove('hidden');
@@ -950,15 +1056,23 @@
     document.getElementById('activity-detail-modal').classList.add('hidden');
   }
 
-  async function userJoinActivity(btn, name, feeType, price) {
+  // ⭐ 報名加入時若有梯次會傳入 batchName
+  async function userJoinActivity(btn, name, feeType, price, batchName = null) {
     if (isProcessing) return;
-    if (!confirm(`確定報名「${name}」？`)) return;
+    
+    const confirmMsg = batchName ? `確定報名「${name} - ${batchName}」？` : `確定報名「${name}」？`;
+    if (!confirm(confirmMsg)) return;
+
     isProcessing = true; 
     setButtonLoading('detail-modal-join-btn', true);
     try {
-      await fetchAPI('joinActivity', { userId: userProfile.userId, activityName: name });
+      // 若有選擇梯次，這裡把 batchName 也帶給後端 (後端若能接收可做處理，或直接合併於名稱)
+      let finalActivityName = batchName ? `${name} - ${batchName}` : name;
+      await fetchAPI('joinActivity', { userId: userProfile.userId, activityName: finalActivityName });
+      
       if (feeType === '收費') showModal("報名成功", `此為收費活動，請完成匯款 \nNT$ ${price} 後，至「報名紀錄」填寫後五碼。`, "history");
       else showModal("報名成功", `您已成功報名！期待現場見到您。`, "activities");
+      
       sessionStorage.removeItem('getUserHistory{"userId":"' + userProfile.userId + '"}');
     } catch(e) {
       console.error(e);
@@ -1286,7 +1400,7 @@
     const container = document.getElementById('batch-list-container');
     const id = Date.now() + Math.floor(Math.random() * 100);
     const html = `
-      <div id="batch-item-${id}" class="batch-row animate-in fade-in slide-in-from-top-2">
+      <div id="batch-item-${id}" class="py-4 border-b border-slate-100 relative animate-in fade-in slide-in-from-top-2">
         <div class="flex justify-between items-center mb-2">
           <span class="text-[13px] font-bold text-slate-500">活動細節</span>
           <div class="flex gap-4">
@@ -1311,7 +1425,7 @@
   function removeBatchItem(id) {
     const el = document.getElementById(`batch-item-${id}`);
     if (el) {
-      if (document.querySelectorAll('.batch-row').length <= 1) return showToast('系列活動至少需要一個梯次', true);
+      if (document.querySelectorAll('[id^="batch-item-"]').length <= 1) return showToast('系列活動至少需要一個梯次', true);
       el.remove();
     }
   }
@@ -1326,36 +1440,6 @@
       price: el.querySelector('.batch-price-input').value,
       limit: el.querySelector('.batch-limit-input').value
     });
-  }
-  
-  function previewFile(mode) { 
-    const f = document.getElementById(`file-input-${mode}`).files[0]; 
-    if(!f) return; 
-    showToast("壓縮中...", false);
-    const r = new FileReader(); 
-    r.onloadend = () => { 
-      const img = new Image(); 
-      img.onload = () => { 
-        let w = img.width, h = img.height, max = 500; 
-        if(w > max){h=Math.round(h*(max/w)); w=max;} 
-        const cvs = document.createElement('canvas'); cvs.width=w; cvs.height=h; 
-        const ctx=cvs.getContext('2d'); ctx.fillStyle='#FFF'; ctx.fillRect(0,0,w,h); ctx.drawImage(img,0,0,w,h); 
-        
-        let quality = 0.8;
-        let b64=cvs.toDataURL('image/webp', quality); 
-        
-        while (b64.length > 40000 && quality > 0.1) { quality -= 0.1; b64 = cvs.toDataURL('image/webp', quality); }
-        if (b64.length > 49000) return showToast("圖片過大", true);
-        
-        document.getElementById(`image-preview-${mode}`).src=b64; 
-        document.getElementById(`image-preview-${mode}`).classList.remove('hidden'); 
-        document.getElementById(`preview-placeholder-${mode}`).classList.add('hidden'); 
-        document.getElementById(`in-image-url-${mode}`).value=b64; 
-        showToast("完成");
-      }; 
-      img.src=r.result; 
-    }; 
-    r.readAsDataURL(f); 
   }
 
   async function handleCreateActivity(mode) { 
@@ -1415,7 +1499,7 @@
         p.isBatch = true;
         p.batches = [];
 
-        const rows = document.querySelectorAll('.batch-row');
+        const rows = document.querySelectorAll('[id^="batch-item-"]');
         rows.forEach(row => {
           p.batches.push({
             name: row.querySelector('.batch-name-input').value.trim(),

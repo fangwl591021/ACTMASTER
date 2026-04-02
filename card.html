@@ -1,4 +1,4 @@
-<!-- Version: v1.3.0 (UI 與邏輯分離 - 引入外部 card.js) -->
+<!-- Version: v1.4.0 (UI 與邏輯分離 - 支援動態影片版數位名片) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -175,7 +175,7 @@
       <div id="section-form" class="hidden space-y-6">
         <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-5">
           <div class="mb-5 rounded border border-slate-300 overflow-hidden bg-slate-50 flex items-center justify-center min-h-[150px]">
-            <img id="preview-image" src="" class="w-full h-auto object-contain max-h-[200px]">
+            <img id="process-preview-image" src="" class="w-full h-auto object-contain max-h-[200px]">
           </div>
 
           <div class="space-y-4">
@@ -221,7 +221,7 @@
     <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">fact_check</span></div><span class="text-[10px] font-bold mt-0.5">核銷</span></button>
     <button onclick="window.location.href='index.html?view=admin-create'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">add_circle</span></div><span class="text-[10px] font-bold mt-0.5">建立</span></button>
     <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">groups</span></div><span class="text-[10px] font-bold mt-0.5">CRM</span></button>
-    <button onclick="window.location.href='fate.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">psychology</span></div><span class="text-[10px] font-bold mt-0.5">配對</span></button>
+    <button onclick="window.location.href='fate.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px] text-slate-400">psychology</span></div><span class="text-[10px] font-bold mt-0.5 text-slate-400">配對</span></button>
     <button onclick="window.location.href='card.html'" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">recent_patient</span></div><span class="text-[10px] font-bold mt-0.5">名片</span></button>
     <button onclick="window.location.href='index.html?view=admin-settings'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">settings</span></div><span class="text-[10px] font-bold mt-0.5">參數</span></button>
   </nav>
@@ -310,7 +310,7 @@
   </div>
 </div>
 
-<!-- ⭐ 數位電子名片產生器 (原生扁平風格) -->
+<!-- ⭐ 數位電子名片產生器 (整合圖片與影片版切換) -->
 <div id="ecard-generator-modal" class="hidden fixed inset-0 bg-white flex flex-col animate-in fade-in duration-300 w-full z-[1020] overflow-hidden">
   
   <!-- 頂部 Navbar -->
@@ -337,11 +337,25 @@
           <div class="bg-white px-5 py-6">
             
             <div id="ec-editor-form" class="space-y-6">
+
+              <!-- 名片類型切換 -->
+              <div class="flex p-1 rounded-lg border border-slate-200 bg-slate-100 mb-6">
+                <button id="ec-tab-image" onclick="toggleECardType('image')" class="flex-1 py-2 rounded-md text-[14px] font-bold bg-white text-primary shadow-sm transition-all">靜態圖片版</button>
+                <button id="ec-tab-video" onclick="toggleECardType('video')" class="flex-1 py-2 rounded-md text-[14px] font-bold text-slate-500 transition-all hover:text-slate-700">動態影片版</button>
+              </div>
+              <input type="hidden" id="ec-card-type" value="image">
+
+              <!-- 影片網址 (動態顯示) -->
+              <div id="ec-video-input-group" class="hidden w-full mb-6 pb-6 border-b border-slate-100">
+                <label class="input-label">影片網址 (MP4 格式)</label>
+                <input type="url" id="ec-video-url" class="custom-input text-blue-600" placeholder="https://.../*.mp4" oninput="updateECardPreview()">
+                <p class="text-[12px] text-slate-500 mt-1.5">※ 必須是有效且直連的 HTTPS MP4 網址，LINE 才能自動播放。</p>
+              </div>
               
-              <!-- 圖片設定：虛線框直觀上傳 -->
+              <!-- 圖片設定：虛線框直觀上傳 (影片模式下視為預覽封面縮圖) -->
               <div class="w-full">
                 <div class="flex justify-between items-center mb-1.5">
-                  <label class="input-label !mb-0 flex items-center">點擊圖片變更 <span class="ml-1.5 px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[11px] font-medium">選填</span></label>
+                  <label class="input-label !mb-0 flex items-center" id="ec-upload-label">點擊更換封面圖 <span class="ml-1.5 px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[11px] font-medium">選填</span></label>
                   <div class="relative inline-block">
                     <select id="ec-img-size" class="appearance-none !bg-transparent text-blue-600 font-bold text-[15px] pr-5 outline-none border-none cursor-pointer focus:ring-0" onchange="updateECardPreview()">
                       <option value="mega" selected>Mega 滿版</option>
@@ -350,6 +364,7 @@
                     <span class="material-symbols-outlined absolute right-0 top-1/2 -translate-y-1/2 text-blue-600 pointer-events-none text-[18px]">expand_more</span>
                   </div>
                 </div>
+                <p class="text-[12px] text-slate-500 mb-2" id="ec-upload-hint">※ 若未上傳，系統將智能代入您原先的名片圖檔作為底圖。</p>
                 <div class="w-full relative mt-1">
                     <div id="ec-upload-trigger" onclick="document.getElementById('ec-upload-input').click()" class="w-full h-40 border border-slate-300 rounded flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-colors hover:bg-slate-100 group relative">
                         <div class="text-center text-slate-400 flex flex-col items-center z-10" id="ec-upload-placeholder">
@@ -390,7 +405,7 @@
                 <textarea id="ec-desc-input" class="textarea-block h-28" placeholder="輸入描述或介紹..." oninput="updateECardPreview()"></textarea>
               </div>
 
-              <div class="w-full">
+              <div class="w-full" id="ec-action-url-group">
                 <label class="input-label">點圖預設連結 <span class="text-slate-400 text-[13px]">(點選大圖的跳轉網址)</span></label>
                 <input type="text" id="ec-img-action-url" class="custom-input text-blue-600" value="https://liff.line.me/2009367829-DLtYBDUm" oninput="updateECardPreview()">
               </div>
@@ -472,15 +487,23 @@
                       <div class="flex flex-col gap-1.5 max-w-[88%] w-full">
                           <div class="bg-white px-3.5 py-2 rounded-2xl rounded-tl-sm text-[13px] text-slate-800 shadow-sm w-fit font-medium">為您準備的數位名片！</div>
                           
-                          <div class="flex-preview-bubble" id="preview-ec-bubble">
-                              <img id="preview-ec-img" src="" class="flex-preview-img h-40 hidden">
-                              <div class="flex-badge" id="preview-ec-badge">分享</div>
-                              <div class="p-3.5 text-center bg-white">
-                                  <h2 id="preview-ec-title" class="text-[17px] font-black text-slate-800 leading-tight mb-1.5"></h2>
+                          <!-- 預覽泡泡 -->
+                          <div class="flex-preview-bubble flex flex-col" id="preview-ec-bubble">
+                              <div id="preview-ec-hero" class="relative w-full overflow-hidden bg-slate-100 shrink-0 flex items-center justify-center">
+                                  <img id="preview-ec-img" src="" class="absolute inset-0 w-full h-full object-cover z-0 hidden">
+                                  <video id="preview-ec-video" muted loop playsinline class="absolute inset-0 w-full h-full object-cover z-10 hidden"></video>
+                                  <div id="preview-ec-play-icon" class="absolute inset-0 z-20 flex items-center justify-center text-white/80 hidden pointer-events-none">
+                                      <span class="material-symbols-outlined text-[48px] drop-shadow-md">play_circle</span>
+                                  </div>
+                              </div>
+                              <div class="p-3.5 text-center bg-white relative">
+                                  <div id="preview-ec-badge" class="absolute right-3.5 top-3.5 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full z-10 shadow-sm">分享</div>
+                                  <h2 id="preview-ec-title" class="text-[17px] font-black text-slate-800 leading-tight mb-1.5 pr-10"></h2>
                                   <p id="preview-ec-desc" class="text-[12px] text-slate-500 whitespace-pre-wrap leading-relaxed text-left"></p>
                               </div>
                               <div id="preview-ec-buttons" class="p-3.5 pt-0 bg-white space-y-2"></div>
                           </div>
+
                       </div>
                   </div>
                   <div class="h-4"></div>

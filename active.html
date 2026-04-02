@@ -1,4 +1,4 @@
-<!-- Version: v1.3.1 (修復底部導覽列太淡與過細的 CSS 權重問題) -->
+<!-- Version: v1.4.0 (完美還原版：修復圖片上傳遺失、完整裁切邏輯與獨立運作環境) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -54,7 +54,6 @@
 
     .batch-card { @apply bg-white border border-slate-200 rounded-xl p-4 mb-4 relative shadow-sm; }
 
-    /* ⭐ 修正底部導航列：恢復標準 400 粗細與 slate-500 原生灰色 */
     .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-slate-500 h-full; min-width: 48px;}
     .nav-btn .icon-box { @apply flex items-center justify-center mb-0.5; }
     .nav-btn .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400; font-size: 24px; }
@@ -64,6 +63,11 @@
 
     .refresh-spin { animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    /* 裁切器樣式 */
+    .cropper-view-box, .cropper-face { border-radius: 4px; }
+    .cropper-line { background-color: #2563eb; opacity: 0.5; }
+    .cropper-point { background-color: #2563eb; }
   </style>
 </head>
 <body class="font-sans min-h-screen flex flex-col items-center">
@@ -79,9 +83,7 @@
       <span class="bg-slate-800 text-white text-[9px] px-2 py-0.5 rounded uppercase font-bold ml-1">Admin</span>
     </div>
     <div class="flex items-center gap-3">
-      <div id="user-profile-badge" class="hidden flex items-center gap-2">
-        <img id="user-avatar" src="" class="w-8 h-8 rounded-full object-cover border border-slate-200 shadow-sm">
-      </div>
+      <img id="user-avatar" src="" class="w-8 h-8 rounded-full object-cover border border-slate-200 shadow-sm hidden">
     </div>
   </nav>
 
@@ -103,7 +105,7 @@
         <button onclick="toggleCreateMode('batch')" id="tab-batch" class="tab-btn">系列梯次</button>
       </div>
       
-      <!-- 1. 快速模式 -->
+      <!-- ================= 1. 快速模式 ================= -->
       <div id="form-quick" class="space-y-5 animate-in fade-in">
         <div class="flex flex-col"><label class="input-label">活動名稱</label><input type="text" id="quick-name" class="custom-input" placeholder="例如：2026 商務交流會"></div>
         <div class="grid grid-cols-2 gap-4">
@@ -111,10 +113,22 @@
           <div><label class="input-label">預設身份</label><select id="quick-identity" class="custom-input cursor-pointer"><option>會員</option><option>來賓</option></select></div>
         </div>
         <div class="flex flex-col"><label class="input-label">名單內容 (每行一位)</label><textarea id="quick-names" class="custom-input h-36 resize-none" placeholder="王小明&#10;李小華"></textarea></div>
+        
+        <!-- 還原：快速模式圖片上傳 -->
+        <div class="flex flex-col mt-2">
+          <label class="input-label">活動宣傳圖 <span class="text-[12px] text-slate-400 ml-1">(選填)</span></label>
+          <div onclick="document.getElementById('file-input-quick').click()" class="w-full h-36 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-all hover:bg-slate-100 relative group">
+            <div id="preview-placeholder-quick" class="text-center text-slate-400 flex flex-col items-center"><span class="material-symbols-outlined text-3xl mb-1">add_photo_alternate</span><p class="text-[12px] font-bold">點擊上傳圖片</p></div>
+            <img id="image-preview-quick" class="hidden w-full h-full object-cover absolute inset-0">
+            <input type="file" id="file-input-quick" class="hidden" accept="image/*" onchange="openCropper(this, 'quick')">
+          </div>
+          <input type="hidden" id="in-image-url-quick">
+        </div>
+
         <button onclick="handleCreateActivity('quick')" id="btn-quick-create" class="btn-primary mt-2">建立並發布</button>
       </div>
       
-      <!-- 2. 完整模式 -->
+      <!-- ================= 2. 完整模式 ================= -->
       <div id="form-detailed" class="hidden space-y-5 animate-in fade-in">
          <div class="flex flex-col"><label class="input-label">活動標題</label><input type="text" id="detail-name" class="custom-input" placeholder="輸入標題"></div>
          <div class="grid grid-cols-2 gap-4">
@@ -130,10 +144,22 @@
          </div>
          <div class="flex flex-col"><input type="number" id="detail-price" class="custom-input hidden h-[46px]" placeholder="金額 (NT$)"></div>
          <div class="flex flex-col"><label class="input-label">活動說明</label><textarea id="detail-desc" class="custom-input h-32 resize-none" placeholder="詳細內容..."></textarea></div>
+
+         <!-- 還原：完整模式圖片上傳 -->
+         <div class="flex flex-col mt-2">
+           <label class="input-label">宣傳大圖</label>
+           <div onclick="document.getElementById('file-input-detailed').click()" class="w-full h-36 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-all hover:bg-slate-100 relative group">
+             <div id="preview-placeholder-detailed" class="text-center text-slate-400 flex flex-col items-center"><span class="material-symbols-outlined text-3xl mb-1">add_photo_alternate</span><p class="text-[12px] font-bold">點擊上傳圖片</p></div>
+             <img id="image-preview-detailed" class="hidden w-full h-full object-cover absolute inset-0">
+             <input type="file" id="file-input-detailed" class="hidden" accept="image/*" onchange="openCropper(this, 'detailed')">
+           </div>
+           <input type="hidden" id="in-image-url-detailed">
+         </div>
+
          <button onclick="handleCreateActivity('detailed')" id="btn-detailed-create" class="btn-primary mt-4">發布單場活動</button>
       </div>
 
-      <!-- 3. 系列梯次模式 -->
+      <!-- ================= 3. 系列梯次模式 ================= -->
       <div id="form-batch" class="hidden space-y-5 animate-in fade-in">
         <div class="flex flex-col"><label class="input-label">主系列標題</label><input type="text" id="batch-name" class="custom-input" placeholder="例如：2026 AI 應用實戰班"></div>
         <div class="grid grid-cols-2 gap-4">
@@ -141,6 +167,17 @@
           <div><label class="input-label">預設身份</label><select id="batch-identity" class="custom-input cursor-pointer"><option>會員</option><option>來賓</option></select></div>
         </div>
         <div class="flex flex-col"><label class="input-label">系列共同說明</label><textarea id="batch-desc" class="custom-input h-24 resize-none" placeholder="輸入此系列活動的統整說明..."></textarea></div>
+
+        <!-- 還原：梯次模式圖片上傳 -->
+        <div class="flex flex-col mt-2">
+          <label class="input-label">宣傳大圖 <span class="text-[12px] text-slate-400 ml-1">(系列共用)</span></label>
+          <div onclick="document.getElementById('file-input-batch').click()" class="w-full h-36 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-all hover:bg-slate-100 relative group">
+            <div id="preview-placeholder-batch" class="text-center text-slate-400 flex flex-col items-center"><span class="material-symbols-outlined text-3xl mb-1">add_photo_alternate</span><p class="text-[12px] font-bold">點擊上傳圖片</p></div>
+            <img id="image-preview-batch" class="hidden w-full h-full object-cover absolute inset-0">
+            <input type="file" id="file-input-batch" class="hidden" accept="image/*" onchange="openCropper(this, 'batch')">
+          </div>
+          <input type="hidden" id="in-image-url-batch">
+        </div>
 
         <div class="pt-2">
           <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-2">
@@ -160,17 +197,32 @@
     </div>
   </main>
 
-  <!-- 底部導航 Admin：注意建立按鈕是 Active，其他按鈕跳回 index.html -->
+  <!-- 底部導航 Admin：完全同步 index.html 外觀，點擊對應按鈕進行跳轉 -->
   <nav id="bottom-nav-admin" class="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-100 flex justify-evenly items-center h-[72px] pb-safe left-1/2 -translate-x-1/2 z-40 hidden">
     <button onclick="window.location.href='active.html'" class="nav-btn nav-active-btn" id="nav-admin-create"><div class="icon-box"><span class="material-symbols-outlined">add_circle</span></div><span class="text-[10px] font-bold mt-0.5">建立</span></button>
-    <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn" id="nav-admin-activities"><div class="icon-box"><span class="material-symbols-outlined">fact_check</span></div><span class="text-[10px] font-normal mt-0.5">核銷</span></button>
-    <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn" id="nav-admin-crm"><div class="icon-box"><span class="material-symbols-outlined">groups</span></div><span class="text-[10px] font-normal mt-0.5">CRM</span></button>
-    <button onclick="window.location.href='fate.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined">psychology</span></div><span class="text-[10px] font-normal mt-0.5">配對</span></button>
-    <button onclick="window.location.href='card.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined">recent_patient</span></div><span class="text-[10px] font-normal mt-0.5">名片</span></button>
-    <button onclick="window.location.href='index.html?view=admin-settings'" class="nav-btn" id="nav-admin-settings"><div class="icon-box"><span class="material-symbols-outlined">settings</span></div><span class="text-[10px] font-normal mt-0.5">參數</span></button>
+    <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn" id="nav-admin-activities"><div class="icon-box"><span class="material-symbols-outlined">fact_check</span></div><span class="text-[10px] mt-0.5">核銷</span></button>
+    <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn" id="nav-admin-crm"><div class="icon-box"><span class="material-symbols-outlined">groups</span></div><span class="text-[10px] mt-0.5">CRM</span></button>
+    <button onclick="window.location.href='fate.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined">psychology</span></div><span class="text-[10px] mt-0.5">配對</span></button>
+    <button onclick="window.location.href='card.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined">recent_patient</span></div><span class="text-[10px] mt-0.5">名片</span></button>
+    <button onclick="window.location.href='index.html?view=admin-settings'" class="nav-btn" id="nav-admin-settings"><div class="icon-box"><span class="material-symbols-outlined">settings</span></div><span class="text-[10px] mt-0.5">參數</span></button>
   </nav>
 
 </div>
+
+<!-- 共同圖片裁切 Modal -->
+<div id="section-image-cropper" class="hidden fixed inset-0 bg-slate-900 flex flex-col animate-in fade-in duration-200 w-full max-w-md mx-auto z-[1080]">
+  <div class="flex justify-between items-center p-4 bg-slate-900 text-white shrink-0 border-b border-slate-800 shadow-sm">
+    <button onclick="cancelCrop()" class="text-slate-400 font-normal text-sm px-3 py-2 active:scale-90 transition-transform">取消</button>
+    <span class="font-normal text-[15px] tracking-wider flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px]">crop</span> 裁切圖片</span>
+    <button onclick="confirmCrop()" class="px-4 py-1.5 font-bold text-white bg-primary rounded-md text-sm active:scale-95 transition-transform shadow-md">完成</button>
+  </div>
+  <div class="flex-1 relative overflow-hidden flex items-center justify-center bg-black">
+    <img id="cropper-image" src="" class="max-w-full max-h-full block opacity-0 transition-opacity duration-300">
+  </div>
+</div>
+
+<!-- 系統 Toast 通知 -->
+<div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-normal flex items-center gap-2 w-max max-w-[90vw] opacity-0 pointer-events-none bg-slate-800 text-white"></div>
 
 <script>
   const LIFF_ID = "2009367829-DLtYBDUm"; 
@@ -178,32 +230,140 @@
   const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55", "U8932b891ad24da512afb9c1a6f41567b"]; 
 
   let userProfile = null, isProcessing = false;
+  let cropperInstance = null;
+  let currentCropTarget = '';
 
   document.addEventListener("DOMContentLoaded", async () => {
     try {
       await liff.init({ liffId: LIFF_ID });
       if (!liff.isLoggedIn()) { liff.login({ redirectUri: window.location.href }); return; }
       userProfile = await liff.getProfile();
-      document.getElementById('user-avatar').src = userProfile.pictureUrl || '';
+      
+      const avatarEl = document.getElementById('user-avatar');
+      if (avatarEl) {
+        avatarEl.src = userProfile.pictureUrl || '';
+        avatarEl.classList.remove('hidden');
+      }
       
       const isAdminUser = ADMIN_IDS.includes(userProfile.userId);
       document.getElementById('view-loading').classList.add('hidden');
       
       if (isAdminUser) {
-        document.getElementById('user-profile-badge').classList.remove('hidden');
         document.getElementById('view-admin-create').classList.remove('hidden');
         document.getElementById('bottom-nav-admin').classList.remove('hidden');
         
-        // 初始化第一個梯次
         if(document.getElementById('batch-list-container').children.length === 0) addBatchItem();
       } else {
-        // 如果不是管理員，強制踢回首頁
         window.location.href = 'index.html';
       }
     } catch (err) { 
-      alert("初始化失敗：" + err.message);
+      showToast("初始化失敗：" + err.message, true);
     }
   });
+
+  // UI 工具函式
+  function showToast(m, e=false) { 
+    const t = document.getElementById('toast'); if(!t) return; 
+    t.innerHTML = `<span class="material-symbols-outlined icon-filled">${e?'error':'check_circle'}</span>` + m; 
+    t.className = `fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-normal transform translate-y-0 opacity-100 ${e ? 'bg-red-500 text-white border-red-600' : 'bg-slate-800 text-white border-slate-700'} flex items-center gap-2 w-max max-w-[90vw]`; 
+    t.classList.remove('hidden');
+    setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -1rem)'; setTimeout(() => t.classList.add('hidden'), 300); }, 3000); 
+  }
+
+  function setButtonLoading(btnId, isLoading, originalText = '') {
+      const btn = document.getElementById(btnId);
+      if (!btn) return false;
+      if (isLoading) {
+          if (!btn.dataset.oriText) btn.dataset.oriText = btn.innerHTML;
+          btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[18px] align-middle">refresh</span> 處理中...';
+          btn.classList.add('opacity-50', 'pointer-events-none');
+          return true;
+      } else {
+          btn.innerHTML = originalText || btn.dataset.oriText || '送出';
+          btn.classList.remove('opacity-50', 'pointer-events-none');
+          return false;
+      }
+  }
+
+  // 動態載入 Cropper.js
+  const loadScript = (src) => new Promise((res, rej) => {
+    if (document.querySelector(`script[src="${src}"]`)) return res();
+    const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s);
+  });
+  const loadCSS = (href) => new Promise((res, rej) => {
+    if (document.querySelector(`link[href="${href}"]`)) return res();
+    const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; l.onload = res; l.onerror = rej; document.head.appendChild(l);
+  });
+
+  // 圖片裁切邏輯
+  async function openCropper(input, targetMode) {
+    const file = input.files[0]; if (!file) return;
+    currentCropTarget = targetMode;
+
+    if (!window.Cropper) {
+       showToast("載入影像模組中...", false);
+       await loadCSS("https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css");
+       await loadScript("https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js");
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = document.getElementById('cropper-image'); 
+      img.src = e.target.result; 
+      img.style.opacity = '0';
+      document.getElementById('section-image-cropper').classList.remove('hidden');
+      if (cropperInstance) cropperInstance.destroy();
+      
+      // 固定 4:3 比例
+      setTimeout(() => { 
+        img.style.opacity = '1'; 
+        cropperInstance = new Cropper(img, { 
+          aspectRatio: 4 / 3,
+          viewMode: 1, 
+          dragMode: 'move', 
+          autoCropArea: 0.9, 
+          guides: true, 
+          center: true, 
+          highlight: false 
+        }); 
+      }, 100);
+    }; 
+    reader.readAsDataURL(file); 
+    input.value = ""; 
+  }
+
+  function cancelCrop() { 
+    if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; } 
+    document.getElementById('section-image-cropper').classList.add('hidden'); 
+  }
+
+  function confirmCrop() { 
+    if (!cropperInstance) return; 
+    let quality = 0.8;
+    let base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1000, maxHeight: 1000 }).toDataURL('image/webp', quality); 
+    
+    while (base64.length > 40000 && quality > 0.1) {
+       quality -= 0.1;
+       base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1000, maxHeight: 1000 }).toDataURL('image/webp', quality);
+    }
+    if (base64.length > 49000) {
+       return showToast("圖片仍過大，請裁切更小的範圍", true);
+    }
+
+    cancelCrop(); 
+
+    const modeId = currentCropTarget;
+    const previewImg = document.getElementById(`image-preview-${modeId}`);
+    const placeholder = document.getElementById(`preview-placeholder-${modeId}`);
+    const urlInput = document.getElementById(`in-image-url-${modeId}`);
+
+    if(previewImg && placeholder && urlInput) {
+        previewImg.src = base64; 
+        previewImg.classList.remove('hidden'); 
+        placeholder.classList.add('hidden'); 
+        urlInput.value = base64; 
+        showToast("✅ 圖片設定成功");
+    }
+  }
 
   // 切換建立模式
   function toggleCreateMode(m) { 
@@ -253,7 +413,7 @@
   function removeBatchItem(id) {
     const el = document.getElementById(`batch-item-${id}`);
     if (el) {
-      if (document.querySelectorAll('[id^="batch-item-"]').length <= 1) return alert('系列活動至少需要一個梯次');
+      if (document.querySelectorAll('[id^="batch-item-"]').length <= 1) return showToast('⚠️ 系列活動至少需要一個梯次', true);
       el.remove();
     }
   }
@@ -270,18 +430,22 @@
     });
   }
 
-  // 提交活動建立
+  // 提交活動建立 API
   async function handleCreateActivity(mode) { 
     if(isProcessing) return; 
-    const name = document.getElementById(mode === 'batch' ? 'batch-name' : (mode === 'quick' ? 'quick-name' : 'detail-name')).value.trim();
-    if(!name) return alert('請填寫活動名稱');
+    const nameInput = document.getElementById(mode === 'batch' ? 'batch-name' : (mode === 'quick' ? 'quick-name' : 'detail-name'));
+    const name = nameInput ? nameInput.value.trim() : '';
+    
+    if(!name) {
+      showToast('⚠️ 請填寫活動名稱', true);
+      return nameInput?.focus();
+    }
 
     isProcessing = true;
     const btnId = `btn-${mode}-create`;
     const btn = document.getElementById(btnId);
     const oriText = btn.innerHTML;
-    btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[18px] align-middle">refresh</span> 處理中...';
-    btn.disabled = true;
+    setButtonLoading(btnId, true);
 
     let p = { 
       activityName: name,
@@ -302,19 +466,22 @@
       p.names = document.getElementById('quick-names').value.split('\n').filter(n=>n.trim()); 
       p.activityType = document.getElementById('quick-type').value;
       p.defaultIdentity = document.getElementById('quick-identity').value;
+      p.imageUrl = document.getElementById('in-image-url-quick') ? document.getElementById('in-image-url-quick').value : '';
     } else if(mode==='detailed') {
-      p.activityType = document.getElementById('detail-type').value;
-      p.defaultIdentity = document.getElementById('detail-identity').value;
+      p.activityType = document.getElementById('detail-type') ? document.getElementById('detail-type').value : '例會';
+      p.defaultIdentity = document.getElementById('detail-identity') ? document.getElementById('detail-identity').value : '來賓';
       const feeRadio = document.querySelector('input[name="fee-type"]:checked');
       p.feeType = feeRadio ? feeRadio.value : '免費'; 
-      p.price = document.getElementById('detail-price').value; 
+      p.price = document.getElementById('detail-price') ? document.getElementById('detail-price').value : ''; 
       p.startTime = document.getElementById('detail-start').value; 
       p.endTime = document.getElementById('detail-end').value; 
       p.description = document.getElementById('detail-desc').value;
+      p.imageUrl = document.getElementById('in-image-url-detailed') ? document.getElementById('in-image-url-detailed').value : '';
     } else if(mode==='batch') {
       p.activityType = document.getElementById('batch-type').value;
       p.defaultIdentity = document.getElementById('batch-identity').value;
       p.description = document.getElementById('batch-desc').value;
+      p.imageUrl = document.getElementById('in-image-url-batch') ? document.getElementById('in-image-url-batch').value : '';
       const cards = document.querySelectorAll('[id^="batch-item-"]');
       p.batches = Array.from(cards).map(card => ({
         name: card.querySelector('.batch-name-input').value.trim(),
@@ -323,6 +490,9 @@
         price: card.querySelector('.batch-price-input').value,
         limit: card.querySelector('.batch-limit-input').value
       }));
+
+      if(p.batches.length === 0) { isProcessing=false; setButtonLoading(btnId, false, oriText); return showToast("⚠️ 至少需新增一個梯次", true); }
+      for(let b of p.batches) { if(!b.name) { isProcessing=false; setButtonLoading(btnId, false, oriText); return showToast("⚠️ 梯次名稱必填", true); } }
 
       if(p.batches.length > 0) {
            p.startTime = p.batches[0].startTime;
@@ -344,15 +514,19 @@
       const res = await response.json();
       if (!res.success) throw new Error(res.error);
 
-      alert('✅ 活動建立成功！');
+      showToast('🎉 活動建立成功！即將跳轉...');
       
+      // 清除快取並跳轉
       sessionStorage.removeItem('getActivityDashboard{}');
-      window.location.href = 'index.html?view=admin-activities';
+      setTimeout(() => {
+        window.location.href = 'index.html?view=admin-activities';
+      }, 1500);
       
     } catch(e) { 
-      alert('建立失敗：' + e.message);
+      showToast('⚠️ 建立失敗：' + e.message, true);
       btn.innerHTML = oriText;
       btn.disabled = false;
+      btn.classList.remove('opacity-50', 'pointer-events-none');
       isProcessing = false;
     }
   }

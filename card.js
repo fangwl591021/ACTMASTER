@@ -2,7 +2,7 @@
  * card.js 
  * 名片管理中樞核心邏輯
  * 負責處理 API 請求、名片 OCR、裁切、數位電子名片 (Flex Message) 的生成與分享
- * Version: v1.3.1 (修復名片自動認領、電話 +886 轉譯、網址自動補全 https:// 與 tel:)
+ * Version: v1.3.2 (強化 OCR 多組號碼萃取、+886 國碼轉譯、網址自動補全 https://)
  */
 
 const LIFF_ID = "2009367829-DLtYBDUm"; 
@@ -39,15 +39,32 @@ function setButtonLoading(btnId, isLoading, originalText = '') {
     }
 }
 
-// ⭐ 修復 +886 國碼轉譯與空白處理
+// ⭐ 修復：強化 +886 國碼轉譯與多組號碼處理 (遇到多隻號碼時，精準只取第一組)
 function formatPhoneStr(val) {
   if (!val) return '';
-  let s = String(val).trim();
-  s = s.replace(/[^\d+]/g, ''); // 移除空格與連字號，保留數字與 +
+  let str = String(val).trim();
+
+  // 嘗試抓取字串中第一個看起來像電話號碼的區塊 (允許 + 號、數字、空白、連字號，長度至少 7 碼)
+  let matches = str.match(/(?:\+?\d[\d\-\s]{7,18}\d)/g);
+  
+  // 若有配對到多組 (如 +886... 和 +86...)，只取第一組最主要的
+  let targetStr = (matches && matches.length > 0) ? matches[0] : str;
+  
+  // 移除所有非數字與非加號的字元
+  let s = targetStr.replace(/[^\d+]/g, '');
+  
+  // 處理台灣國碼 +886 或 886 (886909... 長度會大於等於11)
   if (s.startsWith('+886')) s = '0' + s.substring(4);
-  if (s.startsWith('886')) s = '0' + s.substring(3);
-  if (/^9\d{8}$/.test(s)) return '0' + s;
-  if (/^[2-8]\d{7,8}$/.test(s)) return '0' + s;
+  else if (s.startsWith('886') && s.length >= 11) s = '0' + s.substring(3);
+  
+  // 處理使用者可能省略 0，直接輸入 9 開頭的台灣手機
+  if (/^9\d{8}$/.test(s)) s = '0' + s;
+  
+  // 防止極端情況下多組號碼黏在一起太長 (若為 09 開頭的手機，強制截斷取前 10 碼)
+  if (s.length > 10 && s.startsWith('09')) {
+      s = s.substring(0, 10);
+  }
+  
   return s;
 }
 
@@ -256,10 +273,18 @@ async function recognizeCardData() {
   try {
     const data = await fetchAPI('recognizeCard', { base64Image: compressedBase64 });
     const fields = ['Name', 'EnglishName', 'Title', 'Department', 'CompanyName', 'TaxID', 'Mobile', 'Tel', 'Ext', 'Fax', 'Address', 'Email', 'Website', 'SocialMedia', 'Slogan'];
+    
     fields.forEach(f => {
       const el = document.getElementById(`f-${f}`);
-      if(el) el.value = data[f] || '';
+      if(el) {
+          let val = data[f] || '';
+          // ⭐ 自動格式化電話與修復網址協議
+          if (f === 'Mobile' || f === 'Tel' || f === 'Fax') val = formatPhoneStr(val);
+          if (f === 'Website' && val && !val.startsWith('http') && val.includes('.')) val = 'https://' + val;
+          el.value = val;
+      }
     });
+
     currentFateTags = {
         Personality: data.Personality || '',
         Hobbies: data.Hobbies || '',
@@ -282,7 +307,6 @@ async function saveToCloud() {
   const payload = {
     base64Image: compressedBase64,
     Notes: document.getElementById('f-Notes').value,
-    // ⭐ 修復：管理員 OCR 建立名片時，不應該自動綁定為管理員的 userId，否則會變成已認領
     userId: '', 
     ...(currentFateTags || {})
   };
@@ -476,7 +500,6 @@ function openCardDetailByRowId(rowId) {
       document.getElementById('ro-company').innerText = [card['公司名稱']||card['CompanyName'], card['英文名/別名']||card['EnglishName']].filter(Boolean).join(' - ') || '未提供';
       document.getElementById('ro-taxid').innerText = card['統一編號'] || card['TaxID'] || '未提供';
       
-      // ⭐ 修復：確保有 tel:，並且如果是台灣號碼自動轉譯為 09 開頭
       const mobileLink = document.getElementById('ro-mobile-link');
       let phoneStr = card['手機號碼'] || card['Mobile'] ? formatPhoneStr(card['手機號碼'] || card['Mobile']) : '';
       mobileLink.innerText = phoneStr || '未提供';
@@ -579,6 +602,11 @@ async function shareClaimLink() {
 function openCardEdit() { 
     const c = currentActiveCard;
     if (!c) return;
+    
+    // ⭐ 在載入編輯表單時，同時做一次網址與電話的優化預先處理
+    let webStr = c['公司網址'] || c['Website'] || '';
+    if (webStr && !webStr.startsWith('http') && webStr.includes('.')) webStr = 'https://' + webStr;
+
     const fields = {
       'edit-c-Name': c['姓名'] || c['Name'] || '',
       'edit-c-EnglishName': c['英文名/別名'] || c['EnglishName'] || '',
@@ -592,7 +620,7 @@ function openCardEdit() {
       'edit-c-Fax': formatPhoneStr(c['傳真'] || c['Fax']) || '',
       'edit-c-Address': c['公司地址'] || c['Address'] || '',
       'edit-c-Email': c['電子郵件'] || c['Email'] || '',
-      'edit-c-Website': c['公司網址'] || c['Website'] || '',
+      'edit-c-Website': webStr,
       'edit-c-SocialMedia': c['社群帳號'] || c['SocialMedia'] || '',
       'edit-c-Slogan': c['服務項目/品牌標語'] || c['Slogan'] || '',
       'edit-c-Notes': c['建檔人/備註'] || c['Notes'] || ''
@@ -686,7 +714,6 @@ async function submitCardEdit() {
   }
 }
 
-// ⭐ 修復：產生數位名片時自動帶入正確格式 (自動補上 https:// 與 tel:)
 function buildFlexMessageFromCard(card, config, dynamicAr = null) {
   let imgUrl, imgActionUrl, imgSize, aspectMode, ar, title, desc, buttons = [];
   let titleAlign = config && config.titleAlign ? config.titleAlign : 'center';
@@ -736,7 +763,6 @@ function buildFlexMessageFromCard(card, config, dynamicAr = null) {
           buttons.push({ l: 'Google 導航', u: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(rawAddress.split(',')[0])}`, c: '#1e293b' });
       }
 
-      // 自動帶入網址 (補上 https://)
       const rawWebsite = card['公司網址'] || card['Website'];
       if (rawWebsite) {
           let wUrl = String(rawWebsite).trim();
@@ -777,7 +803,6 @@ function buildFlexMessageFromCard(card, config, dynamicAr = null) {
   return flexContents;
 }
 
-// ⭐ 修復：不要再把設定檔中的 url 自動削掉前綴，否則使用者不知道這是什麼格式
 function openECardGenerator() {
   if (!currentActiveCard) return;
   const c = currentActiveCard;
@@ -828,7 +853,6 @@ function openECardGenerator() {
     for(let i=1; i<=4; i++) {
       const btn = buttons[i-1];
       document.getElementById(`ec-btn${i}-label`).value = btn ? btn.action.label : '';
-      // ⭐ 不再替除前綴，讓輸入框直接顯示 tel: 或 https://
       document.getElementById(`ec-btn${i}-url`).value = btn ? btn.action.uri : '';
       document.getElementById(`ec-btn${i}-color`).value = '#1e293b';
     }
@@ -910,31 +934,27 @@ function updateECardPreview() {
   }
 }
 
-// ⭐ 修復：強化網址防呆，自動補齊 https:// 以及 tel:，並修復 886
 function checkFormat(showAlert = false) {
   let errors = [];
   for (let i = 1; i <= 4; i++) {
       let urlInput = document.getElementById(`ec-btn${i}-url`);
       let url = urlInput.value.trim();
       if (url) {
-          // 如果全是數字或 + 號等，自動判定為電話
           if (/^[\d\-\+\s()]+$/.test(url) && !url.startsWith('tel:')) {
               let pureNum = url.replace(/[^\d+]/g, '');
               if (pureNum.startsWith('+886')) pureNum = '0' + pureNum.substring(4);
               if (pureNum.startsWith('886')) pureNum = '0' + pureNum.substring(3);
               if (pureNum) urlInput.value = 'tel:' + pureNum;
           } 
-          // 如果有 @ 但沒有 mailto 或 http，自動判定為信箱
           else if (url.includes('@') && !url.startsWith('mailto:') && !url.startsWith('http')) {
               urlInput.value = 'mailto:' + url.replace(/\s/g, '');
           } 
-          // 如果是網域，自動補上 https://
           else if (!url.startsWith('http') && !url.startsWith('tel:') && !url.startsWith('mailto:') && !url.startsWith('line:')) {
               if (url.includes('.')) {
                   urlInput.value = 'https://' + url.replace(/\s/g, '');
               }
           }
-          urlInput.value = urlInput.value.replace(/\s/g, ''); // 移除中間所有的空白
+          urlInput.value = urlInput.value.replace(/\s/g, ''); 
       }
   }
 

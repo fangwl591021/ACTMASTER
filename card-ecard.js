@@ -33,13 +33,12 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
     let titleAlign = config && config.titleAlign ? config.titleAlign : 'center';
     let rawImg = (config && config.imgUrl) ? config.imgUrl : (card && card['名片圖檔'] ? card['名片圖檔'] : '');
     
-    if (!rawImg || typeof rawImg !== 'string' || !rawImg.startsWith('http')) {
-        // 使用更穩定的 Unsplash 佔位圖，避免 aiwe.cc 產生 404
+    // ⭐ 防呆：遇到無圖檔就不會載入，直接使用預設圖
+    if (!rawImg || typeof rawImg !== 'string' || !rawImg.startsWith('http') || rawImg === '無圖檔' || rawImg === '圖片儲存失敗') {
         rawImg = 'https://images.unsplash.com/photo-1616628188550-808682f3926d?w=800&q=80'; 
     }
     imgUrl = window.getDirectImageUrl(rawImg);
     
-    // 如果是 global 從 card.js 來的話，會有 LIFF_ID，沒有的話給定預設
     const myLiffId = (typeof LIFF_ID !== 'undefined') ? LIFF_ID : '2009367829-DLtYBDUm';
 
     if (config) {
@@ -250,6 +249,7 @@ window.openECardGenerator = function() {
     }
     
     window.toggleECardType(document.getElementById('ec-card-type').value);
+    document.getElementById('preview-ec-img').removeAttribute('data-current-src');
     document.getElementById('ecard-generator-modal').classList.remove('hidden');
 }
   
@@ -263,7 +263,8 @@ window.updateECardPreview = function() {
     let rawUrl = document.getElementById('ec-img-input').value;
     if (!rawUrl) {
         rawUrl = (typeof currentActiveCard !== 'undefined' && currentActiveCard && currentActiveCard['名片圖檔']) ? currentActiveCard['名片圖檔'] : '';
-        if (!rawUrl || !rawUrl.startsWith('http')) {
+        // ⭐ 防呆：遇到無圖檔就不會載入，直接使用預設圖
+        if (!rawUrl || rawUrl === '無圖檔' || rawUrl === '圖片儲存失敗' || !rawUrl.startsWith('http')) {
             rawUrl = 'https://images.unsplash.com/photo-1616628188550-808682f3926d?w=800&q=80';
         }
     }
@@ -290,10 +291,12 @@ window.updateECardPreview = function() {
             videoEl.classList.remove('hidden');
             videoEl.play().catch(e => {});
         } else {
+            videoEl.src = '';
             videoEl.classList.add('hidden');
         }
         playIcon.classList.remove('hidden');
     } else {
+        videoEl.src = '';
         videoEl.classList.add('hidden');
         playIcon.classList.add('hidden');
     }
@@ -336,6 +339,7 @@ window.updateECardPreview = function() {
             imgEl.classList.remove('hidden');
             
             if (previewBox && placeholder) {
+                previewBox.src = '';
                 previewBox.classList.add('hidden');
                 placeholder.classList.remove('hidden');
             }

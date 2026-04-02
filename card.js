@@ -1,8 +1,7 @@
 /**
  * card.js 
  * 名片管理中樞核心邏輯
- * 負責處理 API 請求、名片 OCR、裁切、數位電子名片 (Flex Message) 的生成與分享
- * Version: v1.3.2 (強化 OCR 多組號碼萃取、+886 國碼轉譯、網址自動補全 https://)
+ * Version: v1.4.0 (支援動態影片版名片，整合 Smart Fallback 與 Flex Message 生成)
  */
 
 const LIFF_ID = "2009367829-DLtYBDUm"; 
@@ -39,32 +38,18 @@ function setButtonLoading(btnId, isLoading, originalText = '') {
     }
 }
 
-// ⭐ 修復：強化 +886 國碼轉譯與多組號碼處理 (遇到多隻號碼時，精準只取第一組)
 function formatPhoneStr(val) {
   if (!val) return '';
   let str = String(val).trim();
-
-  // 嘗試抓取字串中第一個看起來像電話號碼的區塊 (允許 + 號、數字、空白、連字號，長度至少 7 碼)
   let matches = str.match(/(?:\+?\d[\d\-\s]{7,18}\d)/g);
-  
-  // 若有配對到多組 (如 +886... 和 +86...)，只取第一組最主要的
   let targetStr = (matches && matches.length > 0) ? matches[0] : str;
-  
-  // 移除所有非數字與非加號的字元
   let s = targetStr.replace(/[^\d+]/g, '');
-  
-  // 處理台灣國碼 +886 或 886 (886909... 長度會大於等於11)
   if (s.startsWith('+886')) s = '0' + s.substring(4);
   else if (s.startsWith('886') && s.length >= 11) s = '0' + s.substring(3);
-  
-  // 處理使用者可能省略 0，直接輸入 9 開頭的台灣手機
   if (/^9\d{8}$/.test(s)) s = '0' + s;
-  
-  // 防止極端情況下多組號碼黏在一起太長 (若為 09 開頭的手機，強制截斷取前 10 碼)
   if (s.length > 10 && s.startsWith('09')) {
       s = s.substring(0, 10);
   }
-  
   return s;
 }
 
@@ -219,12 +204,8 @@ function openCropper(input, mode = 'card') {
       if (cropperInstance) cropperInstance.destroy();
       setTimeout(() => {
         img.style.opacity = '1';
-        
         cropperInstance = new Cropper(img, { 
-          viewMode: 1, 
-          dragMode: 'move', 
-          autoCropArea: 0.9, 
-          aspectRatio: NaN, 
+          viewMode: 1, dragMode: 'move', autoCropArea: 0.9, aspectRatio: NaN, 
           restore: false, guides: true, center: true, highlight: false, cropBoxMovable: true, cropBoxResizable: true, toggleDragModeOnDblclick: false 
         });
       }, 100);
@@ -278,7 +259,6 @@ async function recognizeCardData() {
       const el = document.getElementById(`f-${f}`);
       if(el) {
           let val = data[f] || '';
-          // ⭐ 自動格式化電話與修復網址協議
           if (f === 'Mobile' || f === 'Tel' || f === 'Fax') val = formatPhoneStr(val);
           if (f === 'Website' && val && !val.startsWith('http') && val.includes('.')) val = 'https://' + val;
           el.value = val;
@@ -603,7 +583,6 @@ function openCardEdit() {
     const c = currentActiveCard;
     if (!c) return;
     
-    // ⭐ 在載入編輯表單時，同時做一次網址與電話的優化預先處理
     let webStr = c['公司網址'] || c['Website'] || '';
     if (webStr && !webStr.startsWith('http') && webStr.includes('.')) webStr = 'https://' + webStr;
 
@@ -714,13 +693,38 @@ async function submitCardEdit() {
   }
 }
 
+// ⭐ 新增：切換圖片版與影片版名片
+window.toggleECardType = function(type) {
+  document.getElementById('ec-card-type').value = type;
+  const tabImg = document.getElementById('ec-tab-image');
+  const tabVid = document.getElementById('ec-tab-video');
+  const vidGroup = document.getElementById('ec-video-input-group');
+  
+  if (type === 'video') {
+    tabImg.className = 'flex-1 py-2 rounded-md text-[14px] font-bold text-slate-500 transition-all hover:text-slate-700';
+    tabVid.className = 'flex-1 py-2 rounded-md text-[14px] font-bold bg-white text-primary shadow-sm transition-all';
+    vidGroup.classList.remove('hidden');
+    document.getElementById('ec-upload-label').innerHTML = '點擊上傳封面圖縮圖 <span class="ml-1.5 px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[11px] font-medium">選填</span>';
+    document.getElementById('ec-upload-hint').innerText = '※ 影片必須有封面縮圖，若未上傳系統將自動代入名片圖或預設底圖。';
+  } else {
+    tabImg.className = 'flex-1 py-2 rounded-md text-[14px] font-bold bg-white text-primary shadow-sm transition-all';
+    tabVid.className = 'flex-1 py-2 rounded-md text-[14px] font-bold text-slate-500 transition-all hover:text-slate-700';
+    vidGroup.classList.add('hidden');
+    document.getElementById('ec-upload-label').innerHTML = '點擊圖片變更 <span class="ml-1.5 px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[11px] font-medium">選填</span>';
+    document.getElementById('ec-upload-hint').innerText = '※ 若未上傳，系統將智能代入您原先的名片圖檔作為底圖。';
+  }
+  updateECardPreview();
+};
+
 function buildFlexMessageFromCard(card, config, dynamicAr = null) {
   let imgUrl, imgActionUrl, imgSize, aspectMode, ar, title, desc, buttons = [];
+  let cardType = config && config.cardType ? config.cardType : 'image';
+  let videoUrl = config && config.videoUrl ? config.videoUrl : '';
   let titleAlign = config && config.titleAlign ? config.titleAlign : 'center';
   let rawImg = (config && config.imgUrl) ? config.imgUrl : (card && card['名片圖檔'] ? card['名片圖檔'] : '');
   
   if (!rawImg || typeof rawImg !== 'string' || !rawImg.startsWith('http')) {
-      rawImg = 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
+      rawImg = 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png'; // 系統預設墊檔圖
   }
   imgUrl = getDirectImageUrl(rawImg);
   
@@ -788,14 +792,42 @@ function buildFlexMessageFromCard(card, config, dynamicAr = null) {
 
   const badgeUrl = `https://liff.line.me/${LIFF_ID}?shareCardId=${card.rowId}`;
 
+  // ⭐ 動態構建 Hero 區塊 (支援影片與圖片)
+  let heroBlock;
+  if (cardType === 'video' && videoUrl && videoUrl.match(/^https:\/\//i)) {
+      heroBlock = {
+          "type": "video",
+          "url": videoUrl,
+          "previewUrl": imgUrl,
+          "altContent": {
+              "type": "image",
+              "size": "full",
+              "aspectRatio": ar,
+              "aspectMode": aspectMode,
+              "url": imgUrl
+          },
+          "aspectRatio": ar,
+          "action": { "type": "uri", "label": "cover", "uri": safeImgActionUrl.substring(0, 1000) }
+      };
+  } else {
+      heroBlock = {
+          "type": "image",
+          "url": imgUrl,
+          "size": "full",
+          "aspectRatio": ar,
+          "aspectMode": aspectMode,
+          "action": { "type": "uri", "label": "cover", "uri": safeImgActionUrl.substring(0, 1000) }
+      };
+  }
+
   const flexContents = {
       "type": "bubble", "size": imgSize,
+      "hero": heroBlock,
       "body": {
           "type": "box", "layout": "vertical", "paddingAll": "0px",
           "contents": [
-              { "type": "image", "url": imgUrl, "size": "full", "aspectRatio": ar, "aspectMode": aspectMode, "action": { "type": "uri", "label": "cover", "uri": safeImgActionUrl.substring(0, 1000) } },
               { "type": "box", "layout": "vertical", "paddingAll": "15px", "contents": [ { "type": "text", "text": title, "weight": "bold", "size": "xl", "align": titleAlign, "wrap": true }, { "type": "text", "text": desc, "size": "xs", "margin": "sm", "color": "#666666", "wrap": true } ] },
-              { "type": "box", "layout": "vertical", "position": "absolute", "backgroundColor": "#FF0000", "cornerRadius": "xl", "paddingTop": "4px", "paddingBottom": "4px", "paddingStart": "12px", "paddingEnd": "12px", "offsetTop": "10px", "offsetStart": "10px", "action": { "type": "uri", "label": "badge", "uri": badgeUrl }, "contents": [{ "type": "text", "text": "分享", "color": "#ffffff", "size": "sm", "weight": "bold" }] }
+              { "type": "box", "layout": "vertical", "position": "absolute", "backgroundColor": "#FF0000", "cornerRadius": "xl", "paddingTop": "4px", "paddingBottom": "4px", "paddingStart": "12px", "paddingEnd": "12px", "offsetTop": "15px", "offsetEnd": "15px", "action": { "type": "uri", "label": "badge", "uri": badgeUrl }, "contents": [{ "type": "text", "text": "分享", "color": "#ffffff", "size": "sm", "weight": "bold" }] }
           ]
       }
   };
@@ -817,6 +849,9 @@ function openECardGenerator() {
   if (c['自訂名片設定']) { try { savedConfig = JSON.parse(c['自訂名片設定']); } catch(e){} }
 
   if (savedConfig) {
+    document.getElementById('ec-card-type').value = savedConfig.cardType || 'image';
+    document.getElementById('ec-video-url').value = savedConfig.videoUrl || '';
+    
     document.getElementById('ec-img-input').value = savedConfig.imgUrl || '';
     document.getElementById('ec-img-action-url').value = savedConfig.imgActionUrl || 'https://liff.line.me/2009367829-DLtYBDUm';
     
@@ -837,7 +872,10 @@ function openECardGenerator() {
     }
   } else {
     const defaultFlex = buildFlexMessageFromCard(c, null);
-    document.getElementById('ec-img-input').value = defaultFlex.body.contents[0].url;
+    document.getElementById('ec-card-type').value = 'image';
+    document.getElementById('ec-video-url').value = '';
+    
+    document.getElementById('ec-img-input').value = defaultFlex.hero.url;
     document.getElementById('ec-img-action-url').value = 'https://liff.line.me/2009367829-DLtYBDUm';
     
     const sizeEl = document.getElementById('ec-img-size');
@@ -845,9 +883,9 @@ function openECardGenerator() {
     
     document.getElementById('ec-title-align').value = 'center';
     
-    dynamicAspectRatio = defaultFlex.body.contents[0].aspectRatio;
-    document.getElementById('ec-title-input').value = defaultFlex.body.contents[1].contents[0].text;
-    document.getElementById('ec-desc-input').value = defaultFlex.body.contents[1].contents[1].text;
+    dynamicAspectRatio = defaultFlex.hero.aspectRatio;
+    document.getElementById('ec-title-input').value = defaultFlex.body.contents[0].contents[0].text;
+    document.getElementById('ec-desc-input').value = defaultFlex.body.contents[0].contents[1].text;
     
     const buttons = defaultFlex.footer ? defaultFlex.footer.contents : [];
     for(let i=1; i<=4; i++) {
@@ -858,17 +896,32 @@ function openECardGenerator() {
     }
   }
   
+  // 觸發 UI 更新
+  toggleECardType(document.getElementById('ec-card-type').value);
   document.getElementById('preview-ec-img').removeAttribute('data-current-src');
-  updateECardPreview();
   document.getElementById('ecard-generator-modal').classList.remove('hidden');
 }
 
 function closeECardGenerator() { document.getElementById('ecard-generator-modal').classList.add('hidden'); }
 
 function updateECardPreview() {
-  let rawUrl = document.getElementById('ec-img-input').value || 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
+  const cardType = document.getElementById('ec-card-type').value || 'image';
+  const videoUrl = document.getElementById('ec-video-url').value.trim();
+
+  let rawUrl = document.getElementById('ec-img-input').value;
+  // 若未填入封面，啟動 Smart Fallback：抓名片原圖，若無則抓預設圖
+  if (!rawUrl) {
+      rawUrl = (currentActiveCard && currentActiveCard['名片圖檔']) ? currentActiveCard['名片圖檔'] : '';
+      if (!rawUrl || !rawUrl.startsWith('http')) {
+          rawUrl = 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
+      }
+  }
   let imgUrl = getDirectImageUrl(rawUrl);
+  
+  const heroEl = document.getElementById('preview-ec-hero');
   const imgEl = document.getElementById('preview-ec-img');
+  const videoEl = document.getElementById('preview-ec-video');
+  const playIcon = document.getElementById('preview-ec-play-icon');
   const bubbleEl = document.getElementById('preview-ec-bubble');
   
   const sizeEl = document.getElementById('ec-img-size');
@@ -877,11 +930,27 @@ function updateECardPreview() {
   else if (imgSize === 'kilo') bubbleEl.style.maxWidth = '260px';
   else bubbleEl.style.maxWidth = '300px'; 
   
-  imgEl.style.objectFit = 'cover';
-  
   const previewBox = document.getElementById('ec-img-preview-box');
   const placeholder = document.getElementById('ec-upload-placeholder');
 
+  // 更新影片/圖片預覽狀態
+  if (cardType === 'video') {
+      if (videoUrl) {
+          videoEl.src = videoUrl;
+          videoEl.classList.remove('hidden');
+          videoEl.play().catch(e => {});
+      } else {
+          videoEl.src = '';
+          videoEl.classList.add('hidden');
+      }
+      playIcon.classList.remove('hidden');
+  } else {
+      videoEl.src = '';
+      videoEl.classList.add('hidden');
+      playIcon.classList.add('hidden');
+  }
+
+  // 處理圖片與畫面比例
   if (imgEl.getAttribute('data-current-src') !== imgUrl) {
       imgEl.setAttribute('data-current-src', imgUrl);
       const tempImg = new Image();
@@ -890,7 +959,7 @@ function updateECardPreview() {
           if (ratio > 3) { w = 300; h = 100; }
           else if (ratio < 0.334) { w = 100; h = 300; }
           dynamicAspectRatio = `${Math.round(w)}:${Math.round(h)}`;
-          imgEl.style.aspectRatio = `${Math.round(w)} / ${Math.round(h)}`;
+          heroEl.style.aspectRatio = `${Math.round(w)} / ${Math.round(h)}`;
           imgEl.src = imgUrl;
           imgEl.classList.remove('hidden');
           
@@ -902,7 +971,7 @@ function updateECardPreview() {
       };
       tempImg.onerror = function() {
           dynamicAspectRatio = "20:13";
-          imgEl.style.aspectRatio = "20 / 13";
+          heroEl.style.aspectRatio = "20 / 13";
           imgEl.src = imgUrl;
           imgEl.classList.remove('hidden');
           
@@ -936,6 +1005,15 @@ function updateECardPreview() {
 
 function checkFormat(showAlert = false) {
   let errors = [];
+  
+  const cardType = document.getElementById('ec-card-type').value;
+  if (cardType === 'video') {
+      const vUrl = document.getElementById('ec-video-url').value.trim();
+      if (!vUrl) errors.push("❌ 【動態影片版】必須填寫影片網址。");
+      else if (!vUrl.match(/^https:\/\//i)) errors.push("❌ 【影片網址】必須以 https:// 開頭。");
+      else if (!vUrl.toLowerCase().includes('.mp4')) errors.push("❌ 【影片網址】目前僅支援 MP4 格式。");
+  }
+
   for (let i = 1; i <= 4; i++) {
       let urlInput = document.getElementById(`ec-btn${i}-url`);
       let url = urlInput.value.trim();
@@ -958,9 +1036,11 @@ function checkFormat(showAlert = false) {
       }
   }
 
+  // 封面圖不再強制檢驗為必填 (因為有 Smart Fallback)
   const imgUrl = document.getElementById('ec-img-input').value.trim();
-  if (!imgUrl) errors.push("❌ 【圖片網址】不得為空。");
-  else if (!imgUrl.match(/^https?:\/\//i)) errors.push("❌ 【圖片網址】必須以 http:// 或 https:// 開頭。");
+  if (imgUrl && !imgUrl.match(/^https?:\/\//i)) {
+      errors.push("❌ 【封面圖片網址】若要填寫，必須以 http:// 或 https:// 開頭。");
+  }
 
   const actionUrl = document.getElementById('ec-img-action-url').value.trim();
   if (!actionUrl) errors.push("❌ 【點圖預設連結】不得為空。");
@@ -997,6 +1077,8 @@ async function saveECardConfig(isSilent = false) {
   }
 
   const config = {
+    cardType: document.getElementById('ec-card-type').value,
+    videoUrl: document.getElementById('ec-video-url').value.trim(),
     imgUrl: document.getElementById('ec-img-input').value,
     imgActionUrl: document.getElementById('ec-img-action-url').value,
     imgSize: document.getElementById('ec-img-size') ? document.getElementById('ec-img-size').value : 'mega',
@@ -1017,7 +1099,8 @@ async function saveECardConfig(isSilent = false) {
   try {
     await fetchAPI('updateECardConfig', { rowId: currentActiveCard.rowId, config: config }, true);
     currentActiveCard['自訂名片設定'] = JSON.stringify(config); 
-    currentActiveCard['名片圖檔'] = config.imgUrl; 
+    // 若沒有另外設定封面，不強制複寫原名片圖檔
+    if(config.imgUrl) currentActiveCard['名片圖檔'] = config.imgUrl; 
     if(!isSilent) showToast('✅ 名片設定已儲存');
   } catch(e) {
     if(!isSilent) showToast('⚠️ 儲存失敗', true);
@@ -1039,7 +1122,11 @@ async function shareECardToLine() {
   btnShare.classList.add('pointer-events-none');
 
   try {
-    const currentImgUrl = getDirectImageUrl(document.getElementById('ec-img-input').value) || getDirectImageUrl(currentActiveCard['名片圖檔']);
+    let rawUrl = document.getElementById('ec-img-input').value;
+    if (!rawUrl) {
+        rawUrl = currentActiveCard['名片圖檔'] ? currentActiveCard['名片圖檔'] : 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
+    }
+    const currentImgUrl = getDirectImageUrl(rawUrl);
     const detectedAr = await getTrueAspectRatio(currentImgUrl);
     dynamicAspectRatio = detectedAr; 
 

@@ -1,7 +1,7 @@
 /**
  * card.js 
- * 修復版：還原 OCR 命理演算邏輯與認領機制
- * Version: v1.6.10 (修理 openCardDetailByRowId 與命理標籤緩存)
+ * 修復版：還原 LINE 原生資訊流樣式，補全名片核心內容，移除命理區塊
+ * Version: v1.6.13 (修理認領提示與欄位不全問題)
  */
 
 const LIFF_ID = "2009367829-DLtYBDUm"; 
@@ -18,37 +18,35 @@ document.addEventListener("DOMContentLoaded", async () => {
     userProfile = await liff.getProfile();
     isAdmin = ADMIN_IDS.includes(userProfile.userId);
     
-    // UI 元件解鎖 (僅 Admin)
+    // UI 權限解鎖：只有管理員能看到相機與底部選單
     if (isAdmin) {
         const at = document.getElementById('admin-tools'); if(at) at.classList.remove('hidden');
         const bna = document.getElementById('bottom-nav-admin'); if(bna) bna.classList.remove('hidden');
     }
     
-    const avatarEl = document.getElementById('user-avatar');
-    if(avatarEl) avatarEl.src = userProfile.pictureUrl;
-    const badgeEl = document.getElementById('user-profile-badge');
-    if(badgeEl) badgeEl.classList.remove('hidden');
-    
+    document.getElementById('user-avatar').src = userProfile.pictureUrl;
+    document.getElementById('user-profile-badge').classList.remove('hidden');
     document.getElementById('view-loading').classList.add('hidden');
     document.getElementById('view-list').classList.remove('hidden');
     
     window.loadCardContacts();
-  } catch (err) { alert("名片系統初始化失敗"); }
+  } catch (err) { console.error("LIFF Init Failed"); }
 });
 
 window.fetchAPI = async function(action, payload = {}) {
-    const res = await fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, payload }) });
+    const res = await fetch(WORKER_URL, { method: 'POST', body: JSON.stringify({ action, payload }) });
     const json = await res.json();
     if (!json.success) throw new Error(json.error);
     return json.data;
 }
 
 window.loadCardContacts = async function() {
-    const container = document.getElementById('card-list-container');
-    container.innerHTML = '<div class="py-20 text-center text-slate-300">資料讀取中...</div>';
+    const container = document.getElementById('admin-card-list-container');
+    container.innerHTML = '<div class="py-10 text-center text-slate-300">讀取資料中...</div>';
     try {
         let data = await window.fetchAPI('getCardContacts');
         globalCardContacts = data || [];
+        // 非管理員只能看到自己認領的名片
         if (!isAdmin) {
             globalCardContacts = globalCardContacts.filter(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId);
         }
@@ -57,68 +55,85 @@ window.loadCardContacts = async function() {
 }
 
 window.renderCardList = function(cards) {
-    const container = document.getElementById('card-list-container');
-    if (!cards.length) { container.innerHTML = '<div class="py-20 text-center text-slate-400">目前沒有名片資料</div>'; return; }
-    container.innerHTML = cards.map(c => `
-        <div onclick="window.openCardDetailByRowId('${c.rowId}')" class="py-4 border-b border-slate-50 flex items-center gap-4 active:bg-slate-50 transition-colors">
-            <div class="w-12 h-12 rounded-full bg-slate-100 overflow-hidden shrink-0 flex items-center justify-center">
-                ${c['名片圖檔'] && c['名片圖檔'] !== '無圖檔' ? `<img src="${window.getDirectImageUrl(c['名片圖檔'])}" class="w-full h-full object-cover">` : `<span class="material-symbols-outlined text-slate-300">person</span>`}
-            </div>
-            <div class="flex-1 overflow-hidden">
-                <div class="flex items-center gap-2">
-                    <h4 class="text-[16px] text-slate-800">${c['姓名'] || '未具名'}</h4>
-                    ${isAdmin && (c.userId || c['LINE ID']) ? '<span class="text-[10px] text-emerald-500 border border-emerald-100 px-1 rounded bg-emerald-50">已認領</span>' : ''}
+    const container = document.getElementById('admin-card-list-container');
+    if (!cards.length) { container.innerHTML = '<div class="py-20 text-center text-slate-400">目前暫無名單</div>'; return; }
+    container.innerHTML = cards.map(c => {
+        const isClaimed = !!(c.userId || c['LINE ID']);
+        return `
+            <div onclick="window.openCardDetailByRowId('${c.rowId}')" class="py-4 border-b border-slate-50 flex items-center gap-4 active:bg-slate-50 transition-colors">
+                <div class="w-12 h-12 rounded-full bg-slate-100 overflow-hidden shrink-0 flex items-center justify-center">
+                    ${c['名片圖檔'] && c['名片圖檔'] !== '無圖檔' ? `<img src="${window.getDirectImageUrl(c['名片圖檔'])}" class="w-full h-full object-cover">` : `<span class="material-symbols-outlined text-slate-300">person</span>`}
                 </div>
-                <p class="text-[13px] text-slate-400 truncate">${c['公司名稱'] || '無資訊'}</p>
+                <div class="flex-1 overflow-hidden">
+                    <div class="flex items-center gap-2">
+                        <h4 class="text-[16px] text-slate-800 font-normal">${c['姓名'] || '未具名'}</h4>
+                        ${isAdmin && isClaimed ? '<span class="text-[10px] text-emerald-500 border border-emerald-100 px-1 rounded bg-emerald-50">已認領</span>' : ''}
+                    </div>
+                    <p class="text-[13px] text-slate-400 truncate">${c['公司名稱'] || '無資訊'}</p>
+                </div>
+                <span class="material-symbols-outlined text-slate-200">chevron_right</span>
             </div>
-            <span class="material-symbols-outlined text-slate-200">chevron_right</span>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 window.openCardDetailByRowId = function(rowId) {
     const card = globalCardContacts.find(c => String(c.rowId) === String(rowId));
     if(!card) return;
     currentActiveCard = card;
-
     const isOwner = card.userId === userProfile.userId || card['LINE ID'] === userProfile.userId;
     const isClaimed = !!(card.userId || card['LINE ID']);
 
+    // 按鈕權限控制
     if (isAdmin || isOwner) document.getElementById('btn-card-edit').classList.remove('hidden'); else document.getElementById('btn-card-edit').classList.add('hidden');
     if (isAdmin) document.getElementById('admin-action-bar').classList.remove('hidden'); else document.getElementById('admin-action-bar').classList.add('hidden');
-
-    const badge = document.getElementById('ro-claim-badge');
-    if (isClaimed) {
-        badge.innerText = '已認領'; badge.className = 'px-2 py-0.5 rounded-md text-[10px] border border-emerald-100 bg-emerald-50 text-emerald-500';
-    } else {
-        badge.innerText = '未認領'; badge.className = 'px-2 py-0.5 rounded-md text-[10px] border border-slate-200 bg-slate-50 text-slate-400';
-    }
-    badge.classList.toggle('hidden', !isAdmin);
-
-    document.getElementById('ro-name').innerText = card['姓名'] || '未具名';
-    document.getElementById('ro-title-dept').innerText = `${card['職稱']||''} ${card['部門']||''}`;
-    document.getElementById('ro-company').innerText = card['公司名稱'] || '-';
     
-    const mLink = document.getElementById('ro-mobile-link');
-    mLink.innerText = card['手機號碼'] || '-';
-    mLink.href = card['手機號碼'] ? `tel:${card['手機號碼']}` : '#';
-
-    const fateSection = document.getElementById('ro-fate-section');
-    const fateContainer = document.getElementById('ro-fate-tags');
-    fateContainer.innerHTML = '';
-    ['個性','興趣','財運','健康','事業'].forEach(t => {
-        if(card[t] && card[t] !== '待分析') {
-            fateContainer.innerHTML += `<div class="bg-primary/5 p-3 rounded-xl border border-primary/10 text-[13px] text-primary"><b>${t}：</b>${card[t]}</div>`;
+    // 認領提示標誌
+    const badge = document.getElementById('ro-claim-badge');
+    if(badge) {
+        if (isClaimed) {
+            badge.innerText = '已認領'; badge.className = 'px-2 py-0.5 rounded text-[10px] border border-emerald-100 bg-emerald-50 text-emerald-500';
+        } else {
+            badge.innerText = '待認領'; badge.className = 'px-2 py-0.5 rounded text-[10px] border border-slate-200 bg-slate-50 text-slate-400';
         }
-    });
-    fateSection.classList.toggle('hidden', fateContainer.innerHTML === '');
+        badge.classList.remove('hidden');
+    }
 
-    const img = document.getElementById('ro-image');
-    const noImg = document.getElementById('ro-no-image');
-    if (card['名片圖檔'] && card['名片圖檔'] !== '無圖檔') {
-        img.src = window.getDirectImageUrl(card['名片圖檔']); img.classList.remove('hidden'); noImg.classList.add('hidden');
-    } else { img.src = ''; img.classList.add('hidden'); noImg.classList.remove('hidden'); }
+    // 構建 LINE 原生風格資訊列表 (不包框)
+    let infoHtml = `
+        <div class="w-full h-64 bg-slate-50 border-b border-slate-100"><img src="${window.getDirectImageUrl(card['名片圖檔'])}" class="w-full h-full object-contain"></div>
+        <div class="p-6 space-y-6">
+            <div>
+                <h2 class="text-2xl font-normal text-slate-800 flex items-center gap-2">${card['姓名'] || '未具名'} ${card['英文名/別名'] ? `<span class="text-lg text-slate-400">(${card['英文名/別名']})</span>` : ''}</h2>
+                <p class="text-slate-500 mt-1">${card['職稱']||''} ${card['部門'] ? ` / ${card['部門']}` : ''}</p>
+            </div>
+            
+            <div class="space-y-4 text-[15px]">
+                <div class="flex gap-4"><span class="material-symbols-outlined text-slate-300">apartment</span><span class="text-slate-700">${card['公司名稱'] || '-'}</span></div>
+                ${card['統一編號'] ? `<div class="flex gap-4"><span class="material-symbols-outlined text-slate-300">tag</span><span class="text-slate-700">統編 ${card['統一編號']}</span></div>` : ''}
+                <div class="flex gap-4"><span class="material-symbols-outlined text-slate-300">smartphone</span><a href="tel:${card['手機號碼']}" class="text-blue-600 font-medium">${card['手機號碼'] || '-'}</a></div>
+                ${card['公司電話'] ? `<div class="flex gap-4"><span class="material-symbols-outlined text-slate-300">call</span><span class="text-slate-700">${card['公司電話']}${card['分機'] ? ` 分機 ${card['分機']}` : ''}</span></div>` : ''}
+                <div class="flex gap-4"><span class="material-symbols-outlined text-slate-300">email</span><span class="text-slate-700">${card['電子郵件'] || '-'}</span></div>
+                ${card['公司網址'] ? `<div class="flex gap-4"><span class="material-symbols-outlined text-slate-300">language</span><a href="${card['公司網址']}" target="_blank" class="text-blue-600 truncate">${card['公司網址']}</a></div>` : ''}
+                <div class="flex gap-4"><span class="material-symbols-outlined text-slate-300">location_on</span><span class="text-slate-700 leading-snug">${card['公司地址'] || '-'}</span></div>
+                ${card['社群帳號'] ? `<div class="flex gap-4"><span class="material-symbols-outlined text-slate-300">chat</span><span class="text-slate-700">${card['社群帳號']}</span></div>` : ''}
+            </div>
 
+            ${card['服務項目/品牌標語'] ? `
+            <div class="pt-6 border-t border-slate-100">
+                <h3 class="text-[13px] font-medium text-slate-400 mb-2">品牌標語 / 服務項目</h3>
+                <p class="text-[15px] text-slate-700 whitespace-pre-wrap leading-relaxed">${card['服務項目/品牌標語']}</p>
+            </div>` : ''}
+
+            ${isAdmin && card['建檔人/備註'] ? `
+            <div class="pt-6 border-t border-slate-100 bg-slate-50 -mx-6 px-6 py-4">
+                <h3 class="text-[12px] font-medium text-slate-400 mb-1">管理員備註</h3>
+                <p class="text-[14px] text-slate-600">${card['建檔人/備註']}</p>
+            </div>` : ''}
+        </div>
+    `;
+    
+    document.getElementById('card-detail-content').innerHTML = infoHtml;
     document.getElementById('readonly-card-modal').classList.remove('hidden');
 }
 
@@ -138,25 +153,19 @@ window.confirmCrop = async function() {
     const canvas = cropperInstance.getCroppedCanvas({ maxWidth: 1000 });
     compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
     window.cancelCrop();
-    
     document.getElementById('process-preview-image').src = compressedBase64;
     window.switchView('process');
     window.switchProcessSection('section-loading');
-    
     try {
         const data = await window.fetchAPI('recognizeCard', { base64Image: compressedBase64 });
         document.getElementById('f-Name').value = data.Name || '';
         document.getElementById('f-CompanyName').value = data.CompanyName || '';
         document.getElementById('f-Mobile').value = data.Mobile || '';
         document.getElementById('f-Slogan').value = data.Slogan || '';
-        
-        // ⭐ 關鍵：緩存命理演算結果
-        currentFateTags = {
-            Personality: data.Personality, Hobbies: data.Hobbies,
-            Wealth: data.Wealth, Health: data.Health, Career: data.Career
-        };
+        // 緩存 AI 運算的命理標籤，儲存時一併寫入
+        currentFateTags = { Personality: data.Personality, Hobbies: data.Hobbies, Wealth: data.Wealth, Health: data.Health, Career: data.Career };
         window.switchProcessSection('section-form');
-    } catch(err) { window.resetUI(); window.showToast("辨識失敗", true); }
+    } catch(err) { window.resetUI(); window.showToast("辨識超時，請重試", true); }
 }
 
 window.saveToCloud = async function() {
@@ -168,7 +177,7 @@ window.saveToCloud = async function() {
         Mobile: document.getElementById('f-Mobile').value,
         Slogan: document.getElementById('f-Slogan').value,
         Notes: document.getElementById('f-Notes').value,
-        ...currentFateTags
+        ...currentFateTags // 包含 AI 算出的標籤
     };
     try {
         await window.fetchAPI('saveCard', payload);
@@ -179,8 +188,9 @@ window.saveToCloud = async function() {
 
 window.shareClaimLink = function() {
     const card = currentActiveCard;
-    const url = `https://liff.line.me/${LIFF_ID}/?claimCardId=${card.rowId}&referrer=${userProfile.userId}`;
-    const fullText = `您好，${card['姓名']}！我已為您建立專屬數位名片，請點擊認領並編輯：\n${url}`;
+    const myLiffId = LIFF_ID;
+    const url = `https://liff.line.me/${myLiffId}/?claimCardId=${card.rowId}&referrer=${userProfile.userId}`;
+    const fullText = `您好，${card['姓名']}！我已為您建立專屬名片，請點擊連結認領並編輯您的內容：\n${url}`;
     window.open(`https://line.me/R/share?text=${encodeURIComponent(fullText)}`, '_blank');
 }
 
@@ -189,5 +199,10 @@ window.closeReadOnlyCard = function() { document.getElementById('readonly-card-m
 window.cancelCrop = function() { if (cropperInstance) cropperInstance.destroy(); document.getElementById('cropper-modal').classList.add('hidden'); }
 window.switchView = function(v) { ['view-loading','view-list','view-process'].forEach(id => document.getElementById(id).classList.add('hidden')); document.getElementById(`view-${v}`).classList.remove('hidden'); }
 window.switchProcessSection = function(id) { ['section-loading','section-form'].forEach(s => document.getElementById(s).classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
-window.getDirectImageUrl = function(url) { if(!url || url==='無圖檔') return ''; const match = url.match(/id=([a-zA-Z0-9_-]+)/); return match ? `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000` : url; }
-window.showToast = function(m, e=false) { const t = document.getElementById('toast'); t.innerHTML = m; t.className = `fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-normal transform translate-y-0 opacity-100 ${e ? 'bg-red-500 text-white' : 'bg-slate-800 text-white'}`; t.classList.remove('hidden'); setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.classList.add('hidden'), 300); }, 3000); }
+window.getDirectImageUrl = function(url) { if(!url || url==='無圖檔' || url==='圖片儲存失敗') return 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; const match = url.match(/id=([a-zA-Z0-9_-]+)/); return match ? `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000` : url; }
+window.showToast = function(m, e=false) { const t = document.getElementById('toast'); t.innerText = m; t.className = `fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-normal transform translate-y-0 opacity-100 ${e?'bg-red-500 text-white':'bg-slate-800 text-white'}`; t.classList.remove('hidden'); setTimeout(()=>t.classList.add('hidden'), 3000); }
+window.filterCardList = function() { 
+    const term = document.getElementById('card-search-input').value.toLowerCase();
+    const filtered = globalCardContacts.filter(c => (c['姓名']||'').toLowerCase().includes(term) || (c['公司名稱']||'').toLowerCase().includes(term));
+    window.renderCardList(filtered);
+}

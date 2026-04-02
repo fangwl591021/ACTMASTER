@@ -1,7 +1,7 @@
 /**
  * card.js 
- * 名片管理核心邏輯 (不含電子名片 ECard)
- * Version: v1.5.1
+ * 名片管理核心邏輯 (輕量化，不含電子名片 ECard)
+ * Version: v1.6.0
  */
 
 const LIFF_ID = "2009367829-DLtYBDUm"; 
@@ -22,7 +22,7 @@ let uploadTargetMode = 'card';
 const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55", "U8932b891ad24da512afb9c1a6f41567b"];
 let isAdmin = false;
 
-// ⭐ 共用的 PC 版 / 外部瀏覽器備用分享機制 (Fallback)
+// ⭐ 共用的 PC 版 / 外部瀏覽器備用分享機制
 window.fallbackShare = function(url, altText) {
     const fullText = `${altText}\n${url}`;
     const fallbackInput = document.createElement('textarea');
@@ -66,7 +66,6 @@ document.addEventListener("DOMContentLoaded", async () => {
           const imgUrlForAr = config && config.imgUrl ? getDirectImageUrl(config.imgUrl) : getDirectImageUrl(card['名片圖檔']);
           const detectedAr = await getTrueAspectRatio(imgUrlForAr);
 
-          // 調用 card-ecard.js 中的 buildFlexMessageFromCard
           if (typeof window.buildFlexMessageFromCard === 'function') {
              const flexContents = window.buildFlexMessageFromCard(card, config, detectedAr);
              const title = config && config.title ? config.title : card['姓名'] || card['Name'];
@@ -80,7 +79,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                      } else {
                          await liff.shareTargetPicker([{ type: "flex", altText: altText, contents: flexContents }]);
                      }
-                     setTimeout(() => { liff.closeWindow(); }, 500);
                  } catch(e) {
                      window.fallbackShare(shareUrl, altText);
                  }
@@ -125,7 +123,7 @@ function setButtonLoading(btnId, isLoading, originalText = '') {
     }
 }
 
-function formatPhoneStr(val) {
+window.formatPhoneStr = function(val) {
   if (!val) return '';
   let str = String(val).trim();
   let matches = str.match(/(?:\+?\d[\d\-\s]{7,18}\d)/g);
@@ -172,7 +170,7 @@ window.fetchAPI = async function(action, payload = {}, silent = false) {
     if (!result.success) throw new Error(result.error);
     return result.data;
   } catch (err) {
-    if (!silent) showToast(err.message, true); 
+    if (!silent) window.showToast(err.message, true); 
     throw err;
   }
 }
@@ -223,7 +221,7 @@ window.showToast = function(msg, isError = false) {
   setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -1rem)'; setTimeout(() => t.classList.add('hidden'), 300); }, 3000); 
 }
 
-function openCropper(input, mode = 'card') {
+window.openCropper = function(input, mode = 'card') {
     uploadTargetMode = mode;
     const file = input.files[0];
     if (!file) return;
@@ -263,13 +261,13 @@ async function confirmCrop() {
       btn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin">refresh</span> 上傳中';
       btn.classList.add('pointer-events-none');
       try {
-          showToast("圖片上傳中...", false);
-          const url = await fetchAPI('uploadImage', { base64Image: compressedBase64 });
+          window.showToast("圖片上傳中...", false);
+          const url = await window.fetchAPI('uploadImage', { base64Image: compressedBase64 });
           document.getElementById('ec-img-input').value = url;
           if (typeof window.updateECardPreview === 'function') window.updateECardPreview();
-          showToast("✅ 圖片上傳成功");
+          window.showToast("✅ 圖片上傳成功");
       } catch (err) {
-          showToast("⚠️ 上傳失敗：" + err.message, true);
+          window.showToast("⚠️ 上傳失敗：" + err.message, true);
       } finally {
           btn.innerHTML = originalHtml;
           btn.classList.remove('pointer-events-none');
@@ -284,14 +282,14 @@ async function confirmCrop() {
 
 async function recognizeCardData() {
   try {
-    const data = await fetchAPI('recognizeCard', { base64Image: compressedBase64 });
+    const data = await window.fetchAPI('recognizeCard', { base64Image: compressedBase64 });
     const fields = ['Name', 'EnglishName', 'Title', 'Department', 'CompanyName', 'TaxID', 'Mobile', 'Tel', 'Ext', 'Fax', 'Address', 'Email', 'Website', 'SocialMedia', 'Slogan'];
     
     fields.forEach(f => {
       const el = document.getElementById(`f-${f}`);
       if(el) {
           let val = data[f] || '';
-          if (f === 'Mobile' || f === 'Tel' || f === 'Fax') val = formatPhoneStr(val);
+          if (f === 'Mobile' || f === 'Tel' || f === 'Fax') val = window.formatPhoneStr(val);
           if (f === 'Website' && val && !val.startsWith('http') && val.includes('.')) val = 'https://' + val;
           el.value = val;
       }
@@ -305,7 +303,7 @@ async function recognizeCardData() {
         Career: data.Career || ''
     };
     switchProcessSection('section-form');
-    showToast("✅ AI 辨識完成");
+    window.showToast("✅ AI 辨識完成");
   } catch(err) {
     resetUI();
   }
@@ -329,12 +327,12 @@ async function saveToCloud() {
   if (!payload.Name && !payload.CompanyName) {
     setButtonLoading('btn-save', false, '存入雲端 <span class="material-symbols-outlined text-[18px]">cloud_upload</span>');
     isProcessing = false;
-    return showToast("⚠️ 請輸入姓名或公司", true);
+    return window.showToast("⚠️ 請輸入姓名或公司", true);
   }
 
   try {
-    await fetchAPI('saveCard', payload);
-    showToast("🎉 建立成功！");
+    await window.fetchAPI('saveCard', payload);
+    window.showToast("🎉 建立成功！");
     globalCardContacts = [];
     sessionStorage.removeItem('getCardContacts{}');
     setTimeout(() => { resetUI(); }, 1000);
@@ -367,8 +365,8 @@ async function loadCardContacts() {
         try {
             globalCardContacts = JSON.parse(cached);
             globalCardContacts.forEach(c => {
-                if (c['手機號碼']) c['手機號碼'] = formatPhoneStr(c['手機號碼']);
-                if (c['公司電話']) c['公司電話'] = formatPhoneStr(c['公司電話']);
+                if (c['手機號碼']) c['手機號碼'] = window.formatPhoneStr(c['手機號碼']);
+                if (c['公司電話']) c['公司電話'] = window.formatPhoneStr(c['公司電話']);
             });
             
             if (!isAdmin) {
@@ -377,7 +375,7 @@ async function loadCardContacts() {
                 if (mode === 'mycard' && globalCardContacts.length > 0) {
                     openCardDetailByRowId(globalCardContacts[0].rowId);
                 } else if (mode === 'mycard' && globalCardContacts.length === 0) {
-                    showToast("找不到您的專屬名片", true);
+                    window.showToast("找不到您的專屬名片", true);
                     setTimeout(() => window.location.href = 'index.html?view=user-profile', 2000);
                 }
             }
@@ -388,11 +386,11 @@ async function loadCardContacts() {
         container.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>';
     }
 
-    fetchAPI('getCardContacts', {}, true).then(data => {
+    window.fetchAPI('getCardContacts', {}, true).then(data => {
         globalCardContacts = data || [];
         globalCardContacts.forEach(c => {
-            if (c['手機號碼']) c['手機號碼'] = formatPhoneStr(c['手機號碼']);
-            if (c['公司電話']) c['公司電話'] = formatPhoneStr(c['公司電話']);
+            if (c['手機號碼']) c['手機號碼'] = window.formatPhoneStr(c['手機號碼']);
+            if (c['公司電話']) c['公司電話'] = window.formatPhoneStr(c['公司電話']);
         });
         sessionStorage.setItem(cacheKey, JSON.stringify(globalCardContacts));
         
@@ -402,7 +400,7 @@ async function loadCardContacts() {
             if (mode === 'mycard' && globalCardContacts.length > 0 && !cached) {
                 openCardDetailByRowId(globalCardContacts[0].rowId);
             } else if (mode === 'mycard' && globalCardContacts.length === 0 && !cached) {
-                showToast("找不到您的專屬名片", true);
+                window.showToast("找不到您的專屬名片", true);
                 setTimeout(() => window.location.href = 'index.html?view=user-profile', 2000);
             }
         }
@@ -446,7 +444,7 @@ function renderCardPage(isReset = false) {
         return `
         <div onclick="openCardDetailByRowId('${card.rowId}')" class="pl-[5px] pr-4 py-4 bg-white flex items-center gap-4 border-b border-slate-200 last:border-b-0 active:bg-slate-50 cursor-pointer transition-colors">
           <div class="w-[52px] h-[52px] shrink-0 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center border border-slate-200">
-            ${card['名片圖檔'] && card['名片圖檔'] !== '圖片儲存失敗' ? `<img src="${getDirectImageUrl(card['名片圖檔'])}" class="w-full h-full object-cover">` : `<span class="material-symbols-outlined text-slate-400 text-[24px]">person</span>`}
+            ${card['名片圖檔'] && card['名片圖檔'] !== '圖片儲存失敗' ? `<img src="${window.getDirectImageUrl(card['名片圖檔'])}" class="w-full h-full object-cover">` : `<span class="material-symbols-outlined text-slate-400 text-[24px]">person</span>`}
           </div>
           <div class="flex-1 overflow-hidden flex flex-col justify-center gap-1.5">
             <div class="flex items-center">
@@ -486,7 +484,7 @@ function loadMoreCards() {
     renderCardPage(false);
 }
 
-function openCardDetailByRowId(rowId) { 
+window.openCardDetailByRowId = function(rowId) { 
     try {
       const card = globalCardContacts.find(c => String(c.rowId) === String(rowId));
       if(!card) return;
@@ -513,11 +511,11 @@ function openCardDetailByRowId(rowId) {
       document.getElementById('ro-taxid').innerText = card['統一編號'] || card['TaxID'] || '未提供';
       
       const mobileLink = document.getElementById('ro-mobile-link');
-      let phoneStr = card['手機號碼'] || card['Mobile'] ? formatPhoneStr(card['手機號碼'] || card['Mobile']) : '';
+      let phoneStr = card['手機號碼'] || card['Mobile'] ? window.formatPhoneStr(card['手機號碼'] || card['Mobile']) : '';
       mobileLink.innerText = phoneStr || '未提供';
       mobileLink.href = phoneStr ? `tel:${phoneStr}` : '#';
       
-      document.getElementById('ro-tel').innerText = [card['公司電話']||card['Tel'] ? formatPhoneStr(card['公司電話']||card['Tel']) : '', card['分機']||card['Ext'] ? `ext.${card['分機']||card['Ext']}` : ''].filter(Boolean).join(' ') || '未提供';
+      document.getElementById('ro-tel').innerText = [card['公司電話']||card['Tel'] ? window.formatPhoneStr(card['公司電話']||card['Tel']) : '', card['分機']||card['Ext'] ? `ext.${card['分機']||card['Ext']}` : ''].filter(Boolean).join(' ') || '未提供';
       
       const emailLink = document.getElementById('ro-email-link');
       const emailStr = card['電子郵件'] || card['Email'] || '';
@@ -544,7 +542,7 @@ function openCardDetailByRowId(rowId) {
       const imgEl = document.getElementById('ro-image');
       const noImgEl = document.getElementById('ro-no-image');
       if (card['名片圖檔'] && card['名片圖檔'] !== '圖片儲存失敗') {
-        imgEl.src = getDirectImageUrl(card['名片圖檔']);
+        imgEl.src = window.getDirectImageUrl(card['名片圖檔']);
         imgEl.classList.remove('hidden');
         noImgEl.classList.add('hidden');
       } else {
@@ -606,7 +604,7 @@ async function shareClaimLink() {
       if (liff.isApiAvailable('shareTargetPicker')) {
           try {
               const res = await liff.shareTargetPicker([{ type: "flex", altText: altText, contents: flexMessage }]);
-              if (res) showToast('✅ 認領連結已發送！');
+              if (res) window.showToast('✅ 認領連結已發送！');
           } catch (err) {
               window.fallbackShare(url, altText);
           }
@@ -635,10 +633,10 @@ function openCardEdit() {
       'edit-c-Department': c['部門'] || c['Department'] || '',
       'edit-c-CompanyName': c['公司名稱'] || c['CompanyName'] || '',
       'edit-c-TaxID': c['統一編號'] || c['TaxID'] || '',
-      'edit-c-Mobile': formatPhoneStr(c['手機號碼'] || c['Mobile']) || '',
-      'edit-c-Tel': formatPhoneStr(c['公司電話'] || c['Tel']) || '',
+      'edit-c-Mobile': window.formatPhoneStr(c['手機號碼'] || c['Mobile']) || '',
+      'edit-c-Tel': window.formatPhoneStr(c['公司電話'] || c['Tel']) || '',
       'edit-c-Ext': c['分機'] || c['Ext'] || '',
-      'edit-c-Fax': formatPhoneStr(c['傳真'] || c['Fax']) || '',
+      'edit-c-Fax': window.formatPhoneStr(c['傳真'] || c['Fax']) || '',
       'edit-c-Address': c['公司地址'] || c['Address'] || '',
       'edit-c-Email': c['電子郵件'] || c['Email'] || '',
       'edit-c-Website': webStr,
@@ -683,17 +681,17 @@ async function submitCardEdit() {
   };
 
   const oldName = currentActiveCard['姓名'] || currentActiveCard['Name'] || '';
-  const oldPhone = formatPhoneStr(currentActiveCard['手機號碼'] || currentActiveCard['Mobile']) || '';
+  const oldPhone = window.formatPhoneStr(currentActiveCard['手機號碼'] || currentActiveCard['Mobile']) || '';
   
   if (payload.Name !== oldName || payload.Mobile !== oldPhone) {
       try {
-           const newTags = await fetchAPI('calculateFateTags', { Name: payload.Name, Mobile: payload.Mobile }, true);
+           const newTags = await window.fetchAPI('calculateFateTags', { Name: payload.Name, Mobile: payload.Mobile }, true);
            payload = { ...payload, ...newTags };
       } catch (e) {}
   }
 
   try {
-    await fetchAPI('updateCard', payload);
+    await window.fetchAPI('updateCard', payload);
     Object.assign(currentActiveCard, {
       '姓名': payload.Name, 'Name': payload.Name, '英文名/別名': payload.EnglishName,
       '手機號碼': payload.Mobile, 'Mobile': payload.Mobile, '公司名稱': payload.CompanyName,
@@ -715,20 +713,20 @@ async function submitCardEdit() {
     
     const index = globalCardContacts.findIndex(c => c.rowId === payload.rowId);
     if (index !== -1) globalCardContacts[index] = currentActiveCard;
-    openCardDetailByRowId(payload.rowId);
+    window.openCardDetailByRowId(payload.rowId);
     
-    fetchAPI('getCardContacts').then(data => {
+    window.fetchAPI('getCardContacts').then(data => {
         globalCardContacts = data || [];
         globalCardContacts.forEach(c => {
-          if (c['手機號碼']) c['手機號碼'] = formatPhoneStr(c['手機號碼']);
-          if (c['公司電話']) c['公司電話'] = formatPhoneStr(c['公司電話']);
+          if (c['手機號碼']) c['手機號碼'] = window.formatPhoneStr(c['手機號碼']);
+          if (c['公司電話']) c['公司電話'] = window.formatPhoneStr(c['公司電話']);
         });
         filterCardList();
     });
 
-    showToast("✅ 資料更新成功");
+    window.showToast("✅ 資料更新成功");
   } catch(err) {
-    showToast("更新失敗", true);
+    window.showToast("更新失敗", true);
   } finally {
     setButtonLoading('btn-save-card-edit', false, '儲存變更');
     isProcessing = false;

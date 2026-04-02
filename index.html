@@ -1,4 +1,4 @@
-<!-- Version: v1.1.13 (修復梯次下拉選單動態計費與後端對接) -->
+<!-- Version: v1.1.14 (修復報名紀錄排版擠壓問題、優化原生視覺) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -165,9 +165,9 @@
     </div>
 
     <!-- 報名紀錄 -->
-    <div id="view-user-history" class="hidden space-y-4 animate-in fade-in pt-4">
-      <h2 class="text-2xl font-extrabold font-headline text-slate-800">報名紀錄</h2>
-      <div id="user-history-container" class="space-y-4"></div>
+    <div id="view-user-history" class="hidden animate-in fade-in pt-2">
+      <h2 class="text-2xl font-extrabold font-headline text-slate-800 mb-4">報名紀錄</h2>
+      <div id="user-history-container" class="flex flex-col gap-3"></div>
     </div>
 
     <!-- 個人資料與專屬名片入口 -->
@@ -234,7 +234,7 @@
       <button id="btn-submit-settings" onclick="submitSettings()" class="btn-primary mt-2">儲存設定</button>
     </div>
 
-    <!-- 後台：建立活動 (整合系列梯次與裁切功能) -->
+    <!-- 後台：建立活動 -->
     <div id="view-admin-create" class="hidden space-y-5 animate-in fade-in pt-4">
       <div class="mb-4">
         <h2 class="text-2xl font-extrabold font-headline text-slate-800 tracking-tight">建立新活動</h2>
@@ -953,10 +953,10 @@
             </p>
             <h3 class="text-[14px] font-bold text-slate-800 leading-snug line-clamp-2 mb-3 flex-1">${a.name}</h3>
             <div class="flex gap-2 mt-auto">
-              <button onclick="event.stopPropagation(); openActivityDetailByName('${safeName}')" class="flex-[1] py-2 bg-white text-slate-600 rounded-lg font-bold text-[12px] hover:bg-slate-50 transition-colors flex items-center justify-center border border-slate-300 shadow-sm">
+              <button class="flex-[1] py-2 bg-white text-slate-600 rounded-lg font-bold text-[12px] transition-colors flex items-center justify-center border border-slate-300 shadow-sm">
                 說明
               </button>
-              <button onclick="event.stopPropagation(); userJoinActivity(this, '${safeName}', '${a.feeType}', '${a.price}')" class="flex-[1.5] py-2 bg-primary text-white rounded-lg font-bold text-[12px] hover:bg-blue-700 transition-colors flex items-center justify-center shadow-sm">
+              <button class="flex-[1.5] py-2 bg-primary text-white rounded-lg font-bold text-[12px] transition-colors flex items-center justify-center shadow-sm">
                 報名
               </button>
             </div>
@@ -1106,6 +1106,7 @@
     isProcessing = true; 
     setButtonLoading('detail-modal-join-btn', true);
     try {
+      // 這裡如果後端有收 batchName 跟 price 我們就傳
       await fetchAPI('joinActivity', { userId: userProfile.userId, activityName: name, batchName: batchName, price: price });
       
       if (feeType === '收費' || parseInt(price) > 0) showModal("報名成功", `此為收費活動，請完成匯款 \nNT$ ${price} 後，至「報名紀錄」填寫後五碼。`, "history");
@@ -1120,6 +1121,7 @@
     }
   }
 
+  // ⭐ 修復報名紀錄排版：解決取消按鈕與輸入框重疊問題
   async function loadUserHistory() {
     const container = document.getElementById('user-history-container');
     container.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>';
@@ -1136,25 +1138,28 @@
           const isCanceled = item.regStatus === '已取消'; const safeName = item.name.replace(/'/g, "\\'");
           let pC = item.payStatus==='已完款'?'bg-blue-50 text-blue-600 border-blue-100':(item.payStatus==='匯款審核中'?'bg-slate-800 text-white border-slate-800':'bg-orange-50 text-orange-600 border-orange-100');
           return `
-          <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 relative overflow-hidden animate-in slide-in-from-bottom-2 mx-1">
-            ${isCanceled ? '<div class="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold px-3 py-0.5 rounded-bl-lg shadow-sm tracking-wider">已取消</div>' : ''}
-            <div class="flex gap-4 items-center">
-              <div id="qr-${item.name.replace(/\s+/g,'')}" class="w-16 h-16 bg-slate-50 border border-slate-100 rounded-xl p-1.5 shrink-0 ${isCanceled?'opacity-30 grayscale':''}"></div>
-              <div class="flex-1 overflow-hidden">
-                <h4 class="font-extrabold text-slate-800 text-[15px] leading-snug mb-1 truncate">${item.name}</h4>
-                <p class="text-[11px] text-slate-500 font-bold flex items-center gap-1"><span class="material-symbols-outlined text-[13px]">event</span> ${item.startTime ? item.startTime.substring(0,10) : '未定'}</p>
-                <div class="flex items-center gap-1.5 mt-2.5">
-                  <span class="px-2.5 py-1 text-[10px] font-bold rounded-md tracking-wider uppercase border ${item.checkedIn ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-50 text-slate-500 border-slate-200'}">${item.checkedIn ? '已簽到' : '待簽到'}</span>
-                  ${item.isPaidAct && !isCanceled ? `<span class="px-2.5 py-1 text-[10px] font-bold rounded-md tracking-wider uppercase border ${pC}">${item.payStatus}</span>` : ''}
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 relative overflow-hidden animate-in slide-in-from-bottom-2 mx-1 mb-3">
+            ${isCanceled ? '<div class="absolute top-0 right-0 bg-slate-500 text-white text-[10px] px-3 py-0.5 rounded-bl-lg tracking-wider">已取消</div>' : ''}
+            
+            <div class="flex gap-3 items-start">
+              <div id="qr-${item.name.replace(/\s+/g,'')}" class="w-[60px] h-[60px] bg-slate-50 border border-slate-100 rounded-lg p-1 shrink-0 ${isCanceled?'opacity-30 grayscale':''}"></div>
+              <div class="flex-1 overflow-hidden pr-6">
+                <h4 class="font-medium text-slate-800 text-[15px] leading-snug mb-1 truncate">${item.name}</h4>
+                <p class="text-[12px] text-slate-500 flex items-center gap-1 mb-2"><span class="material-symbols-outlined text-[14px]">event</span> ${item.startTime ? item.startTime.substring(0,10) : '未定'}</p>
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="px-2 py-0.5 text-[10px] rounded tracking-wider border ${item.checkedIn ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-50 text-slate-500 border-slate-200'}">${item.checkedIn ? '已簽到' : '待簽到'}</span>
+                  ${item.isPaidAct && !isCanceled ? `<span class="px-2 py-0.5 text-[10px] rounded tracking-wider border ${pC}">${item.payStatus}</span>` : ''}
                 </div>
               </div>
             </div>
+            
+            ${!isCanceled ? `<button id="btn-cancel-${item.name.replace(/\s+/g,'')}" onclick="userCancelRegistration(this, '${safeName}')" class="absolute top-3 right-3 text-slate-300 hover:text-red-500 transition-colors bg-white"><span class="material-symbols-outlined text-[20px]">cancel</span></button>` : ''}
+            
             ${item.isPaidAct && item.payStatus === '未繳費' && !isCanceled ? `
-              <div class="mt-4 pt-4 border-t border-slate-100 flex gap-2">
-                 <input type="text" id="pay-${item.name.replace(/\s+/g,'')}" class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[13px] font-bold text-center outline-none focus:border-primary focus:bg-white" placeholder="末五碼" maxlength="5">
-                 <button id="btn-report-${item.name.replace(/\s+/g,'')}" onclick="submitLast5(this, '${safeName}', '${item.name.replace(/\s+/g,'')}')" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-[13px] font-bold active:scale-95 transition-transform hover:bg-slate-700">回報</button>
+              <div class="mt-3 pt-3 border-t border-slate-100 flex gap-2 items-center">
+                 <input type="text" id="pay-${item.name.replace(/\s+/g,'')}" class="flex-1 w-0 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-[14px] text-slate-700 outline-none focus:border-primary focus:bg-white" placeholder="輸入末五碼" maxlength="5">
+                 <button id="btn-report-${item.name.replace(/\s+/g,'')}" onclick="submitLast5(this, '${safeName}', '${item.name.replace(/\s+/g,'')}')" class="shrink-0 whitespace-nowrap bg-primary text-white px-4 py-2.5 rounded-lg text-[14px] active:scale-95 transition-transform shadow-sm">回報</button>
               </div>` : ''}
-            ${!isCanceled ? `<button id="btn-cancel-${item.name.replace(/\s+/g,'')}" onclick="userCancelRegistration(this, '${safeName}')" class="absolute bottom-4 right-4 text-[11px] text-slate-400 font-bold hover:text-red-500 transition-colors underline underline-offset-2">取消</button>` : ''}
           </div>`;
         }).join('');
         
@@ -1417,7 +1422,7 @@
     } catch(e) { console.error(e); } finally { isProcessing = false; setButtonLoading('btn-submit-settings', false, '儲存設定'); }
   }
 
-  // ============== 【重點修改區域：建立活動模式切換與處理】 ==============
+  // ============== 【建立活動模式切換與處理】 ==============
   function toggleCreateMode(m) { 
     ['quick', 'detailed', 'batch'].forEach(t => {
       const btn = document.getElementById('tab-' + t);
@@ -1555,7 +1560,7 @@
            p.startTime = p.batches[0].startTime;
            p.endTime = p.batches[p.batches.length - 1].endTime;
            
-           // ⭐ 根據梯次自動設定收費標籤
+           // 根據梯次自動設定收費標籤
            const hasPaid = p.batches.some(b => parseInt(b.price) > 0);
            if (hasPaid) {
                p.feeType = '收費';

@@ -1,4 +1,4 @@
-<!-- Version: v1.3.1 (修復底部導覽列太淡與過細的 CSS 權重問題) -->
+<!-- Version: v1.4.1 (修復選單全黑與跳轉邏輯) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -58,13 +58,13 @@
     .btn-primary { @apply w-full py-4 bg-[#06C755] text-white rounded-xl font-medium text-[16px] active:scale-[0.98] transition-all flex items-center justify-center gap-2; }
     .btn-secondary { @apply w-full py-3 bg-white border border-slate-300 text-slate-700 rounded-xl font-medium text-[16px] hover:bg-slate-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-sm; }
     
-    /* ⭐ 修正底部導航列：恢復標準 400 粗細與 slate-500 原生灰色 */
-    .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-slate-500 h-full; min-width: 48px;}
+    /* ⭐ 底部選單樣式：全黑與原生灰的極致對比 */
+    .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-slate-500 h-full font-medium; min-width: 48px;}
     .nav-btn .icon-box { @apply flex items-center justify-center mb-0.5; }
-    .nav-btn .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400; font-size: 24px; }
+    .nav-btn .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400; font-size: 24px; color: inherit; }
     
-    .nav-active-btn { @apply text-slate-800 font-bold; }
-    .nav-active-btn .material-symbols-outlined { font-variation-settings: 'FILL' 1, 'wght' 400; color: #1e293b; }
+    .nav-active-btn { @apply text-black font-bold; }
+    .nav-active-btn .material-symbols-outlined { font-variation-settings: 'FILL' 1, 'wght' 400; color: #000000; }
 
     .refresh-spin { animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -222,21 +222,21 @@
 
   </main>
 
-  <!-- 底部導航 Admin：建立按鈕跳轉至 active.html -->
+  <!-- 底部導航 Admin：完全同步 active.html 跳轉邏輯 -->
   <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white border-t border-slate-100 flex justify-evenly items-center h-[72px] pb-safe left-1/2 -translate-x-1/2 z-40">
-    <button onclick="window.location.href='active.html'" class="nav-btn" id="nav-admin-create"><div class="icon-box"><span class="material-symbols-outlined">add_circle</span></div><span class="text-[10px] font-medium mt-0.5">建立</span></button>
-    <button onclick="switchView('admin-activities')" class="nav-btn" id="nav-admin-activities"><div class="icon-box"><span class="material-symbols-outlined">fact_check</span></div><span class="text-[10px] font-medium mt-0.5">核銷</span></button>
-    <button onclick="switchView('admin-crm')" class="nav-btn" id="nav-admin-crm"><div class="icon-box"><span class="material-symbols-outlined">groups</span></div><span class="text-[10px] font-medium mt-0.5">CRM</span></button>
-    <button onclick="window.location.href='fate.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined">psychology</span></div><span class="text-[10px] font-medium mt-0.5">配對</span></button>
-    <button onclick="window.location.href='card.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined">recent_patient</span></div><span class="text-[10px] font-medium mt-0.5">名片</span></button>
-    <button onclick="switchView('admin-settings')" class="nav-btn" id="nav-admin-settings"><div class="icon-box"><span class="material-symbols-outlined">settings</span></div><span class="text-[10px] font-medium mt-0.5">參數</span></button>
+    <button onclick="window.location.href='active.html'" class="nav-btn" id="nav-admin-create"><div class="icon-box"><span class="material-symbols-outlined">add_circle</span></div><span class="text-[10px] mt-0.5">建立</span></button>
+    <button onclick="switchView('admin-activities')" class="nav-btn" id="nav-admin-activities"><div class="icon-box"><span class="material-symbols-outlined">fact_check</span></div><span class="text-[10px] mt-0.5">核銷</span></button>
+    <button onclick="switchView('admin-crm')" class="nav-btn" id="nav-admin-crm"><div class="icon-box"><span class="material-symbols-outlined">groups</span></div><span class="text-[10px] mt-0.5">CRM</span></button>
+    <button onclick="window.location.href='fate.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined">psychology</span></div><span class="text-[10px] mt-0.5">配對</span></button>
+    <button onclick="window.location.href='card.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined">recent_patient</span></div><span class="text-[10px] mt-0.5">名片</span></button>
+    <button onclick="switchView('admin-settings')" class="nav-btn" id="nav-admin-settings"><div class="icon-box"><span class="material-symbols-outlined">settings</span></div><span class="text-[10px] mt-0.5">參數</span></button>
   </nav>
 
   <!-- 底部導航 User -->
   <nav id="bottom-nav-user" class="hidden fixed bottom-0 w-full max-w-md bg-white border-t border-slate-100 flex justify-around items-center h-[72px] pb-safe left-1/2 -translate-x-1/2 z-40">
-    <button onclick="switchView('user-activities')" class="nav-btn" id="nav-user-activities"><div class="icon-box"><span class="material-symbols-outlined">explore</span></div><span class="text-[11px] mt-0.5 font-medium">活動</span></button>
-    <button onclick="switchView('user-history')" class="nav-btn" id="nav-user-history"><div class="icon-box"><span class="material-symbols-outlined">receipt_long</span></div><span class="text-[11px] mt-0.5 font-medium">紀錄</span></button>
-    <button onclick="switchView('user-profile')" class="nav-btn" id="nav-user-profile"><div class="icon-box"><span class="material-symbols-outlined">person</span></div><span class="text-[11px] mt-0.5 font-medium">設定</span></button>
+    <button onclick="switchView('user-activities')" class="nav-btn" id="nav-user-activities"><div class="icon-box"><span class="material-symbols-outlined">explore</span></div><span class="text-[11px] mt-0.5">活動</span></button>
+    <button onclick="switchView('user-history')" class="nav-btn" id="nav-user-history"><div class="icon-box"><span class="material-symbols-outlined">receipt_long</span></div><span class="text-[11px] mt-0.5">紀錄</span></button>
+    <button onclick="switchView('user-profile')" class="nav-btn" id="nav-user-profile"><div class="icon-box"><span class="material-symbols-outlined">person</span></div><span class="text-[11px] mt-0.5">設定</span></button>
   </nav>
 </div>
 
@@ -565,7 +565,8 @@
     const t = document.getElementById('toast'); if(!t) return; 
     t.innerHTML = `<span class="material-symbols-outlined icon-filled">${e?'error':'check_circle'}</span>` + m; 
     t.className = `fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-normal transform translate-y-0 opacity-100 ${e ? 'bg-red-500 text-white border-red-600' : 'bg-slate-800 text-white border-slate-700'} flex items-center gap-2 w-max max-w-[90vw]`; 
-    setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -1rem)'; }, 3000); 
+    t.classList.remove('hidden');
+    setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -1rem)'; setTimeout(() => t.classList.add('hidden'), 300); }, 3000); 
   }
 
   async function submitUserRegistrationStep1() {
@@ -624,7 +625,6 @@
     }
   }
 
-  // ⭐ 生日變更時，觸發 AI 計算五大標籤並更新名片資料庫
   async function submitProfileUpdate() {
     if(isProcessing) return; isProcessing = true; setButtonLoading('btn-save-profile', true);
     const p = { 
@@ -647,7 +647,6 @@
       registeredInfo = p;
       showToast("會員資料儲存成功");
 
-      // 如果生日、姓名或電話有變，觸發名片資料庫的 AI 標籤更新
       if ((p.birthday !== oldBirthday || p.name !== oldName || p.phone !== oldPhone) && p.birthday) {
           const contacts = await fetchAPI('getCardContacts', {}, false);
           const myCard = contacts.find(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId || c['Line ID'] === userProfile.userId);

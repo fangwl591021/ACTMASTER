@@ -1,7 +1,7 @@
 /**
  * card.js 
  * 名片管理核心邏輯 (輕量化，不含電子名片 ECard)
- * Version: v1.6.6 (修復邀請認領 404 網址問題與全域函式綁定)
+ * Version: v1.6.7 (修復誤刪的 openCardDetailByRowId 函式)
  */
 
 const LIFF_ID = "2009367829-DLtYBDUm"; 
@@ -22,7 +22,6 @@ let uploadTargetMode = 'card';
 const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55", "U8932b891ad24da512afb9c1a6f41567b"];
 let isAdmin = false;
 
-// ⭐ 修復 404：更新為 LINE 最新官方分享協議
 window.fallbackShare = function(url, altText) {
     const fullText = `${altText}\n${url}`;
     const fallbackInput = document.createElement('textarea');
@@ -38,8 +37,6 @@ window.fallbackShare = function(url, altText) {
         alert("請手動複製以下連結分享給好友：\n\n" + url);
     }
     document.body.removeChild(fallbackInput);
-    
-    // 使用官方最新協議，避免 404
     window.open(`https://line.me/R/share?text=${encodeURIComponent(fullText)}`, '_blank');
 }
 
@@ -498,7 +495,99 @@ window.loadMoreCards = function() {
     window.renderCardPage(false);
 }
 
-// ⭐ 核心修復：綁定至 window 確保按鈕能呼叫到
+// ⭐ 復原被誤刪的關鍵函式：讀取名片詳情
+window.openCardDetailByRowId = function(rowId) { 
+    try {
+      const card = globalCardContacts.find(c => String(c.rowId) === String(rowId));
+      if(!card) return;
+      currentActiveCard = card; 
+      
+      document.getElementById('ro-name').innerText = card['姓名'] || card['Name'] || '未知姓名';
+      
+      const statusEl = document.getElementById('ro-claim-status');
+      if (isAdmin) {
+          if (card.userId || card['LINE ID'] || card['Line ID'] || card['lineId']) {
+              statusEl.innerText = '已認領';
+              statusEl.className = 'px-2 py-0.5 rounded text-[11px] border bg-emerald-50 border-emerald-200 text-emerald-600';
+          } else {
+              statusEl.innerText = '未認領';
+              statusEl.className = 'px-2 py-0.5 rounded text-[11px] border bg-slate-50 border-slate-200 text-slate-400';
+          }
+          statusEl.classList.remove('hidden');
+      } else {
+          statusEl.classList.add('hidden');
+      }
+      
+      document.getElementById('ro-title').innerText = [card['職稱']||card['Title'], card['部門']||card['Department']].filter(Boolean).join(' / ') || '無職稱';
+      document.getElementById('ro-company').innerText = [card['公司名稱']||card['CompanyName'], card['英文名/別名']||card['EnglishName']].filter(Boolean).join(' - ') || '未提供';
+      document.getElementById('ro-taxid').innerText = card['統一編號'] || card['TaxID'] || '未提供';
+      
+      const mobileLink = document.getElementById('ro-mobile-link');
+      let phoneStr = card['手機號碼'] || card['Mobile'] ? window.formatPhoneStr(card['手機號碼'] || card['Mobile']) : '';
+      mobileLink.innerText = phoneStr || '未提供';
+      mobileLink.href = phoneStr ? `tel:${phoneStr}` : '#';
+      
+      document.getElementById('ro-tel').innerText = [card['公司電話']||card['Tel'] ? window.formatPhoneStr(card['公司電話']||card['Tel']) : '', card['分機']||card['Ext'] ? `ext.${card['分機']||card['Ext']}` : ''].filter(Boolean).join(' ') || '未提供';
+      
+      const emailLink = document.getElementById('ro-email-link');
+      const emailStr = card['電子郵件'] || card['Email'] || '';
+      emailLink.innerText = emailStr || '未提供';
+      emailLink.href = emailStr ? `mailto:${emailStr}` : '#';
+      
+      document.getElementById('ro-address').innerText = card['公司地址'] || card['Address'] || '未提供';
+      
+      const notesArr = [];
+      const slogan = card['服務項目/品牌標語']||card['Slogan'];
+      if(slogan) notesArr.push(`【品牌與服務】\n${slogan}`);
+      const fax = card['傳真']||card['Fax'];
+      if(fax) notesArr.push(`【傳真】${fax}`);
+      const website = card['公司網址']||card['Website'];
+      if(website) notesArr.push(`【網址】${website}`);
+      const social = card['社群帳號']||card['SocialMedia'];
+      if(social) notesArr.push(`【社群】${social}`);
+      const internalNotes = card['建檔人/備註']||card['Notes'];
+      if(internalNotes && isAdmin) notesArr.push(`【內部備註】\n${internalNotes}`);
+      
+      const finalNotes = notesArr.join('\n\n');
+      document.getElementById('ro-notes').innerText = finalNotes || '無其他資訊';
+
+      const imgEl = document.getElementById('ro-image');
+      const noImgEl = document.getElementById('ro-no-image');
+      
+      const isValidImg = card['名片圖檔'] && card['名片圖檔'] !== '圖片儲存失敗' && card['名片圖檔'] !== '無圖檔';
+      
+      if (isValidImg) {
+        imgEl.src = window.getDirectImageUrl(card['名片圖檔']);
+        imgEl.classList.remove('hidden');
+        noImgEl.classList.add('hidden');
+      } else {
+        imgEl.removeAttribute('src');
+        imgEl.classList.add('hidden');
+        noImgEl.classList.remove('hidden');
+      }
+      
+      if (!isAdmin) {
+          document.getElementById('btn-share-claim').classList.add('hidden');
+      } else {
+          document.getElementById('btn-share-claim').classList.remove('hidden');
+      }
+
+      document.getElementById('readonly-card-modal').classList.remove('hidden');
+    } catch(e) {
+      alert("無法開啟: " + e.message);
+    }
+}
+
+// ⭐ 復原被誤刪的關鍵函式：關閉名片詳情
+window.closeReadOnlyCard = function() { 
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('mode') === 'mycard') {
+        window.location.href = 'index.html?view=user-profile';
+    } else {
+        document.getElementById('readonly-card-modal').classList.add('hidden'); 
+    }
+}
+
 window.shareClaimLink = async function() {
   if (!currentActiveCard || isProcessing) return;
   isProcessing = true;
@@ -507,7 +596,6 @@ window.shareClaimLink = async function() {
   try {
       const card = currentActiveCard;
       const myLiffId = (typeof LIFF_ID !== 'undefined') ? LIFF_ID : '2009367829-DLtYBDUm';
-      // 改用最安全的 query string 附帶在 liff 根網址後
       const url = `https://liff.line.me/${myLiffId}/?view=user-profile&claimCardId=${card.rowId}&referrer=${userProfile.userId}`;
 
       const flexMessage = {

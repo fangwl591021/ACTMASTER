@@ -1,4 +1,4 @@
-<!-- Version: v1.3.0 (正式分離 active.html，專注於核銷、報名與 CRM) -->
+<!-- Version: v1.3.1 (修復底部導覽列太淡與過細的 CSS 權重問題) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -58,12 +58,13 @@
     .btn-primary { @apply w-full py-4 bg-[#06C755] text-white rounded-xl font-medium text-[16px] active:scale-[0.98] transition-all flex items-center justify-center gap-2; }
     .btn-secondary { @apply w-full py-3 bg-white border border-slate-300 text-slate-700 rounded-xl font-medium text-[16px] hover:bg-slate-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-sm; }
     
-    .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-[#9CA3AF] h-full; min-width: 48px;}
+    /* ⭐ 修正底部導航列：恢復標準 400 粗細與 slate-500 原生灰色 */
+    .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-slate-500 h-full; min-width: 48px;}
     .nav-btn .icon-box { @apply flex items-center justify-center mb-0.5; }
-    .nav-btn .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 300; font-size: 24px; }
+    .nav-btn .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400; font-size: 24px; }
     
-    .nav-active-btn { @apply text-[#1E293B] font-bold; }
-    .nav-active-btn .material-symbols-outlined { font-variation-settings: 'FILL' 1, 'wght' 400; color: #1E293B; }
+    .nav-active-btn { @apply text-slate-800 font-bold; }
+    .nav-active-btn .material-symbols-outlined { font-variation-settings: 'FILL' 1, 'wght' 400; color: #1e293b; }
 
     .refresh-spin { animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -131,7 +132,6 @@
           <button onclick="document.getElementById('reg-card-camera').click()" class="btn-secondary flex-1 !border-primary text-primary bg-primary-light"><span class="material-symbols-outlined text-[20px]">photo_camera</span> 拍照</button>
           <button onclick="document.getElementById('reg-card-upload').click()" class="btn-secondary flex-1"><span class="material-symbols-outlined text-[20px]">image</span> 相簿</button>
         </div>
-        <!-- 借用 active.html 的上傳機制或後台 API -->
         <input type="file" id="reg-card-camera" accept="image/*" capture="environment" class="hidden" onchange="openCropper(this, 'reg')">
         <input type="file" id="reg-card-upload" accept="image/*" class="hidden" onchange="openCropper(this, 'reg')">
         <div class="text-center mt-3 pt-2">
@@ -176,7 +176,7 @@
       </div>
       <button id="btn-save-profile" onclick="submitProfileUpdate()" class="btn-primary mt-4">儲存變更</button>
 
-      <!-- 專屬名片入口 -->
+      <!-- 專屬名片入口橫幅 -->
       <div id="my-card-entry" class="hidden mt-8 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-5 text-white shadow-xl shadow-slate-900/20 flex justify-between items-center relative overflow-hidden cursor-pointer active:scale-[0.98] transition-transform" onclick="window.location.href='card.html?mode=mycard'">
           <div class="absolute -right-4 -top-4 opacity-10"><span class="material-symbols-outlined text-[100px]">contact_mail</span></div>
           <div class="relative z-10">
@@ -222,7 +222,7 @@
 
   </main>
 
-  <!-- ⭐ 底部導航 Admin：注意建立按鈕改為跳轉到 active.html -->
+  <!-- 底部導航 Admin：建立按鈕跳轉至 active.html -->
   <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white border-t border-slate-100 flex justify-evenly items-center h-[72px] pb-safe left-1/2 -translate-x-1/2 z-40">
     <button onclick="window.location.href='active.html'" class="nav-btn" id="nav-admin-create"><div class="icon-box"><span class="material-symbols-outlined">add_circle</span></div><span class="text-[10px] font-medium mt-0.5">建立</span></button>
     <button onclick="switchView('admin-activities')" class="nav-btn" id="nav-admin-activities"><div class="icon-box"><span class="material-symbols-outlined">fact_check</span></div><span class="text-[10px] font-medium mt-0.5">核銷</span></button>
@@ -624,7 +624,7 @@
     }
   }
 
-  // ⭐ 變更生日觸發重算邏輯保留
+  // ⭐ 生日變更時，觸發 AI 計算五大標籤並更新名片資料庫
   async function submitProfileUpdate() {
     if(isProcessing) return; isProcessing = true; setButtonLoading('btn-save-profile', true);
     const p = { 
@@ -647,6 +647,7 @@
       registeredInfo = p;
       showToast("會員資料儲存成功");
 
+      // 如果生日、姓名或電話有變，觸發名片資料庫的 AI 標籤更新
       if ((p.birthday !== oldBirthday || p.name !== oldName || p.phone !== oldPhone) && p.birthday) {
           const contacts = await fetchAPI('getCardContacts', {}, false);
           const myCard = contacts.find(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId || c['Line ID'] === userProfile.userId);

@@ -1,7 +1,8 @@
 /**
  * card.js 
  * 名片管理中樞核心邏輯
- * Version: v1.4.0 (支援動態影片版名片，整合 Smart Fallback 與 Flex Message 生成)
+ * 負責處理 API 請求、名片 OCR、裁切、數位電子名片 (Flex Message) 的生成與分享
+ * Version: v1.3.3 (支援 LINE VOOM OBS /mp4 影片格式網址)
  */
 
 const LIFF_ID = "2009367829-DLtYBDUm"; 
@@ -205,7 +206,10 @@ function openCropper(input, mode = 'card') {
       setTimeout(() => {
         img.style.opacity = '1';
         cropperInstance = new Cropper(img, { 
-          viewMode: 1, dragMode: 'move', autoCropArea: 0.9, aspectRatio: NaN, 
+          viewMode: 1, 
+          dragMode: 'move', 
+          autoCropArea: 0.9, 
+          aspectRatio: NaN, 
           restore: false, guides: true, center: true, highlight: false, cropBoxMovable: true, cropBoxResizable: true, toggleDragModeOnDblclick: false 
         });
       }, 100);
@@ -693,7 +697,7 @@ async function submitCardEdit() {
   }
 }
 
-// ⭐ 新增：切換圖片版與影片版名片
+// 支援動態切換圖片版/影片版
 window.toggleECardType = function(type) {
   document.getElementById('ec-card-type').value = type;
   const tabImg = document.getElementById('ec-tab-image');
@@ -792,7 +796,7 @@ function buildFlexMessageFromCard(card, config, dynamicAr = null) {
 
   const badgeUrl = `https://liff.line.me/${LIFF_ID}?shareCardId=${card.rowId}`;
 
-  // ⭐ 動態構建 Hero 區塊 (支援影片與圖片)
+  // 動態構建 Hero 區塊 (支援影片與圖片)
   let heroBlock;
   if (cardType === 'video' && videoUrl && videoUrl.match(/^https:\/\//i)) {
       heroBlock = {
@@ -896,7 +900,6 @@ function openECardGenerator() {
     }
   }
   
-  // 觸發 UI 更新
   toggleECardType(document.getElementById('ec-card-type').value);
   document.getElementById('preview-ec-img').removeAttribute('data-current-src');
   document.getElementById('ecard-generator-modal').classList.remove('hidden');
@@ -909,7 +912,6 @@ function updateECardPreview() {
   const videoUrl = document.getElementById('ec-video-url').value.trim();
 
   let rawUrl = document.getElementById('ec-img-input').value;
-  // 若未填入封面，啟動 Smart Fallback：抓名片原圖，若無則抓預設圖
   if (!rawUrl) {
       rawUrl = (currentActiveCard && currentActiveCard['名片圖檔']) ? currentActiveCard['名片圖檔'] : '';
       if (!rawUrl || !rawUrl.startsWith('http')) {
@@ -933,7 +935,6 @@ function updateECardPreview() {
   const previewBox = document.getElementById('ec-img-preview-box');
   const placeholder = document.getElementById('ec-upload-placeholder');
 
-  // 更新影片/圖片預覽狀態
   if (cardType === 'video') {
       if (videoUrl) {
           videoEl.src = videoUrl;
@@ -950,7 +951,6 @@ function updateECardPreview() {
       playIcon.classList.add('hidden');
   }
 
-  // 處理圖片與畫面比例
   if (imgEl.getAttribute('data-current-src') !== imgUrl) {
       imgEl.setAttribute('data-current-src', imgUrl);
       const tempImg = new Image();
@@ -1003,6 +1003,7 @@ function updateECardPreview() {
   }
 }
 
+// ⭐ 修復：支援 LINE VOOM OBS /mp4 網址，不再強制檢查 .mp4
 function checkFormat(showAlert = false) {
   let errors = [];
   
@@ -1011,7 +1012,8 @@ function checkFormat(showAlert = false) {
       const vUrl = document.getElementById('ec-video-url').value.trim();
       if (!vUrl) errors.push("❌ 【動態影片版】必須填寫影片網址。");
       else if (!vUrl.match(/^https:\/\//i)) errors.push("❌ 【影片網址】必須以 https:// 開頭。");
-      else if (!vUrl.toLowerCase().includes('.mp4')) errors.push("❌ 【影片網址】目前僅支援 MP4 格式。");
+      // 放寬條件：只要包含 mp4 即可 (例如 /mp4 或 .mp4)
+      else if (!vUrl.toLowerCase().includes('mp4')) errors.push("❌ 【影片網址】目前僅支援 MP4 格式。");
   }
 
   for (let i = 1; i <= 4; i++) {
@@ -1036,7 +1038,6 @@ function checkFormat(showAlert = false) {
       }
   }
 
-  // 封面圖不再強制檢驗為必填 (因為有 Smart Fallback)
   const imgUrl = document.getElementById('ec-img-input').value.trim();
   if (imgUrl && !imgUrl.match(/^https?:\/\//i)) {
       errors.push("❌ 【封面圖片網址】若要填寫，必須以 http:// 或 https:// 開頭。");
@@ -1099,7 +1100,6 @@ async function saveECardConfig(isSilent = false) {
   try {
     await fetchAPI('updateECardConfig', { rowId: currentActiveCard.rowId, config: config }, true);
     currentActiveCard['自訂名片設定'] = JSON.stringify(config); 
-    // 若沒有另外設定封面，不強制複寫原名片圖檔
     if(config.imgUrl) currentActiveCard['名片圖檔'] = config.imgUrl; 
     if(!isSilent) showToast('✅ 名片設定已儲存');
   } catch(e) {

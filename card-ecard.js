@@ -34,7 +34,8 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
     let rawImg = (config && config.imgUrl) ? config.imgUrl : (card && card['名片圖檔'] ? card['名片圖檔'] : '');
     
     if (!rawImg || typeof rawImg !== 'string' || !rawImg.startsWith('http')) {
-        rawImg = 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png'; 
+        // 使用更穩定的 Unsplash 佔位圖，避免 aiwe.cc 產生 404
+        rawImg = 'https://images.unsplash.com/photo-1616628188550-808682f3926d?w=800&q=80'; 
     }
     imgUrl = window.getDirectImageUrl(rawImg);
     
@@ -249,7 +250,6 @@ window.openECardGenerator = function() {
     }
     
     window.toggleECardType(document.getElementById('ec-card-type').value);
-    document.getElementById('preview-ec-img').removeAttribute('data-current-src');
     document.getElementById('ecard-generator-modal').classList.remove('hidden');
 }
   
@@ -264,7 +264,7 @@ window.updateECardPreview = function() {
     if (!rawUrl) {
         rawUrl = (typeof currentActiveCard !== 'undefined' && currentActiveCard && currentActiveCard['名片圖檔']) ? currentActiveCard['名片圖檔'] : '';
         if (!rawUrl || !rawUrl.startsWith('http')) {
-            rawUrl = 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
+            rawUrl = 'https://images.unsplash.com/photo-1616628188550-808682f3926d?w=800&q=80';
         }
     }
     let imgUrl = window.getDirectImageUrl ? window.getDirectImageUrl(rawUrl) : rawUrl;
@@ -290,12 +290,10 @@ window.updateECardPreview = function() {
             videoEl.classList.remove('hidden');
             videoEl.play().catch(e => {});
         } else {
-            videoEl.src = '';
             videoEl.classList.add('hidden');
         }
         playIcon.classList.remove('hidden');
     } else {
-        videoEl.src = '';
         videoEl.classList.add('hidden');
         playIcon.classList.add('hidden');
     }
@@ -318,7 +316,6 @@ window.updateECardPreview = function() {
                 if (ratio > 3) { w = 300; h = 100; }
                 else if (ratio < 0.334) { w = 100; h = 300; }
                 let dynAr = `${Math.round(w)}:${Math.round(h)}`;
-                // 這裡要借用 card.js 的 global variable 存，如果找不到就算了
                 if (typeof window.dynamicAspectRatio !== 'undefined') window.dynamicAspectRatio = dynAr;
                 applyAspectRatio(dynAr);
             } else {
@@ -339,7 +336,6 @@ window.updateECardPreview = function() {
             imgEl.classList.remove('hidden');
             
             if (previewBox && placeholder) {
-                previewBox.src = '';
                 previewBox.classList.add('hidden');
                 placeholder.classList.remove('hidden');
             }
@@ -440,7 +436,6 @@ window.saveECardConfig = async function(isSilent = false) {
         btn.classList.add('pointer-events-none', 'opacity-50');
     }
   
-    // 取回 dynamicAspectRatio
     let currentDynAr = (typeof window.dynamicAspectRatio !== 'undefined') ? window.dynamicAspectRatio : '20:13';
 
     const config = {
@@ -492,7 +487,7 @@ window.shareECardToLine = async function() {
     try {
       let rawUrl = document.getElementById('ec-img-input').value;
       if (!rawUrl) {
-          rawUrl = currentActiveCard['名片圖檔'] ? currentActiveCard['名片圖檔'] : 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
+          rawUrl = currentActiveCard['名片圖檔'] ? currentActiveCard['名片圖檔'] : 'https://images.unsplash.com/photo-1616628188550-808682f3926d?w=800&q=80';
       }
       const currentImgUrl = window.getDirectImageUrl ? window.getDirectImageUrl(rawUrl) : rawUrl;
       const detectedAr = (typeof window.getTrueAspectRatio === 'function') ? await window.getTrueAspectRatio(currentImgUrl) : "20:13";

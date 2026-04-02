@@ -1,4 +1,4 @@
-<!-- Version: v1.3.0 (獨立拆分：建立活動模組) -->
+<!-- Version: v1.3.1 (修復底部導覽列太淡與過細的 CSS 權重問題) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -54,12 +54,13 @@
 
     .batch-card { @apply bg-white border border-slate-200 rounded-xl p-4 mb-4 relative shadow-sm; }
 
-    .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-[#9CA3AF] h-full; min-width: 48px;}
+    /* ⭐ 修正底部導航列：恢復標準 400 粗細與 slate-500 原生灰色 */
+    .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-slate-500 h-full; min-width: 48px;}
     .nav-btn .icon-box { @apply flex items-center justify-center mb-0.5; }
-    .nav-btn .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 300; font-size: 24px; }
+    .nav-btn .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400; font-size: 24px; }
     
-    .nav-active-btn { @apply text-[#1E293B] font-bold; }
-    .nav-active-btn .material-symbols-outlined { font-variation-settings: 'FILL' 1, 'wght' 400; color: #1E293B; }
+    .nav-active-btn { @apply text-slate-800 font-bold; }
+    .nav-active-btn .material-symbols-outlined { font-variation-settings: 'FILL' 1, 'wght' 400; color: #1e293b; }
 
     .refresh-spin { animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -67,7 +68,7 @@
 </head>
 <body class="font-sans min-h-screen flex flex-col items-center">
 
-<div class="w-full max-w-md bg-background h-screen relative flex flex-col shadow-2xl overflow-hidden">
+<div id="app-container" class="w-full max-w-md h-screen relative flex flex-col shadow-2xl overflow-hidden bg-background">
   
   <nav class="fixed top-0 w-full max-w-md z-40 bg-white/90 backdrop-blur-xl px-5 py-3.5 flex justify-between items-center left-1/2 -translate-x-1/2 border-b border-slate-200 shadow-sm">
     <div class="text-[18px] font-medium text-slate-800 flex items-center gap-2 tracking-tight">
@@ -161,12 +162,12 @@
 
   <!-- 底部導航 Admin：注意建立按鈕是 Active，其他按鈕跳回 index.html -->
   <nav id="bottom-nav-admin" class="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-100 flex justify-evenly items-center h-[72px] pb-safe left-1/2 -translate-x-1/2 z-40 hidden">
-    <button onclick="window.location.href='active.html'" class="nav-btn nav-active-btn" id="nav-admin-create"><div class="icon-box"><span class="material-symbols-outlined">add_circle</span></div><span class="text-[10px] font-medium mt-0.5">建立</span></button>
-    <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn" id="nav-admin-activities"><div class="icon-box"><span class="material-symbols-outlined">fact_check</span></div><span class="text-[10px] font-medium mt-0.5">核銷</span></button>
-    <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn" id="nav-admin-crm"><div class="icon-box"><span class="material-symbols-outlined">groups</span></div><span class="text-[10px] font-medium mt-0.5">CRM</span></button>
-    <button onclick="window.location.href='fate.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined">psychology</span></div><span class="text-[10px] font-medium mt-0.5">配對</span></button>
-    <button onclick="window.location.href='card.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined">recent_patient</span></div><span class="text-[10px] font-medium mt-0.5">名片</span></button>
-    <button onclick="window.location.href='index.html?view=admin-settings'" class="nav-btn" id="nav-admin-settings"><div class="icon-box"><span class="material-symbols-outlined">settings</span></div><span class="text-[10px] font-medium mt-0.5">參數</span></button>
+    <button onclick="window.location.href='active.html'" class="nav-btn nav-active-btn" id="nav-admin-create"><div class="icon-box"><span class="material-symbols-outlined">add_circle</span></div><span class="text-[10px] font-bold mt-0.5">建立</span></button>
+    <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn" id="nav-admin-activities"><div class="icon-box"><span class="material-symbols-outlined">fact_check</span></div><span class="text-[10px] font-normal mt-0.5">核銷</span></button>
+    <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn" id="nav-admin-crm"><div class="icon-box"><span class="material-symbols-outlined">groups</span></div><span class="text-[10px] font-normal mt-0.5">CRM</span></button>
+    <button onclick="window.location.href='fate.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined">psychology</span></div><span class="text-[10px] font-normal mt-0.5">配對</span></button>
+    <button onclick="window.location.href='card.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined">recent_patient</span></div><span class="text-[10px] font-normal mt-0.5">名片</span></button>
+    <button onclick="window.location.href='index.html?view=admin-settings'" class="nav-btn" id="nav-admin-settings"><div class="icon-box"><span class="material-symbols-outlined">settings</span></div><span class="text-[10px] font-normal mt-0.5">參數</span></button>
   </nav>
 
 </div>
@@ -345,7 +346,6 @@
 
       alert('✅ 活動建立成功！');
       
-      // 建立成功後跳轉回主畫面核銷列表
       sessionStorage.removeItem('getActivityDashboard{}');
       window.location.href = 'index.html?view=admin-activities';
       

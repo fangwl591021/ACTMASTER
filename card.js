@@ -1,7 +1,7 @@
 /**
  * card.js 
  * 名片管理核心邏輯 (輕量化，不含電子名片 ECard)
- * Version: v1.6.4 (修復 404 URL 與空 src 標籤問題)
+ * Version: v1.6.5 (修復 404 URL 且移除隱藏樣式防呆)
  */
 
 const LIFF_ID = "2009367829-DLtYBDUm"; 
@@ -63,7 +63,12 @@ document.addEventListener("DOMContentLoaded", async () => {
           let config = null;
           if (card['自訂名片設定']) { try { config = JSON.parse(card['自訂名片設定']); } catch(e){} }
 
-          const imgUrlForAr = config && config.imgUrl ? getDirectImageUrl(config.imgUrl) : getDirectImageUrl(card['名片圖檔']);
+          const isValidImgForAr = config && config.imgUrl ? config.imgUrl : card['名片圖檔'];
+          let imgUrlForAr = '';
+          // 防呆：避免請求 404
+          if (isValidImgForAr && isValidImgForAr !== '圖片儲存失敗' && isValidImgForAr !== '無圖檔') {
+              imgUrlForAr = getDirectImageUrl(isValidImgForAr);
+          }
           const detectedAr = await getTrueAspectRatio(imgUrlForAr);
 
           if (typeof window.buildFlexMessageFromCard === 'function') {
@@ -142,14 +147,14 @@ window.formatPhoneStr = function(val) {
 }
 
 window.getDirectImageUrl = function(url) { 
-  if (!url) return url;
+  if (!url || url === '無圖檔' || url === '圖片儲存失敗') return url;
   const driveMatch = url.match(/id=([a-zA-Z0-9_-]+)/) || url.match(/d\/([a-zA-Z0-9_-]+)/);
   if (driveMatch && url.includes('drive.google.com')) return `https://drive.google.com/thumbnail?id=${driveMatch[1]}&sz=w1000`;
   return url;
 }
 
 window.getTrueAspectRatio = (url) => new Promise((resolve) => {
-    if (!url) return resolve('20:13');
+    if (!url || url === '無圖檔' || url === '圖片儲存失敗') return resolve('20:13');
     const img = new Image();
     img.onload = function() {
         let w = this.width; let h = this.height; let ratio = w / h;
@@ -359,6 +364,9 @@ async function loadCardContacts() {
         if (searchContainer) searchContainer.classList.add('hidden');
         const loadMoreBox = document.getElementById('card-load-more-box');
         if (loadMoreBox) loadMoreBox.classList.add('hidden');
+    } else {
+        const navAdmin = document.getElementById('bottom-nav-admin');
+        if (navAdmin) navAdmin.classList.remove('hidden');
     }
 
     const cacheKey = 'getCardContacts{}';
@@ -444,10 +452,13 @@ function renderCardPage(isReset = false) {
           ? '<span class="shrink-0 text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded text-[11px] whitespace-nowrap ml-2 border border-emerald-100">已認領</span>' 
           : '<span class="shrink-0 text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded text-[11px] whitespace-nowrap ml-2 border border-slate-200">未認領</span>';
         
+        // ⭐ 防呆：遇到無圖檔就不渲染 src，避免 404
+        const isValidImg = card['名片圖檔'] && card['名片圖檔'] !== '圖片儲存失敗' && card['名片圖檔'] !== '無圖檔';
+        
         return `
         <div onclick="openCardDetailByRowId('${card.rowId}')" class="pl-[5px] pr-4 py-4 bg-white flex items-center gap-4 border-b border-slate-200 last:border-b-0 active:bg-slate-50 cursor-pointer transition-colors">
           <div class="w-[52px] h-[52px] shrink-0 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center border border-slate-200">
-            ${card['名片圖檔'] && card['名片圖檔'] !== '圖片儲存失敗' ? `<img src="${window.getDirectImageUrl(card['名片圖檔'])}" class="w-full h-full object-cover">` : `<span class="material-symbols-outlined text-slate-400 text-[24px]">person</span>`}
+            ${isValidImg ? `<img src="${window.getDirectImageUrl(card['名片圖檔'])}" class="w-full h-full object-cover">` : `<span class="material-symbols-outlined text-slate-400 text-[24px]">person</span>`}
           </div>
           <div class="flex-1 overflow-hidden flex flex-col justify-center gap-1.5">
             <div class="flex items-center">
@@ -544,7 +555,11 @@ window.openCardDetailByRowId = function(rowId) {
 
       const imgEl = document.getElementById('ro-image');
       const noImgEl = document.getElementById('ro-no-image');
-      if (card['名片圖檔'] && card['名片圖檔'] !== '圖片儲存失敗') {
+      
+      // ⭐ 防呆：遇到無圖檔就不渲染 src，避免 404
+      const isValidImg = card['名片圖檔'] && card['名片圖檔'] !== '圖片儲存失敗' && card['名片圖檔'] !== '無圖檔';
+      
+      if (isValidImg) {
         imgEl.src = window.getDirectImageUrl(card['名片圖檔']);
         imgEl.classList.remove('hidden');
         noImgEl.classList.add('hidden');

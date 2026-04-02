@@ -1,4 +1,3 @@
-<!-- Version: v1.4.1 (修復選單全黑與跳轉邏輯) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -58,16 +57,19 @@
     .btn-primary { @apply w-full py-4 bg-[#06C755] text-white rounded-xl font-medium text-[16px] active:scale-[0.98] transition-all flex items-center justify-center gap-2; }
     .btn-secondary { @apply w-full py-3 bg-white border border-slate-300 text-slate-700 rounded-xl font-medium text-[16px] hover:bg-slate-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-sm; }
     
-    /* ⭐ 底部選單樣式：全黑與原生灰的極致對比 */
-    .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-slate-500 h-full font-medium; min-width: 48px;}
+    .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-[#9CA3AF] h-full font-medium; min-width: 48px;}
     .nav-btn .icon-box { @apply flex items-center justify-center mb-0.5; }
     .nav-btn .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400; font-size: 24px; color: inherit; }
     
-    .nav-active-btn { @apply text-black font-bold; }
-    .nav-active-btn .material-symbols-outlined { font-variation-settings: 'FILL' 1, 'wght' 400; color: #000000; }
+    .nav-active-btn { @apply text-[#1E293B] font-bold; }
+    .nav-active-btn .material-symbols-outlined { font-variation-settings: 'FILL' 1, 'wght' 400; color: #1E293B; }
 
     .refresh-spin { animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    .cropper-view-box, .cropper-face { border-radius: 4px; }
+    .cropper-line { background-color: #2563eb; opacity: 0.5; }
+    .cropper-point { background-color: #2563eb; }
   </style>
 </head>
 <body class="font-sans min-h-screen flex flex-col items-center">
@@ -222,7 +224,7 @@
 
   </main>
 
-  <!-- 底部導航 Admin：完全同步 active.html 跳轉邏輯 -->
+  <!-- 底部導航 Admin -->
   <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white border-t border-slate-100 flex justify-evenly items-center h-[72px] pb-safe left-1/2 -translate-x-1/2 z-40">
     <button onclick="window.location.href='active.html'" class="nav-btn" id="nav-admin-create"><div class="icon-box"><span class="material-symbols-outlined">add_circle</span></div><span class="text-[10px] mt-0.5">建立</span></button>
     <button onclick="switchView('admin-activities')" class="nav-btn" id="nav-admin-activities"><div class="icon-box"><span class="material-symbols-outlined">fact_check</span></div><span class="text-[10px] mt-0.5">核銷</span></button>
@@ -315,6 +317,16 @@
 
 <div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-normal flex items-center gap-2 w-max max-w-[90vw] opacity-0 pointer-events-none bg-slate-800 text-white"></div>
 
+<!-- 共同圖片裁切 Modal -->
+<div id="section-image-cropper" class="hidden fixed inset-0 bg-slate-900 flex flex-col animate-in fade-in duration-200 w-full max-w-md mx-auto z-[1080]">
+  <div class="flex justify-between items-center p-4 bg-slate-900 text-white shrink-0 border-b border-slate-800 shadow-sm">
+    <button onclick="cancelCrop()" class="text-slate-400 font-normal text-sm px-3 py-2 active:scale-90 transition-transform">取消</button>
+    <span class="font-normal text-[15px] tracking-wider flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px]">crop</span> 裁切圖片</span>
+    <button onclick="confirmCrop()" class="px-4 py-1.5 font-bold text-white bg-primary rounded-md text-sm active:scale-95 transition-transform shadow-md">完成</button>
+  </div>
+  <div class="flex-1 relative overflow-hidden flex items-center justify-center bg-black"><img id="cropper-image" src="" class="max-w-full max-h-full block opacity-0 transition-opacity duration-300"></div>
+</div>
+
 <script>
   const LIFF_ID = "2009367829-DLtYBDUm"; 
   const WORKER_URL = "https://actmaster.fangwl591021.workers.dev"; 
@@ -325,7 +337,7 @@
   let globalCrmData = [], filteredCrmData = [], crmPageLimit = 10, currentCrmViewCount = 10;
   let isProcessing = false;
   let regStep1Data = {}, regCompressedBase64 = "";
-  let html5QrcodeScanner = null;
+  let html5QrcodeScanner = null, cropperInstance = null, currentCropTarget = '';
 
   document.addEventListener('wheel', function(e) {
     if (document.activeElement.type === 'number') document.activeElement.blur();
@@ -449,6 +461,10 @@
     if (document.querySelector(`script[src="${src}"]`)) return res();
     const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s);
   });
+  const loadCSS = (href) => new Promise((res, rej) => {
+    if (document.querySelector(`link[href="${href}"]`)) return res();
+    const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; l.onload = res; l.onerror = rej; document.head.appendChild(l);
+  });
 
   async function fetchAPI(action, payload = {}, useCache = false) {
     const cacheKey = action + JSON.stringify(payload);
@@ -569,6 +585,70 @@
     setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -1rem)'; setTimeout(() => t.classList.add('hidden'), 300); }, 3000); 
   }
 
+  async function openCropper(input, targetMode) {
+    const file = input.files[0]; if (!file) return;
+    currentCropTarget = targetMode;
+
+    if (!window.Cropper) {
+       showToast("載入影像模組中...", false);
+       await loadCSS("https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css");
+       await loadScript("https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js");
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = document.getElementById('cropper-image'); 
+      img.src = e.target.result; 
+      img.style.opacity = '0';
+      document.getElementById('section-image-cropper').classList.remove('hidden');
+      if (cropperInstance) cropperInstance.destroy();
+      
+      const aspectRatio = currentCropTarget === 'reg' ? NaN : 4 / 3;
+
+      setTimeout(() => { 
+        img.style.opacity = '1'; 
+        cropperInstance = new Cropper(img, { 
+          aspectRatio: aspectRatio,
+          viewMode: 1, 
+          dragMode: 'move', 
+          autoCropArea: 0.9, 
+          guides: true, 
+          center: true, 
+          highlight: false 
+        }); 
+      }, 100);
+    }; 
+    reader.readAsDataURL(file); 
+    input.value = ""; 
+  }
+
+  function cancelCrop() { 
+    if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; } 
+    document.getElementById('section-image-cropper').classList.add('hidden'); 
+  }
+
+  function confirmCrop() { 
+    if (!cropperInstance) return; 
+    let quality = 0.8;
+    let base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1000, maxHeight: 1000 }).toDataURL('image/webp', quality); 
+    
+    while (base64.length > 40000 && quality > 0.1) {
+       quality -= 0.1;
+       base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1000, maxHeight: 1000 }).toDataURL('image/webp', quality);
+    }
+    if (base64.length > 49000) {
+       return showToast("圖片仍過大，請裁切更小的範圍", true);
+    }
+
+    cancelCrop(); 
+
+    if (currentCropTarget === 'reg') {
+      regCompressedBase64 = base64;
+      recognizeAndSaveRegCard();
+    } else {
+      showToast("圖片裁切成功");
+    }
+  }
+
   async function submitUserRegistrationStep1() {
     if (isProcessing) return; isProcessing = true;
     setButtonLoading('btn-reg-step1', true);
@@ -625,6 +705,16 @@
     }
   }
 
+  async function recognizeAndSaveRegCard() {
+    showToast("AI 辨識中...", false); document.getElementById('reg-step-2').classList.add('pointer-events-none', 'opacity-50');
+    try {
+      const data = await fetchAPI('recognizeCard', { base64Image: regCompressedBase64, Birthday: regStep1Data.birthday });
+      const payload = { base64Image: regCompressedBase64, userId: userProfile.userId, 'LINE ID': userProfile.userId, Name: regStep1Data.name, EnglishName: data.EnglishName || '', Title: data.Title || '', Department: data.Department || '', CompanyName: data.CompanyName || '', TaxID: data.TaxID || '', Mobile: regStep1Data.phone, Tel: data.Tel || '', Ext: data.Ext || '', Fax: data.Fax || '', Address: data.Address || regStep1Data.address || '', Email: data.Email || '', Website: data.Website || '', SocialMedia: data.SocialMedia || '', Slogan: data.Slogan || '', Notes: '註冊自動建檔', Birthday: regStep1Data.birthday || '', Personality: data.Personality || '', Hobbies: data.Hobbies || '', Wealth: data.Wealth || '', Health: data.Health || '', Career: data.Career || '' };
+      await fetchAPI('saveCard', payload); showToast("名片建檔成功！"); finishRegistration();
+    } catch(err) { finishRegistration(); }
+  }
+
+  // ⭐ 核心修復：修改生日觸發 AI 重算，如果沒有名片則自動建立
   async function submitProfileUpdate() {
     if(isProcessing) return; isProcessing = true; setButtonLoading('btn-save-profile', true);
     const p = { 
@@ -648,11 +738,28 @@
       showToast("會員資料儲存成功");
 
       if ((p.birthday !== oldBirthday || p.name !== oldName || p.phone !== oldPhone) && p.birthday) {
-          const contacts = await fetchAPI('getCardContacts', {}, false);
-          const myCard = contacts.find(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId || c['Line ID'] === userProfile.userId);
+          let contacts = await fetchAPI('getCardContacts', {}, false);
+          let myCard = contacts.find(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId || c['Line ID'] === userProfile.userId);
+
+          // 核心邏輯：如果之前略過上傳導致沒有名片，自動建立一張基礎名片
+          if (!myCard) {
+              showToast("正在為您建立專屬數位名片...", false);
+              await fetchAPI('saveCard', {
+                  userId: userProfile.userId,
+                  'LINE ID': userProfile.userId,
+                  Name: p.name,
+                  Mobile: p.phone,
+                  CompanyName: p.industry,
+                  Notes: '會員輸入生日自動建檔'
+              }, false);
+              
+              // 重抓一次通訊錄，確保能拿到剛建好的 rowId
+              contacts = await fetchAPI('getCardContacts', {}, false);
+              myCard = contacts.find(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId || c['Line ID'] === userProfile.userId);
+          }
 
           if (myCard) {
-              showToast("偵測到資料變更，啟動八字與靈數精算中...", false);
+              showToast("偵測到資料變更，啟動五大維度精算中...", false);
               const newTags = await fetchAPI('calculateFateTags', { Name: p.name, Mobile: p.phone, Birthday: p.birthday }, false);
               const updatePayload = {
                   rowId: myCard.rowId, Name: p.name, Mobile: p.phone,
@@ -661,7 +768,10 @@
               };
               await fetchAPI('updateCard', updatePayload, false);
               sessionStorage.removeItem('getCardContacts{}');
-              showToast("✅ 結合八字與靈數的五大命理標籤已更新！");
+              showToast("✅ 結合八字與靈數的五大命理標籤已寫入名片！");
+              
+              // 解鎖專屬名片入口
+              document.getElementById('my-card-entry').classList.remove('hidden');
           }
       }
     } catch(e) {

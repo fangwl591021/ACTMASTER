@@ -1,4 +1,4 @@
-<!-- Version: v1.4.1 (修復 Flex Header 標籤覆蓋與 9:16 比例) -->
+<!-- Version: v1.4.2 (底部導航列位置同步、修復顏色) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -11,9 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   
-  <!-- 引入獨立的發送模組 -->
   <script src="liff-share.js"></script>
-
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
@@ -45,7 +43,6 @@
     .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1.5rem); }
     
     .input-label { @apply block text-[15px] text-slate-800 mb-1.5 font-normal; }
-    
     select.custom-input { -webkit-appearance: none !important; -moz-appearance: none !important; appearance: none !important; background-image: none !important; }
     .custom-input { @apply w-full h-[44px] px-3 bg-white border border-slate-400 rounded outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors text-text-main text-[15px] shadow-none; }
     .custom-input::placeholder { @apply text-slate-400; }
@@ -198,13 +195,14 @@
     </div>
   </main>
 
+  <!-- ⭐ 統一底部導航列位置與顏色 -->
   <nav id="bottom-nav-admin" class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-evenly items-center px-1 py-2 z-40 pb-safe shadow-app-nav left-1/2 -translate-x-1/2 h-[72px]">
-    <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">fact_check</span></div><span class="text-[10px] font-bold mt-0.5">核銷</span></button>
-    <button onclick="window.location.href='index.html?view=admin-create'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">add_circle</span></div><span class="text-[10px] font-bold mt-0.5">建立</span></button>
-    <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">groups</span></div><span class="text-[10px] font-bold mt-0.5">CRM</span></button>
-    <button onclick="window.location.href='fate.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px] text-slate-400">psychology</span></div><span class="text-[10px] font-bold mt-0.5 text-slate-400">配對</span></button>
-    <button onclick="window.location.href='card.html'" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">recent_patient</span></div><span class="text-[10px] font-bold mt-0.5">名片</span></button>
-    <button onclick="window.location.href='index.html?view=admin-settings'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">settings</span></div><span class="text-[10px] font-bold mt-0.5">參數</span></button>
+    <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">fact_check</span></div><span class="text-[10px] font-normal mt-0.5">核銷</span></button>
+    <button onclick="window.location.href='index.html?view=admin-create'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">add_circle</span></div><span class="text-[10px] font-normal mt-0.5">建立</span></button>
+    <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">groups</span></div><span class="text-[10px] font-normal mt-0.5">CRM</span></button>
+    <button onclick="window.location.href='fate.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">psychology</span></div><span class="text-[10px] font-normal mt-0.5">配對</span></button>
+    <button onclick="window.location.href='card.html'" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">recent_patient</span></div><span class="text-[10px] font-normal mt-0.5">名片</span></button>
+    <button onclick="window.location.href='index.html?view=admin-settings'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">settings</span></div><span class="text-[10px] font-normal mt-0.5">參數</span></button>
   </nav>
 </div>
 
@@ -358,13 +356,13 @@
               
               <div class="grid grid-cols-2 gap-3">
                 <div class="flex flex-col">
-                  <label class="input-label">畫面比例 (支援短影音)</label>
+                  <label class="input-label">畫面比例</label>
                   <div class="relative w-full">
                     <select id="ec-aspect-ratio" class="custom-input appearance-none px-3" onchange="updateECardPreview()">
                       <option value="auto" selected>自動偵測</option>
                       <option value="20:13">20:13 (標準)</option>
                       <option value="1:1">1:1 (正方)</option>
-                      <option value="16:9">16:9 (橫式)</option>
+                      <option value="16:9">16:9 (橫向)</option>
                       <option value="9:16">9:16 (短影音)</option>
                     </select>
                     <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">expand_more</span>
@@ -465,9 +463,9 @@
                       <div class="flex flex-col gap-1.5 max-w-[88%] w-full">
                           <div class="bg-white px-3.5 py-2 rounded-2xl rounded-tl-sm text-[13px] text-slate-800 shadow-sm w-fit font-medium">為您準備的數位名片！</div>
                           
-                          <!-- ⭐ 新版預覽泡泡 (加入 Header 區域放分享按鈕) -->
+                          <!-- ⭐ 預覽泡泡 -->
                           <div class="flex-preview-bubble flex flex-col" id="preview-ec-bubble">
-                              <div class="w-full flex justify-end p-2.5 bg-white pb-1 border-b border-slate-50">
+                              <div class="w-full flex justify-end p-2 bg-white pb-1 border-b border-slate-50">
                                   <div class="bg-red-500 text-white text-[10px] font-bold w-[65px] h-[25px] flex items-center justify-center rounded-full shadow-sm">分享</div>
                               </div>
                               <div id="preview-ec-hero" class="relative w-full overflow-hidden bg-slate-100 shrink-0 flex items-center justify-center">
@@ -477,11 +475,11 @@
                                       <span class="material-symbols-outlined text-[48px] drop-shadow-md">play_circle</span>
                                   </div>
                               </div>
-                              <div class="p-3.5 text-center bg-white relative">
+                              <div class="p-3 text-center bg-white relative">
                                   <h2 id="preview-ec-title" class="text-[17px] font-black text-slate-800 leading-tight mb-1.5"></h2>
                                   <p id="preview-ec-desc" class="text-[12px] text-slate-500 whitespace-pre-wrap leading-relaxed text-left"></p>
                               </div>
-                              <div id="preview-ec-buttons" class="p-3.5 pt-0 bg-white space-y-2"></div>
+                              <div id="preview-ec-buttons" class="p-2 pt-0 bg-white space-y-1.5"></div>
                           </div>
 
                       </div>

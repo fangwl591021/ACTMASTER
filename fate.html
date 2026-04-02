@@ -25,14 +25,13 @@
       },
     }
   </script>
-  <style>
+  <style type="text/tailwindcss">
     .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
     .icon-filled { font-variation-settings: 'FILL' 1; }
     body { background-color: #f8f9fc; -webkit-tap-highlight-color: transparent; }
     .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1.5rem); }
     .custom-input { @apply w-full py-4 px-5 bg-input-bg border-none rounded-2xl outline-none focus:ring-2 focus:ring-primary/30 transition-all font-medium text-text-main; }
     
-    /* 統一導覽列按鈕樣式 */
     .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-slate-400; min-width: 48px; }
     .nav-btn .icon-box { @apply px-3 py-1.5 rounded-full transition-all flex items-center justify-center; }
     .nav-active { @apply text-primary font-bold; }
@@ -60,7 +59,6 @@
 
     <div id="view-main" class="hidden animate-in fade-in pt-2">
       
-      <!-- 命理標籤控制區 -->
       <div class="bg-white rounded-[2rem] shadow-sm p-5 mb-4 border border-slate-100 flex justify-between items-center">
         <div>
            <h3 class="text-sm font-black text-slate-800">資料庫標籤狀態</h3>
@@ -95,7 +93,6 @@
 
   </main>
 
-  <!-- 統一 6 顆按鈕滿版底部導覽列 -->
   <nav id="bottom-nav-admin" class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-evenly items-center px-2 py-2 z-[80] pb-safe shadow-[0_-4px_15px_rgba(0,0,0,0.03)] left-1/2 -translate-x-1/2">
     <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn" id="nav-admin-activities">
       <div class="icon-box"><span class="material-symbols-outlined text-[24px]">fact_check</span></div><span class="text-[10px] mt-1 font-bold whitespace-nowrap">核銷</span>
@@ -118,7 +115,6 @@
   </nav>
 </div>
 
-<!-- ================= 絕對純淨版：數位電子名片預覽 Modal ================= -->
 <div id="readonly-card-modal" class="hidden fixed inset-0 bg-slate-100/95 backdrop-blur-sm flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl" style="z-index: 1050;">
   <div class="bg-white px-5 py-4 flex justify-between items-center border-b border-slate-200 z-10 shrink-0 shadow-sm">
     <h3 class="text-lg font-black text-slate-800">數位名片</h3>
@@ -126,7 +122,6 @@
   </div>
 
   <div class="flex-1 overflow-y-auto pb-28 pt-8 px-5 flex flex-col items-center">
-    <!-- 完美還原 Flex Message 的視覺外觀 -->
     <div class="w-full max-w-[340px] bg-white rounded-[20px] shadow-[0_10px_30px_rgba(0,0,0,0.08)] overflow-hidden relative border border-slate-100">
       <div class="absolute top-3 left-3 bg-[#FF0000] text-white text-[13px] font-bold px-3 py-1 rounded-full z-10 shadow-sm tracking-widest">分享</div>
       <img id="ro-img" src="" class="w-full h-auto max-h-[220px] object-cover bg-slate-50">
@@ -151,7 +146,7 @@
   
   let globalCardContacts = [];
   let currentUserProfile = null;
-  let currentActiveCard = null; // 用於存放準備預覽/轉發的純淨版名片
+  let currentActiveCard = null; 
 
   window.onload = async () => {
     try {
@@ -240,7 +235,8 @@
           
           try {
               const mobileToUse = c['手機號碼'] || c['公司電話'] || '';
-              const newTags = await fetchAPI('calculateFateTags', { Name: c['姓名'], Mobile: mobileToUse }, true);
+              const bdayToUse = c['生日'] || ''; 
+              const newTags = await fetchAPI('calculateFateTags', { Name: c['姓名'], Mobile: mobileToUse, Birthday: bdayToUse }, true);
               
               const fullPayload = {
                   rowId: c.rowId,
@@ -368,15 +364,12 @@
 
         <div class="flex gap-2">
             ${phoneStr ? `<a href="tel:${phoneStr}" class="flex-1 py-2.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-[13px] text-center active:scale-95 transition-transform flex justify-center items-center gap-1"><span class="material-symbols-outlined text-[16px]">call</span> 聯絡</a>` : ''}
-            <!-- ⭐ 直接開啟純淨版 Web 數位名片 -->
             <button onclick="openWebCard('${contact.rowId}')" class="flex-1 py-2.5 bg-slate-800 text-white rounded-xl font-bold text-[13px] text-center active:scale-95 transition-transform flex justify-center items-center gap-1"><span class="material-symbols-outlined text-[16px]">contact_mail</span> 查看名片</button>
         </div>
       </div>
       `;
     }).join('');
   }
-
-  // ================= 絕對純淨版：數位電子名片預覽與分享模組 =================
 
   function getDirectImageUrl(url) { 
       if (!url) return url;
@@ -400,7 +393,6 @@
       img.src = url;
   });
 
-  // ⭐ 點擊查看名片：開啟獨立純淨無編輯介面的預覽 Modal
   function openWebCard(rowId) {
       const card = globalCardContacts.find(c => String(c.rowId) === String(rowId));
       if (!card) return;
@@ -544,16 +536,14 @@
       try {
           const message = { type: "flex", altText: altText || "您收到一張數位名片", contents: flexContents };
           const res = await liff.shareTargetPicker([message]);
-          if (res) showToast('🚀 數位名片已成功轉發！');
-          else showToast('取消傳送');
+          if (res) alert('🚀 數位名片已成功轉發！');
           setTimeout(() => liff.closeWindow(), 1500);
       } catch (error) {
           if (error.message && error.message.includes('not allowed')) {
               alert("⚠️ 系統權限已更新！即將為您重新登入以獲取最新權限。");
               liff.logout(); window.location.reload(); 
           } else {
-              alert('發送取消或發生未知錯誤: ' + error.message);
-              liff.closeWindow();
+              alert('發送取消或發生未知錯誤');
           }
       }
   };

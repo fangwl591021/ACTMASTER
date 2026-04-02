@@ -1,4 +1,4 @@
-<!-- Version: v1.4.1 (修復選單全黑與跳轉邏輯) -->
+<!-- Version: v1.5.0 (修復空轉問題，維持獨立運作) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -54,7 +54,7 @@
 
     .batch-card { @apply bg-white border border-slate-200 rounded-xl p-4 mb-4 relative shadow-sm; }
 
-    /* ⭐ 底部選單樣式：全黑與原生灰的極致對比 */
+    /* ⭐ 底部導航列：全黑與原生灰對比 */
     .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-slate-500 h-full font-medium; min-width: 48px;}
     .nav-btn .icon-box { @apply flex items-center justify-center mb-0.5; }
     .nav-btn .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400; font-size: 24px; color: inherit; }
@@ -115,7 +115,6 @@
         </div>
         <div class="flex flex-col"><label class="input-label">名單內容 (每行一位)</label><textarea id="quick-names" class="custom-input h-36 resize-none" placeholder="王小明&#10;李小華"></textarea></div>
         
-        <!-- 還原：快速模式圖片上傳 -->
         <div class="flex flex-col mt-2">
           <label class="input-label">活動宣傳圖 <span class="text-[12px] text-slate-400 ml-1">(選填)</span></label>
           <div onclick="document.getElementById('file-input-quick').click()" class="w-full h-36 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-all hover:bg-slate-100 relative group">
@@ -146,7 +145,6 @@
          <div class="flex flex-col"><input type="number" id="detail-price" class="custom-input hidden h-[46px]" placeholder="金額 (NT$)"></div>
          <div class="flex flex-col"><label class="input-label">活動說明</label><textarea id="detail-desc" class="custom-input h-32 resize-none" placeholder="詳細內容..."></textarea></div>
 
-         <!-- 還原：完整模式圖片上傳 -->
          <div class="flex flex-col mt-2">
            <label class="input-label">宣傳大圖</label>
            <div onclick="document.getElementById('file-input-detailed').click()" class="w-full h-36 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-all hover:bg-slate-100 relative group">
@@ -169,7 +167,6 @@
         </div>
         <div class="flex flex-col"><label class="input-label">系列共同說明</label><textarea id="batch-desc" class="custom-input h-24 resize-none" placeholder="輸入此系列活動的統整說明..."></textarea></div>
 
-        <!-- 還原：梯次模式圖片上傳 -->
         <div class="flex flex-col mt-2">
           <label class="input-label">宣傳大圖 <span class="text-[12px] text-slate-400 ml-1">(系列共用)</span></label>
           <div onclick="document.getElementById('file-input-batch').click()" class="w-full h-36 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-all hover:bg-slate-100 relative group">
@@ -198,7 +195,7 @@
     </div>
   </main>
 
-  <!-- 底部導航 Admin：完全同步 index.html，跳轉正確連結 -->
+  <!-- 底部導航 Admin：確保 Active 在「建立」按鈕 -->
   <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white border-t border-slate-100 flex justify-evenly items-center h-[72px] pb-safe left-1/2 -translate-x-1/2 z-40">
     <button onclick="window.location.href='active.html'" class="nav-btn nav-active-btn" id="nav-admin-create"><div class="icon-box"><span class="material-symbols-outlined">add_circle</span></div><span class="text-[10px] mt-0.5">建立</span></button>
     <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn" id="nav-admin-activities"><div class="icon-box"><span class="material-symbols-outlined">fact_check</span></div><span class="text-[10px] mt-0.5">核銷</span></button>
@@ -222,8 +219,7 @@
   </div>
 </div>
 
-<!-- 系統 Toast 通知 -->
-<div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-normal flex items-center gap-2 w-max max-w-[90vw] opacity-0 pointer-events-none bg-slate-800 text-white"></div>
+<div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-medium flex items-center gap-2 w-max max-w-[90vw] bg-slate-800 text-white opacity-0 pointer-events-none border border-slate-700"></div>
 
 <script>
   const LIFF_ID = "2009367829-DLtYBDUm"; 
@@ -252,7 +248,6 @@
       if (isAdminUser) {
         document.getElementById('view-admin-create').classList.remove('hidden');
         document.getElementById('bottom-nav-admin').classList.remove('hidden');
-        
         if(document.getElementById('batch-list-container').children.length === 0) addBatchItem();
       } else {
         window.location.href = 'index.html';
@@ -286,7 +281,6 @@
       }
   }
 
-  // 動態載入 Cropper.js
   const loadScript = (src) => new Promise((res, rej) => {
     if (document.querySelector(`script[src="${src}"]`)) return res();
     const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s);
@@ -295,6 +289,20 @@
     if (document.querySelector(`link[href="${href}"]`)) return res();
     const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; l.onload = res; l.onerror = rej; document.head.appendChild(l);
   });
+
+  // API 呼叫
+  async function fetchAPI(action, payload = {}) {
+    try {
+      const response = await fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, payload }) });
+      const resText = await response.text();
+      let result; 
+      try { result = JSON.parse(resText); } catch(e) { throw new Error(`系統連線失敗 (非 JSON)`); }
+      if (!result.success) throw new Error(result.error);
+      return result.data;
+    } catch (err) { 
+      throw err; 
+    }
+  }
 
   // 圖片裁切邏輯
   async function openCropper(input, targetMode) {
@@ -313,18 +321,10 @@
       img.style.opacity = '0';
       document.getElementById('section-image-cropper').classList.remove('hidden');
       if (cropperInstance) cropperInstance.destroy();
-      
-      // 固定 4:3 比例
       setTimeout(() => { 
         img.style.opacity = '1'; 
         cropperInstance = new Cropper(img, { 
-          aspectRatio: 4 / 3,
-          viewMode: 1, 
-          dragMode: 'move', 
-          autoCropArea: 0.9, 
-          guides: true, 
-          center: true, 
-          highlight: false 
+          aspectRatio: 4 / 3, viewMode: 1, dragMode: 'move', autoCropArea: 0.9, guides: true, center: true, highlight: false 
         }); 
       }, 100);
     }; 
@@ -366,7 +366,6 @@
     }
   }
 
-  // 切換建立模式
   function toggleCreateMode(m) { 
     ['quick', 'detailed', 'batch'].forEach(t => {
       const btn = document.getElementById('tab-' + t);
@@ -374,7 +373,6 @@
       if(btn) btn.className = (m === t) ? 'tab-btn tab-active' : 'tab-btn';
       if(form) form.classList.toggle('hidden', m !== t);
     });
-
     if (m === 'batch' && document.getElementById('batch-list-container').children.length === 0) {
       addBatchItem();
     }
@@ -382,7 +380,6 @@
 
   function toggleFeeInput() { document.getElementById('detail-price').classList.toggle('hidden', document.querySelector('input[name="fee-type"]:checked').value !== '收費'); }
 
-  // 新增梯次項目
   function addBatchItem(data = null) {
     const container = document.getElementById('batch-list-container');
     const id = Date.now() + Math.floor(Math.random() * 100);
@@ -431,7 +428,6 @@
     });
   }
 
-  // 提交活動建立 API
   async function handleCreateActivity(mode) { 
     if(isProcessing) return; 
     const nameInput = document.getElementById(mode === 'batch' ? 'batch-name' : (mode === 'quick' ? 'quick-name' : 'detail-name'));
@@ -507,22 +503,10 @@
     }
     
     try { 
-      const response = await fetch(WORKER_URL, { 
-          method: 'POST', 
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'bulkAddRegistrants', payload: p }) 
-      });
-      const res = await response.json();
-      if (!res.success) throw new Error(res.error);
-
+      await fetchAPI('bulkAddRegistrants', p);
       showToast('🎉 活動建立成功！即將跳轉...');
-      
-      // 清除快取並跳轉
       sessionStorage.removeItem('getActivityDashboard{}');
-      setTimeout(() => {
-        window.location.href = 'index.html?view=admin-activities';
-      }, 1500);
-      
+      setTimeout(() => { window.location.href = 'index.html?view=admin-activities'; }, 1500);
     } catch(e) { 
       showToast('⚠️ 建立失敗：' + e.message, true);
       btn.innerHTML = oriText;

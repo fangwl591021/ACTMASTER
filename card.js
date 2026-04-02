@@ -1,7 +1,6 @@
 /**
  * card.js 
- * 名片管理中樞核心邏輯
- * Version: v1.4.1 (修復 Flex 影片元件分享崩潰、加入 Header 按鈕、支援 9:16 短影音)
+ * Version: v1.4.2 (修復手機版 LIFF 登入空轉問題、優化載入時機)
  */
 
 const LIFF_ID = "2009367829-DLtYBDUm"; 
@@ -23,8 +22,8 @@ let uploadTargetMode = 'card';
 const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55", "U8932b891ad24da512afb9c1a6f41567b"];
 let isAdmin = false;
 
-window.onload = async () => {
-  // ⭐ 防呆機制：避免使用者誤把 card.js 引入到 index.html 造成衝突崩潰
+// ⭐ 改用 DOMContentLoaded 解決手機端 window.onload 延遲造成的空轉問題
+document.addEventListener("DOMContentLoaded", async () => {
   if (!document.getElementById('card-search-input')) return;
 
   try {
@@ -70,16 +69,16 @@ window.onload = async () => {
       document.getElementById('user-avatar').src = userProfile.pictureUrl || '';
       document.getElementById('user-profile-badge').classList.remove('hidden');
       isAdmin = ADMIN_IDS.includes(userProfile.userId);
+      switchView('list');
     } else {
-      liff.login();
-      return;
+      // ⭐ 補上 redirectUri 確保手機外部瀏覽器登入後能正確跳轉回來
+      liff.login({ redirectUri: window.location.href });
     }
-
-    switchView('list');
   } catch (err) {
     showToast("⚠️ LIFF 初始化失敗", true);
+    document.getElementById('loading-text').innerText = '系統載入失敗，請重新整理';
   }
-};
+});
 
 function setButtonLoading(btnId, isLoading, originalText = '') {
     const btn = document.getElementById(btnId);
@@ -719,7 +718,6 @@ window.toggleECardType = function(type) {
   updateECardPreview();
 };
 
-// ⭐ 核心修復：使用 Header 加入右靠齊分享標籤，並拔除 video 元件的 action 屬性
 function buildFlexMessageFromCard(card, config, dynamicAr = null) {
   let imgUrl, imgActionUrl, imgSize, aspectMode, ar, title, desc, buttons = [];
   let cardType = config && config.cardType ? config.cardType : 'image';
@@ -799,7 +797,6 @@ function buildFlexMessageFromCard(card, config, dynamicAr = null) {
 
   const badgeUrl = `https://liff.line.me/${LIFF_ID}?shareCardId=${card.rowId}`;
 
-  // ⭐ Header 區塊：把分享按鈕放這裡以避開影片不支援絕對定位與 action 的限制
   const headerBlock = {
       "type": "box",
       "layout": "horizontal",
@@ -835,7 +832,6 @@ function buildFlexMessageFromCard(card, config, dynamicAr = null) {
 
   let heroBlock;
   if (cardType === 'video' && videoUrl && videoUrl.match(/^https:\/\//i)) {
-      // ⭐ 影片元件不能包含 action 屬性！
       heroBlock = {
           "type": "video",
           "url": videoUrl,
@@ -850,7 +846,6 @@ function buildFlexMessageFromCard(card, config, dynamicAr = null) {
           "aspectRatio": ar
       };
   } else {
-      // 圖片元件可以包含 action
       heroBlock = {
           "type": "image",
           "url": imgUrl,

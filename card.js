@@ -1,6 +1,6 @@
 /**
  * card.js 
- * Version: v1.4.2 (修復手機版 LIFF 登入空轉問題、優化載入時機)
+ * Version: v1.4.3 (修正 Flex paddingAll 為 7px 緊湊版)
  */
 
 const LIFF_ID = "2009367829-DLtYBDUm"; 
@@ -22,7 +22,6 @@ let uploadTargetMode = 'card';
 const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55", "U8932b891ad24da512afb9c1a6f41567b"];
 let isAdmin = false;
 
-// ⭐ 改用 DOMContentLoaded 解決手機端 window.onload 延遲造成的空轉問題
 document.addEventListener("DOMContentLoaded", async () => {
   if (!document.getElementById('card-search-input')) return;
 
@@ -71,7 +70,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       isAdmin = ADMIN_IDS.includes(userProfile.userId);
       switchView('list');
     } else {
-      // ⭐ 補上 redirectUri 確保手機外部瀏覽器登入後能正確跳轉回來
       liff.login({ redirectUri: window.location.href });
     }
   } catch (err) {
@@ -718,6 +716,7 @@ window.toggleECardType = function(type) {
   updateECardPreview();
 };
 
+// ⭐ 核心修復：使用 Header 加入右靠齊分享標籤，縮減 7px Padding
 function buildFlexMessageFromCard(card, config, dynamicAr = null) {
   let imgUrl, imgActionUrl, imgSize, aspectMode, ar, title, desc, buttons = [];
   let cardType = config && config.cardType ? config.cardType : 'image';
@@ -797,11 +796,12 @@ function buildFlexMessageFromCard(card, config, dynamicAr = null) {
 
   const badgeUrl = `https://liff.line.me/${LIFF_ID}?shareCardId=${card.rowId}`;
 
+  // ⭐ Header 區塊設定為 7px 緊湊邊界
   const headerBlock = {
       "type": "box",
       "layout": "horizontal",
       "justifyContent": "flex-end",
-      "paddingAll": "10px",
+      "paddingAll": "7px",
       "contents": [
           {
               "type": "box",
@@ -863,11 +863,12 @@ function buildFlexMessageFromCard(card, config, dynamicAr = null) {
       "body": {
           "type": "box", "layout": "vertical", "paddingAll": "0px",
           "contents": [
-              { "type": "box", "layout": "vertical", "paddingAll": "15px", "contents": [ { "type": "text", "text": title, "weight": "bold", "size": "xl", "align": titleAlign, "wrap": true }, { "type": "text", "text": desc, "size": "xs", "margin": "sm", "color": "#666666", "wrap": true } ] }
+              { "type": "box", "layout": "vertical", "paddingAll": "7px", "contents": [ { "type": "text", "text": title, "weight": "bold", "size": "xl", "align": titleAlign, "wrap": true }, { "type": "text", "text": desc, "size": "xs", "margin": "sm", "color": "#666666", "wrap": true } ] }
           ]
       }
   };
-  if (btnContents.length > 0) flexContents.footer = { "type": "box", "layout": "vertical", "spacing": "sm", "paddingAll": "15px", "backgroundColor": "#FFFFFF", "contents": btnContents };
+  // ⭐ 底部動作按鈕區域設定為 7px 緊湊邊界
+  if (btnContents.length > 0) flexContents.footer = { "type": "box", "layout": "vertical", "spacing": "sm", "paddingAll": "7px", "backgroundColor": "#FFFFFF", "contents": btnContents };
   return flexContents;
 }
 

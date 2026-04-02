@@ -1,8 +1,7 @@
 /**
  * card.js 
  * 名片管理中樞核心邏輯
- * 負責處理 API 請求、名片 OCR、裁切、數位電子名片 (Flex Message) 的生成與分享
- * Version: v1.3.4 (修復 Flex 覆蓋標籤至 Header、新增影片 9:16 比例選項)
+ * Version: v1.4.1 (修復 Flex 影片元件分享崩潰、加入 Header 按鈕、支援 9:16 短影音)
  */
 
 const LIFF_ID = "2009367829-DLtYBDUm"; 
@@ -19,10 +18,68 @@ let currentActiveCard = null;
 let isProcessing = false;
 let dynamicAspectRatio = "20:13"; 
 let currentFateTags = null; 
-let uploadTargetMode = 'card'; // 'card' or 'ecard'
+let uploadTargetMode = 'card'; 
 
 const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55", "U8932b891ad24da512afb9c1a6f41567b"];
 let isAdmin = false;
+
+window.onload = async () => {
+  // ⭐ 防呆機制：避免使用者誤把 card.js 引入到 index.html 造成衝突崩潰
+  if (!document.getElementById('card-search-input')) return;
+
+  try {
+    await liff.init({ liffId: LIFF_ID });
+    const params = new URLSearchParams(window.location.search);
+    const shareCardId = params.get('shareCardId');
+    
+    if (shareCardId) {
+      if (!liff.isLoggedIn()) { liff.login({ redirectUri: window.location.href }); return; }
+      document.getElementById('loading-text').innerText = '準備轉發數位名片...';
+      try {
+          const contacts = await fetchAPI('getCardContacts');
+          contacts.forEach(c => {
+              if (c['手機號碼']) c['手機號碼'] = formatPhoneStr(c['手機號碼']);
+              if (c['公司電話']) c['公司電話'] = formatPhoneStr(c['公司電話']);
+          });
+          const card = contacts.find(c => String(c.rowId) === String(shareCardId));
+          if (!card) throw new Error('找不到該名片資料');
+
+          let config = null;
+          if (card['自訂名片設定']) { try { config = JSON.parse(card['自訂名片設定']); } catch(e){} }
+
+          const imgUrlForAr = config && config.imgUrl ? getDirectImageUrl(config.imgUrl) : getDirectImageUrl(card['名片圖檔']);
+          const detectedAr = await getTrueAspectRatio(imgUrlForAr);
+
+          const flexContents = buildFlexMessageFromCard(card, config, detectedAr);
+          const title = config && config.title ? config.title : card['姓名'];
+          const altText = `您收到一張數位名片：${title || '商務名片'}`;
+          
+          if (window.triggerFlexSharing) {
+              await window.triggerFlexSharing(flexContents, altText);
+          } else {
+              showToast("發生錯誤，轉發模組未載入", true);
+          }
+      } catch (e) {
+          alert('名片資料讀取失敗: ' + e.message); liff.closeWindow();
+      }
+      return;
+    }
+
+    if (liff.isLoggedIn()) {
+      userProfile = await liff.getProfile();
+      document.getElementById('user-avatar').src = userProfile.pictureUrl || '';
+      document.getElementById('user-profile-badge').classList.remove('hidden');
+      isAdmin = ADMIN_IDS.includes(userProfile.userId);
+    } else {
+      liff.login();
+      return;
+    }
+
+    switchView('list');
+  } catch (err) {
+    showToast("⚠️ LIFF 初始化失敗", true);
+  }
+};
 
 function setButtonLoading(btnId, isLoading, originalText = '') {
     const btn = document.getElementById(btnId);
@@ -91,61 +148,6 @@ async function fetchAPI(action, payload = {}, silent = false) {
   }
 }
 
-window.onload = async () => {
-  try {
-    await liff.init({ liffId: LIFF_ID });
-    const params = new URLSearchParams(window.location.search);
-    const shareCardId = params.get('shareCardId');
-    
-    if (shareCardId) {
-      if (!liff.isLoggedIn()) { liff.login({ redirectUri: window.location.href }); return; }
-      document.getElementById('loading-text').innerText = '準備轉發數位名片...';
-      try {
-          const contacts = await fetchAPI('getCardContacts');
-          contacts.forEach(c => {
-              if (c['手機號碼']) c['手機號碼'] = formatPhoneStr(c['手機號碼']);
-              if (c['公司電話']) c['公司電話'] = formatPhoneStr(c['公司電話']);
-          });
-          const card = contacts.find(c => String(c.rowId) === String(shareCardId));
-          if (!card) throw new Error('找不到該名片資料');
-
-          let config = null;
-          if (card['自訂名片設定']) { try { config = JSON.parse(card['自訂名片設定']); } catch(e){} }
-
-          const imgUrlForAr = config && config.imgUrl ? getDirectImageUrl(config.imgUrl) : getDirectImageUrl(card['名片圖檔']);
-          const detectedAr = await getTrueAspectRatio(imgUrlForAr);
-
-          const flexContents = buildFlexMessageFromCard(card, config, detectedAr);
-          const title = config && config.title ? config.title : card['姓名'];
-          const altText = `您收到一張數位名片：${title || '商務名片'}`;
-          
-          if (window.triggerFlexSharing) {
-              await window.triggerFlexSharing(flexContents, altText);
-          } else {
-              showToast("發生錯誤，轉發模組未載入", true);
-          }
-      } catch (e) {
-          alert('名片資料讀取失敗: ' + e.message); liff.closeWindow();
-      }
-      return;
-    }
-
-    if (liff.isLoggedIn()) {
-      userProfile = await liff.getProfile();
-      document.getElementById('user-avatar').src = userProfile.pictureUrl || '';
-      document.getElementById('user-profile-badge').classList.remove('hidden');
-      isAdmin = ADMIN_IDS.includes(userProfile.userId);
-    } else {
-      liff.login();
-      return;
-    }
-
-    switchView('list');
-  } catch (err) {
-    showToast("⚠️ LIFF 初始化失敗", true);
-  }
-};
-
 function switchView(view) {
   ['view-loading', 'view-list', 'view-process'].forEach(v => {
     const el = document.getElementById(v);
@@ -206,10 +208,7 @@ function openCropper(input, mode = 'card') {
       setTimeout(() => {
         img.style.opacity = '1';
         cropperInstance = new Cropper(img, { 
-          viewMode: 1, 
-          dragMode: 'move', 
-          autoCropArea: 0.9, 
-          aspectRatio: NaN, 
+          viewMode: 1, dragMode: 'move', autoCropArea: 0.9, aspectRatio: NaN, 
           restore: false, guides: true, center: true, highlight: false, cropBoxMovable: true, cropBoxResizable: true, toggleDragModeOnDblclick: false 
         });
       }, 100);
@@ -247,7 +246,7 @@ async function confirmCrop() {
           btn.classList.remove('pointer-events-none');
       }
   } else {
-      document.getElementById('preview-image').src = compressedBase64;
+      document.getElementById('process-preview-image').src = compressedBase64;
       switchView('process');
       switchProcessSection('section-loading');
       recognizeCardData();
@@ -697,7 +696,6 @@ async function submitCardEdit() {
   }
 }
 
-// 支援動態切換圖片版/影片版
 window.toggleECardType = function(type) {
   document.getElementById('ec-card-type').value = type;
   const tabImg = document.getElementById('ec-tab-image');
@@ -718,11 +716,10 @@ window.toggleECardType = function(type) {
     document.getElementById('ec-upload-hint').innerText = '※ 若未上傳，系統將智能代入您原先的名片圖檔作為底圖。';
   }
   
-  // 切換時依據下拉選單更新 AR，如果是 auto 讓它重新抓取
   updateECardPreview();
 };
 
-// ⭐ 核心修復：使用 Header 加入右靠齊分享標籤，並支援自訂影片比例 (9:16)
+// ⭐ 核心修復：使用 Header 加入右靠齊分享標籤，並拔除 video 元件的 action 屬性
 function buildFlexMessageFromCard(card, config, dynamicAr = null) {
   let imgUrl, imgActionUrl, imgSize, aspectMode, ar, title, desc, buttons = [];
   let cardType = config && config.cardType ? config.cardType : 'image';
@@ -731,7 +728,7 @@ function buildFlexMessageFromCard(card, config, dynamicAr = null) {
   let rawImg = (config && config.imgUrl) ? config.imgUrl : (card && card['名片圖檔'] ? card['名片圖檔'] : '');
   
   if (!rawImg || typeof rawImg !== 'string' || !rawImg.startsWith('http')) {
-      rawImg = 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png'; // 系統預設墊檔圖
+      rawImg = 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png'; 
   }
   imgUrl = getDirectImageUrl(rawImg);
   
@@ -740,7 +737,6 @@ function buildFlexMessageFromCard(card, config, dynamicAr = null) {
       imgSize = config.imgSize || 'mega';
       aspectMode = config.aspectMode || 'cover';
       
-      // 支援指定的比例，若是 auto 則使用偵測到的 dynamicAr
       let arSetting = config.ar || 'auto';
       ar = (arSetting === 'auto') ? (dynamicAr || '20:13') : arSetting;
       
@@ -803,7 +799,7 @@ function buildFlexMessageFromCard(card, config, dynamicAr = null) {
 
   const badgeUrl = `https://liff.line.me/${LIFF_ID}?shareCardId=${card.rowId}`;
 
-  // ⭐ Header 區塊：把分享按鈕放這裡以避開影片 Hero 不支援 Absolute 的問題
+  // ⭐ Header 區塊：把分享按鈕放這裡以避開影片不支援絕對定位與 action 的限制
   const headerBlock = {
       "type": "box",
       "layout": "horizontal",
@@ -837,9 +833,9 @@ function buildFlexMessageFromCard(card, config, dynamicAr = null) {
       ]
   };
 
-  // 動態構建 Hero 區塊 (支援影片與圖片，純元件，不加絕對定位)
   let heroBlock;
   if (cardType === 'video' && videoUrl && videoUrl.match(/^https:\/\//i)) {
+      // ⭐ 影片元件不能包含 action 屬性！
       heroBlock = {
           "type": "video",
           "url": videoUrl,
@@ -851,10 +847,10 @@ function buildFlexMessageFromCard(card, config, dynamicAr = null) {
               "aspectMode": aspectMode,
               "url": imgUrl
           },
-          "aspectRatio": ar,
-          "action": { "type": "uri", "label": "cover", "uri": safeImgActionUrl.substring(0, 1000) }
+          "aspectRatio": ar
       };
   } else {
+      // 圖片元件可以包含 action
       heroBlock = {
           "type": "image",
           "url": imgUrl,
@@ -923,7 +919,7 @@ function openECardGenerator() {
     document.getElementById('ec-card-type').value = 'image';
     document.getElementById('ec-video-url').value = '';
     
-    document.getElementById('ec-img-input').value = defaultFlex.hero.url;
+    document.getElementById('ec-img-input').value = defaultFlex.hero.url || '';
     document.getElementById('ec-img-action-url').value = 'https://liff.line.me/2009367829-DLtYBDUm';
     
     const sizeEl = document.getElementById('ec-img-size');
@@ -934,7 +930,7 @@ function openECardGenerator() {
 
     document.getElementById('ec-title-align').value = 'center';
     
-    dynamicAspectRatio = defaultFlex.hero.aspectRatio;
+    dynamicAspectRatio = defaultFlex.hero.aspectRatio || '20:13';
     document.getElementById('ec-title-input').value = defaultFlex.body.contents[0].contents[0].text;
     document.getElementById('ec-desc-input').value = defaultFlex.body.contents[0].contents[1].text;
     
@@ -999,7 +995,6 @@ function updateECardPreview() {
       playIcon.classList.add('hidden');
   }
 
-  // 套用指定的畫面比例
   const applyAspectRatio = (ratioStr) => {
       let [w, h] = ratioStr.split(':');
       if(w && h) {
@@ -1045,7 +1040,6 @@ function updateECardPreview() {
       };
       tempImg.src = imgUrl;
   } else {
-      // 即使圖片沒換，仍可能需要更新比例
       applyAspectRatio(arSetting === 'auto' ? dynamicAspectRatio : arSetting);
   }
 

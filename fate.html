@@ -1,3 +1,4 @@
+<!-- Version: v1.1.2 (QQ 修復版：打通資料庫斷層，從會員庫補撈生日執行 B 波命理運算) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -235,7 +236,28 @@
           
           try {
               const mobileToUse = c['手機號碼'] || c['公司電話'] || '';
-              const bdayToUse = c['生日'] || ''; 
+              let bdayToUse = c['生日'] || ''; 
+
+              // ⭐ QQ大師修復：資料庫連動斷層補漏！
+              // 如果這張名片通訊錄沒有生日，但對方有註冊會員(有 LINE ID)，自動去會員資料庫抓生日！
+              const uid = c['LINE ID'] || c.userId || c['Line ID'] || c.lineId || '';
+              if ((!bdayToUse || bdayToUse === 'Not provided') && uid) {
+                  try {
+                      // 呼叫會員資料庫 (具備 Cache 以免頻繁連線)
+                      const uRes = await fetchAPI('checkUser', { userId: uid }, true); 
+                      if (uRes && uRes.isRegistered && uRes.info && uRes.info.birthday) {
+                          let rawBday = uRes.info.birthday;
+                          const d = new Date(rawBday);
+                          if (!isNaN(d.getTime())) {
+                              bdayToUse = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                          } else {
+                              bdayToUse = rawBday;
+                          }
+                      }
+                  } catch(e) { console.warn("Fetch user info failed", e); }
+              }
+              
+              // 傳送最終的生日去算命
               const newTags = await fetchAPI('calculateFateTags', { Name: c['姓名'], Mobile: mobileToUse, Birthday: bdayToUse }, true);
               
               const fullPayload = {
@@ -256,6 +278,7 @@
                   SocialMedia: c['社群帳號'] || '', 
                   Slogan: c['服務項目/品牌標語'] || '', 
                   Notes: c['建檔人/備註'] || '',
+                  Birthday: bdayToUse, // ⭐ 將抓到的生日一併寫回名片通訊錄，以後就不會斷層了
                   Personality: newTags.Personality || '待分析',
                   Hobbies: newTags.Hobbies || '待分析',
                   Wealth: newTags.Wealth || '待分析',
@@ -271,10 +294,11 @@
               c['財運'] = fullPayload.Wealth;
               c['健康'] = fullPayload.Health;
               c['事業'] = fullPayload.Career;
+              c['生日'] = fullPayload.Birthday;
               
           } catch (err) {
               console.error(`處理 ${c['姓名']} 失敗:`, err);
-              alert(`⚠️ 處理「${c['姓名']}」時發生錯誤！\n\n錯誤訊息：${err.message}\n\n可能原因：\n1. 您尚未將 worker.js 更新部署至 Cloudflare。\n2. OpenAI API 超時或配額限制。`);
+              alert(`⚠️ 處理「${c['姓名']}」時發生錯誤！\n\n錯誤訊息：${err.message}`);
               break; 
           }
           

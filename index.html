@@ -1,4 +1,4 @@
-<!-- Version: v1.1.17 (QQ 修復版：基於 v1.1.16 完美結構，加入建立活動防空轉機制) -->
+<!-- Version: v1.1.19 (QQ 修復版：打通資料庫斷層，認領名片時自動拷貝生日觸發 B 波命理) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -357,7 +357,7 @@
 
   <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-evenly items-center px-1 py-2 z-40 pb-safe shadow-app-nav left-1/2 -translate-x-1/2 h-[72px]">
     <button onclick="switchView('admin-activities')" class="nav-btn" id="nav-admin-activities"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">fact_check</span></div><span class="text-[10px] font-normal mt-0.5">核銷</span></button>
-    <button onclick="switchView('admin-create')" class="nav-btn" id="nav-admin-create"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">add_circle</span></div><span class="text-[10px] font-normal mt-0.5">建立</span></button>
+    <button onclick="window.location.href='active.html'" class="nav-btn" id="nav-admin-create"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">add_circle</span></div><span class="text-[10px] font-normal mt-0.5">建立</span></button>
     <button onclick="switchView('admin-crm')" class="nav-btn" id="nav-admin-crm"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">groups</span></div><span class="text-[10px] font-normal mt-0.5">CRM</span></button>
     <button onclick="window.location.href='fate.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">psychology</span></div><span class="text-[10px] font-normal mt-0.5">配對</span></button>
     <button onclick="window.location.href='card.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">recent_patient</span></div><span class="text-[10px] font-normal mt-0.5">名片</span></button>
@@ -609,11 +609,9 @@
         switchView(targetView || 'admin-activities');
         if(document.getElementById('batch-list-container').children.length === 0) addBatchItem();
         
-        // ⭐ Admin 測試認領
         if (claimCardId) processClaimInBackground(claimCardId);
       } else {
         if (isRegistered) {
-          // ⭐ 先切換畫面，不要被 await 卡住
           switchView(targetView || 'user-activities'); 
           
           if (claimCardId) {
@@ -654,7 +652,6 @@
     }
   };
 
-  // ⭐ 背景執行認領，不阻塞 UI
   async function processClaimInBackground(claimCardId) {
       try {
           const cardData = await fetchAPI('getCardById', { rowId: claimCardId });
@@ -671,6 +668,20 @@
                   else if (zhKeys[f] && cardData[zhKeys[f]] !== undefined) updatePayload[f] = cardData[zhKeys[f]];
                   else updatePayload[f] = '';
               });
+
+              // ⭐ QQ大師修復：自動從會員資料補齊生日，並主動觸發 B 波命理運算！
+              if (registeredInfo && registeredInfo.birthday) {
+                  let bday = registeredInfo.birthday;
+                  const d = new Date(bday);
+                  if(!isNaN(d.getTime())) bday = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                  updatePayload.Birthday = bday;
+                  
+                  try {
+                      const newTags = await fetchAPI('calculateFateTags', { Name: updatePayload.Name, Mobile: updatePayload.Mobile, Birthday: bday }, true);
+                      Object.assign(updatePayload, newTags);
+                  } catch(e) {}
+              }
+
               await fetchAPI('updateCard', updatePayload);
               showToast("✅ 名片已成功認領並綁定至您的帳號");
           }
@@ -686,7 +697,6 @@
   }
 
   function switchView(view) {
-    // ⭐ QQ 大師修復：強制導向獨立的 active.html 頁面，解決 admin-create 空轉問題
     if (view === 'admin-create') { window.location.href = 'active.html'; return; }
 
     ['view-loading', 'view-user-register', 'view-user-activities', 'view-user-profile', 'view-user-history', 'view-admin-activities', 'view-admin-crm', 'view-admin-settings', 'view-admin-create'].forEach(v => { const el = document.getElementById(v); if(el) el.classList.add('hidden'); });
@@ -777,7 +787,8 @@
                       userId: userProfile.userId,
                       Name: p.name,
                       Mobile: p.phone,
-                      CompanyName: p.industry
+                      CompanyName: p.industry,
+                      Birthday: p.birthday // ⭐ 寫回資料庫
                   };
                   const fields = ['EnglishName', 'Title', 'Department', 'TaxID', 'Tel', 'Ext', 'Fax', 'Address', 'Email', 'Website', 'SocialMedia', 'Slogan', 'Notes'];
                   const zhKeys = {'EnglishName':'英文名/別名', 'Title':'職稱', 'Department':'部門', 'TaxID':'統一編號', 'Tel':'公司電話', 'Ext':'分機', 'Fax':'傳真', 'Address':'公司地址', 'Email':'電子郵件', 'Website':'公司網址', 'SocialMedia':'社群帳號', 'Slogan':'服務項目/品牌標語', 'Notes':'建檔人/備註'};
@@ -786,6 +797,13 @@
                       else if (zhKeys[f] && cardData[zhKeys[f]] !== undefined) updatePayload[f] = cardData[zhKeys[f]];
                       else updatePayload[f] = '';
                   });
+
+                  // ⭐ 觸發 B 波命理運算
+                  try {
+                      const newTags = await fetchAPI('calculateFateTags', { Name: p.name, Mobile: p.phone, Birthday: p.birthday }, true);
+                      Object.assign(updatePayload, newTags);
+                  } catch(e) {}
+
                   await fetchAPI('updateCard', updatePayload);
               }
           } catch(e) { console.error("Update card failed", e); }

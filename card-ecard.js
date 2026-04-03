@@ -1,6 +1,6 @@
 /**
  * card-ecard.js
- * 數位電子名片 (ECard) 專用模組
+ * 數位電子名片 (ECard) 專用模組 - QQ修復版 (取消預設個資按鈕、過濾無效字眼)
  */
 
 window.toggleECardType = function(type) {
@@ -10,16 +10,16 @@ window.toggleECardType = function(type) {
     const vidGroup = document.getElementById('ec-video-input-group');
     
     if (type === 'video') {
-      tabImg.className = 'flex-1 py-2 rounded-md text-[14px] font-bold text-slate-500 transition-all hover:text-slate-700';
-      tabVid.className = 'flex-1 py-2 rounded-md text-[14px] font-bold bg-white text-primary shadow-sm transition-all';
+      tabImg.className = 'flex-1 py-2 rounded-xl text-[14px] font-bold text-slate-500 transition-all hover:text-slate-700 bg-transparent';
+      tabVid.className = 'flex-1 py-2 rounded-xl text-[14px] font-bold bg-white text-primary shadow-sm transition-all';
       vidGroup.classList.remove('hidden');
-      document.getElementById('ec-upload-label').innerHTML = '點擊上傳封面圖縮圖 <span class="ml-1.5 px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[11px] font-medium">選填</span>';
+      document.getElementById('ec-upload-label').innerHTML = '點擊上傳封面圖縮圖 <span class="ml-1.5 px-2 py-0.5 bg-blue-50 text-blue-600 rounded-md text-[11px] font-bold tracking-wider">選填</span>';
       document.getElementById('ec-upload-hint').innerText = '※ 影片必須有封面縮圖，若未上傳系統將自動代入名片圖或預設底圖。';
     } else {
-      tabImg.className = 'flex-1 py-2 rounded-md text-[14px] font-bold bg-white text-primary shadow-sm transition-all';
-      tabVid.className = 'flex-1 py-2 rounded-md text-[14px] font-bold text-slate-500 transition-all hover:text-slate-700';
+      tabImg.className = 'flex-1 py-2 rounded-xl text-[14px] font-bold bg-white text-primary shadow-sm transition-all';
+      tabVid.className = 'flex-1 py-2 rounded-xl text-[14px] font-bold text-slate-500 transition-all hover:text-slate-700 bg-transparent';
       vidGroup.classList.add('hidden');
-      document.getElementById('ec-upload-label').innerHTML = '點擊圖片變更 <span class="ml-1.5 px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[11px] font-medium">選填</span>';
+      document.getElementById('ec-upload-label').innerHTML = '點擊圖片變更 <span class="ml-1.5 px-2 py-0.5 bg-blue-50 text-blue-600 rounded-md text-[11px] font-bold tracking-wider">選填</span>';
       document.getElementById('ec-upload-hint').innerText = '※ 若未上傳，系統將智能代入您原先的名片圖檔作為底圖。';
     }
     
@@ -33,7 +33,7 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
     let titleAlign = config && config.titleAlign ? config.titleAlign : 'center';
     let rawImg = (config && config.imgUrl) ? config.imgUrl : (card && card['名片圖檔'] ? card['名片圖檔'] : '');
     
-    // ⭐ 防呆：遇到無圖檔就不會載入，直接使用預設圖
+    // 防呆：遇到無圖檔就不會載入，直接使用預設圖
     if (!rawImg || typeof rawImg !== 'string' || !rawImg.startsWith('http') || rawImg === '無圖檔' || rawImg === '圖片儲存失敗') {
         rawImg = 'https://images.unsplash.com/photo-1616628188550-808682f3926d?w=800&q=80'; 
     }
@@ -55,38 +55,18 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
         imgSize = 'mega';
         aspectMode = 'cover';
         ar = dynamicAr || '20:13';
-        title = [card['公司名稱'], card['姓名']].filter(Boolean).join(' - ') || card['姓名'] || card['Name'] || '商務名片';
-        desc = card['服務項目/品牌標語'] || '點擊下方按鈕與我聯繫';
+        
+        let cName = card['公司名稱'] && card['公司名稱'] !== 'Not provided' ? card['公司名稱'] : '';
+        let uName = card['姓名'] && card['姓名'] !== 'Not provided' ? card['姓名'] : '';
+        title = [cName, uName].filter(Boolean).join(' - ') || card['Name'] || '商務名片';
+        
+        // ⭐ QQ修復：徹底過濾 Not provided
+        let defaultDesc = card['服務項目/品牌標語'] || '';
+        if (defaultDesc === 'Not provided' || defaultDesc === '未提供') defaultDesc = '';
+        desc = defaultDesc || '歡迎點擊下方按鈕與我聯繫';
   
-        const rawPhone = card['手機號碼'] || card['Mobile'];
-        if (rawPhone && typeof window.formatPhoneStr === 'function') {
-            let phone = window.formatPhoneStr(rawPhone);
-            if (phone) buttons.push({ l: '撥打手機', u: `tel:${phone}`, c: '#1e293b' });
-        }
-        
-        const rawTel = card['公司電話'] || card['Tel'];
-        if (rawTel && typeof window.formatPhoneStr === 'function') {
-            let tel = window.formatPhoneStr(rawTel);
-            if (tel) buttons.push({ l: '撥打電話', u: `tel:${tel}`, c: '#1e293b' });
-        }
-        
-        const rawEmail = card['電子郵件'] || card['Email'];
-        if (rawEmail) {
-            let email = String(rawEmail).split(/[\s,]+/)[0];
-            if (email.includes('@')) buttons.push({ l: '發送信箱', u: `mailto:${email}`, c: '#1e293b' });
-        }
-        
-        const rawAddress = card['公司地址'] || card['Address'];
-        if (rawAddress) {
-            buttons.push({ l: 'Google 導航', u: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(rawAddress.split(',')[0])}`, c: '#1e293b' });
-        }
-  
-        const rawWebsite = card['公司網址'] || card['Website'];
-        if (rawWebsite) {
-            let wUrl = String(rawWebsite).trim();
-            if (wUrl && !wUrl.startsWith('http')) wUrl = 'https://' + wUrl;
-            if (wUrl) buttons.push({ l: '公司網站', u: wUrl, c: '#1e293b' });
-        }
+        // ⭐ QQ修復：取消預設揭露個資，將預設按鈕設為空陣列，保護隱私
+        buttons = [];
     }
   
     const validSizes = ['nano', 'micro', 'kilo', 'mega', 'giga'];
@@ -237,7 +217,7 @@ window.openECardGenerator = function() {
       document.getElementById('ec-title-align').value = 'center';
       
       document.getElementById('ec-title-input').value = defaultFlex.body.contents[0].contents[0].text;
-      document.getElementById('ec-desc-input').value = defaultFlex.body.contents[0].contents[1].text;
+      document.getElementById('ec-desc-input').value = defaultFlex.body.contents[0].contents[1] ? defaultFlex.body.contents[0].contents[1].text : '';
       
       const buttons = defaultFlex.footer ? defaultFlex.footer.contents : [];
       for(let i=1; i<=4; i++) {
@@ -263,7 +243,6 @@ window.updateECardPreview = function() {
     let rawUrl = document.getElementById('ec-img-input').value;
     if (!rawUrl) {
         rawUrl = (typeof currentActiveCard !== 'undefined' && currentActiveCard && currentActiveCard['名片圖檔']) ? currentActiveCard['名片圖檔'] : '';
-        // ⭐ 防呆：遇到無圖檔就不會載入，直接使用預設圖
         if (!rawUrl || rawUrl === '無圖檔' || rawUrl === '圖片儲存失敗' || !rawUrl.startsWith('http')) {
             rawUrl = 'https://images.unsplash.com/photo-1616628188550-808682f3926d?w=800&q=80';
         }
@@ -353,8 +332,8 @@ window.updateECardPreview = function() {
     const cssAlign = titleAlign === 'start' ? 'left' : (titleAlign === 'end' ? 'right' : 'center');
     document.getElementById('preview-ec-title').style.textAlign = cssAlign;
   
-    document.getElementById('preview-ec-title').innerText = document.getElementById('ec-title-input').value || '未命名的標題';
-    document.getElementById('preview-ec-desc').innerText = document.getElementById('ec-desc-input').value || '請輸入描述內容...';
+    document.getElementById('preview-ec-title').innerText = document.getElementById('ec-title-input').value || '請輸入標題';
+    document.getElementById('preview-ec-desc').innerText = document.getElementById('ec-desc-input').value;
     
     const btnContainer = document.getElementById('preview-ec-buttons');
     btnContainer.innerHTML = '';

@@ -1,4 +1,4 @@
-<!-- Version: v1.6.4 (正式模組化分離版 - 升級現代極簡 UI、去除粗框) -->
+<!-- Version: v1.6.5 (正式模組化分離版 - 修復 ECard 編輯器右側手機預覽比例) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -42,7 +42,6 @@
     body { background-color: #ffffff; -webkit-tap-highlight-color: transparent; }
     .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1.5rem); }
     
-    /* ⭐ QQ修復：徹底拔除舊式粗框，採用 LINE 原生的現代感淺色背墊與極淡光暈 */
     .input-label { @apply block text-[13px] font-bold text-slate-500 mb-2 uppercase tracking-wider; }
     select.custom-input { -webkit-appearance: none !important; -moz-appearance: none !important; appearance: none !important; background-image: none !important; }
     .custom-input { @apply w-full h-[48px] px-4 bg-slate-50 border border-transparent rounded-xl outline-none focus:bg-white focus:border-primary/30 focus:ring-4 focus:ring-primary/10 transition-all font-medium text-slate-800 text-[15px] shadow-sm placeholder-slate-400; }
@@ -319,10 +318,12 @@
   </div>
 
   <div class="flex-1 overflow-y-auto w-full bg-slate-50 lg:bg-white">
-    <div class="container mx-auto max-w-5xl h-full">
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-0 lg:gap-8 h-full">
+    <!-- ⭐ QQ修復：最大寬度放寬至 max-w-6xl，確保右側手機不會被過度擠壓 -->
+    <div class="container mx-auto max-w-6xl h-full">
+      <!-- ⭐ QQ修復：切分為 5 欄，左邊佔 3 份，右邊佔 2 份 -->
+      <div class="grid grid-cols-1 lg:grid-cols-5 gap-0 lg:gap-8 h-full">
         
-        <div class="lg:col-span-2">
+        <div class="lg:col-span-3">
           <div class="bg-white px-5 py-6">
             
             <div id="ec-editor-form" class="space-y-6">
@@ -415,7 +416,6 @@
                   <span class="text-slate-400 text-[11px] font-normal">(選填，最多 4 個)</span>
                 </label>
                 
-                <!-- ⭐ QQ修復：按鈕輸入區塊全面改版，使用卡片式微縮排版 -->
                 <div class="space-y-3">
                   <div class="flex items-center gap-3 bg-slate-50 p-2.5 rounded-2xl">
                     <input type="color" id="ec-btn1-color" value="#1e293b" class="w-10 h-10 rounded-xl cursor-pointer border-none bg-transparent shrink-0" oninput="updateECardPreview()">
@@ -464,10 +464,10 @@
           </div>
         </div>
 
-        <!-- 右側：手機模擬器預覽 -->
-        <div class="lg:col-span-1 hidden lg:block bg-slate-50/50 p-6 border-l border-slate-100">
-          <div class="sticky top-6 pb-6">
-            <div class="phone-frame w-full max-w-[340px] h-[680px] mx-auto flex flex-col shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)]">
+        <!-- ⭐ QQ修復：右側手機模擬器改為佔 2 份網格，加入 flex justify-center 避免靠左擠壓 -->
+        <div class="lg:col-span-2 hidden lg:block bg-slate-50/50 p-6 border-l border-slate-100 flex justify-center">
+          <div class="sticky top-6 pb-6 w-full flex justify-center">
+            <div class="phone-frame w-full max-w-[340px] h-[680px] flex flex-col shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)]">
               <div class="phone-notch"></div>
               
               <div class="bg-[#1e293b]/95 backdrop-blur-md text-white px-4 pt-10 pb-3 flex items-center gap-3 shrink-0 z-10 shadow-sm border-b border-white/10">

@@ -1,4 +1,4 @@
-<!-- Version: v1.1.2 (QQ 修復版：打通資料庫斷層，從會員庫補撈生日執行 B 波命理運算) -->
+<!-- Version: v1.1.3 (QQ 修復版：徹底移除查看名片時的個資按鈕外洩) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -135,7 +135,7 @@
   </div>
 
   <div class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 p-4 pb-safe flex justify-center" style="z-index: 1060; box-shadow: 0 -10px 30px rgba(0,0,0,0.05);">
-    <button onclick="shareReadOnlyCardToLine()" class="w-[90%] py-4 bg-[#ff751f] text-white rounded-2xl font-bold text-[17px] shadow-lg shadow-orange-500/30 active:scale-95 transition-all flex items-center justify-center gap-2">
+    <button onclick="shareReadOnlyCardToLine()" class="w-[90%] py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[17px] shadow-lg shadow-green-500/30 active:scale-95 transition-all flex items-center justify-center gap-2">
       🚀 轉發名片至 LINE
     </button>
   </div>
@@ -238,12 +238,9 @@
               const mobileToUse = c['手機號碼'] || c['公司電話'] || '';
               let bdayToUse = c['生日'] || ''; 
 
-              // ⭐ QQ大師修復：資料庫連動斷層補漏！
-              // 如果這張名片通訊錄沒有生日，但對方有註冊會員(有 LINE ID)，自動去會員資料庫抓生日！
               const uid = c['LINE ID'] || c.userId || c['Line ID'] || c.lineId || '';
               if ((!bdayToUse || bdayToUse === 'Not provided') && uid) {
                   try {
-                      // 呼叫會員資料庫 (具備 Cache 以免頻繁連線)
                       const uRes = await fetchAPI('checkUser', { userId: uid }, true); 
                       if (uRes && uRes.isRegistered && uRes.info && uRes.info.birthday) {
                           let rawBday = uRes.info.birthday;
@@ -257,7 +254,6 @@
                   } catch(e) { console.warn("Fetch user info failed", e); }
               }
               
-              // 傳送最終的生日去算命
               const newTags = await fetchAPI('calculateFateTags', { Name: c['姓名'], Mobile: mobileToUse, Birthday: bdayToUse }, true);
               
               const fullPayload = {
@@ -278,7 +274,7 @@
                   SocialMedia: c['社群帳號'] || '', 
                   Slogan: c['服務項目/品牌標語'] || '', 
                   Notes: c['建檔人/備註'] || '',
-                  Birthday: bdayToUse, // ⭐ 將抓到的生日一併寫回名片通訊錄，以後就不會斷層了
+                  Birthday: bdayToUse, 
                   Personality: newTags.Personality || '待分析',
                   Hobbies: newTags.Hobbies || '待分析',
                   Wealth: newTags.Wealth || '待分析',
@@ -427,34 +423,37 @@
 
       let rawImg = config?.imgUrl || card['名片圖檔'] || '';
       if (!rawImg || typeof rawImg !== 'string' || !rawImg.startsWith('http')) {
-          rawImg = 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
+          rawImg = 'https://images.unsplash.com/photo-1616628188550-808682f3926d?w=800&q=80';
       }
       const imgUrl = getDirectImageUrl(rawImg);
       
-      let title = config?.title || [card['公司名稱'], card['姓名']].filter(Boolean).join(' - ') || '商務名片';
-      let desc = config?.desc || card['服務項目/品牌標語'] || '點擊下方按鈕與我聯繫';
+      let cName = card['公司名稱'] && card['公司名稱'] !== 'Not provided' ? card['公司名稱'] : '';
+      let uName = card['姓名'] && card['姓名'] !== 'Not provided' ? card['姓名'] : '';
+      let defaultTitle = [cName, uName].filter(Boolean).join(' - ') || card['Name'] || '商務名片';
+      
+      let title = config?.title || defaultTitle;
+      let desc = config?.desc || card['服務項目/品牌標語'] || '歡迎點擊下方按鈕與我聯繫';
+      
+      title = title.replace(/Not provided/gi, '').replace(/未提供/g, '').trim();
+      desc = desc.replace(/Not provided/gi, '').replace(/未提供/g, '').trim();
+      if (!title) title = defaultTitle;
+      if (desc === 'Not provided') desc = '';
       
       let buttons = [];
       if (config && config.buttons && config.buttons.length > 0) {
-          buttons = config.buttons;
-      } else {
-          if (card['手機號碼']) {
-              let phone = String(card['手機號碼']).split(',')[0].replace(/[^\d+]/g, '');
-              if (phone.startsWith('886')) phone = '0' + phone.substring(3);
-              if (phone) buttons.push({ l: '撥打手機', u: `tel:${phone}`, c: '#ff751f' });
-          }
-          if (card['公司電話']) {
-              let tel = String(card['公司電話']).split(',')[0].replace(/[^\d+]/g, '');
-              if (tel.startsWith('886')) tel = '0' + tel.substring(3);
-              if (tel) buttons.push({ l: '撥打電話', u: `tel:${tel}`, c: '#ff751f' });
-          }
-          if (card['電子郵件']) {
-              let email = String(card['電子郵件']).split(/[\s,]+/)[0];
-              if (email.includes('@')) buttons.push({ l: '發送信箱', u: `mailto:${email}`, c: '#ff751f' });
-          }
-          if (card['公司地址']) {
-              buttons.push({ l: 'Google 導航', u: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(card['公司地址'].split(',')[0])}`, c: '#ff751f' });
-          }
+          let phone = card['手機號碼'] ? String(card['手機號碼']).split(',')[0].replace(/[^\d+]/g, '') : '';
+          if (phone && phone.startsWith('886')) phone = '0' + phone.substring(3);
+          let tel = card['公司電話'] ? String(card['公司電話']).split(',')[0].replace(/[^\d+]/g, '') : '';
+          if (tel && tel.startsWith('886')) tel = '0' + tel.substring(3);
+          let email = card['電子郵件'] ? String(card['電子郵件']).split(/[\s,]+/)[0] : '';
+          
+          buttons = config.buttons.filter(b => {
+              if (phone && b.u.includes(phone)) return false;
+              if (tel && b.u.includes(tel)) return false;
+              if (email && b.u.includes(email)) return false;
+              if (b.l === 'Google 導航') return false;
+              return true;
+          });
       }
 
       document.getElementById('ro-img').src = imgUrl;
@@ -468,7 +467,7 @@
 
       const btnContainer = document.getElementById('ro-buttons');
       btnContainer.innerHTML = buttons.map(b => `
-          <div class="w-full text-white text-[15px] font-bold text-center py-3.5 rounded-xl shadow-sm" style="background-color: ${b.c || '#ff751f'}">${b.l}</div>
+          <div class="w-full text-white text-[15px] font-bold text-center py-3.5 rounded-xl shadow-sm" style="background-color: ${b.c || '#06C755'}">${b.l}</div>
       `).join('');
 
       document.getElementById('readonly-card-modal').classList.remove('hidden');
@@ -484,12 +483,14 @@
     let rawImg = (config && config.imgUrl) ? config.imgUrl : (card && card['名片圖檔'] ? card['名片圖檔'] : '');
     
     if (!rawImg || typeof rawImg !== 'string' || !rawImg.startsWith('http')) {
-        rawImg = 'https://aiwe.cc/wp-content/uploads/2026/01/781206b661aebf645c633e618db3960b.png';
+        rawImg = 'https://images.unsplash.com/photo-1616628188550-808682f3926d?w=800&q=80';
     }
     imgUrl = getDirectImageUrl(rawImg);
     
+    const myLiffId = (typeof LIFF_ID !== 'undefined') ? LIFF_ID : '2009367829-DLtYBDUm';
+
     if (config) {
-        imgActionUrl = config.imgActionUrl || 'https://liff.line.me/2009367829-DLtYBDUm';
+        imgActionUrl = config.imgActionUrl || `https://liff.line.me/${myLiffId}`;
         imgSize = config.imgSize || 'mega';
         aspectMode = config.aspectMode || 'cover';
         ar = dynamicAr || config.ar || '20:13';
@@ -497,48 +498,39 @@
         desc = config.desc || '-'; 
         buttons = config.buttons || [];
     } else {
-        imgActionUrl = 'https://liff.line.me/2009367829-DLtYBDUm';
+        imgActionUrl = `https://liff.line.me/${myLiffId}`;
         imgSize = 'mega';
         aspectMode = 'cover';
         ar = dynamicAr || '20:13';
-        title = [card['公司名稱'], card['姓名']].filter(Boolean).join(' - ') || '商務名片';
-        desc = card['服務項目/品牌標語'] || '點擊下方按鈕與我聯繫';
+        
+        let cName = card['公司名稱'] && card['公司名稱'] !== 'Not provided' ? card['公司名稱'] : '';
+        let uName = card['姓名'] && card['姓名'] !== 'Not provided' ? card['姓名'] : '';
+        title = [cName, uName].filter(Boolean).join(' - ') || card['Name'] || '商務名片';
+        
+        let defaultDesc = card['服務項目/品牌標語'] || '';
+        if (defaultDesc === 'Not provided' || defaultDesc === '未提供') defaultDesc = '';
+        desc = defaultDesc || '歡迎點擊下方按鈕與我聯繫';
 
-        if (card['手機號碼']) {
-            let phone = String(card['手機號碼']).split(',')[0].replace(/[^\d+]/g, '');
-            if (phone.startsWith('886')) phone = '0' + phone.substring(3);
-            if (phone) buttons.push({ l: '撥打手機', u: `tel:${phone}`, c: '#ff751f' });
-        }
-        if (card['公司電話']) {
-            let tel = String(card['公司電話']).split(',')[0].replace(/[^\d+]/g, '');
-            if (tel.startsWith('886')) tel = '0' + tel.substring(3);
-            if (tel) buttons.push({ l: '撥打電話', u: `tel:${tel}`, c: '#ff751f' });
-        }
-        if (card['電子郵件']) {
-            let email = String(card['電子郵件']).split(/[\s,]+/)[0];
-            if (email.includes('@')) buttons.push({ l: '發送信箱', u: `mailto:${email}`, c: '#ff751f' });
-        }
-        if (card['公司地址']) {
-            buttons.push({ l: 'Google 導航', u: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(card['公司地址'].split(',')[0])}`, c: '#ff751f' });
-        }
+        // ⭐ QQ 隱私鐵律：絕對禁止預設將電話/信箱/地址加入對外名片，按鈕必須預設為空！
+        buttons = [];
     }
 
     const validSizes = ['nano', 'micro', 'kilo', 'mega', 'giga'];
     if (!validSizes.includes(imgSize)) imgSize = 'mega';
     if (!/^\d+:\d+$/.test(ar)) ar = '20:13';
 
-    let safeImgActionUrl = imgActionUrl ? String(imgActionUrl).trim() : 'https://liff.line.me/2009367829-DLtYBDUm';
+    let safeImgActionUrl = imgActionUrl ? String(imgActionUrl).trim() : `https://liff.line.me/${myLiffId}`;
     if (!safeImgActionUrl.match(/^(http|https|tel|mailto|line):/i)) { safeImgActionUrl = 'https://' + safeImgActionUrl; }
 
     const btnContents = [];
     for (let i=0; i<buttons.length; i++) {
         let label = buttons[i].l ? String(buttons[i].l).trim() : '查看';
         let safeU = buttons[i].u ? String(buttons[i].u).trim() : 'https://line.me';
-        let btnColor = buttons[i].c || '#ff751f';
+        let btnColor = buttons[i].c || '#06C755';
         btnContents.push({ "type": "button", "style": "primary", "color": btnColor, "height": "sm", "margin": "sm", "action": { "type": "uri", "label": label.substring(0, 20), "uri": safeU.substring(0, 1000) } });
     }
 
-    const badgeUrl = `https://liff.line.me/${LIFF_ID}?shareCardId=${card.rowId}`;
+    const badgeUrl = `https://liff.line.me/${myLiffId}/card.html?shareCardId=${card.rowId}`;
 
     const flexContents = {
         "type": "bubble", "size": imgSize,

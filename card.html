@@ -1,4 +1,4 @@
-<!-- Version: v1.6.6 (正式模組化分離版 - 修改編輯器按鈕顏色預設值為 #06C755) -->
+<!-- Version: v1.6.7 (正式模組化分離版 - 徹底移除名片詳情頁的命理標籤顯示，保護隱私) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -241,9 +241,7 @@
         <div class="flex items-start gap-4"><span class="material-symbols-outlined text-slate-400 text-[20px] mt-0.5">location_on</span><span id="ro-address" class="text-slate-800 text-[15px] font-medium leading-snug"></span></div>
       </div>
       
-      <div id="ro-fate-tags-container">
-        <!-- 命理標籤渲染區塊 -->
-      </div>
+      <!-- ⭐ QQ 隱私鐵律：已徹底刪除 ro-fate-tags-container 區塊，名片詳情不再顯示 AI 命理結果 -->
 
       <div id="ro-notes-container">
         <h3 class="text-[14px] font-bold text-slate-400 uppercase tracking-widest mb-3">備註與其他</h3>
@@ -416,7 +414,6 @@
                 
                 <div class="space-y-3">
                   <div class="flex items-center gap-3 bg-slate-50 p-2.5 rounded-2xl">
-                    <!-- ⭐ QQ修復：預設為 LINE 綠色 -->
                     <input type="color" id="ec-btn1-color" value="#06C755" class="w-10 h-10 rounded-xl cursor-pointer border-none bg-transparent shrink-0" oninput="updateECardPreview()">
                     <div class="flex flex-col flex-1 gap-1">
                       <input type="text" id="ec-btn1-label" class="w-full bg-transparent border-none text-[14px] font-bold outline-none px-2 py-1 placeholder-slate-400 focus:ring-0" placeholder="按鈕文字 (選填)" oninput="updateECardPreview()">

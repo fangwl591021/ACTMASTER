@@ -1,7 +1,7 @@
 /**
  * card-ecard.js
- * 數位電子名片 (ECard) 專用模組 - QQ修復版 (全面加入 DOM 防呆保護，解決 null 崩潰問題)
- * Version: v1.8.0
+ * 數位電子名片 (ECard) 專用模組 - QQ修復版 (還原自動填入個資按鈕 + 嚴格 Null 防護)
+ * Version: v1.8.1
  */
 
 window.toggleECardType = function(type) {
@@ -68,8 +68,35 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
         if (defaultDesc === 'Not provided' || defaultDesc === '未提供') defaultDesc = '';
         desc = defaultDesc || '歡迎點擊下方按鈕與我聯繫';
   
-        // ⭐ QQ 隱私鐵律：絕對禁止預設將電話/信箱/地址加入對外名片，按鈕必須預設為空！
+        // ⭐ QQ 修復：還原自動填入個資按鈕的機制 (您需要的重新讀取寫入功能)
         buttons = [];
+        let p1 = card['手機號碼'] || card['Mobile'];
+        if (p1) {
+            let phone = String(p1).split(',')[0].replace(/[^\d+]/g, '');
+            if (phone.startsWith('886')) phone = '0' + phone.substring(3);
+            if (phone) buttons.push({ l: '撥打手機', u: `tel:${phone}`, c: '#06C755' });
+        }
+        let p2 = card['公司電話'] || card['Tel'];
+        if (p2) {
+            let tel = String(p2).split(',')[0].replace(/[^\d+]/g, '');
+            if (tel.startsWith('886')) tel = '0' + tel.substring(3);
+            if (tel) buttons.push({ l: '撥打電話', u: `tel:${tel}`, c: '#06C755' });
+        }
+        let p3 = card['電子郵件'] || card['Email'];
+        if (p3) {
+            let email = String(p3).split(/[\s,]+/)[0];
+            if (email.includes('@')) buttons.push({ l: '發送信箱', u: `mailto:${email}`, c: '#06C755' });
+        }
+        let p4 = card['公司地址'] || card['Address'];
+        if (p4) {
+            buttons.push({ l: 'Google 導航', u: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p4.split(',')[0])}`, c: '#06C755' });
+        }
+        let p5 = card['公司網址'] || card['Website'];
+        if (p5 && buttons.length < 4) {
+            let wUrl = String(p5).trim();
+            if (wUrl && !wUrl.startsWith('http')) wUrl = 'https://' + wUrl;
+            if (wUrl) buttons.push({ l: '公司網站', u: wUrl, c: '#06C755' });
+        }
     }
   
     const validSizes = ['nano', 'micro', 'kilo', 'mega', 'giga'];
@@ -168,7 +195,7 @@ window.openECardGenerator = function() {
     if (typeof currentActiveCard === 'undefined' || !currentActiveCard) return;
     const c = currentActiveCard;
   
-    // ⭐ 防呆保護：解決 Cannot set properties of null (setting 'src')
+    // ⭐ 防呆保護：確保頭像元素確實存在才去改寫 src
     if (typeof userProfile !== 'undefined' && userProfile && userProfile.pictureUrl) {
         const avatarImg = document.getElementById('preview-user-avatar');
         if (avatarImg) {
@@ -184,14 +211,13 @@ window.openECardGenerator = function() {
   
     const myLiffId = (typeof LIFF_ID !== 'undefined') ? LIFF_ID : '2009367829-DLtYBDUm';
 
-    // 封裝安全賦值函數
+    // 封裝安全賦值函數，遇到 Null 就安靜略過
     const safeSetValue = (id, val) => {
         const el = document.getElementById(id);
         if (el) el.value = val;
     };
 
     if (savedConfig) {
-      // ⭐ QQ大師自動淨化機制：強制清除舊資料庫中的 Not provided
       if (savedConfig.title) savedConfig.title = savedConfig.title.replace(/Not provided/gi, '').replace(/未提供/g, '').trim();
       if (savedConfig.desc) savedConfig.desc = savedConfig.desc.replace(/Not provided/gi, '').replace(/未提供/g, '').trim();
       
@@ -199,23 +225,6 @@ window.openECardGenerator = function() {
           let cName = c['公司名稱'] && c['公司名稱'] !== 'Not provided' ? c['公司名稱'] : '';
           let uName = c['姓名'] && c['姓名'] !== 'Not provided' ? c['姓名'] : '';
           savedConfig.title = [cName, uName].filter(Boolean).join(' - ') || c['Name'] || '商務名片';
-      }
-
-      // ⭐ QQ大師自動淨化機制：強制斬殺舊資料庫中自動產生的「個資洩漏按鈕」
-      if (savedConfig.buttons && savedConfig.buttons.length > 0) {
-          let phone = c['手機號碼'] ? String(c['手機號碼']).split(',')[0].replace(/[^\d+]/g, '') : '';
-          if (phone && phone.startsWith('886')) phone = '0' + phone.substring(3);
-          let tel = c['公司電話'] ? String(c['公司電話']).split(',')[0].replace(/[^\d+]/g, '') : '';
-          if (tel && tel.startsWith('886')) tel = '0' + tel.substring(3);
-          let email = c['電子郵件'] ? String(c['電子郵件']).split(/[\s,]+/)[0] : '';
-          
-          savedConfig.buttons = savedConfig.buttons.filter(b => {
-              if (phone && b.u.includes(phone)) return false;
-              if (tel && b.u.includes(tel)) return false;
-              if (email && b.u.includes(email)) return false;
-              if (b.l === 'Google 導航') return false;
-              return true;
-          });
       }
 
       safeSetValue('ec-card-type', savedConfig.cardType || 'image');
@@ -245,7 +254,6 @@ window.openECardGenerator = function() {
       safeSetValue('ec-aspect-ratio', 'auto');
       safeSetValue('ec-title-align', 'center');
       
-      // 防呆檢查
       let defaultTitle = '';
       let defaultDesc = '';
       if (defaultFlex.body && defaultFlex.body.contents && defaultFlex.body.contents[0] && defaultFlex.body.contents[0].contents) {
@@ -256,11 +264,13 @@ window.openECardGenerator = function() {
       safeSetValue('ec-title-input', defaultTitle);
       safeSetValue('ec-desc-input', defaultDesc);
       
-      // ⭐ 預設狀態絕對淨空
+      // ⭐ 初次開啟時，安全地把重新抓取的按鈕資料設定回欄位中
+      let buttons = defaultFlex.footer && defaultFlex.footer.contents ? defaultFlex.footer.contents : [];
       for(let i=1; i<=4; i++) {
-        safeSetValue(`ec-btn${i}-label`, '');
-        safeSetValue(`ec-btn${i}-url`, '');
-        safeSetValue(`ec-btn${i}-color`, '#06C755');
+        const btn = buttons[i-1];
+        safeSetValue(`ec-btn${i}-label`, btn ? btn.action.label : '');
+        safeSetValue(`ec-btn${i}-url`, btn ? btn.action.uri : '');
+        safeSetValue(`ec-btn${i}-color`, btn ? btn.color : '#06C755');
       }
     }
     

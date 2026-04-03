@@ -1,6 +1,6 @@
 /**
  * card-ecard.js
- * 數位電子名片 (ECard) 專用模組 - QQ修復版 (取消預設個資按鈕、過濾無效字眼)
+ * 數位電子名片 (ECard) 專用模組 - QQ修復版 (預設按鈕改為 LINE 綠色)
  */
 
 window.toggleECardType = function(type) {
@@ -33,7 +33,6 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
     let titleAlign = config && config.titleAlign ? config.titleAlign : 'center';
     let rawImg = (config && config.imgUrl) ? config.imgUrl : (card && card['名片圖檔'] ? card['名片圖檔'] : '');
     
-    // 防呆：遇到無圖檔就不會載入，直接使用預設圖
     if (!rawImg || typeof rawImg !== 'string' || !rawImg.startsWith('http') || rawImg === '無圖檔' || rawImg === '圖片儲存失敗') {
         rawImg = 'https://images.unsplash.com/photo-1616628188550-808682f3926d?w=800&q=80'; 
     }
@@ -60,12 +59,10 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
         let uName = card['姓名'] && card['姓名'] !== 'Not provided' ? card['姓名'] : '';
         title = [cName, uName].filter(Boolean).join(' - ') || card['Name'] || '商務名片';
         
-        // ⭐ QQ修復：徹底過濾 Not provided
         let defaultDesc = card['服務項目/品牌標語'] || '';
         if (defaultDesc === 'Not provided' || defaultDesc === '未提供') defaultDesc = '';
         desc = defaultDesc || '歡迎點擊下方按鈕與我聯繫';
   
-        // ⭐ QQ修復：取消預設揭露個資，將預設按鈕設為空陣列，保護隱私
         buttons = [];
     }
   
@@ -80,7 +77,8 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
     for (let i=0; i<buttons.length; i++) {
         let label = buttons[i].l ? String(buttons[i].l).trim() : '查看';
         let safeU = buttons[i].u ? String(buttons[i].u).trim() : 'https://line.me';
-        let btnColor = buttons[i].c || '#1e293b';
+        // ⭐ QQ修復：Flex Message 按鈕顏色若無指定，預設改為 #06C755
+        let btnColor = buttons[i].c || '#06C755';
         btnContents.push({ "type": "button", "style": "primary", "color": btnColor, "height": "sm", "margin": "sm", "action": { "type": "uri", "label": label.substring(0, 20), "uri": safeU.substring(0, 1000) } });
     }
   
@@ -198,7 +196,8 @@ window.openECardGenerator = function() {
         const btn = savedConfig.buttons[i-1];
         document.getElementById(`ec-btn${i}-label`).value = btn ? btn.l : '';
         document.getElementById(`ec-btn${i}-url`).value = btn ? btn.u : '';
-        document.getElementById(`ec-btn${i}-color`).value = btn && btn.c ? btn.c : '#1e293b';
+        // ⭐ QQ修復：還原設定時，預設給 #06C755
+        document.getElementById(`ec-btn${i}-color`).value = btn && btn.c ? btn.c : '#06C755';
       }
     } else {
       const defaultFlex = window.buildFlexMessageFromCard(c, null);
@@ -224,7 +223,8 @@ window.openECardGenerator = function() {
         const btn = buttons[i-1];
         document.getElementById(`ec-btn${i}-label`).value = btn ? btn.action.label : '';
         document.getElementById(`ec-btn${i}-url`).value = btn ? btn.action.uri : '';
-        document.getElementById(`ec-btn${i}-color`).value = '#1e293b';
+        // ⭐ QQ修復：初次開啟編輯器，按鈕顏色預設給 #06C755
+        document.getElementById(`ec-btn${i}-color`).value = '#06C755';
       }
     }
     

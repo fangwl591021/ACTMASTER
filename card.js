@@ -1,558 +1,244 @@
 /**
  * card.js 
  * 名片管理中樞核心邏輯
- * Version: v1.4.8 (修理版：補全 15 個商務欄位存檔、校正邀約連結路徑)
+ * Version: v1.6.18 (QQ 修理版：徹底解決邀約 404 與空轉、強制邏輯分流、補齊商務欄位)
  */
 
 const LIFF_ID = "2009367829-DLtYBDUm"; 
 const WORKER_URL = "https://actmaster.fangwl591021.workers.dev"; 
-
-let compressedBase64 = "";
-let userProfile = null;
-let cropperInstance = null;
-let globalCardContacts = []; 
-let filteredCards = [];
-let currentPage = 1;
-const PAGE_LIMIT = 10;
-let currentActiveCard = null; 
-let isProcessing = false;
-let dynamicAspectRatio = "20:13"; 
-let currentFateTags = null; 
-let uploadTargetMode = 'card'; 
-
 const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55", "U8932b891ad24da512afb9c1a6f41567b"];
-let isAdmin = false;
 
-// ⭐ 修理：備用分享機制 (Fallback)
-function fallbackShare(url, altText) {
-    const fullText = `${altText}\n${url}`;
-    const fallbackInput = document.createElement('textarea');
-    fallbackInput.value = fullText;
-    fallbackInput.style.position = 'fixed';
-    fallbackInput.style.opacity = '0';
-    document.body.appendChild(fallbackInput);
-    fallbackInput.select();
-    try {
-        document.execCommand('copy');
-        alert("⚠️ 電腦版無法直接傳送圖文訊息。\n\n✅ 系統已將「認領連結」複製到您的剪貼簿！\n您可以直接貼上給好友完成認領。");
-    } catch(err) {
-        alert("請複製以下連結給好友：\n\n" + url);
-    }
-    document.body.removeChild(fallbackInput);
-    window.open(`https://line.me/R/share?text=${encodeURIComponent(fullText)}`, '_blank');
-}
+let userProfile = null, isAdmin = false, globalCardContacts = [], isProcessing = false;
+let currentActiveCard = null, currentFateTags = null, compressedBase64 = "", cropperInstance = null;
+
+// ⭐ 核心修理：UI 切換防呆掛載
+window.switchView = function(v) { 
+    const views = ['view-loading','view-list','view-process'];
+    views.forEach(id => { const el = document.getElementById(id); if(el) el.classList.add('hidden'); });
+    const target = document.getElementById(`view-${v}`);
+    if(target) target.classList.remove('hidden'); 
+};
+
+window.switchProcessSection = function(id) { 
+    const sections = ['section-loading','section-form'];
+    sections.forEach(s => { const el = document.getElementById(s); if(el) el.classList.add('hidden'); });
+    const target = document.getElementById(id);
+    if(target) target.classList.remove('hidden'); 
+};
+
+window.resetUI = function() { window.switchView('list'); compressedBase64 = ""; currentFateTags = null; };
+window.closeReadOnlyCard = function() { const el = document.getElementById('readonly-card-modal'); if(el) el.classList.add('hidden'); };
 
 document.addEventListener("DOMContentLoaded", async () => {
-  if (!document.getElementById('card-search-input')) return;
+  const params = new URLSearchParams(window.location.search);
+  const claimCardId = params.get('claimCardId');
+  const shareCardId = params.get('shareCardId');
+
+  // ⭐ 修理：強制導航保護 (Logic Guard)
+  // 如果在 card.html 偵測到認領參數，表示路徑錯誤，強制跳轉回 index.html 處理註冊與認領
+  if (claimCardId) {
+      window.location.href = `index.html?view=user-profile&claimCardId=${claimCardId}&referrer=${params.get('referrer') || ''}`;
+      return;
+  }
+
+  const listContainer = document.getElementById('admin-card-list-container');
+  if (!listContainer && !document.getElementById('card-detail-content')) return;
 
   try {
     await liff.init({ liffId: LIFF_ID });
-    const params = new URLSearchParams(window.location.search);
-    const shareCardId = params.get('shareCardId');
+    if (!liff.isLoggedIn()) { liff.login({ redirectUri: window.location.href }); return; }
+    userProfile = await liff.getProfile();
+    isAdmin = ADMIN_IDS.includes(userProfile.userId);
     
+    // UI 權限鎖死
+    if (isAdmin) {
+        const at = document.getElementById('admin-tools-container'); if(at) at.classList.remove('hidden');
+        const bna = document.getElementById('bottom-nav-admin'); if(bna) bna.classList.remove('hidden');
+    }
+    const roleBtn = document.getElementById('role-switch-btn');
+    if(roleBtn) { if(isAdmin) roleBtn.classList.remove('hidden'); else roleBtn.remove(); }
+    
+    // 頭像處理
+    const avatarEl = document.getElementById('user-avatar');
+    if(avatarEl && userProfile.pictureUrl) avatarEl.src = userProfile.pictureUrl;
+    const badgeEl = document.getElementById('user-profile-badge');
+    if(badgeEl) badgeEl.classList.remove('hidden');
+    
+    // 處理轉發名片
     if (shareCardId) {
-      if (!liff.isLoggedIn()) { liff.login({ redirectUri: window.location.href }); return; }
-      const loadText = document.getElementById('loading-text');
-      if(loadText) loadText.innerText = '準備轉發數位名片...';
-      
-      try {
-          const contacts = await fetchAPI('getCardContacts');
-          const card = contacts.find(c => String(c.rowId) === String(shareCardId));
-          if (!card) throw new Error('找不到該名片資料');
-
-          let config = null;
-          if (card['自訂名片設定']) { try { config = JSON.parse(card['自訂名片設定']); } catch(e){} }
-
-          const imgUrlForAr = config && config.imgUrl ? getDirectImageUrl(config.imgUrl) : getDirectImageUrl(card['名片圖檔']);
-          const detectedAr = await getTrueAspectRatio(imgUrlForAr);
-
-          if (typeof window.buildFlexMessageFromCard === 'function') {
-             const flexContents = window.buildFlexMessageFromCard(card, config, detectedAr);
-             const title = config && config.title ? config.title : card['姓名'] || card['Name'];
-             const altText = `您收到一張數位名片：${title || '商務名片'}`;
-             const shareUrl = `https://liff.line.me/${LIFF_ID}/card.html?shareCardId=${shareCardId}`;
-             
-             if (liff.isApiAvailable('shareTargetPicker')) {
-                 try {
-                     if (window.triggerFlexSharing) {
-                         await window.triggerFlexSharing(flexContents, altText);
-                     } else {
-                         await liff.shareTargetPicker([{ type: "flex", altText: altText, contents: flexContents }]);
-                     }
-                     setTimeout(() => { liff.closeWindow(); }, 500);
-                 } catch(e) { window.fallbackShare(shareUrl, altText); }
-             } else {
-                 window.fallbackShare(shareUrl, altText);
-             }
-          }
-      } catch (e) { alert('名片讀取失敗: ' + e.message); }
-      return; 
+        if (typeof window.handleAutoShare === 'function') window.handleAutoShare(shareCardId);
+        return; 
     }
 
-    if (liff.isLoggedIn()) {
-      userProfile = await liff.getProfile();
-      document.getElementById('user-avatar').src = userProfile.pictureUrl || '';
-      document.getElementById('user-profile-badge').classList.remove('hidden');
-      
-      isAdmin = ADMIN_IDS.includes(userProfile.userId);
-      const roleBtn = document.getElementById('role-switch-btn');
-      if (roleBtn && !isAdmin) { roleBtn.remove(); }
-
-      switchView('list');
-    } else {
-      liff.login({ redirectUri: window.location.href });
-    }
-  } catch (err) {
-    showToast("⚠️ LIFF 初始化失敗", true);
-  }
-});
-
-function setButtonLoading(btnId, isLoading, originalText = '') {
-    const btn = document.getElementById(btnId);
-    if (!btn) return false;
-    if (isLoading) {
-        if (!btn.dataset.oriText) btn.dataset.oriText = btn.innerHTML;
-        btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[18px] align-middle">refresh</span> 處理中...';
-        btn.classList.add('opacity-50', 'pointer-events-none');
-        return true;
-    } else {
-        btn.innerHTML = originalText || btn.dataset.oriText || '送出';
-        btn.classList.remove('opacity-50', 'pointer-events-none');
-        return false;
-    }
-}
-
-function formatPhoneStr(val) {
-  if (!val) return '';
-  let str = String(val).trim();
-  let matches = str.match(/(?:\+?\d[\d\-\s]{7,18}\d)/g);
-  let targetStr = (matches && matches.length > 0) ? matches[0] : str;
-  let s = targetStr.replace(/[^\d+]/g, '');
-  if (s.startsWith('+886')) s = '0' + s.substring(4);
-  else if (s.startsWith('886') && s.length >= 11) s = '0' + s.substring(3);
-  if (/^9\d{8}$/.test(s)) s = '0' + s;
-  return s;
-}
-
-function getDirectImageUrl(url) { 
-  if (!url || url === '無圖檔' || url === '圖片儲存失敗') return '';
-  const driveMatch = url.match(/id=([a-zA-Z0-9_-]+)/) || url.match(/d\/([a-zA-Z0-9_-]+)/);
-  if (driveMatch && url.includes('drive.google.com')) return `https://drive.google.com/thumbnail?id=${driveMatch[1]}&sz=w1000`;
-  return url;
-}
-
-const getTrueAspectRatio = (url) => new Promise((resolve) => {
-    if (!url) return resolve('20:13');
-    const img = new Image();
-    img.onload = function() {
-        let w = this.width; let h = this.height; let ratio = w / h;
-        if (ratio > 3) { w = 300; h = 100; }
-        else if (ratio < 0.334) { w = 100; h = 300; }
-        resolve(`${Math.round(w)}:${Math.round(h)}`);
-    };
-    img.onerror = function() { resolve('20:13'); };
-    img.src = url;
-});
-
-async function fetchAPI(action, payload = {}, silent = false) {
-  try {
-    const response = await fetch(WORKER_URL, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action, payload })
-    });
-    const resText = await response.text();
-    let result;
-    try { result = JSON.parse(resText); } catch(e) { throw new Error(`系統連線失敗 (非 JSON)`); }
-    if (!result.success) throw new Error(result.error);
-    return result.data;
-  } catch (err) {
-    if (!silent) showToast(err.message, true); 
-    throw err;
-  }
-}
-
-function switchView(view) {
-  const views = ['view-loading', 'view-list', 'view-process'];
-  views.forEach(v => {
-    const el = document.getElementById(v);
-    if (el) el.classList.add('hidden');
-  });
-  if (view === 'process') {
-    document.getElementById('view-process').classList.remove('hidden');
-  } else if (view === 'list') {
-    document.getElementById('view-list').classList.remove('hidden');
-    if (globalCardContacts.length === 0 && !isProcessing) { window.loadCardContacts(); }
-  }
-}
-
-function switchProcessSection(id) {
-  ['section-loading', 'section-form'].forEach(v => {
-    const el = document.getElementById(v);
-    if(el) el.classList.add('hidden');
-  });
-  const target = document.getElementById(id);
-  if(target) target.classList.remove('hidden');
-}
-
-function resetUI() {
-  document.getElementById('card-camera').value = "";
-  document.getElementById('card-upload').value = "";
-  compressedBase64 = "";
-  currentFateTags = null;
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('mode') === 'mycard') { window.location.href = 'index.html?view=user-profile'; } 
-  else { switchView('list'); }
-}
-
-function showToast(msg, isError = false) {
-  const t = document.getElementById('toast');
-  if(!t) return;
-  t.innerHTML = `<span class="material-symbols-outlined icon-filled">${isError ? 'error' : 'info'}</span> ${msg}`;
-  t.className = `fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded text-[15px] shadow-lg transition-all font-bold flex items-center gap-2 w-max max-w-[90vw] ${isError ? 'bg-red-500 text-white border-red-600' : 'bg-slate-800 text-white border-slate-700'} opacity-100`;
-  t.classList.remove('hidden');
-  setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -1rem)'; }, 3000); 
-}
-
-function openCropper(input, mode = 'card') {
-    uploadTargetMode = mode;
-    const file = input.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = document.getElementById('cropper-image');
-      img.src = e.target.result;
-      img.style.opacity = '0';
-      document.getElementById('section-cropper').classList.remove('hidden');
-      if (cropperInstance) cropperInstance.destroy();
-      setTimeout(() => {
-        img.style.opacity = '1';
-        cropperInstance = new Cropper(img, { 
-          viewMode: 1, dragMode: 'move', autoCropArea: 0.9, aspectRatio: NaN, 
-          restore: false, guides: true, center: true, highlight: false, cropBoxMovable: true, cropBoxResizable: true, toggleDragModeOnDblclick: false 
-        });
-      }, 100);
-    };
-    reader.readAsDataURL(file);
-    input.value = ""; 
-}
-
-function cancelCrop() {
-  if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
-  document.getElementById('section-cropper').classList.add('hidden');
-}
-
-async function confirmCrop() {
-  if (!cropperInstance) return;
-  const croppedCanvas = cropperInstance.getCroppedCanvas({ maxWidth: 1200, maxHeight: 1200 });
-  compressedBase64 = croppedCanvas.toDataURL('image/jpeg', 0.8);
-  cancelCrop();
-  
-  if (uploadTargetMode === 'ecard') {
-      const btn = document.getElementById('btn-check-format'); 
-      const originalHtml = btn.innerHTML;
-      btn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin">refresh</span> 上傳中';
-      btn.classList.add('pointer-events-none');
-      try {
-          showToast("圖片上傳中...", false);
-          const url = await fetchAPI('uploadImage', { base64Image: compressedBase64 });
-          document.getElementById('ec-img-input').value = url;
-          if(typeof updateECardPreview === 'function') updateECardPreview();
-          showToast("✅ 圖片上傳成功");
-      } catch (err) { showToast("⚠️ 上傳失敗：" + err.message, true); } 
-      finally { btn.innerHTML = originalHtml; btn.classList.remove('pointer-events-none'); }
-  } else {
-      const prevImg = document.getElementById('process-preview-image');
-      if(prevImg) prevImg.src = compressedBase64;
-      switchView('process');
-      switchProcessSection('section-loading');
-      recognizeCardData();
-  }
-}
-
-async function recognizeCardData() {
-  try {
-    const data = await fetchAPI('recognizeCard', { base64Image: compressedBase64 });
-    // ⭐ 修理：補全導入 15 個商務欄位
-    const fields = ['Name', 'EnglishName', 'Title', 'Department', 'CompanyName', 'TaxID', 'Mobile', 'Tel', 'Ext', 'Fax', 'Address', 'Email', 'Website', 'SocialMedia', 'Slogan'];
-    fields.forEach(f => {
-      const el = document.getElementById(`f-${f}`);
-      if(el) {
-          let val = data[f] || '';
-          if (f === 'Mobile' || f === 'Tel' || f === 'Fax') val = formatPhoneStr(val);
-          if (f === 'Website' && val && !val.startsWith('http') && val.includes('.')) val = 'https://' + val;
-          el.value = val;
-      }
-    });
-    currentFateTags = {
-        Personality: data.Personality || '', Hobbies: data.Hobbies || '',
-        Wealth: data.Wealth || '', Health: data.Health || '', Career: data.Career || ''
-    };
-    switchProcessSection('section-form');
-    showToast("✅ AI 辨識完成");
-  } catch(err) { window.resetUI(); }
-}
-
-async function saveToCloud() {
-  if (isProcessing) return; 
-  isProcessing = true;
-  setButtonLoading('btn-save', true);
-  
-  const payload = {
-    base64Image: compressedBase64,
-    Notes: document.getElementById('f-Notes').value,
-    userId: '', 
-    ...currentFateTags 
-  };
-  
-  // ⭐ 修理：補全存入雲端的資料欄位
-  const fields = ['Name', 'EnglishName', 'Title', 'Department', 'CompanyName', 'TaxID', 'Mobile', 'Tel', 'Ext', 'Fax', 'Address', 'Email', 'Website', 'SocialMedia', 'Slogan'];
-  fields.forEach(f => { payload[f] = document.getElementById(`f-${f}`).value; });
-  
-  if (!payload.Name && !payload.CompanyName) {
-    setButtonLoading('btn-save', false, '存入雲端');
-    isProcessing = false;
-    return showToast("⚠️ 請輸入姓名或公司", true);
-  }
-
-  try {
-    await fetchAPI('saveCard', payload);
-    showToast("🎉 建立成功！");
-    globalCardContacts = [];
-    sessionStorage.removeItem('getCardContacts{}');
-    setTimeout(() => { resetUI(); }, 1000);
-  } catch(err) { console.error(err); } 
-  finally { setButtonLoading('btn-save', false, '存入雲端'); isProcessing = false; }
-}
-
-async function loadCardContacts() { 
-    const container = document.getElementById('admin-card-list-container');
-    if (!container) return;
-
-    if (!isAdmin) {
-        const navAdmin = document.getElementById('bottom-nav-admin');
-        if (navAdmin) navAdmin.classList.add('hidden');
-        const toolsContainer = document.getElementById('admin-tools-container');
-        if (toolsContainer) toolsContainer.classList.add('hidden');
-        const searchContainer = document.getElementById('admin-search-container');
-        if (searchContainer) searchContainer.classList.add('hidden');
-    }
-
-    const cacheKey = 'getCardContacts{}';
-    const cached = sessionStorage.getItem(cacheKey);
+    const vl = document.getElementById('view-loading'); if(vl) vl.classList.add('hidden');
+    const vlist = document.getElementById('view-list'); if(vlist) vlist.classList.remove('hidden');
     
-    if (cached) {
-        try {
-            globalCardContacts = JSON.parse(cached);
-            if (!isAdmin && userProfile) {
-                globalCardContacts = globalCardContacts.filter(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId);
-            }
-            filterCardList(); 
-        } catch(e) {}
-    } else {
-        container.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>';
-    }
+    window.loadCardContacts();
+  } catch (err) { 
+      console.error("LIFF Init Failed", err); 
+      const vl = document.getElementById('view-loading'); if(vl) vl.classList.add('hidden');
+  }
+});
 
-    fetchAPI('getCardContacts', {}, true).then(data => {
+window.fetchAPI = async function(action, payload = {}) {
+    const res = await fetch(WORKER_URL, { method: 'POST', body: JSON.stringify({ action, payload }) });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.error);
+    return json.data;
+};
+
+window.loadCardContacts = async function() {
+    const container = document.getElementById('admin-card-list-container');
+    if (!container) return; 
+    container.innerHTML = '<div class="py-10 text-center text-slate-300">資料讀取中...</div>';
+    try {
+        let data = await window.fetchAPI('getCardContacts');
         globalCardContacts = data || [];
-        sessionStorage.setItem(cacheKey, JSON.stringify(globalCardContacts));
         if (!isAdmin && userProfile) {
             globalCardContacts = globalCardContacts.filter(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId);
         }
-        filterCardList(); 
-    }).catch(e => {
-        if (globalCardContacts.length === 0) {
-            container.innerHTML = `<div class="text-center py-10 text-error font-bold">讀取失敗</div>`;
-        }
-    });
-}
+        window.renderCardList(globalCardContacts);
+    } catch(e) { container.innerHTML = '讀取失敗'; }
+};
 
-function filterCardList() { 
-    const term = document.getElementById('card-search-input').value.toLowerCase();
-    filteredCards = globalCardContacts.filter(c => 
-      (c['姓名'] || '').toLowerCase().includes(term) || (c['公司名稱'] || '').toLowerCase().includes(term)
-    );
-    currentPage = 1;
-    renderCardPage(true);
-}
-
-function renderCardPage(isReset = false) {
+window.renderCardList = function(cards) {
     const container = document.getElementById('admin-card-list-container');
     if (!container) return;
-
-    if (!filteredCards || filteredCards.length === 0) {
-        container.innerHTML = '<div class="text-center py-16 bg-white rounded shadow-sm border border-slate-200 text-slate-500 text-[15px]">查無相關名片</div>';
-        return;
-    }
-
-    const startIndex = (currentPage - 1) * PAGE_LIMIT;
-    const endIndex = startIndex + PAGE_LIMIT;
-    const pageData = filteredCards.slice(startIndex, endIndex);
-
-    let html = pageData.map((card) => {
-        const isClaimed = !!(card.userId || card['LINE ID'] || card['Line ID'] || card['lineId']);
-        const claimBadge = isClaimed 
-          ? '<span class="shrink-0 text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded text-[11px] whitespace-nowrap ml-2 border border-emerald-100">已認領</span>' 
-          : '<span class="shrink-0 text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded text-[11px] whitespace-nowrap ml-2 border border-slate-200">未認領</span>';
-        
-        return `
-        <div onclick="openCardDetailByRowId('${card.rowId}')" class="pl-[5px] pr-4 py-4 bg-white flex items-center gap-4 border-b border-slate-200 last:border-b-0 active:bg-slate-50 cursor-pointer transition-colors">
-          <div class="w-[52px] h-[52px] shrink-0 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center border border-slate-200">
-            ${card['名片圖檔'] && card['名片圖檔'] !== '圖片儲存失敗' && card['名片圖檔'] !== '無圖檔' ? `<img src="${getDirectImageUrl(card['名片圖檔'])}" class="w-full h-full object-cover">` : `<span class="material-symbols-outlined text-slate-400 text-[24px]">person</span>`}
-          </div>
-          <div class="flex-1 overflow-hidden flex flex-col justify-center gap-1.5">
-            <div class="flex items-center">
-              <h4 class="text-[17px] text-slate-800 truncate leading-none">${card['姓名'] || '未知姓名'}</h4>
-              ${isAdmin ? claimBadge : ''}
+    if (!cards.length) { container.innerHTML = '<div class="py-20 text-center text-slate-400">目前暫無名單</div>'; return; }
+    
+    container.innerHTML = cards.map(c => `
+        <div onclick="window.openCardDetailByRowId('${c.rowId}')" class="py-4 border-b border-slate-50 flex items-center gap-4 active:bg-slate-50 transition-colors">
+            <div class="w-12 h-12 rounded-full bg-slate-100 overflow-hidden shrink-0 flex items-center justify-center">
+                ${c['名片圖檔'] && c['名片圖檔'] !== '無圖檔' ? `<img src="${window.getDirectImageUrl(c['名片圖檔'])}" class="w-full h-full object-cover">` : `<span class="material-symbols-outlined text-slate-300">person</span>`}
             </div>
-            <p class="text-[14px] text-slate-500 truncate leading-none font-normal">${card['公司名稱'] || card['職稱'] || '無資訊'}</p>
-          </div>
-        </div>`
-    }).join('');
+            <div class="flex-1 overflow-hidden">
+                <div class="flex items-center gap-2">
+                    <h4 class="text-[16px] text-slate-800 font-normal">${c['姓名'] || '未具名'}</h4>
+                    ${isAdmin && (c.userId || c['LINE ID']) ? '<span class="text-[10px] text-emerald-500 border border-emerald-100 px-1 rounded bg-emerald-50">已認領</span>' : ''}
+                </div>
+                <p class="text-[13px] text-slate-400 truncate">${c['公司名稱'] || '無資訊'}</p>
+            </div>
+            <span class="material-symbols-outlined text-slate-200">chevron_right</span>
+        </div>
+    `).join('');
+};
 
-    if (isReset) {
-        container.innerHTML = `<div class="bg-white border border-slate-200 rounded overflow-hidden" id="card-list-wrapper">${html}</div>`;
-    } else {
-        const wrapper = document.getElementById('card-list-wrapper');
-        if (wrapper) wrapper.insertAdjacentHTML('beforeend', html);
+window.openCardDetailByRowId = function(rowId) {
+    const card = globalCardContacts.find(c => String(c.rowId) === String(rowId));
+    if(!card) return;
+    currentActiveCard = card;
+    const isOwner = userProfile && (card.userId === userProfile.userId || card['LINE ID'] === userProfile.userId);
+    const isClaimed = !!(card.userId || card['LINE ID']);
+
+    const editBtn = document.getElementById('btn-card-edit');
+    const adminBar = document.getElementById('admin-action-bar');
+    if (editBtn) editBtn.classList.toggle('hidden', !(isAdmin || isOwner));
+    if (adminBar) adminBar.classList.toggle('hidden', !isAdmin);
+    
+    const badge = document.getElementById('ro-claim-status');
+    if(badge) {
+        badge.innerText = isClaimed ? '已認領' : '待認領';
+        badge.className = isClaimed ? 'px-2 py-0.5 rounded text-[10px] border border-emerald-100 bg-emerald-50 text-emerald-500 font-normal' : 'px-2 py-0.5 rounded text-[10px] border border-slate-200 bg-slate-50 text-slate-400 font-normal';
+        badge.classList.remove('hidden');
     }
-}
 
-function loadMoreCards() { currentPage++; renderCardPage(false); }
+    // ⭐ 修理：補全所有 15+ 欄位，還原 LINE 原生樣式
+    let infoHtml = `
+        <div class="w-full h-64 bg-slate-50 border-b border-slate-100 flex items-center justify-center">
+            ${card['名片圖檔'] && card['名片圖檔'] !== '無圖檔' ? `<img src="${window.getDirectImageUrl(card['名片圖檔'])}" class="w-full h-full object-contain">` : `<span class="material-symbols-outlined text-slate-200 text-6xl">contact_mail</span>`}
+        </div>
+        <div class="p-6 space-y-6">
+            <div>
+                <h2 class="text-2xl font-normal text-slate-800 flex items-center gap-2">
+                    ${card['姓名'] || '未具名'} ${card['英文名/別名'] ? `<span class="text-lg text-slate-400">(${card['英文名/別名']})</span>` : ''}
+                </h2>
+                <p class="text-slate-500 mt-1">${card['職稱']||''} ${card['部門'] ? ` / ${card['部門']}` : ''}</p>
+            </div>
+            <div class="space-y-4 text-[15px] font-normal">
+                <div class="flex gap-4"><span class="material-symbols-outlined text-slate-300">apartment</span><span class="text-slate-700">${card['公司名稱'] || '-'}</span></div>
+                ${card['統一編號'] ? `<div class="flex gap-4"><span class="material-symbols-outlined text-slate-300">tag</span><span class="text-slate-700">統編 ${card['統一編號']}</span></div>` : ''}
+                <div class="flex gap-4"><span class="material-symbols-outlined text-slate-300">smartphone</span><a href="tel:${card['手機號碼']}" class="text-blue-600 font-medium">${card['手機號碼'] || '-'}</a></div>
+                ${card['公司電話'] ? `<div class="flex gap-4"><span class="material-symbols-outlined text-slate-300">call</span><span class="text-slate-700">${card['公司電話']}${card['分機'] ? ` 分機 ${card['分機']}` : ''}</span></div>` : ''}
+                ${card['傳真'] ? `<div class="flex gap-4"><span class="material-symbols-outlined text-slate-300">fax</span><span class="text-slate-700">${card['傳真']} (傳真)</span></div>` : ''}
+                <div class="flex gap-4"><span class="material-symbols-outlined text-slate-300">email</span><span class="text-slate-700">${card['電子郵件'] || '-'}</span></div>
+                ${card['公司網址'] ? `<div class="flex gap-4"><span class="material-symbols-outlined text-slate-300">language</span><a href="${card['公司網址']}" target="_blank" class="text-blue-600 truncate">${card['公司網址']}</a></div>` : ''}
+                <div class="flex gap-4"><span class="material-symbols-outlined text-slate-300">location_on</span><span class="text-slate-700 leading-snug">${card['公司地址'] || '-'}</span></div>
+                ${card['社群帳號'] ? `<div class="flex gap-4"><span class="material-symbols-outlined text-slate-300">chat</span><span class="text-slate-700">${card['社群帳號']}</span></div>` : ''}
+            </div>
+            ${card['服務項目/品牌標語'] ? `<div class="pt-6 border-t border-slate-100"><h3 class="text-[13px] font-medium text-slate-400 mb-2">品牌標語 / 服務項目</h3><p class="text-[15px] text-slate-700 whitespace-pre-wrap leading-relaxed">${card['服務項目/品牌標語']}</p></div>` : ''}
+            ${isAdmin && card['建檔人/備註'] ? `<div class="pt-6 border-t border-slate-100 bg-slate-50 -mx-6 px-6 py-4"><h3 class="text-[12px] font-normal text-slate-400 mb-1">管理員內部備註</h3><p class="text-[14px] text-slate-600 font-normal">${card['建檔人/備註']}</p></div>` : ''}
+        </div>
+    `;
+    const detailBox = document.getElementById('card-detail-content');
+    if(detailBox) detailBox.innerHTML = infoHtml;
+    document.getElementById('readonly-card-modal').classList.remove('hidden');
+};
 
-function openCardDetailByRowId(rowId) { 
-    try {
-      const card = globalCardContacts.find(c => String(c.rowId) === String(rowId));
-      if(!card) return;
-      currentActiveCard = card; 
-      
-      document.getElementById('ro-name').innerText = card['姓名'] || card['Name'] || '未知姓名';
-      
-      const statusEl = document.getElementById('ro-claim-status');
-      if (isAdmin && statusEl) {
-          const isClaimed = card.userId || card['LINE ID'] || card['Line ID'] || card['lineId'];
-          statusEl.innerText = isClaimed ? '已認領' : '未認領';
-          statusEl.className = isClaimed ? 'px-2 py-0.5 rounded text-[11px] border bg-emerald-50 border-emerald-200 text-emerald-600 font-normal' : 'px-2 py-0.5 rounded text-[11px] border bg-slate-50 border-slate-200 text-slate-400 font-normal';
-          statusEl.classList.remove('hidden');
-      }
-      
-      document.getElementById('ro-title').innerText = [card['職稱']||card['Title'], card['部門']||card['Department']].filter(Boolean).join(' / ') || '無職稱';
-      document.getElementById('ro-company').innerText = [card['公司名稱']||card['CompanyName'], card['英文名/別名']||card['EnglishName']].filter(Boolean).join(' - ') || '未提供';
-      document.getElementById('ro-taxid').innerText = card['統一編號'] || card['TaxID'] || '未提供';
-      
-      const mobileLink = document.getElementById('ro-mobile-link');
-      let phoneStr = card['手機號碼'] || card['Mobile'] ? formatPhoneStr(card['手機號碼'] || card['Mobile']) : '';
-      mobileLink.innerText = phoneStr || '未提供'; mobileLink.href = phoneStr ? `tel:${phoneStr}` : '#';
-      
-      document.getElementById('ro-tel').innerText = [card['公司電話']||card['Tel'] ? formatPhoneStr(card['公司電話']||card['Tel']) : '', card['分機']||card['Ext'] ? `ext.${card['分機']||card['Ext']}` : ''].filter(Boolean).join(' ') || '未提供';
-      
-      const emailLink = document.getElementById('ro-email-link');
-      const emailStr = card['電子郵件'] || card['Email'] || '';
-      emailLink.innerText = emailStr || '未提供'; emailLink.href = emailStr ? `mailto:${emailStr}` : '#';
-      
-      document.getElementById('ro-address').innerText = card['公司地址'] || card['Address'] || '未提供';
-      
-      const notesArr = [];
-      const slogan = card['服務項目/品牌標語']||card['Slogan'];
-      if(slogan) notesArr.push(`【服務項目】\n${slogan}`);
-      const website = card['公司網址']||card['Website'];
-      if(website) notesArr.push(`【網址】${website}`);
-      const internalNotes = card['建檔人/備註']||card['Notes'];
-      if(internalNotes && isAdmin) notesArr.push(`【內部備註】\n${internalNotes}`);
-      
-      document.getElementById('ro-notes').innerText = notesArr.join('\n\n') || '無其他資訊';
-
-      const imgEl = document.getElementById('ro-image');
-      const noImgEl = document.getElementById('ro-no-image');
-      if (card['名片圖檔'] && card['名片圖檔'] !== '圖片儲存失敗' && card['名片圖檔'] !== '無圖檔') {
-        imgEl.src = getDirectImageUrl(card['名片圖檔']); imgEl.classList.remove('hidden'); noImgEl.classList.add('hidden');
-      } else {
-        imgEl.src = ''; imgEl.classList.add('hidden'); noImgEl.classList.remove('hidden');
-      }
-      
-      const shareBtn = document.getElementById('btn-share-claim');
-      if(shareBtn) shareBtn.classList.toggle('hidden', !isAdmin);
-
-      document.getElementById('readonly-card-modal').classList.remove('hidden');
-    } catch(e) { console.log(e); }
-}
-
-function closeReadOnlyCard() { 
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('mode') === 'mycard') { window.location.href = 'index.html?view=user-profile'; } 
-    else { document.getElementById('readonly-card-modal').classList.add('hidden'); }
-}
-
-// ⭐ 修理：邀約連結路徑 404 問題，並使用最新 LINE 分享協議
-async function shareClaimLink() {
-  if (!currentActiveCard || isProcessing) return;
-  isProcessing = true;
-  setButtonLoading('btn-share-claim', true);
-
-  try {
-      const card = currentActiveCard;
-      // 移除 URL 中的 /index.html 拼接錯誤，並使用 LIFF 根路徑
-      const url = `https://liff.line.me/${LIFF_ID}/?view=user-profile&claimCardId=${card.rowId}&referrer=${userProfile.userId}`;
-
-      const flexMessage = {
-          type: "bubble", size: "mega",
-          body: {
-              type: "box", layout: "vertical", paddingAll: "20px",
-              contents: [
-                  { type: "text", text: "專屬名片認領", weight: "bold", color: "#2563eb", size: "sm" },
-                  { type: "text", text: `您好，${card['姓名'] || card['Name'] || ''}！`, weight: "bold", size: "xl", margin: "md" },
-                  { type: "text", text: "我已為您建立了數位名片。點擊下方按鈕即可完成資料認領，並啟用轉發功能！", size: "sm", color: "#64748b", wrap: true, margin: "md" }
-              ]
-          },
-          footer: {
-              type: "box", layout: "vertical", spacing: "sm", paddingAll: "20px",
-              contents: [ { type: "button", style: "primary", color: "#2563eb", height: "sm", action: { type: "uri", label: "認領並編輯名片", uri: url } } ]
-          }
-      };
-
-      if (!liff.isLoggedIn()) { liff.login(); return; }
-      const altText = "您的專屬數位名片認領邀請";
-
-      if (liff.isApiAvailable('shareTargetPicker')) {
-          try {
-              const res = await liff.shareTargetPicker([{ type: "flex", altText: altText, contents: flexMessage }]);
-              if (res) showToast('✅ 認領連結已發送！');
-          } catch (err) { fallbackShare(url, altText); }
-      } else { fallbackShare(url, altText); }
-  } catch (error) { console.error(error); } 
-  finally { setButtonLoading('btn-share-claim', false, '邀請認領'); isProcessing = false; }
-}
-
-function openCardEdit() { 
-    const c = currentActiveCard; if (!c) return;
-    const fields = {
-      'edit-c-Name': c['姓名'] || c['Name'] || '', 'edit-c-EnglishName': c['英文名/別名'] || c['EnglishName'] || '',
-      'edit-c-Title': c['職稱'] || c['Title'] || '', 'edit-c-Department': c['部門'] || c['Department'] || '',
-      'edit-c-CompanyName': c['公司名稱'] || c['CompanyName'] || '', 'edit-c-TaxID': c['統一編號'] || c['TaxID'] || '',
-      'edit-c-Mobile': formatPhoneStr(c['手機號碼'] || c['Mobile']) || '', 'edit-c-Tel': formatPhoneStr(c['公司電話'] || c['Tel']) || '',
-      'edit-c-Ext': c['分機'] || c['Ext'] || '', 'edit-c-Fax': formatPhoneStr(c['傳真'] || c['Fax']) || '',
-      'edit-c-Address': c['公司地址'] || c['Address'] || '', 'edit-c-Email': c['電子郵件'] || c['Email'] || '',
-      'edit-c-Website': c['公司網址'] || c['Website'] || '', 'edit-c-SocialMedia': c['社群帳號'] || c['SocialMedia'] || '',
-      'edit-c-Slogan': c['服務項目/品牌標語'] || c['Slogan'] || '', 'edit-c-Notes': c['建檔人/備註'] || c['Notes'] || ''
+window.openCropper = function(input) {
+    const file = input.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = document.getElementById('cropper-image'); if(!img) return;
+      img.src = e.target.result;
+      document.getElementById('cropper-modal').classList.remove('hidden');
+      if (cropperInstance) cropperInstance.destroy();
+      setTimeout(() => { if(img) img.style.opacity = '1'; cropperInstance = new Cropper(img, { viewMode: 1, dragMode: 'move', autoCropArea: 0.9 }); }, 100);
     };
-    for (const [id, value] of Object.entries(fields)) { const el = document.getElementById(id); if (el) el.value = value; }
-    document.getElementById('card-edit-modal').classList.remove('hidden');
-}
+    reader.readAsDataURL(file);
+};
 
-function closeCardEdit() { document.getElementById('card-edit-modal').classList.add('hidden'); }
+window.confirmCrop = async function() {
+    if(!cropperInstance) return;
+    const canvas = cropperInstance.getCroppedCanvas({ maxWidth: 1000 });
+    compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+    window.cancelCrop();
+    const preview = document.getElementById('process-preview-image');
+    if(preview) preview.src = compressedBase64;
+    window.switchView('process');
+    window.switchProcessSection('section-loading');
+    try {
+        const data = await window.fetchAPI('recognizeCard', { base64Image: compressedBase64 });
+        document.getElementById('f-Name').value = data.Name || '';
+        document.getElementById('f-CompanyName').value = data.CompanyName || '';
+        document.getElementById('f-Mobile').value = data.Mobile || '';
+        document.getElementById('f-Slogan').value = data.Slogan || '';
+        currentFateTags = { Personality: data.Personality, Hobbies: data.Hobbies, Wealth: data.Wealth, Health: data.Health, Career: data.Career };
+        window.switchProcessSection('section-form');
+    } catch(err) { window.resetUI(); alert("辨識超時"); }
+};
 
-async function submitCardEdit() {
-  if (isProcessing || !currentActiveCard) return;
-  isProcessing = true; setButtonLoading('btn-save-card-edit', true);
-  let payload = { rowId: currentActiveCard.rowId };
-  const fields = ['Name', 'EnglishName', 'Title', 'Department', 'CompanyName', 'TaxID', 'Mobile', 'Tel', 'Ext', 'Fax', 'Address', 'Email', 'Website', 'SocialMedia', 'Slogan', 'Notes'];
-  fields.forEach(f => { payload[f] = document.getElementById(`edit-c-${f}`)?.value.trim() || ''; });
+window.saveToCloud = async function() {
+    if(isProcessing) return; isProcessing = true;
+    const payload = {
+        base64Image: compressedBase64,
+        Name: document.getElementById('f-Name')?.value || '',
+        CompanyName: document.getElementById('f-CompanyName')?.value || '',
+        Mobile: document.getElementById('f-Mobile')?.value || '',
+        Slogan: document.getElementById('f-Slogan')?.value || '',
+        Notes: document.getElementById('f-Notes')?.value || '',
+        ...currentFateTags
+    };
+    try {
+        await window.fetchAPI('saveCard', payload);
+        alert("✅ 已存入雲端"); window.resetUI(); window.loadCardContacts();
+    } catch(e) { alert("儲存失敗"); }
+    finally { isProcessing = false; }
+};
 
-  try {
-    await fetchAPI('updateCard', payload);
-    Object.assign(currentActiveCard, payload);
-    closeCardEdit();
-    openCardDetailByRowId(payload.rowId);
-    showToast("✅ 資料更新成功");
-  } catch(err) { showToast("更新失敗", true); } 
-  finally { setButtonLoading('btn-save-card-edit', false, '儲存變更'); isProcessing = false; }
-}
+// ⭐ 修理：移除 URL 錯誤拼接，確保導航正確，並使用最新 LINE 分享協議
+window.shareClaimLink = function() {
+    const card = currentActiveCard;
+    if(!card || !userProfile) return;
+    // 移除 /index.html 拼接，改用 LIFF 根路徑，防止 404
+    const url = `https://liff.line.me/${LIFF_ID}/?claimCardId=${card.rowId}&referrer=${userProfile.userId}`;
+    const fullText = `您好，${card['姓名']}！我已為您建立專屬數位名片，請點擊連結認領並編輯您的內容：\n${url}`;
+    window.open(`https://line.me/R/share?text=${encodeURIComponent(fullText)}`, '_blank');
+};
+
+window.cancelCrop = function() { if (cropperInstance) cropperInstance.destroy(); const cm = document.getElementById('cropper-modal'); if(cm) cm.classList.add('hidden'); };
+window.getDirectImageUrl = function(url) { if(!url || url==='無圖檔' || url==='圖片儲存失敗') return 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; const match = url.match(/id=([a-zA-Z0-9_-]+)/); return match ? `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000` : url; };
+window.filterCardList = function() { 
+    const term = document.getElementById('card-search-input')?.value.toLowerCase() || '';
+    const filtered = globalCardContacts.filter(c => (c['姓名']||'').toLowerCase().includes(term) || (c['公司名稱']||'').toLowerCase().includes(term));
+    window.renderCardList(filtered);
+};

@@ -1,6 +1,6 @@
 /**
  * card-ecard.js
- * 數位電子名片 (ECard) 專用模組 - QQ修復版 (絕對防護：取消預設個資揭露，保護隱私)
+ * 數位電子名片 (ECard) 專用模組 - QQ修復版 (絕對防護：加入自動淨化機制，清除舊資料庫中的外洩個資與 Not provided)
  */
 
 window.toggleECardType = function(type) {
@@ -175,6 +175,33 @@ window.openECardGenerator = function() {
     const myLiffId = (typeof LIFF_ID !== 'undefined') ? LIFF_ID : '2009367829-DLtYBDUm';
 
     if (savedConfig) {
+      // ⭐ QQ大師自動淨化機制：強制清除舊資料庫中的 Not provided
+      if (savedConfig.title) savedConfig.title = savedConfig.title.replace(/Not provided/gi, '').replace(/未提供/g, '').trim();
+      if (savedConfig.desc) savedConfig.desc = savedConfig.desc.replace(/Not provided/gi, '').replace(/未提供/g, '').trim();
+      
+      if (!savedConfig.title) {
+          let cName = c['公司名稱'] && c['公司名稱'] !== 'Not provided' ? c['公司名稱'] : '';
+          let uName = c['姓名'] && c['姓名'] !== 'Not provided' ? c['姓名'] : '';
+          savedConfig.title = [cName, uName].filter(Boolean).join(' - ') || c['Name'] || '商務名片';
+      }
+
+      // ⭐ QQ大師自動淨化機制：強制斬殺舊資料庫中自動產生的「個資洩漏按鈕」
+      if (savedConfig.buttons && savedConfig.buttons.length > 0) {
+          let phone = c['手機號碼'] ? String(c['手機號碼']).split(',')[0].replace(/[^\d+]/g, '') : '';
+          if (phone && phone.startsWith('886')) phone = '0' + phone.substring(3);
+          let tel = c['公司電話'] ? String(c['公司電話']).split(',')[0].replace(/[^\d+]/g, '') : '';
+          if (tel && tel.startsWith('886')) tel = '0' + tel.substring(3);
+          let email = c['電子郵件'] ? String(c['電子郵件']).split(/[\s,]+/)[0] : '';
+          
+          savedConfig.buttons = savedConfig.buttons.filter(b => {
+              if (phone && b.u.includes(phone)) return false;
+              if (tel && b.u.includes(tel)) return false;
+              if (email && b.u.includes(email)) return false;
+              if (b.l === 'Google 導航') return false;
+              return true;
+          });
+      }
+
       document.getElementById('ec-card-type').value = savedConfig.cardType || 'image';
       document.getElementById('ec-video-url').value = savedConfig.videoUrl || '';
       
@@ -192,6 +219,7 @@ window.openECardGenerator = function() {
       document.getElementById('ec-title-input').value = savedConfig.title || '';
       document.getElementById('ec-desc-input').value = savedConfig.desc || '';
   
+      // 填入按鈕 (若被斬殺則會變空，且預設顏色給 #06C755)
       for(let i=1; i<=4; i++) {
         const btn = savedConfig.buttons[i-1];
         document.getElementById(`ec-btn${i}-label`).value = btn ? btn.l : '';
@@ -217,7 +245,7 @@ window.openECardGenerator = function() {
       document.getElementById('ec-title-input').value = defaultFlex.body.contents[0].contents[0].text;
       document.getElementById('ec-desc-input').value = defaultFlex.body.contents[0].contents[1] ? defaultFlex.body.contents[0].contents[1].text : '';
       
-      // ⭐ QQ 隱私鐵律：預設編輯器介面時，清空所有的預設按鈕輸入，絕不自動帶入個資
+      // ⭐ 預設狀態絕對淨空
       for(let i=1; i<=4; i++) {
         document.getElementById(`ec-btn${i}-label`).value = '';
         document.getElementById(`ec-btn${i}-url`).value = '';

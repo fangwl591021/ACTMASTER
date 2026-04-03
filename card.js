@@ -1,7 +1,7 @@
 /**
  * card.js 
- * QQ 大師修復版：徹底移除名片詳情頁中的「AI 深度命理分析」區塊，保護個資
- * Version: v1.6.9 
+ * QQ 大師修復版：加入批次清除舊個資按鈕的邏輯
+ * Version: v1.7.0 
  */
 
 const LIFF_ID = "2009367829-DLtYBDUm"; 
@@ -561,8 +561,6 @@ function openCardDetailByRowId(rowId) {
       
       document.getElementById('ro-address').innerText = card['公司地址'] || card['Address'] || '未提供';
       
-      // ⭐ QQ 隱私鐵律：已徹底刪除 ro-fate-tags-container 區塊的資料填入邏輯，名片詳情不再顯示 AI 命理結果
-
       const notesArr = [];
       const slogan = card['服務項目/品牌標語']||card['Slogan'];
       if(slogan) notesArr.push(`【品牌與服務】\n${slogan}`);
@@ -797,4 +795,56 @@ async function submitCardEdit() {
     setButtonLoading('btn-save-card-edit', false, '儲存變更');
     isProcessing = false;
   }
+}
+
+// ⭐ QQ 修復：新增批次清除所有名片「洩漏個資按鈕」的功能
+window.batchCleanECardButtons = async function() {
+    if (!isAdmin) return;
+    if (!confirm("系統將批次清除所有名片上的「自訂按鈕與描述」\n(以防範舊版個資外洩，恢復為安全的預設值)。\n此動作不可逆，確定要執行嗎？")) return;
+
+    const btn = document.getElementById('btn-batch-clean');
+    if (btn) {
+        btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[14px]">refresh</span> 清除中...';
+        btn.classList.add('pointer-events-none', 'opacity-50');
+    }
+
+    let cleanedCount = 0;
+    try {
+        for (let i = 0; i < globalCardContacts.length; i++) {
+            const c = globalCardContacts[i];
+            if (c['自訂名片設定']) {
+                try {
+                    let config = JSON.parse(c['自訂名片設定']);
+                    let needsClean = false;
+                    
+                    if (config && config.buttons && config.buttons.length > 0) {
+                        config.buttons = [];
+                        needsClean = true;
+                    }
+                    if (config && config.title && (config.title.includes('Not provided') || config.title.includes('未提供'))) {
+                        config.title = '';
+                        needsClean = true;
+                    }
+                    if (config && config.desc && (config.desc.includes('Not provided') || config.desc.includes('未提供'))) {
+                        config.desc = '';
+                        needsClean = true;
+                    }
+
+                    if (needsClean) {
+                        await fetchAPI('updateECardConfig', { rowId: c.rowId, config: config }, true);
+                        c['自訂名片設定'] = JSON.stringify(config);
+                        cleanedCount++;
+                    }
+                } catch(e){}
+            }
+        }
+        showToast(`✅ 清除完畢！共重置了 ${cleanedCount} 張名片的個資按鈕。`);
+    } catch (err) {
+        showToast("清除過程發生錯誤", true);
+    } finally {
+        if (btn) {
+            btn.innerHTML = '<span class="material-symbols-outlined text-[15px]">cleaning_services</span> 重新整理所有數位名片按鈕 (清除舊個資)';
+            btn.classList.remove('pointer-events-none', 'opacity-50');
+        }
+    }
 }

@@ -1,7 +1,7 @@
 /**
  * card.js 
- * QQ 大師修復版：加入 A波與 B波命理主動寫入流程，並完美還原命理標籤顯示
- * Version: v1.6.3 
+ * QQ 大師修復版：加入 A波與 B波命理主動寫入流程，並完美還原命理標籤原生無邊框顯示
+ * Version: v1.6.4 
  */
 
 const LIFF_ID = "2009367829-DLtYBDUm"; 
@@ -345,7 +345,7 @@ async function saveToCloud() {
     return showToast("⚠️ 請輸入姓名或公司", true);
   }
 
-  // ⭐ QQ 大師修復：A波 - 名片掃描建檔時的主動命理分析 (姓名、電話)
+  // ⭐ QQ 大師修復：A波 - 名片掃描建檔時的主動命理分析防護網 (姓名、電話)
   if (!currentFateTags || !currentFateTags.Personality || currentFateTags.Personality === '待分析' || currentFateTags.Personality === '') {
       try {
           setButtonLoading('btn-save', true, 'AI 命理建檔中...');
@@ -561,19 +561,19 @@ function openCardDetailByRowId(rowId) {
       
       document.getElementById('ro-address').innerText = card['公司地址'] || card['Address'] || '未提供';
       
-      // ⭐ QQ大師修復：完美還原命理標籤顯示區塊 (依照您截圖的視覺比例)
+      // ⭐ QQ大師修復：完美呈現 5 大命理標籤 (絕對拒絕包框與粗體，純淨的原生清單流)
       const tagsContainer = document.getElementById('ro-fate-tags-container');
       if (tagsContainer) {
           if (card['個性'] && card['個性'] !== '待分析') {
               tagsContainer.innerHTML = `
-              <div class="border border-slate-200 rounded bg-white p-5">
-                  <h3 class="text-[14px] font-bold text-blue-600 mb-3 flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px]">psychology</span> AI 命理標籤</h3>
-                  <div class="space-y-2">
-                      ${card['個性'] ? `<div class="bg-blue-50/40 border border-blue-100 rounded-xl p-3 text-[14px] text-blue-700 leading-relaxed"><span class="font-bold">個性：</span>${card['個性']}</div>` : ''}
-                      ${card['興趣'] ? `<div class="bg-blue-50/40 border border-blue-100 rounded-xl p-3 text-[14px] text-blue-700 leading-relaxed"><span class="font-bold">興趣：</span>${card['興趣']}</div>` : ''}
-                      ${card['財運'] ? `<div class="bg-blue-50/40 border border-blue-100 rounded-xl p-3 text-[14px] text-blue-700 leading-relaxed"><span class="font-bold">財運：</span>${card['財運']}</div>` : ''}
-                      ${card['健康'] ? `<div class="bg-blue-50/40 border border-blue-100 rounded-xl p-3 text-[14px] text-blue-700 leading-relaxed"><span class="font-bold">健康：</span>${card['健康']}</div>` : ''}
-                      ${card['事業'] ? `<div class="bg-blue-50/40 border border-blue-100 rounded-xl p-3 text-[14px] text-blue-700 leading-relaxed"><span class="font-bold">事業：</span>${card['事業']}</div>` : ''}
+              <div class="pt-6 border-t border-slate-100">
+                  <h3 class="text-[13px] font-normal text-slate-400 mb-3 tracking-wide">AI 深度命理分析</h3>
+                  <div class="space-y-4 text-[15px] font-normal">
+                      ${card['個性'] ? `<div class="flex gap-4 items-start"><span class="text-slate-400 w-[72px] shrink-0">姓名電話</span><span class="text-slate-700 leading-relaxed">${card['個性']}</span></div>` : ''}
+                      ${card['興趣'] ? `<div class="flex gap-4 items-start"><span class="text-slate-400 w-[72px] shrink-0">八字五行</span><span class="text-slate-700 leading-relaxed">${card['興趣']}</span></div>` : ''}
+                      ${card['財運'] ? `<div class="flex gap-4 items-start"><span class="text-slate-400 w-[72px] shrink-0">生命靈數</span><span class="text-slate-700 leading-relaxed">${card['財運']}</span></div>` : ''}
+                      ${card['健康'] ? `<div class="flex gap-4 items-start"><span class="text-slate-400 w-[72px] shrink-0">西洋星座</span><span class="text-slate-700 leading-relaxed">${card['健康']}</span></div>` : ''}
+                      ${card['事業'] ? `<div class="flex gap-4 items-start"><span class="text-slate-400 w-[72px] shrink-0">東方生肖</span><span class="text-slate-700 leading-relaxed">${card['事業']}</span></div>` : ''}
                   </div>
               </div>`;
           } else {
@@ -598,7 +598,7 @@ function openCardDetailByRowId(rowId) {
 
       const imgEl = document.getElementById('ro-image');
       const noImgEl = document.getElementById('ro-no-image');
-      if (card['名片圖檔'] && card['名片圖檔'] !== '圖片儲存失敗' && card['名片圖檔'] !== '無圖檔') {
+      if (card['名片圖檔'] && card['名片圖檔'] !== '圖片儲存失敗') {
         imgEl.src = getDirectImageUrl(card['名片圖檔']);
         imgEl.classList.remove('hidden');
         noImgEl.classList.add('hidden');
@@ -748,7 +748,7 @@ async function submitCardEdit() {
   const oldBday = currentActiveCard['生日'] || '';
   const tagsMissing = !currentActiveCard['個性'] || currentActiveCard['個性'] === '待分析';
   
-  // ⭐ QQ大師修復：B波 - 只要「姓名/電話/生日」任一有變，或原本無標籤，就觸發深度重算
+  // ⭐ QQ大師修復：B波 - 只要「姓名/電話/生日」任一有變，或原本無標籤，就主動觸發深度重算
   if (payload.Name !== oldName || payload.Mobile !== oldPhone || payload.Birthday !== oldBday || tagsMissing) {
       try {
            setButtonLoading('btn-save-card-edit', true, 'AI 深度分析中...');

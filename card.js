@@ -1,7 +1,7 @@
 /**
  * card.js 
- * QQ 大師修復版：實作嚴格的 A波(2條) 與 B波(5條+整合) 動態切換，支援 LINE 原生多行斷行排版
- * Version: v1.6.8 
+ * QQ 大師修復版：徹底移除名片詳情頁中的「AI 深度命理分析」區塊，保護個資
+ * Version: v1.6.9 
  */
 
 const LIFF_ID = "2009367829-DLtYBDUm"; 
@@ -230,7 +230,7 @@ function showToast(msg, isError = false) {
   const t = document.getElementById('toast');
   if (!t) return;
   t.innerHTML = `<span class="material-symbols-outlined icon-filled">${isError ? 'error' : 'info'}</span> ${msg}`;
-  t.className = `fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded text-[15px] shadow-lg transition-all font-bold flex items-center gap-2 w-max max-w-[90vw] ${isError ? 'bg-red-500 text-white border-red-600' : 'bg-slate-800 text-white border-slate-700'} opacity-100`;
+  t.className = `fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all font-bold flex items-center gap-2 w-max max-w-[90vw] ${isError ? 'bg-red-500 text-white border-red-600' : 'bg-slate-800 text-white border-slate-700'} opacity-100`;
   t.style.zIndex = '10000';
   t.classList.remove('hidden');
   setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -1rem)'; setTimeout(() => t.classList.add('hidden'), 300); }, 3000); 
@@ -561,27 +561,7 @@ function openCardDetailByRowId(rowId) {
       
       document.getElementById('ro-address').innerText = card['公司地址'] || card['Address'] || '未提供';
       
-      // ⭐ QQ大師核心：渲染 2條 或 5條+整合判斷 的命理資料，加寬段落間距並徹底拔除邊框與粗體
-      const tagsContainer = document.getElementById('ro-fate-tags-container');
-      if (tagsContainer) {
-          if (card['個性'] && card['個性'] !== '待分析') {
-              tagsContainer.innerHTML = `
-              <div class="pt-8 border-t border-slate-100">
-                  <h3 class="text-[14px] font-bold text-slate-800 mb-5 tracking-wide flex items-center gap-1.5">
-                      <span class="material-symbols-outlined text-[18px] text-primary">psychology</span> AI 深度命理分析
-                  </h3>
-                  <div class="space-y-6 text-[14px] font-normal">
-                      ${card['個性'] ? `<div class="flex gap-4 items-start flex-col sm:flex-row pb-5 border-b border-slate-50 last:border-0"><span class="text-slate-400 w-[40px] shrink-0 sm:pt-0.5 font-bold">個性</span><span class="text-slate-700 leading-relaxed whitespace-pre-wrap flex-1">${card['個性']}</span></div>` : ''}
-                      ${card['興趣'] ? `<div class="flex gap-4 items-start flex-col sm:flex-row pb-5 border-b border-slate-50 last:border-0"><span class="text-slate-400 w-[40px] shrink-0 sm:pt-0.5 font-bold">興趣</span><span class="text-slate-700 leading-relaxed whitespace-pre-wrap flex-1">${card['興趣']}</span></div>` : ''}
-                      ${card['財運'] ? `<div class="flex gap-4 items-start flex-col sm:flex-row pb-5 border-b border-slate-50 last:border-0"><span class="text-slate-400 w-[40px] shrink-0 sm:pt-0.5 font-bold">財運</span><span class="text-slate-700 leading-relaxed whitespace-pre-wrap flex-1">${card['財運']}</span></div>` : ''}
-                      ${card['健康'] ? `<div class="flex gap-4 items-start flex-col sm:flex-row pb-5 border-b border-slate-50 last:border-0"><span class="text-slate-400 w-[40px] shrink-0 sm:pt-0.5 font-bold">健康</span><span class="text-slate-700 leading-relaxed whitespace-pre-wrap flex-1">${card['健康']}</span></div>` : ''}
-                      ${card['事業'] ? `<div class="flex gap-4 items-start flex-col sm:flex-row pb-5 border-b border-slate-50 last:border-0"><span class="text-slate-400 w-[40px] shrink-0 sm:pt-0.5 font-bold">事業</span><span class="text-slate-700 leading-relaxed whitespace-pre-wrap flex-1">${card['事業']}</span></div>` : ''}
-                  </div>
-              </div>`;
-          } else {
-              tagsContainer.innerHTML = '';
-          }
-      }
+      // ⭐ QQ 隱私鐵律：已徹底刪除 ro-fate-tags-container 區塊的資料填入邏輯，名片詳情不再顯示 AI 命理結果
 
       const notesArr = [];
       const slogan = card['服務項目/品牌標語']||card['Slogan'];
@@ -767,7 +747,6 @@ async function submitCardEdit() {
   
   const tagsMissing = !currentActiveCard['個性'] || currentActiveCard['個性'] === '待分析';
   
-  // B波觸發：姓名、電話、生日任一異動，或本來缺標籤，主動重新觸發深度運算
   if (payload.Name !== oldName || payload.Mobile !== oldPhone || payload.Birthday !== parsedOldBday || tagsMissing) {
       try {
            setButtonLoading('btn-save-card-edit', true, 'AI 深度分析中...');

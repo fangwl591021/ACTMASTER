@@ -1,7 +1,7 @@
 /**
  * card.js 
- * QQ 大師修復版：加入批次清除舊個資按鈕的邏輯
- * Version: v1.7.0 
+ * QQ 大師修復版：配合 v1.8.0 強制破除快取，徹底隱藏舊版命理區塊
+ * Version: v1.8.0 
  */
 
 const LIFF_ID = "2009367829-DLtYBDUm"; 
@@ -345,7 +345,6 @@ async function saveToCloud() {
     return showToast("⚠️ 請輸入姓名或公司", true);
   }
 
-  // A波防呆：若缺標籤主動觸發無生日版的計算
   if (!currentFateTags || !currentFateTags.Personality || currentFateTags.Personality === '待分析' || currentFateTags.Personality === '') {
       try {
           setButtonLoading('btn-save', true, 'AI 命理建檔中...');

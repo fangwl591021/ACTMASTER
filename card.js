@@ -1,7 +1,7 @@
 /**
  * card.js 
- * QQ 大師修復版：加入 A波與 B波命理主動寫入流程，並完美還原命理標籤原生無邊框顯示
- * Version: v1.6.5 (修復命理標籤 5 大條列式斷行呈現)
+ * QQ 大師修復版：實作嚴格的 A波(2條) 與 B波(5條) 動態切換，解決日期讀取空白問題
+ * Version: v1.6.7 
  */
 
 const LIFF_ID = "2009367829-DLtYBDUm"; 
@@ -532,10 +532,10 @@ function openCardDetailByRowId(rowId) {
       if (isAdmin && statusEl) {
           if (card.userId || card['LINE ID'] || card['Line ID'] || card['lineId']) {
               statusEl.innerText = '已認領';
-              statusEl.className = 'px-2 py-0.5 rounded text-[11px] border bg-emerald-50 border-emerald-200 text-emerald-600';
+              statusEl.className = 'px-2 py-0.5 rounded text-[11px] border bg-emerald-50 border-emerald-200 text-emerald-600 font-bold';
           } else {
               statusEl.innerText = '未認領';
-              statusEl.className = 'px-2 py-0.5 rounded text-[11px] border bg-slate-50 border-slate-200 text-slate-400';
+              statusEl.className = 'px-2 py-0.5 rounded text-[11px] border bg-slate-50 border-slate-200 text-slate-400 font-bold';
           }
           statusEl.classList.remove('hidden');
       } else if (statusEl) {
@@ -560,21 +560,21 @@ function openCardDetailByRowId(rowId) {
       
       document.getElementById('ro-address').innerText = card['公司地址'] || card['Address'] || '未提供';
       
-      // ⭐ QQ大師修復：AI 深度命理分析 (使用 whitespace-pre-wrap 支援 AI 回傳的 \n 多行斷行，完美呈現 5 大條列)
+      // ⭐ QQ大師：完美呈現 5 大命理標籤 (無邊框、多行斷行呈現)
       const tagsContainer = document.getElementById('ro-fate-tags-container');
       if (tagsContainer) {
           if (card['個性'] && card['個性'] !== '待分析') {
               tagsContainer.innerHTML = `
               <div class="pt-8 border-t border-slate-100">
-                  <h3 class="text-[14px] font-normal text-slate-400 mb-4 tracking-wide flex items-center gap-1.5">
-                      <span class="material-symbols-outlined text-[18px]">psychology</span> AI 深度命理分析
+                  <h3 class="text-[14px] font-bold text-slate-800 mb-5 tracking-wide flex items-center gap-1.5">
+                      <span class="material-symbols-outlined text-[18px] text-primary">psychology</span> AI 深度命理分析
                   </h3>
-                  <div class="space-y-6 text-[15px] font-normal">
-                      ${card['個性'] ? `<div class="flex gap-4 items-start flex-col sm:flex-row"><span class="text-slate-400 w-[72px] shrink-0 sm:pt-0.5">個性</span><span class="text-slate-700 leading-relaxed whitespace-pre-wrap">${card['個性']}</span></div>` : ''}
-                      ${card['興趣'] ? `<div class="flex gap-4 items-start flex-col sm:flex-row"><span class="text-slate-400 w-[72px] shrink-0 sm:pt-0.5">興趣</span><span class="text-slate-700 leading-relaxed whitespace-pre-wrap">${card['興趣']}</span></div>` : ''}
-                      ${card['財運'] ? `<div class="flex gap-4 items-start flex-col sm:flex-row"><span class="text-slate-400 w-[72px] shrink-0 sm:pt-0.5">財運</span><span class="text-slate-700 leading-relaxed whitespace-pre-wrap">${card['財運']}</span></div>` : ''}
-                      ${card['健康'] ? `<div class="flex gap-4 items-start flex-col sm:flex-row"><span class="text-slate-400 w-[72px] shrink-0 sm:pt-0.5">健康</span><span class="text-slate-700 leading-relaxed whitespace-pre-wrap">${card['健康']}</span></div>` : ''}
-                      ${card['事業'] ? `<div class="flex gap-4 items-start flex-col sm:flex-row"><span class="text-slate-400 w-[72px] shrink-0 sm:pt-0.5">事業</span><span class="text-slate-700 leading-relaxed whitespace-pre-wrap">${card['事業']}</span></div>` : ''}
+                  <div class="space-y-5 text-[14px] font-normal">
+                      ${card['個性'] ? `<div class="flex gap-3 items-start flex-col sm:flex-row pb-4 border-b border-slate-50 last:border-0"><span class="text-slate-400 w-[40px] shrink-0 sm:pt-0.5 font-bold">個性</span><span class="text-slate-700 leading-relaxed whitespace-pre-wrap flex-1">${card['個性']}</span></div>` : ''}
+                      ${card['興趣'] ? `<div class="flex gap-3 items-start flex-col sm:flex-row pb-4 border-b border-slate-50 last:border-0"><span class="text-slate-400 w-[40px] shrink-0 sm:pt-0.5 font-bold">興趣</span><span class="text-slate-700 leading-relaxed whitespace-pre-wrap flex-1">${card['興趣']}</span></div>` : ''}
+                      ${card['財運'] ? `<div class="flex gap-3 items-start flex-col sm:flex-row pb-4 border-b border-slate-50 last:border-0"><span class="text-slate-400 w-[40px] shrink-0 sm:pt-0.5 font-bold">財運</span><span class="text-slate-700 leading-relaxed whitespace-pre-wrap flex-1">${card['財運']}</span></div>` : ''}
+                      ${card['健康'] ? `<div class="flex gap-3 items-start flex-col sm:flex-row pb-4 border-b border-slate-50 last:border-0"><span class="text-slate-400 w-[40px] shrink-0 sm:pt-0.5 font-bold">健康</span><span class="text-slate-700 leading-relaxed whitespace-pre-wrap flex-1">${card['健康']}</span></div>` : ''}
+                      ${card['事業'] ? `<div class="flex gap-3 items-start flex-col sm:flex-row pb-4 border-b border-slate-50 last:border-0"><span class="text-slate-400 w-[40px] shrink-0 sm:pt-0.5 font-bold">事業</span><span class="text-slate-700 leading-relaxed whitespace-pre-wrap flex-1">${card['事業']}</span></div>` : ''}
                   </div>
               </div>`;
           } else {
@@ -688,6 +688,17 @@ function openCardEdit() {
     let webStr = c['公司網址'] || c['Website'] || '';
     if (webStr && !webStr.startsWith('http') && webStr.includes('.')) webStr = 'https://' + webStr;
 
+    // ⭐ QQ大師修復：處理從資料庫讀出之生日字串，轉換為 <input type="date"> 需要的 YYYY-MM-DD 格式
+    let bdayVal = c['生日'] || '';
+    if (bdayVal) {
+        try {
+            const d = new Date(bdayVal);
+            if (!isNaN(d.getTime())) {
+                bdayVal = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            }
+        } catch(e){}
+    }
+
     const fields = {
       'edit-c-Name': c['姓名'] || c['Name'] || '',
       'edit-c-EnglishName': c['英文名/別名'] || c['EnglishName'] || '',
@@ -705,7 +716,7 @@ function openCardEdit() {
       'edit-c-SocialMedia': c['社群帳號'] || c['SocialMedia'] || '',
       'edit-c-Slogan': c['服務項目/品牌標語'] || c['Slogan'] || '',
       'edit-c-Notes': c['建檔人/備註'] || c['Notes'] || '',
-      'edit-c-Birthday': c['生日'] || ''
+      'edit-c-Birthday': bdayVal
     };
     
     for (const [id, value] of Object.entries(fields)) {
@@ -746,10 +757,19 @@ async function submitCardEdit() {
 
   const oldName = currentActiveCard['姓名'] || currentActiveCard['Name'] || '';
   const oldPhone = formatPhoneStr(currentActiveCard['手機號碼'] || currentActiveCard['Mobile']) || '';
-  const oldBday = currentActiveCard['生日'] || '';
+  
+  // 防呆：比對生日時，將 DB 的原始字串先轉成 YYYY-MM-DD 才能準確比對
+  let parsedOldBday = '';
+  const oldBdayRaw = currentActiveCard['生日'] || '';
+  if (oldBdayRaw) {
+      const d = new Date(oldBdayRaw);
+      if (!isNaN(d.getTime())) parsedOldBday = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+  
   const tagsMissing = !currentActiveCard['個性'] || currentActiveCard['個性'] === '待分析';
   
-  if (payload.Name !== oldName || payload.Mobile !== oldPhone || payload.Birthday !== oldBday || tagsMissing) {
+  // ⭐ QQ大師：B波 - 若姓名、電話、生日任一異動，或本來缺標籤，主動重新觸發深度運算 (5條)
+  if (payload.Name !== oldName || payload.Mobile !== oldPhone || payload.Birthday !== parsedOldBday || tagsMissing) {
       try {
            setButtonLoading('btn-save-card-edit', true, 'AI 深度分析中...');
            const newTags = await fetchAPI('calculateFateTags', { Name: payload.Name, Mobile: payload.Mobile, Birthday: payload.Birthday }, true);

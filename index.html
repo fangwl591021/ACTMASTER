@@ -1,4 +1,4 @@
-<!-- Version: v1.1.16 (QQ 修理版：基於 v1.1.15 退版重建，解決邀約認領白畫面空轉問題) -->
+<!-- Version: v1.1.17 (QQ 修復版：基於 v1.1.16 完美結構，加入建立活動防空轉機制) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -577,8 +577,6 @@
     if (el) { el.className = 'grid grid-cols-2 gap-3 px-2'; el.innerHTML = skeletonHTML; }
   }
 
-  // ⭐ QQ 修理核心：解決邀約網址空轉
-  // 透過調整非同步邏輯，確保在執行後台認領綁定 (claimCardId) 之前，會先執行 switchView，讓畫面出來，不卡死在 Loading
   window.onload = async () => {
     try {
       await liff.init({ liffId: LIFF_ID });
@@ -688,6 +686,9 @@
   }
 
   function switchView(view) {
+    // ⭐ QQ 大師修復：強制導向獨立的 active.html 頁面，解決 admin-create 空轉問題
+    if (view === 'admin-create') { window.location.href = 'active.html'; return; }
+
     ['view-loading', 'view-user-register', 'view-user-activities', 'view-user-profile', 'view-user-history', 'view-admin-activities', 'view-admin-crm', 'view-admin-settings', 'view-admin-create'].forEach(v => { const el = document.getElementById(v); if(el) el.classList.add('hidden'); });
     const activeEl = document.getElementById(`view-${view}`); if (activeEl) activeEl.classList.remove('hidden');
     const navAdmin = document.getElementById('bottom-nav-admin'); const navUser = document.getElementById('bottom-nav-user');

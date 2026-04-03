@@ -1,6 +1,6 @@
 /**
  * card-ecard.js
- * 數位電子名片 (ECard) 專用模組 - QQ修復版 (精確還原按鈕資料自動帶入與 LINE 綠色預設值)
+ * 數位電子名片 (ECard) 專用模組 - QQ修復版 (絕對防護：取消預設個資揭露，保護隱私)
  */
 
 window.toggleECardType = function(type) {
@@ -33,7 +33,6 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
     let titleAlign = config && config.titleAlign ? config.titleAlign : 'center';
     let rawImg = (config && config.imgUrl) ? config.imgUrl : (card && card['名片圖檔'] ? card['名片圖檔'] : '');
     
-    // 防呆：遇到無圖檔就不會載入，直接使用預設圖
     if (!rawImg || typeof rawImg !== 'string' || !rawImg.startsWith('http') || rawImg === '無圖檔' || rawImg === '圖片儲存失敗') {
         rawImg = 'https://images.unsplash.com/photo-1616628188550-808682f3926d?w=800&q=80'; 
     }
@@ -64,35 +63,8 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
         if (defaultDesc === 'Not provided' || defaultDesc === '未提供') defaultDesc = '';
         desc = defaultDesc || '歡迎點擊下方按鈕與我聯繫';
   
-        // ⭐ QQ修復：徹底還原預設按鈕資料提取機制，讓欄位不再空蕩蕩！
+        // ⭐ QQ 隱私鐵律：絕對禁止預設將電話/信箱/地址加入對外名片，按鈕必須預設為空！
         buttons = [];
-        let p1 = card['手機號碼'] || card['Mobile'];
-        if (p1) {
-            let phone = String(p1).split(',')[0].replace(/[^\d+]/g, '');
-            if (phone.startsWith('886')) phone = '0' + phone.substring(3);
-            if (phone) buttons.push({ l: '撥打手機', u: `tel:${phone}`, c: '#06C755' });
-        }
-        let p2 = card['公司電話'] || card['Tel'];
-        if (p2) {
-            let tel = String(p2).split(',')[0].replace(/[^\d+]/g, '');
-            if (tel.startsWith('886')) tel = '0' + tel.substring(3);
-            if (tel) buttons.push({ l: '撥打電話', u: `tel:${tel}`, c: '#06C755' });
-        }
-        let p3 = card['電子郵件'] || card['Email'];
-        if (p3) {
-            let email = String(p3).split(/[\s,]+/)[0];
-            if (email.includes('@')) buttons.push({ l: '發送信箱', u: `mailto:${email}`, c: '#06C755' });
-        }
-        let p4 = card['公司地址'] || card['Address'];
-        if (p4) {
-            buttons.push({ l: 'Google 導航', u: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p4.split(',')[0])}`, c: '#06C755' });
-        }
-        let p5 = card['公司網址'] || card['Website'];
-        if (p5 && buttons.length < 4) {
-            let wUrl = String(p5).trim();
-            if (wUrl && !wUrl.startsWith('http')) wUrl = 'https://' + wUrl;
-            if (wUrl) buttons.push({ l: '公司網站', u: wUrl, c: '#06C755' });
-        }
     }
   
     const validSizes = ['nano', 'micro', 'kilo', 'mega', 'giga'];
@@ -106,7 +78,6 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
     for (let i=0; i<buttons.length; i++) {
         let label = buttons[i].l ? String(buttons[i].l).trim() : '查看';
         let safeU = buttons[i].u ? String(buttons[i].u).trim() : 'https://line.me';
-        // ⭐ 按鈕預設 LINE 綠色
         let btnColor = buttons[i].c || '#06C755';
         btnContents.push({ "type": "button", "style": "primary", "color": btnColor, "height": "sm", "margin": "sm", "action": { "type": "uri", "label": label.substring(0, 20), "uri": safeU.substring(0, 1000) } });
     }
@@ -246,12 +217,10 @@ window.openECardGenerator = function() {
       document.getElementById('ec-title-input').value = defaultFlex.body.contents[0].contents[0].text;
       document.getElementById('ec-desc-input').value = defaultFlex.body.contents[0].contents[1] ? defaultFlex.body.contents[0].contents[1].text : '';
       
-      const buttons = defaultFlex.footer ? defaultFlex.footer.contents : [];
+      // ⭐ QQ 隱私鐵律：預設編輯器介面時，清空所有的預設按鈕輸入，絕不自動帶入個資
       for(let i=1; i<=4; i++) {
-        const btn = buttons[i-1];
-        document.getElementById(`ec-btn${i}-label`).value = btn ? btn.action.label : '';
-        document.getElementById(`ec-btn${i}-url`).value = btn ? btn.action.uri : '';
-        // ⭐ QQ修復：初次開啟編輯器，按鈕顏色預設給 LINE 綠色
+        document.getElementById(`ec-btn${i}-label`).value = '';
+        document.getElementById(`ec-btn${i}-url`).value = '';
         document.getElementById(`ec-btn${i}-color`).value = '#06C755';
       }
     }

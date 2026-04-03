@@ -561,6 +561,13 @@ function openCardDetailByRowId(rowId) {
       
       document.getElementById('ro-address').innerText = card['公司地址'] || card['Address'] || '未提供';
       
+      // ⭐ QQ 隱私鐵律防禦：強制清空並隱藏命理標籤區塊，確保舊資料與快取絕對無法渲染出個資
+      const tagsContainer = document.getElementById('ro-fate-tags-container');
+      if (tagsContainer) {
+          tagsContainer.innerHTML = '';
+          tagsContainer.style.display = 'none';
+      }
+
       const notesArr = [];
       const slogan = card['服務項目/品牌標語']||card['Slogan'];
       if(slogan) notesArr.push(`【品牌與服務】\n${slogan}`);

@@ -1,7 +1,7 @@
 /**
  * card.js 
- * QQ 大師修復版：實作嚴格的 A波(2條) 與 B波(5條) 動態切換，解決日期讀取空白問題
- * Version: v1.6.7 
+ * QQ 大師修復版：實作嚴格的 A波(2條) 與 B波(5條+整合) 動態切換，支援 LINE 原生多行斷行排版
+ * Version: v1.6.8 
  */
 
 const LIFF_ID = "2009367829-DLtYBDUm"; 
@@ -345,6 +345,7 @@ async function saveToCloud() {
     return showToast("⚠️ 請輸入姓名或公司", true);
   }
 
+  // A波防呆：若缺標籤主動觸發無生日版的計算
   if (!currentFateTags || !currentFateTags.Personality || currentFateTags.Personality === '待分析' || currentFateTags.Personality === '') {
       try {
           setButtonLoading('btn-save', true, 'AI 命理建檔中...');
@@ -560,7 +561,7 @@ function openCardDetailByRowId(rowId) {
       
       document.getElementById('ro-address').innerText = card['公司地址'] || card['Address'] || '未提供';
       
-      // ⭐ QQ大師：完美呈現 5 大命理標籤 (無邊框、多行斷行呈現)
+      // ⭐ QQ大師核心：渲染 2條 或 5條+整合判斷 的命理資料，加寬段落間距並徹底拔除邊框與粗體
       const tagsContainer = document.getElementById('ro-fate-tags-container');
       if (tagsContainer) {
           if (card['個性'] && card['個性'] !== '待分析') {
@@ -569,12 +570,12 @@ function openCardDetailByRowId(rowId) {
                   <h3 class="text-[14px] font-bold text-slate-800 mb-5 tracking-wide flex items-center gap-1.5">
                       <span class="material-symbols-outlined text-[18px] text-primary">psychology</span> AI 深度命理分析
                   </h3>
-                  <div class="space-y-5 text-[14px] font-normal">
-                      ${card['個性'] ? `<div class="flex gap-3 items-start flex-col sm:flex-row pb-4 border-b border-slate-50 last:border-0"><span class="text-slate-400 w-[40px] shrink-0 sm:pt-0.5 font-bold">個性</span><span class="text-slate-700 leading-relaxed whitespace-pre-wrap flex-1">${card['個性']}</span></div>` : ''}
-                      ${card['興趣'] ? `<div class="flex gap-3 items-start flex-col sm:flex-row pb-4 border-b border-slate-50 last:border-0"><span class="text-slate-400 w-[40px] shrink-0 sm:pt-0.5 font-bold">興趣</span><span class="text-slate-700 leading-relaxed whitespace-pre-wrap flex-1">${card['興趣']}</span></div>` : ''}
-                      ${card['財運'] ? `<div class="flex gap-3 items-start flex-col sm:flex-row pb-4 border-b border-slate-50 last:border-0"><span class="text-slate-400 w-[40px] shrink-0 sm:pt-0.5 font-bold">財運</span><span class="text-slate-700 leading-relaxed whitespace-pre-wrap flex-1">${card['財運']}</span></div>` : ''}
-                      ${card['健康'] ? `<div class="flex gap-3 items-start flex-col sm:flex-row pb-4 border-b border-slate-50 last:border-0"><span class="text-slate-400 w-[40px] shrink-0 sm:pt-0.5 font-bold">健康</span><span class="text-slate-700 leading-relaxed whitespace-pre-wrap flex-1">${card['健康']}</span></div>` : ''}
-                      ${card['事業'] ? `<div class="flex gap-3 items-start flex-col sm:flex-row pb-4 border-b border-slate-50 last:border-0"><span class="text-slate-400 w-[40px] shrink-0 sm:pt-0.5 font-bold">事業</span><span class="text-slate-700 leading-relaxed whitespace-pre-wrap flex-1">${card['事業']}</span></div>` : ''}
+                  <div class="space-y-6 text-[14px] font-normal">
+                      ${card['個性'] ? `<div class="flex gap-4 items-start flex-col sm:flex-row pb-5 border-b border-slate-50 last:border-0"><span class="text-slate-400 w-[40px] shrink-0 sm:pt-0.5 font-bold">個性</span><span class="text-slate-700 leading-relaxed whitespace-pre-wrap flex-1">${card['個性']}</span></div>` : ''}
+                      ${card['興趣'] ? `<div class="flex gap-4 items-start flex-col sm:flex-row pb-5 border-b border-slate-50 last:border-0"><span class="text-slate-400 w-[40px] shrink-0 sm:pt-0.5 font-bold">興趣</span><span class="text-slate-700 leading-relaxed whitespace-pre-wrap flex-1">${card['興趣']}</span></div>` : ''}
+                      ${card['財運'] ? `<div class="flex gap-4 items-start flex-col sm:flex-row pb-5 border-b border-slate-50 last:border-0"><span class="text-slate-400 w-[40px] shrink-0 sm:pt-0.5 font-bold">財運</span><span class="text-slate-700 leading-relaxed whitespace-pre-wrap flex-1">${card['財運']}</span></div>` : ''}
+                      ${card['健康'] ? `<div class="flex gap-4 items-start flex-col sm:flex-row pb-5 border-b border-slate-50 last:border-0"><span class="text-slate-400 w-[40px] shrink-0 sm:pt-0.5 font-bold">健康</span><span class="text-slate-700 leading-relaxed whitespace-pre-wrap flex-1">${card['健康']}</span></div>` : ''}
+                      ${card['事業'] ? `<div class="flex gap-4 items-start flex-col sm:flex-row pb-5 border-b border-slate-50 last:border-0"><span class="text-slate-400 w-[40px] shrink-0 sm:pt-0.5 font-bold">事業</span><span class="text-slate-700 leading-relaxed whitespace-pre-wrap flex-1">${card['事業']}</span></div>` : ''}
                   </div>
               </div>`;
           } else {
@@ -688,7 +689,6 @@ function openCardEdit() {
     let webStr = c['公司網址'] || c['Website'] || '';
     if (webStr && !webStr.startsWith('http') && webStr.includes('.')) webStr = 'https://' + webStr;
 
-    // ⭐ QQ大師修復：處理從資料庫讀出之生日字串，轉換為 <input type="date"> 需要的 YYYY-MM-DD 格式
     let bdayVal = c['生日'] || '';
     if (bdayVal) {
         try {
@@ -758,7 +758,6 @@ async function submitCardEdit() {
   const oldName = currentActiveCard['姓名'] || currentActiveCard['Name'] || '';
   const oldPhone = formatPhoneStr(currentActiveCard['手機號碼'] || currentActiveCard['Mobile']) || '';
   
-  // 防呆：比對生日時，將 DB 的原始字串先轉成 YYYY-MM-DD 才能準確比對
   let parsedOldBday = '';
   const oldBdayRaw = currentActiveCard['生日'] || '';
   if (oldBdayRaw) {
@@ -768,7 +767,7 @@ async function submitCardEdit() {
   
   const tagsMissing = !currentActiveCard['個性'] || currentActiveCard['個性'] === '待分析';
   
-  // ⭐ QQ大師：B波 - 若姓名、電話、生日任一異動，或本來缺標籤，主動重新觸發深度運算 (5條)
+  // B波觸發：姓名、電話、生日任一異動，或本來缺標籤，主動重新觸發深度運算
   if (payload.Name !== oldName || payload.Mobile !== oldPhone || payload.Birthday !== parsedOldBday || tagsMissing) {
       try {
            setButtonLoading('btn-save-card-edit', true, 'AI 深度分析中...');

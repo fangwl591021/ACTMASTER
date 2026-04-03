@@ -1,4 +1,4 @@
-<!-- Version: v1.6.1 (QQ 修復版：基於 v1.6.0 完美結構，絕不異動排版) -->
+<!-- Version: v1.6.1 (正式模組化分離版 - QQ 修復導航空轉問題) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -201,7 +201,8 @@
 
   <nav id="bottom-nav-admin" class="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-100 flex justify-evenly items-center px-1 py-2 z-40 pb-safe shadow-app-nav left-1/2 -translate-x-1/2 h-[72px]">
     <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">fact_check</span></div><span class="text-[10px] font-normal mt-0.5">核銷</span></button>
-    <button onclick="window.location.href='index.html?view=admin-create'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">add_circle</span></div><span class="text-[10px] font-normal mt-0.5">建立</span></button>
+    <!-- ⭐ QQ 修復：建立按鈕強制指向 active.html 解決空轉 -->
+    <button onclick="window.location.href='active.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">add_circle</span></div><span class="text-[10px] font-normal mt-0.5">建立</span></button>
     <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">groups</span></div><span class="text-[10px] font-normal mt-0.5">CRM</span></button>
     <button onclick="window.location.href='fate.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">psychology</span></div><span class="text-[10px] font-normal mt-0.5">配對</span></button>
     <button onclick="window.location.href='card.html'" class="nav-btn nav-active-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">recent_patient</span></div><span class="text-[10px] font-normal mt-0.5">名片</span></button>
@@ -292,9 +293,8 @@
   </div>
 </div>
 
-<!-- ⭐ 數位電子名片產生器 (ECard 模組接管) -->
+<!-- 數位電子名片產生器 (ECard 模組接管) -->
 <div id="ecard-generator-modal" class="hidden fixed inset-0 bg-white flex flex-col animate-in fade-in duration-300 w-full z-[1020] overflow-hidden">
-  
   <div class="bg-white px-5 py-4 border-b border-slate-200 flex justify-between items-center shadow-sm shrink-0 w-full z-20">
     <div class="flex items-center gap-3">
       <button onclick="closeECardGenerator()" class="w-8 h-8 rounded flex items-center justify-center text-slate-600 border border-slate-200 active:bg-slate-50 transition-colors"><span class="material-symbols-outlined text-[20px]">close</span></button>
@@ -446,7 +446,6 @@
           </div>
         </div>
 
-        <!-- 右側：手機模擬器預覽 -->
         <div class="lg:col-span-1 hidden lg:block bg-slate-50 p-6 border-l border-slate-200">
           <div class="sticky top-6 pb-6">
             <div class="phone-frame w-full max-w-[340px] h-[680px] mx-auto flex flex-col">
@@ -466,7 +465,6 @@
                       <div class="flex flex-col gap-1.5 max-w-[88%] w-full">
                           <div class="bg-white px-3.5 py-2 rounded-2xl rounded-tl-sm text-[13px] text-slate-800 shadow-sm w-fit font-medium">為您準備的數位名片！</div>
                           
-                          <!-- ⭐ 預覽泡泡 -->
                           <div class="flex-preview-bubble flex flex-col" id="preview-ec-bubble">
                               <div class="w-full flex justify-end p-2 bg-white pb-1 border-b border-slate-50">
                                   <div class="bg-red-500 text-white text-[10px] font-bold w-[65px] h-[25px] flex items-center justify-center rounded-full shadow-sm">分享</div>
@@ -498,7 +496,6 @@
   </div>
 </div>
 
-<!-- 裁切功能 Modal -->
 <div id="section-cropper" class="hidden fixed inset-0 bg-slate-900 flex flex-col animate-in fade-in duration-300 w-full max-w-md mx-auto" style="z-index: 1030;">
     <div class="flex justify-between items-center p-4 bg-slate-900 text-white shrink-0 z-10 shadow-sm border-b border-slate-800">
       <button onclick="cancelCrop()" class="px-3 py-2 font-bold text-slate-400 active:scale-90 transition-transform text-[15px]">取消</button>
@@ -512,7 +509,6 @@
 
 <div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded text-[15px] shadow-lg transition-all z-[10000] font-bold flex items-center gap-2 w-max max-w-[90vw] bg-slate-800 text-white opacity-0 pointer-events-none border border-slate-700"></div>
 
-<!-- ⭐ 引入兩支核心腳本 -->
 <script src="card.js"></script>
 <script src="card-ecard.js"></script>
 

@@ -1,4 +1,4 @@
-<!-- Version: v1.6.1 (正式模組化分離版 - QQ 修復導航空轉問題) -->
+<!-- Version: v1.6.2 (正式模組化分離版 - QQ 調整按鈕各一半與支援生日欄位) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -201,7 +201,6 @@
 
   <nav id="bottom-nav-admin" class="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-100 flex justify-evenly items-center px-1 py-2 z-40 pb-safe shadow-app-nav left-1/2 -translate-x-1/2 h-[72px]">
     <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">fact_check</span></div><span class="text-[10px] font-normal mt-0.5">核銷</span></button>
-    <!-- ⭐ QQ 修復：建立按鈕強制指向 active.html 解決空轉 -->
     <button onclick="window.location.href='active.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">add_circle</span></div><span class="text-[10px] font-normal mt-0.5">建立</span></button>
     <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">groups</span></div><span class="text-[10px] font-normal mt-0.5">CRM</span></button>
     <button onclick="window.location.href='fate.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">psychology</span></div><span class="text-[10px] font-normal mt-0.5">配對</span></button>
@@ -241,6 +240,10 @@
         <div class="flex items-start gap-4"><span class="material-symbols-outlined text-slate-400 text-[20px] mt-0.5">location_on</span><span id="ro-address" class="text-slate-800 text-[15px] leading-snug"></span></div>
       </div>
       
+      <div id="ro-fate-tags-container">
+        <!-- 命理標籤渲染區塊 -->
+      </div>
+
       <div id="ro-notes-container">
         <h3 class="text-[16px] font-bold text-slate-800 mb-3 border-b border-slate-200 pb-2">備註與其他</h3>
         <p id="ro-notes" class="text-[15px] text-slate-700 leading-relaxed whitespace-pre-wrap break-all"></p>
@@ -248,9 +251,10 @@
     </div>
   </div>
 
+  <!-- ⭐ QQ 修復：底部按鈕調整為 flex-1 達成各一半平分畫面 -->
   <div class="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-200 p-4 pb-safe flex gap-3 z-[1005] shrink-0">
-    <button id="btn-share-claim" onclick="shareClaimLink()" class="flex-[1] py-3.5 bg-white border border-slate-400 text-slate-800 rounded font-bold text-[16px] shadow-sm flex items-center justify-center gap-1 active:bg-slate-50 transition-colors">邀請認領</button>
-    <button onclick="openECardGenerator()" class="flex-[1.5] py-3.5 bg-emerald-600 text-white rounded font-bold text-[16px] shadow-sm flex items-center justify-center gap-1.5 active:bg-emerald-700 transition-colors">產生數位名片</button>
+    <button id="btn-share-claim" onclick="shareClaimLink()" class="flex-1 py-3.5 bg-white border border-slate-400 text-slate-800 rounded font-bold text-[16px] shadow-sm flex items-center justify-center gap-1 active:bg-slate-50 transition-colors">邀請認領</button>
+    <button onclick="openECardGenerator()" class="flex-1 py-3.5 bg-emerald-600 text-white rounded font-bold text-[16px] shadow-sm flex items-center justify-center gap-1.5 active:bg-emerald-700 transition-colors">產生數位名片</button>
   </div>
 </div>
 
@@ -282,9 +286,13 @@
       <div class="flex flex-col"><label class="input-label">電子信箱</label><input type="email" id="edit-c-Email" class="custom-input"></div>
       <div class="flex flex-col"><label class="input-label">傳真</label><input type="text" id="edit-c-Fax" class="custom-input"></div>
     </div>
+    <!-- ⭐ QQ 修復：補上生日欄位，供 B波 運算抓取 -->
+    <div class="grid grid-cols-2 gap-4">
+      <div class="flex flex-col"><label class="input-label">生日 (觸發深度命理)</label><input type="date" id="edit-c-Birthday" class="custom-input !text-[13px]"></div>
+      <div class="flex flex-col"><label class="input-label">社群帳號</label><input type="text" id="edit-c-SocialMedia" class="custom-input"></div>
+    </div>
     <div class="flex flex-col"><label class="input-label">公司地址</label><input type="text" id="edit-c-Address" class="custom-input"></div>
     <div class="flex flex-col"><label class="input-label">公司網址</label><input type="url" id="edit-c-Website" class="custom-input"></div>
-    <div class="flex flex-col"><label class="input-label">社群帳號</label><input type="text" id="edit-c-SocialMedia" class="custom-input"></div>
     <div class="flex flex-col"><label class="input-label">品牌標語 / 服務項目</label><textarea id="edit-c-Slogan" class="textarea-block h-24"></textarea></div>
     <div class="flex flex-col pt-2 border-t border-slate-200 mt-2"><label class="input-label text-primary font-bold">內部建檔備註</label><textarea id="edit-c-Notes" class="textarea-block h-24"></textarea></div>
   </div>

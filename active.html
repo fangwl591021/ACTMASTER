@@ -1,4 +1,4 @@
-<!-- Version: v1.9.0 (QQ 修復版：解決時間寫入空白問題，並暴力渲染送出按鈕) -->
+<!-- Version: v1.9.1 (QQ 修復版：解決空 src 導致的 404 幽靈報錯，並修正 handleSubmit 函數命名不符問題) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -60,11 +60,11 @@
 </head>
 <body class="font-sans text-text-main min-h-screen flex flex-col items-center">
 
-<div class="w-full max-w-md h-screen relative flex flex-col overflow-hidden bg-background shadow-2xl">
+<div id="app-container" class="w-full max-w-md h-screen relative flex flex-col shadow-2xl overflow-hidden bg-background">
   
   <nav class="fixed top-0 w-full max-w-md z-40 bg-white/90 backdrop-blur-md px-5 py-3.5 flex justify-between items-center left-1/2 -translate-x-1/2 border-b border-slate-100">
     <div class="text-[20px] font-extrabold text-slate-800 tracking-tight flex items-center gap-1">
-      建立活動 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v1.9</span>
+      建立活動 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v1.9.1</span>
     </div>
     <button onclick="window.location.href='index.html?view=admin-activities'" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-90 transition-transform">
       <span class="material-symbols-outlined text-[20px]">close</span>
@@ -120,11 +120,11 @@
             <label class="input-label">收費方式</label>
             <div class="flex items-center gap-6 p-4 bg-slate-50 rounded-2xl border border-slate-200">
                 <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="q-fee-type" value="免費" checked class="w-5 h-5 text-blue-600 border-slate-300 focus:ring-blue-500 focus:ring-offset-0 bg-white" onchange="togglePrice('q')">
+                    <input type="radio" name="q-fee-type" value="免費" checked onchange="toggleFeeInput('q')" class="w-5 h-5 text-blue-600 border-slate-300 focus:ring-blue-500 focus:ring-offset-0 bg-white">
                     <span class="text-[15px] font-bold text-slate-700">免費</span>
                 </label>
                 <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="q-fee-type" value="收費" class="w-5 h-5 text-blue-600 border-slate-300 focus:ring-blue-500 focus:ring-offset-0 bg-white" onchange="togglePrice('q')">
+                    <input type="radio" name="q-fee-type" value="收費" onchange="toggleFeeInput('q')" class="w-5 h-5 text-blue-600 border-slate-300 focus:ring-blue-500 focus:ring-offset-0 bg-white">
                     <span class="text-[15px] font-bold text-slate-700">收費</span>
                 </label>
             </div>
@@ -157,8 +157,7 @@
         </div>
         
         <div class="pt-2">
-            <!-- ⭐ 暴力渲染按鈕 -->
-            <button onclick="handleCreateActivity('quick')" id="btn-submit-quick" class="w-full py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[16px] shadow-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2">建立並匯入名單</button>
+            <button onclick="handleSubmit('quick')" id="btn-submit-quick" class="w-full py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[16px] shadow-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2">建立並匯入名單</button>
         </div>
       </div>
 
@@ -200,29 +199,28 @@
             <label class="input-label">收費方式</label>
             <div class="flex items-center gap-6 p-4 bg-slate-50 rounded-2xl border border-slate-200">
                 <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="f-fee-type" value="免費" checked onchange="toggleFeeInput('f')" class="w-5 h-5 text-blue-600 border-slate-300 focus:ring-blue-500 focus:ring-offset-0 bg-white">
+                    <input type="radio" name="detailed-fee-type" value="免費" checked onchange="toggleFeeInput('detailed')" class="w-5 h-5 text-blue-600 border-slate-300 focus:ring-blue-500 focus:ring-offset-0 bg-white">
                     <span class="text-[15px] font-bold text-slate-700">免費</span>
                 </label>
                 <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="f-fee-type" value="收費" onchange="toggleFeeInput('f')" class="w-5 h-5 text-blue-600 border-slate-300 focus:ring-blue-500 focus:ring-offset-0 bg-white">
+                    <input type="radio" name="detailed-fee-type" value="收費" onchange="toggleFeeInput('detailed')" class="w-5 h-5 text-blue-600 border-slate-300 focus:ring-blue-500 focus:ring-offset-0 bg-white">
                     <span class="text-[15px] font-bold text-slate-700">收費</span>
                 </label>
             </div>
-            <div id="f-price-box" class="hidden mt-3 animate-in slide-in-from-top-2">
+            <div id="detailed-price-box" class="hidden mt-3 animate-in slide-in-from-top-2">
                 <div class="relative">
                   <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400">NT$</span>
-                  <input type="number" id="f-price" class="custom-input !pl-12" placeholder="請輸入金額">
+                  <input type="number" id="detail-price" class="custom-input !pl-12" placeholder="請輸入金額">
                 </div>
             </div>
         </div>
 
         <div class="flex flex-col">
             <label class="input-label">活動說明</label>
-            <textarea id="f-desc" class="textarea-block h-32" placeholder="輸入活動詳細說明..."></textarea>
+            <textarea id="detail-desc" class="textarea-block h-32" placeholder="輸入活動詳細說明..."></textarea>
         </div>
         
         <div class="pt-2">
-            <!-- ⭐ 暴力渲染按鈕 -->
             <button onclick="handleSubmit('full')" id="btn-submit-full" class="w-full py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[16px] shadow-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2">確認建立並發佈</button>
         </div>
       </div>
@@ -267,7 +265,6 @@
         </div>
         
         <div class="pt-2">
-            <!-- ⭐ 暴力渲染按鈕 -->
             <button onclick="handleSubmit('series')" id="btn-submit-series" class="w-full py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[16px] shadow-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2">確認建立系列活動</button>
         </div>
       </div>
@@ -275,7 +272,7 @@
     </div>
   </main>
 
-  <nav id="bottom-nav-admin" class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-100 flex justify-evenly items-center px-2 py-2 z-[80] pb-safe shadow-[0_-4px_15px_rgba(0,0,0,0.03)] left-1/2 -translate-x-1/2 h-[76px] rounded-t-3xl">
+  <nav id="bottom-nav-admin" class="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-100 flex justify-evenly items-center px-2 py-2 z-[80] pb-safe shadow-[0_-4px_15px_rgba(0,0,0,0.03)] left-1/2 -translate-x-1/2 h-[76px] rounded-t-3xl">
     <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">fact_check</span></div><span class="text-[10px] mt-1 font-bold whitespace-nowrap">核銷</span></button>
     <button onclick="window.location.href='active.html'" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">add_circle</span></div><span class="text-[10px] mt-1 font-bold whitespace-nowrap">建立</span></button>
     <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">groups</span></div><span class="text-[10px] mt-1 font-bold whitespace-nowrap">CRM</span></button>
@@ -286,14 +283,20 @@
 
 </div>
 
+<!-- 共同圖片裁切 Modal (移除預設的 src 空字串防 404) -->
 <div id="section-image-cropper" class="hidden fixed inset-0 bg-slate-900 flex flex-col animate-in fade-in duration-200 w-full max-w-md mx-auto z-[1080]">
-  <div class="flex justify-between items-center p-4 bg-slate-900 text-white shrink-0 z-10 shadow-sm border-b border-slate-800">
-    <button onclick="cancelCrop()" class="px-3 py-2 font-bold text-slate-400 active:scale-90 transition-transform text-[15px]">取消</button>
-    <span class="font-bold text-[16px] tracking-wider text-white flex items-center gap-1.5"><span class="material-symbols-outlined text-[20px]">crop</span> 自由裁切</span>
+  <div class="flex justify-between items-center p-4 bg-slate-900 text-white shrink-0 border-b border-slate-800 shadow-sm">
+    <button onclick="cancelCrop()" class="text-slate-400 font-normal text-sm px-3 py-2 active:scale-90 transition-transform">取消</button>
+    <span class="font-normal text-[15px] tracking-wider flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px]">crop</span> 裁切圖片</span>
     <button onclick="confirmCrop()" class="px-4 py-1.5 font-bold text-white bg-[#06C755] rounded active:scale-95 transition-transform text-[15px] shadow-sm">完成</button>
   </div>
-  <div class="flex-1 relative bg-black flex items-center justify-center overflow-hidden"><img id="cropper-image" src="" class="max-w-full max-h-full block opacity-0 transition-opacity duration-300"></div>
+  <div class="flex-1 relative overflow-hidden flex items-center justify-center bg-black">
+    <img id="cropper-image" class="max-w-full max-h-full block opacity-0 transition-opacity duration-300">
+  </div>
 </div>
+
+<!-- 系統 Toast 通知 -->
+<div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-normal flex items-center gap-2 w-max max-w-[90vw] opacity-0 pointer-events-none bg-slate-800 text-white"></div>
 
 <script>
   const LIFF_ID = "2009367829-DLtYBDUm";
@@ -379,7 +382,6 @@
       addBatchRow({ name: srcName ? srcName + ' (複製)' : '', start: srcStart, end: srcEnd, price: srcPrice }, sourceId);
   }
 
-  // ⭐ QQ 鐵律：解開 aspectRatio 的比例限制，改為 dragMode: 'crop' 允許自由拉取！
   function openCropper(input, targetMode) {
     const file = input.files[0]; if (!file) return;
     currentCropTarget = targetMode;
@@ -395,9 +397,9 @@
           img.style.opacity = '1';
           
           cropperInstance = new Cropper(img, { 
-            aspectRatio: NaN, // 允許自由比例拉取
+            aspectRatio: NaN, 
             viewMode: 1, 
-            dragMode: 'crop', // 解放拖曳，允許自由框選
+            dragMode: 'crop', 
             autoCropArea: 0.9, 
             guides: true, 
             center: true, 
@@ -414,6 +416,10 @@
   function cancelCrop() { 
     if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; } 
     document.getElementById('section-image-cropper').classList.add('hidden'); 
+    
+    // 釋放記憶體與 DOM
+    const img = document.getElementById('cropper-image');
+    if(img) { img.removeAttribute('src'); img.style.opacity = '0'; }
   }
 
   function confirmCrop() { 
@@ -445,13 +451,13 @@
     }
   }
 
-  // ⭐ 強化防呆：將 HTML 的 datetime-local 帶有 'T' 的格式替換為空白，相容 Google Sheets
   const formatDT = (val) => {
       if (!val) return '';
       return val.replace('T', ' ');
   };
 
-  async function handleCreateActivity(mode) { 
+  // ⭐ QQ 修復點：將函數更名為 handleSubmit 對齊前端按鈕設定
+  async function handleSubmit(mode) { 
     let isProcessing = false;
     if(isProcessing) return; 
     
@@ -495,7 +501,6 @@
       p.names = document.getElementById('quick-names').value.split('\n').filter(n=>n.trim()); 
       p.activityType = document.getElementById('quick-type').value;
       p.defaultIdentity = document.getElementById('quick-identity').value;
-      // ⭐ 讀取快速匯入的時間與活動說明，並過濾 'T' 字元
       p.startTime = formatDT(document.getElementById('quick-start') ? document.getElementById('quick-start').value : '');
       p.endTime = formatDT(document.getElementById('quick-end') ? document.getElementById('quick-end').value : '');
       p.description = document.getElementById('quick-desc') ? document.getElementById('quick-desc').value.trim() : '';

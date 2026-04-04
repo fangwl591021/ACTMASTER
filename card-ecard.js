@@ -1,6 +1,6 @@
 /**
  * card-ecard.js
- * Version: v7.0.0 (導入 Optimistic Base64 即時預覽，破解 Google Drive 縮圖 404 地雷)
+ * Version: v20260404_1915 (QQ 最終修復版：徹底消除 404，嚴守 Header 分享按鈕排版，及即時預覽防破圖)
  */
 
 window.toggleECardType = function(type) {
@@ -277,8 +277,8 @@ window.closeECardGenerator = function() {
     const modalEl = document.getElementById('ecard-generator-modal');
     if (modalEl) modalEl.classList.add('hidden'); 
 }
-  
-// ⭐ QQ 終極本機渲染 (Optimistic UI)：繞過 Google Drive 縮圖 404 問題
+
+// ⭐ QQ 即時預覽防呆：強制帶入本地 Base64 以防 Google Drive 產生縮圖的 404 延遲
 window.updateECardPreview = function(forceBase64 = null) {
     const cardTypeEl = document.getElementById('ec-card-type');
     const cardType = cardTypeEl ? cardTypeEl.value : 'image';
@@ -292,7 +292,7 @@ window.updateECardPreview = function(forceBase64 = null) {
     const imgInputEl = document.getElementById('ec-img-input');
     let rawUrl = imgInputEl ? imgInputEl.value : '';
 
-    let displayUrl = forceBase64; // 若有傳入強制的本機 base64，最高優先級
+    let displayUrl = forceBase64; 
 
     if (!displayUrl) {
         if (!rawUrl) {
@@ -304,7 +304,6 @@ window.updateECardPreview = function(forceBase64 = null) {
         
         displayUrl = typeof window.getDirectImageUrl === 'function' ? window.getDirectImageUrl(rawUrl) : rawUrl;
         
-        // 若網址是「剛剛上傳到一半」的，替換為儲存在本機的超高清 base64 進行預覽
         if (window.optimisticImageUrl && rawUrl === window.optimisticImageUrl && window.optimisticBase64) {
             displayUrl = window.optimisticBase64;
         }
@@ -380,7 +379,6 @@ window.updateECardPreview = function(forceBase64 = null) {
             }
         };
         tempImg.onerror = function() {
-            // ⭐ 防呆重點：即使 Google 縮圖尚未轉好而拋出 404，也強制套用影像與正確比例，不准覆蓋為破圖佔位符
             applyAspectRatio(arSetting === 'auto' ? "20:13" : arSetting);
             
             if (imgEl.getAttribute('data-current-src') === displayUrl) {
@@ -450,7 +448,6 @@ window.checkFormat = function(showAlert = false) {
         const vUrl = vUrlEl ? vUrlEl.value.trim() : '';
         if (!vUrl) errors.push("❌ 【動態影片版】必須填寫影片網址。");
         else if (!vUrl.match(/^https:\/\//i)) errors.push("❌ 【影片網址】必須以 https:// 開頭。");
-        // ⭐ 放寬檢查：允許 mp4 或是 line 相關的連結
         else if (!vUrl.toLowerCase().includes('mp4') && !vUrl.toLowerCase().includes('line')) errors.push("❌ 【影片網址】必須為 MP4 格式或 LINE 影片連結。");
     }
   
@@ -627,7 +624,6 @@ window.handleECardImageUpload = function(input) {
     }
 }
 
-// ⭐ LINE VOOM 轉換器核心邏輯
 window.openVoomModal = function() {
     const m = document.getElementById('voom-modal');
     if (m) m.classList.remove('hidden');

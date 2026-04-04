@@ -1,6 +1,6 @@
 /**
  * card-ecard.js
- * Version: v20260404_1915 (QQ 最終修復版：徹底消除 404，嚴守 Header 分享按鈕排版，及即時預覽防破圖)
+ * Version: v20260404_2000 (同步版本號，確保系統狀態純淨)
  */
 
 window.toggleECardType = function(type) {
@@ -277,8 +277,7 @@ window.closeECardGenerator = function() {
     const modalEl = document.getElementById('ecard-generator-modal');
     if (modalEl) modalEl.classList.add('hidden'); 
 }
-
-// ⭐ QQ 即時預覽防呆：強制帶入本地 Base64 以防 Google Drive 產生縮圖的 404 延遲
+  
 window.updateECardPreview = function(forceBase64 = null) {
     const cardTypeEl = document.getElementById('ec-card-type');
     const cardType = cardTypeEl ? cardTypeEl.value : 'image';

@@ -1,6 +1,6 @@
 /**
  * card.js 
- * Version: v6.0.0 (QQ 修復版：還原 shareCardId 分享機制、解決 404 問題)
+ * Version: v7.0.0 (本地端 base64 預覽機制，繞過 Google Drive 縮圖延遲地雷)
  */
 const LIFF_ID = "2009367829-DLtYBDUm"; 
 const WORKER_URL = "https://actmaster.fangwl591021.workers.dev"; 
@@ -25,7 +25,7 @@ window.showToast = function(msg, isError = false) {
   t.innerHTML = `<span class="material-symbols-outlined icon-filled">${isError ? 'error' : 'info'}</span> ${msg}`;
   t.className = `fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all font-bold flex items-center gap-2 w-max max-w-[90vw] ${isError ? 'bg-red-500 text-white border-red-600' : 'bg-slate-800 text-white border-slate-700'} opacity-100`;
   t.classList.remove('hidden');
-  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.classList.add('hidden'), 300); }, 3000); 
+  setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -1rem)'; setTimeout(() => t.classList.add('hidden'), 300); }, 3000); 
 };
 
 window.fetchAPI = async function(action, payload = {}, silent = false) {
@@ -55,7 +55,6 @@ window.getDirectImageUrl = function(url) {
   return url;
 };
 
-// ⭐ VOOM 防呆核心
 window.getTrueAspectRatio = function(url) {
   return new Promise((resolve) => {
     if (!url) return resolve('20:13');
@@ -106,41 +105,6 @@ function setButtonLoading(btnId, isLoading, originalText = '') {
     }
 }
 
-// ⭐ 還原被我誤刪的分享轉發工具
-window.fallbackShare = function(url, altText) {
-    const fullText = `${altText}\n${url}`;
-    const fallbackInput = document.createElement('textarea');
-    fallbackInput.value = fullText;
-    fallbackInput.style.position = 'fixed'; fallbackInput.style.opacity = '0';
-    document.body.appendChild(fallbackInput);
-    fallbackInput.focus(); fallbackInput.select();
-    try {
-        document.execCommand('copy');
-        alert("⚠️ 電腦版或外部瀏覽器無法直接傳送圖文訊息。\n\n✅ 已複製「專屬連結」至剪貼簿！\n請直接貼上給好友。");
-    } catch(err) {
-        alert("請複製以下連結分享：\n\n" + url);
-    }
-    document.body.removeChild(fallbackInput);
-    window.open(`https://line.me/R/share?text=${encodeURIComponent(fullText)}`, '_blank');
-};
-
-window.triggerFlexSharing = async (flexContents, altText) => {
-    if (!liff.isLoggedIn()) { liff.login({ redirectUri: window.location.href }); return; }
-    try {
-        const message = { type: "flex", altText: altText || "收到一張數位名片", contents: flexContents };
-        const res = await liff.shareTargetPicker([message]);
-        if (res) window.showToast('🚀 數位名片已成功轉發！');
-        setTimeout(() => liff.closeWindow(), 1500);
-    } catch (error) {
-        if (error.message && error.message.includes('not allowed')) {
-            alert("⚠️ 系統權限更新，即將重新登入");
-            liff.logout(); window.location.reload(); 
-        } else {
-            alert('發送取消或發生錯誤');
-        }
-    }
-};
-
 function checkAndOpenMyCard() {
     const params = new URLSearchParams(window.location.search);
     const mode = params.get('mode');
@@ -149,6 +113,7 @@ function checkAndOpenMyCard() {
     if (mode !== 'mycard' || myCardOpened) return;
 
     let targetCard = null;
+    
     if (targetRowId && globalCardContacts.length > 0) {
         targetCard = globalCardContacts.find(c => String(c.rowId) === String(targetRowId));
     } else if (globalCardContacts.length > 0) {
@@ -157,7 +122,7 @@ function checkAndOpenMyCard() {
 
     if (targetCard) {
         myCardOpened = true;
-        window.openCardDetailByRowId(targetCard.rowId);
+        if(typeof window.openCardDetailByRowId === 'function') window.openCardDetailByRowId(targetCard.rowId);
     } else {
         window.showToast("找不到對應的名片紀錄", true);
         setTimeout(() => window.location.href = 'index.html?view=user-profile', 2000);
@@ -179,7 +144,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   try {
     await liff.init({ liffId: LIFF_ID });
     
-    // ⭐ QQ 終極修復：還原您最在乎的 Share Interceptor (點擊分享不會再迷路到核銷)
     const params = new URLSearchParams(window.location.search);
     const shareCardId = params.get('shareCardId');
     
@@ -203,17 +167,17 @@ document.addEventListener("DOMContentLoaded", async () => {
             
             const title = config?.title || card['姓名'] || '商務名片';
             const altText = `您收到一張數位名片：${title}`;
-            const shareUrl = `https://liff.line.me/${LIFF_ID}/card.html?shareCardId=${shareCardId}`;
+            const shareUrl = `https://liff.line.me/${LIFF_ID}?shareCardId=${shareCardId}`;
             
             if (typeof window.triggerFlexSharing === 'function' && flexContents) {
                 await window.triggerFlexSharing(flexContents, altText);
             } else {
-                window.fallbackShare(shareUrl, altText);
+                if(typeof window.fallbackShare === 'function') window.fallbackShare(shareUrl, altText);
             }
         } catch (e) {
             alert('名片轉發失敗: ' + e.message);
         }
-        return; // 終止後續的頁面渲染，因為這只是為了觸發分享
+        return; 
     }
 
     if (!liff.isLoggedIn()) { liff.login({ redirectUri: window.location.href }); return; }
@@ -244,7 +208,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         return; 
     }
     
-    switchView('list');
+    window.switchView('list');
     loadCardContacts();
   } catch (err) {
     window.showToast("初始化失敗", true);
@@ -255,12 +219,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-function switchView(view) {
+window.switchView = function(view) {
   ['view-loading', 'view-list', 'view-process'].forEach(v => { const el = document.getElementById(v); if (el) el.classList.add('hidden'); });
   const target = document.getElementById(`view-${view}`); if (target) target.classList.remove('hidden');
 }
 
-function switchProcessSection(id) {
+window.switchProcessSection = function(id) {
   ['section-loading', 'section-form'].forEach(v => { const el = document.getElementById(v); if (el) el.classList.add('hidden'); });
   const target = document.getElementById(id); if (target) target.classList.remove('hidden');
 }
@@ -272,7 +236,7 @@ window.resetUI = function() {
   
   const params = new URLSearchParams(window.location.search);
   if (params.get('mode') === 'mycard') window.location.href = 'index.html?view=user-profile';
-  else switchView('list');
+  else window.switchView('list');
 }
 
 async function loadCardContacts() { 
@@ -284,7 +248,7 @@ async function loadCardContacts() {
             globalCardContacts = JSON.parse(cachedDataString);
             globalCardContacts = applyUserFilter(globalCardContacts);
             checkAndOpenMyCard();
-            filterCardList(); 
+            window.filterCardList(); 
         } catch(e) {}
     } else if (container) {
         container.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div></div>';
@@ -302,7 +266,7 @@ async function loadCardContacts() {
         if (cachedDataString !== newDataString) {
             localStorage.setItem(CACHE_KEY_CONTACTS, newDataString);
             globalCardContacts = applyUserFilter(newContacts);
-            filterCardList(); 
+            window.filterCardList(); 
             if (!myCardOpened) checkAndOpenMyCard();
         } else if (!cachedDataString && !myCardOpened) {
             checkAndOpenMyCard();
@@ -321,10 +285,10 @@ window.filterCardList = function() {
     const term = document.getElementById('card-search-input')?.value.toLowerCase() || '';
     filteredCards = globalCardContacts.filter(c => (c['姓名'] || '').toLowerCase().includes(term) || (c['公司名稱'] || '').toLowerCase().includes(term));
     currentPage = 1;
-    renderCardPage(true);
+    window.renderCardPage(true);
 }
 
-function renderCardPage(isReset = false) {
+window.renderCardPage = function(isReset = false) {
     const container = document.getElementById('admin-card-list-container');
     if (!container) return;
     if (filteredCards.length === 0) { container.innerHTML = '<div class="text-center py-16 text-slate-500">查無名片</div>'; return; }
@@ -334,7 +298,7 @@ function renderCardPage(isReset = false) {
         const isClaimed = !!(c.userId || c['LINE ID'] || c['Line ID'] || c['lineId']);
         const claimBadge = isClaimed ? '<span class="shrink-0 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md text-[11px] font-bold ml-2">已綁定</span>' : '';
         return `
-        <div onclick="window.openCardDetailByRowId('${c.rowId}')" class="p-5 bg-white flex items-center gap-4 rounded-[2rem] shadow-sm mb-3 cursor-pointer active:scale-[0.98] transition-transform">
+        <div onclick="if(typeof window.openCardDetailByRowId === 'function') window.openCardDetailByRowId('${c.rowId}')" class="p-5 bg-white flex items-center gap-4 rounded-[2rem] shadow-sm mb-3 cursor-pointer active:scale-[0.98] transition-transform">
           <div class="w-[56px] h-[56px] shrink-0 rounded-2xl overflow-hidden bg-slate-50 flex items-center justify-center">
             ${c['名片圖檔'] && c['名片圖檔'] !== '圖片儲存失敗' && c['名片圖檔'] !== '無圖檔' ? `<img src="${window.getDirectImageUrl(c['名片圖檔'])}" class="w-full h-full object-cover">` : `<span class="material-symbols-outlined text-slate-300 text-[28px]">contact_mail</span>`}
           </div>
@@ -359,14 +323,13 @@ function renderCardPage(isReset = false) {
     if (currentPage * PAGE_LIMIT < filteredCards.length) {
         const wrapper = document.getElementById('card-list-wrapper');
         if (wrapper) {
-            wrapper.insertAdjacentHTML('afterend', `<button id="${loadMoreBtnId}" onclick="loadMoreCards()" class="w-full py-4 mt-2 bg-white text-slate-700 font-bold text-[15px] rounded-[2rem] shadow-sm active:scale-95 transition-transform flex justify-center items-center gap-1">顯示更多</button>`);
+            wrapper.insertAdjacentHTML('afterend', `<button id="${loadMoreBtnId}" onclick="if(typeof window.loadMoreCards === 'function') window.loadMoreCards()" class="w-full py-4 mt-2 bg-white text-slate-700 font-bold text-[15px] rounded-[2rem] shadow-sm active:scale-95 transition-transform flex justify-center items-center gap-1">顯示更多</button>`);
         }
     }
 }
 
-window.loadMoreCards = function() { currentPage++; renderCardPage(false); }
+window.loadMoreCards = function() { currentPage++; window.renderCardPage(false); }
 
-// ⭐ QQ 終極防護：還原 LINE 原生卡片無框排版
 window.openCardDetailByRowId = function(rowId) { 
     try {
       const card = globalCardContacts.find(c => String(c.rowId) === String(rowId));
@@ -444,7 +407,7 @@ window.openCardDetailByRowId = function(rowId) {
 
       const modal = document.getElementById('readonly-card-modal');
       if (modal) modal.classList.remove('hidden');
-      switchView('list');
+      window.switchView('list');
     } catch(e) { console.error("開啟錯誤:", e.message); }
 }
 
@@ -491,10 +454,10 @@ window.shareClaimLink = async function() {
               const res = await liff.shareTargetPicker([{ type: "flex", altText: altText, contents: flexMessage }]);
               if (res) window.showToast('✅ 認領連結已發送！');
           } catch (err) {
-              window.fallbackShare(url, altText);
+              if(typeof window.fallbackShare === 'function') window.fallbackShare(url, altText);
           }
       } else {
-          window.fallbackShare(url, altText);
+          if(typeof window.fallbackShare === 'function') window.fallbackShare(url, altText);
       }
   } catch (error) {
       console.error(error);
@@ -580,24 +543,43 @@ window.cancelCrop = function() {
     if (modal) modal.classList.add('hidden'); 
 }
 
+// ⭐ QQ 本地即時預覽：解決 Google Drive 縮圖 404 造成的破圖
 window.confirmCrop = async function() { 
     if (!cropperInstance) return; 
-    let quality = 0.8; let base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1200, maxHeight: 1200 }).toDataURL('image/webp', quality); 
+    let quality = 0.8; 
+    // 轉為 JPEG 大幅縮小檔案，提升上傳穩定度
+    let base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1200, maxHeight: 1200 }).toDataURL('image/jpeg', quality); 
+    while (base64.length > 400000 && quality > 0.1) { 
+        quality -= 0.1; 
+        base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1200, maxHeight: 1200 }).toDataURL('image/jpeg', quality); 
+    }
     window.cancelCrop(); 
     
     if (currentCropTarget === 'ecard') {
       const btn = document.getElementById('btn-check-format'); 
       const originalHtml = btn ? btn.innerHTML : '';
       if(btn) { btn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin">refresh</span> 上傳中'; btn.classList.add('pointer-events-none'); }
+      
+      // ⭐ 先把本地的 base64 存起來，並強制更新預覽畫面，不等伺服器！
+      window.optimisticBase64 = base64;
+      if (typeof window.updateECardPreview === 'function') window.updateECardPreview(base64);
+
       try {
           window.showToast("圖片上傳中...", false);
           const url = await window.fetchAPI('uploadImage', { base64Image: base64 });
+          
+          if (!url || !url.startsWith('http')) throw new Error("伺服器無法回傳有效網址");
+
           const imgInput = document.getElementById('ec-img-input');
           if(imgInput) imgInput.value = url;
-          if (typeof window.updateECardPreview === 'function') window.updateECardPreview();
+          window.optimisticImageUrl = url; // 記錄剛剛生成的真實網址，供後續比對
+          
           window.showToast("✅ 圖片上傳成功");
-      } catch (err) { window.showToast("⚠️ 上傳失敗：" + err.message, true); } 
-      finally { if(btn) { btn.innerHTML = originalHtml; btn.classList.remove('pointer-events-none'); } }
+      } catch (err) { 
+          window.showToast("⚠️ 上傳失敗：" + err.message, true); 
+      } finally { 
+          if(btn) { btn.innerHTML = originalHtml; btn.classList.remove('pointer-events-none'); } 
+      }
       return;
     }
 
@@ -605,14 +587,14 @@ window.confirmCrop = async function() {
     const prevImg = document.getElementById('process-preview-image');
     if (prevImg) prevImg.src = compressedBase64;
     
-    switchView('process');
-    switchProcessSection('section-loading');
+    window.switchView('process');
+    window.switchProcessSection('section-loading');
     
     window.fetchAPI('recognizeCard', { base64Image: compressedBase64 }).then(data => {
        const fields = ['Name', 'EnglishName', 'Title', 'Department', 'CompanyName', 'TaxID', 'Mobile', 'Tel', 'Ext', 'Fax', 'Address', 'Email', 'Website', 'SocialMedia', 'Slogan'];
        fields.forEach(f => { const el = document.getElementById(`f-${f}`); if(el) { let val = data[f] || ''; if (f === 'Mobile' || f === 'Tel' || f === 'Fax') val = formatPhoneStr(val); if (f === 'Website' && val && !val.startsWith('http') && val.includes('.')) val = 'https://' + val; el.value = val; } });
        currentFateTags = { Personality: data.Personality || '', Hobbies: data.Hobbies || '', Wealth: data.Wealth || '', Health: data.Health || '', Career: data.Career || '' };
-       switchProcessSection('section-form');
+       window.switchProcessSection('section-form');
        window.showToast("✅ AI 辨識完成");
     }).catch(err => { window.resetUI(); });
 }
@@ -667,3 +649,37 @@ window.batchRegenerateECards = async function() {
         window.showToast(`✅ 重新讀取寫入完成！共更新了 ${updatedCount} 張。`); loadCardContacts();
     } catch (err) { window.showToast("更新錯誤", true); } finally { if (btn) { btn.innerHTML = '<span class="material-symbols-outlined text-[15px]">sync</span> 批次重新讀取寫入所有名片按鈕'; btn.classList.remove('pointer-events-none', 'opacity-50'); } }
 }
+
+window.fallbackShare = function(url, altText) {
+    const fullText = `${altText}\n${url}`;
+    const fallbackInput = document.createElement('textarea');
+    fallbackInput.value = fullText;
+    fallbackInput.style.position = 'fixed'; fallbackInput.style.opacity = '0';
+    document.body.appendChild(fallbackInput);
+    fallbackInput.focus(); fallbackInput.select();
+    try {
+        document.execCommand('copy');
+        alert("⚠️ 電腦版或外部瀏覽器無法直接傳送圖文訊息。\n\n✅ 已複製「專屬連結」至剪貼簿！\n請直接貼上給好友。");
+    } catch(err) {
+        alert("請複製以下連結分享：\n\n" + url);
+    }
+    document.body.removeChild(fallbackInput);
+    window.open(`https://line.me/R/share?text=${encodeURIComponent(fullText)}`, '_blank');
+};
+
+window.triggerFlexSharing = async (flexContents, altText) => {
+    if (!liff.isLoggedIn()) { liff.login({ redirectUri: window.location.href }); return; }
+    try {
+        const message = { type: "flex", altText: altText || "收到一張數位名片", contents: flexContents };
+        const res = await liff.shareTargetPicker([message]);
+        if (res) window.showToast('🚀 數位名片已成功轉發！');
+        setTimeout(() => liff.closeWindow(), 1500);
+    } catch (error) {
+        if (error.message && error.message.includes('not allowed')) {
+            alert("⚠️ 系統權限更新，即將重新登入");
+            liff.logout(); window.location.reload(); 
+        } else {
+            alert('發送取消或發生錯誤');
+        }
+    }
+};

@@ -1,6 +1,6 @@
 /**
  * card-ecard.js
- * Version: v5.2.1 (VOOM 短影音解析轉換器擴充修復版)
+ * Version: v5.2.2 (允許 LINE 影片網址通過驗證版)
  */
 
 window.toggleECardType = function(type) {
@@ -409,7 +409,8 @@ window.updateECardPreview = function() {
         }
     }
 }
-  
+
+// ⭐ 放寬網址格式檢查：允許包含 line 字眼的連結 (LINE VOOM / LINE SCDN)
 window.checkFormat = function(showAlert = false) {
     let errors = [];
     
@@ -421,7 +422,8 @@ window.checkFormat = function(showAlert = false) {
         const vUrl = vUrlEl ? vUrlEl.value.trim() : '';
         if (!vUrl) errors.push("❌ 【動態影片版】必須填寫影片網址。");
         else if (!vUrl.match(/^https:\/\//i)) errors.push("❌ 【影片網址】必須以 https:// 開頭。");
-        else if (!vUrl.toLowerCase().includes('mp4')) errors.push("❌ 【影片網址】目前僅支援 MP4 格式。");
+        // ⭐ 修改此處：允許 mp4 或是 line 相關的連結
+        else if (!vUrl.toLowerCase().includes('mp4') && !vUrl.toLowerCase().includes('line')) errors.push("❌ 【影片網址】必須為 MP4 格式或 LINE 影片連結。");
     }
   
     for (let i = 1; i <= 4; i++) {

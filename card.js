@@ -1,6 +1,6 @@
 /**
  * card.js 
- * Version: v5.3.0 (VOOM 圖片解析與強制滿版修復)
+ * Version: v6.0.0 (QQ 修復版：還原 shareCardId 分享機制、解決 404 問題)
  */
 const LIFF_ID = "2009367829-DLtYBDUm"; 
 const WORKER_URL = "https://actmaster.fangwl591021.workers.dev"; 
@@ -55,7 +55,7 @@ window.getDirectImageUrl = function(url) {
   return url;
 };
 
-// ⭐ VOOM 防呆核心：若圖片被 CORS 阻擋載入失敗，且網址來自 VOOM，自動判定為 9:16 (直向短影音)
+// ⭐ VOOM 防呆核心
 window.getTrueAspectRatio = function(url) {
   return new Promise((resolve) => {
     if (!url) return resolve('20:13');
@@ -106,7 +106,41 @@ function setButtonLoading(btnId, isLoading, originalText = '') {
     }
 }
 
-// ⭐ DOM防呆：首頁傳過來的 rowId 絕對信任
+// ⭐ 還原被我誤刪的分享轉發工具
+window.fallbackShare = function(url, altText) {
+    const fullText = `${altText}\n${url}`;
+    const fallbackInput = document.createElement('textarea');
+    fallbackInput.value = fullText;
+    fallbackInput.style.position = 'fixed'; fallbackInput.style.opacity = '0';
+    document.body.appendChild(fallbackInput);
+    fallbackInput.focus(); fallbackInput.select();
+    try {
+        document.execCommand('copy');
+        alert("⚠️ 電腦版或外部瀏覽器無法直接傳送圖文訊息。\n\n✅ 已複製「專屬連結」至剪貼簿！\n請直接貼上給好友。");
+    } catch(err) {
+        alert("請複製以下連結分享：\n\n" + url);
+    }
+    document.body.removeChild(fallbackInput);
+    window.open(`https://line.me/R/share?text=${encodeURIComponent(fullText)}`, '_blank');
+};
+
+window.triggerFlexSharing = async (flexContents, altText) => {
+    if (!liff.isLoggedIn()) { liff.login({ redirectUri: window.location.href }); return; }
+    try {
+        const message = { type: "flex", altText: altText || "收到一張數位名片", contents: flexContents };
+        const res = await liff.shareTargetPicker([message]);
+        if (res) window.showToast('🚀 數位名片已成功轉發！');
+        setTimeout(() => liff.closeWindow(), 1500);
+    } catch (error) {
+        if (error.message && error.message.includes('not allowed')) {
+            alert("⚠️ 系統權限更新，即將重新登入");
+            liff.logout(); window.location.reload(); 
+        } else {
+            alert('發送取消或發生錯誤');
+        }
+    }
+};
+
 function checkAndOpenMyCard() {
     const params = new URLSearchParams(window.location.search);
     const mode = params.get('mode');
@@ -115,7 +149,6 @@ function checkAndOpenMyCard() {
     if (mode !== 'mycard' || myCardOpened) return;
 
     let targetCard = null;
-    
     if (targetRowId && globalCardContacts.length > 0) {
         targetCard = globalCardContacts.find(c => String(c.rowId) === String(targetRowId));
     } else if (globalCardContacts.length > 0) {
@@ -145,6 +178,44 @@ function applyUserFilter(contacts) {
 document.addEventListener("DOMContentLoaded", async () => {
   try {
     await liff.init({ liffId: LIFF_ID });
+    
+    // ⭐ QQ 終極修復：還原您最在乎的 Share Interceptor (點擊分享不會再迷路到核銷)
+    const params = new URLSearchParams(window.location.search);
+    const shareCardId = params.get('shareCardId');
+    
+    if (shareCardId) {
+        if (!liff.isLoggedIn()) { liff.login({ redirectUri: window.location.href }); return; }
+        const loadText = document.getElementById('loading-text');
+        if (loadText) loadText.innerText = '準備轉發數位名片...';
+        try {
+            const contacts = await window.fetchAPI('getCardContacts', {}, false);
+            const card = contacts.find(c => String(c.rowId) === String(shareCardId));
+            if (!card) throw new Error('找不到該名片資料');
+            
+            let config = null;
+            if (card['自訂名片設定']) { try { config = JSON.parse(card['自訂名片設定']); } catch(e){} }
+            
+            const rawImg = config?.imgUrl || card['名片圖檔'];
+            const currentImgUrl = typeof window.getDirectImageUrl === 'function' ? window.getDirectImageUrl(rawImg) : rawImg;
+            const detectedAr = typeof window.getTrueAspectRatio === 'function' ? await window.getTrueAspectRatio(currentImgUrl) : "20:13";
+            
+            const flexContents = typeof window.buildFlexMessageFromCard === 'function' ? window.buildFlexMessageFromCard(card, config, detectedAr) : null;
+            
+            const title = config?.title || card['姓名'] || '商務名片';
+            const altText = `您收到一張數位名片：${title}`;
+            const shareUrl = `https://liff.line.me/${LIFF_ID}/card.html?shareCardId=${shareCardId}`;
+            
+            if (typeof window.triggerFlexSharing === 'function' && flexContents) {
+                await window.triggerFlexSharing(flexContents, altText);
+            } else {
+                window.fallbackShare(shareUrl, altText);
+            }
+        } catch (e) {
+            alert('名片轉發失敗: ' + e.message);
+        }
+        return; // 終止後續的頁面渲染，因為這只是為了觸發分享
+    }
+
     if (!liff.isLoggedIn()) { liff.login({ redirectUri: window.location.href }); return; }
     
     userProfile = await liff.getProfile();
@@ -295,7 +366,7 @@ function renderCardPage(isReset = false) {
 
 window.loadMoreCards = function() { currentPage++; renderCardPage(false); }
 
-// ⭐ QQ 終極防護：還原 LINE 原生卡片排版與 Bottom Sheet 效果
+// ⭐ QQ 終極防護：還原 LINE 原生卡片無框排版
 window.openCardDetailByRowId = function(rowId) { 
     try {
       const card = globalCardContacts.find(c => String(c.rowId) === String(rowId));
@@ -308,10 +379,10 @@ window.openCardDetailByRowId = function(rowId) {
       if (isAdmin && statusEl) {
           if (card.userId || card['LINE ID'] || card['Line ID'] || card['lineId']) {
               statusEl.innerText = '已認領';
-              statusEl.className = 'px-2.5 py-0.5 rounded-md text-[11px] border bg-emerald-50 border-emerald-200 text-emerald-600 font-bold';
+              statusEl.className = 'px-2.5 py-0.5 rounded-md text-[11px] bg-emerald-50 text-emerald-600 font-bold';
           } else {
               statusEl.innerText = '未認領';
-              statusEl.className = 'px-2.5 py-0.5 rounded-md text-[11px] border bg-slate-50 border-slate-200 text-slate-400 font-bold';
+              statusEl.className = 'px-2.5 py-0.5 rounded-md text-[11px] bg-slate-50 text-slate-400 font-bold';
           }
           statusEl.classList.remove('hidden');
       } else if (statusEl) {
@@ -339,7 +410,6 @@ window.openCardDetailByRowId = function(rowId) {
       const tagsContainer = document.getElementById('ro-fate-tags-container');
       if (tagsContainer) { tagsContainer.innerHTML = ''; tagsContainer.style.display = 'none'; }
 
-      // 完美還原多行陣列組合
       const notesArr = [];
       const slogan = card['服務項目/品牌標語']||card['Slogan'];
       if(slogan) notesArr.push(`【品牌與服務】\n${slogan}`);
@@ -356,7 +426,6 @@ window.openCardDetailByRowId = function(rowId) {
       const notesEl = document.getElementById('ro-notes');
       if (notesEl) notesEl.innerText = finalNotes || '無其他資訊';
 
-      // 完美還原圖片缺圖 Placeholder 邏輯
       const imgEl = document.getElementById('ro-image');
       const noImgEl = document.getElementById('ro-no-image');
       if (card['名片圖檔'] && card['名片圖檔'] !== '圖片儲存失敗' && card['名片圖檔'] !== '無圖檔' && card['名片圖檔'].startsWith('http')) {

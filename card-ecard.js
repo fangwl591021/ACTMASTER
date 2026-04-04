@@ -1,6 +1,6 @@
 /**
  * card-ecard.js
- * Version: v6.0.0 (徹底消除 404，且嚴守 Header 分享按鈕排版鐵律版)
+ * Version: v7.0.0 (導入 Optimistic Base64 即時預覽，破解 Google Drive 縮圖 404 地雷)
  */
 
 window.toggleECardType = function(type) {
@@ -86,10 +86,8 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
         btnContents.push({ "type": "button", "style": "primary", "color": btnColor, "height": "sm", "margin": "sm", "action": { "type": "uri", "label": label.substring(0, 20), "uri": safeU.substring(0, 1000) } });
     }
   
-    // ⭐ QQ 終極修復 1：配合 index.html 轉轍器，改回指向 card.html 的絕對防呆連結，徹底消滅 404 與迷路。
-    const badgeUrl = `https://liff.line.me/${myLiffId}/card.html?shareCardId=${card.rowId}`;
+    const badgeUrl = `https://liff.line.me/${myLiffId}?shareCardId=${card.rowId}`;
   
-    // ⭐ QQ 終極修復 2：無條件退回您的完美 Header 版型！紅色分享按鈕 100% 待在圖片上方！
     const headerBlock = {
         "type": "box",
         "layout": "horizontal",
@@ -280,7 +278,8 @@ window.closeECardGenerator = function() {
     if (modalEl) modalEl.classList.add('hidden'); 
 }
   
-window.updateECardPreview = function() {
+// ⭐ QQ 終極本機渲染 (Optimistic UI)：繞過 Google Drive 縮圖 404 問題
+window.updateECardPreview = function(forceBase64 = null) {
     const cardTypeEl = document.getElementById('ec-card-type');
     const cardType = cardTypeEl ? cardTypeEl.value : 'image';
     
@@ -293,14 +292,23 @@ window.updateECardPreview = function() {
     const imgInputEl = document.getElementById('ec-img-input');
     let rawUrl = imgInputEl ? imgInputEl.value : '';
 
-    if (!rawUrl) {
-        rawUrl = (typeof currentActiveCard !== 'undefined' && currentActiveCard && currentActiveCard['名片圖檔']) ? currentActiveCard['名片圖檔'] : '';
-        if (!rawUrl || rawUrl === '無圖檔' || rawUrl === '圖片儲存失敗' || !rawUrl.startsWith('http')) {
-            rawUrl = 'https://images.unsplash.com/photo-1616628188550-808682f3926d?w=800&q=80';
+    let displayUrl = forceBase64; // 若有傳入強制的本機 base64，最高優先級
+
+    if (!displayUrl) {
+        if (!rawUrl) {
+            rawUrl = (typeof currentActiveCard !== 'undefined' && currentActiveCard && currentActiveCard['名片圖檔']) ? currentActiveCard['名片圖檔'] : '';
+            if (!rawUrl || rawUrl === '無圖檔' || rawUrl === '圖片儲存失敗' || !rawUrl.startsWith('http')) {
+                rawUrl = 'https://images.unsplash.com/photo-1616628188550-808682f3926d?w=800&q=80';
+            }
+        }
+        
+        displayUrl = typeof window.getDirectImageUrl === 'function' ? window.getDirectImageUrl(rawUrl) : rawUrl;
+        
+        // 若網址是「剛剛上傳到一半」的，替換為儲存在本機的超高清 base64 進行預覽
+        if (window.optimisticImageUrl && rawUrl === window.optimisticImageUrl && window.optimisticBase64) {
+            displayUrl = window.optimisticBase64;
         }
     }
-    
-    let imgUrl = typeof window.getDirectImageUrl === 'function' ? window.getDirectImageUrl(rawUrl) : rawUrl;
     
     const heroEl = document.getElementById('preview-ec-hero');
     const imgEl = document.getElementById('preview-ec-img');
@@ -346,8 +354,8 @@ window.updateECardPreview = function() {
         }
     };
   
-    if (imgEl.getAttribute('data-current-src') !== imgUrl || arSetting !== 'auto') {
-        imgEl.setAttribute('data-current-src', imgUrl);
+    if (imgEl.getAttribute('data-current-src') !== displayUrl || arSetting !== 'auto') {
+        imgEl.setAttribute('data-current-src', displayUrl);
         const tempImg = new Image();
         tempImg.onload = function() {
             if (arSetting === 'auto') {
@@ -362,27 +370,25 @@ window.updateECardPreview = function() {
             } else {
                 applyAspectRatio(arSetting);
             }
-            imgEl.src = imgUrl;
+            imgEl.src = displayUrl;
             imgEl.classList.remove('hidden');
             
             if (previewBox && placeholder) {
-                previewBox.src = imgUrl;
+                previewBox.src = displayUrl;
                 previewBox.classList.remove('hidden');
                 placeholder.classList.add('hidden');
             }
         };
         tempImg.onerror = function() {
+            // ⭐ 防呆重點：即使 Google 縮圖尚未轉好而拋出 404，也強制套用影像與正確比例，不准覆蓋為破圖佔位符
             applyAspectRatio(arSetting === 'auto' ? "20:13" : arSetting);
-            imgEl.src = imgUrl;
-            imgEl.classList.remove('hidden');
             
-            if (previewBox && placeholder) {
-                previewBox.src = '';
-                previewBox.classList.add('hidden');
-                placeholder.classList.remove('hidden');
+            if (imgEl.getAttribute('data-current-src') === displayUrl) {
+                imgEl.src = displayUrl;
+                imgEl.classList.remove('hidden');
             }
         };
-        tempImg.src = imgUrl;
+        tempImg.src = displayUrl;
     } else {
         applyAspectRatio(arSetting === 'auto' ? "20:13" : arSetting);
     }
@@ -422,20 +428,17 @@ window.updateECardPreview = function() {
         }
     }
     
-    // ⭐ QQ 終極修復：確保網頁預覽用的泡泡，其分享按鈕也完美退回 Header
     if (bubbleEl) {
         let existingHeader = bubbleEl.querySelector('.preview-header');
         if (!existingHeader) {
             const headerHTML = `<div class="preview-header w-full flex justify-end p-2 bg-white pb-1"><div class="preview-share-btn bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-sm tracking-widest">分享</div></div>`;
             bubbleEl.insertAdjacentHTML('afterbegin', headerHTML);
         }
-        
-        // 刪除任何舊的絕對定位分享按鈕
         const absoluteShare = bubbleEl.querySelector('.absolute.top-4.right-4.bg-red-500');
         if (absoluteShare) absoluteShare.remove();
     }
 }
-
+  
 window.checkFormat = function(showAlert = false) {
     let errors = [];
     
@@ -447,6 +450,7 @@ window.checkFormat = function(showAlert = false) {
         const vUrl = vUrlEl ? vUrlEl.value.trim() : '';
         if (!vUrl) errors.push("❌ 【動態影片版】必須填寫影片網址。");
         else if (!vUrl.match(/^https:\/\//i)) errors.push("❌ 【影片網址】必須以 https:// 開頭。");
+        // ⭐ 放寬檢查：允許 mp4 或是 line 相關的連結
         else if (!vUrl.toLowerCase().includes('mp4') && !vUrl.toLowerCase().includes('line')) errors.push("❌ 【影片網址】必須為 MP4 格式或 LINE 影片連結。");
     }
   
@@ -590,7 +594,7 @@ window.shareECardToLine = async function() {
       const altText = `您收到一張數位名片：${config && config.title ? config.title : (currentActiveCard ? (currentActiveCard['姓名'] || currentActiveCard['Name']) : '商務名片')}`;
       
       const myLiffId = (typeof LIFF_ID !== 'undefined') ? LIFF_ID : '2009367829-DLtYBDUm';
-      const shareUrl = `https://liff.line.me/${myLiffId}/card.html?shareCardId=${currentActiveCard.rowId}`;
+      const shareUrl = `https://liff.line.me/${myLiffId}?shareCardId=${currentActiveCard.rowId}`;
   
       if (typeof liff !== 'undefined' && liff.isApiAvailable('shareTargetPicker')) {
           try {
@@ -623,6 +627,7 @@ window.handleECardImageUpload = function(input) {
     }
 }
 
+// ⭐ LINE VOOM 轉換器核心邏輯
 window.openVoomModal = function() {
     const m = document.getElementById('voom-modal');
     if (m) m.classList.remove('hidden');

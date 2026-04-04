@@ -1,4 +1,4 @@
-<!-- Version: v1.2.3 (QQ 修復版：宣告遺失的全域變數，解決 globalCardContacts is not defined 崩潰問題) -->
+<!-- Version: v1.2.4 (QQ 修復版：導入智慧多重比對名片尋回機制、清除 UI 冗餘代碼) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -292,7 +292,6 @@
     }
   }, { passive: true });
 
-  // ⭐ QQ修復：宣告全域變數 globalCardContacts，解決 is not defined 當機問題
   let userProfile = null, isAdmin = false, isViewModeAdmin = false, isRegistered = false, registeredInfo = null;
   let globalPublicActivities = [], currentActivities = [], currentRegistrants = [], activeActivityName = '', modalTargetView = '';
   let globalCrmData = []; 
@@ -590,28 +589,67 @@
     else if (view === 'user-history') loadUserHistory();
   }
 
+  // ⭐ QQ 終極修復：智慧多重比對名片，解決「有資料卻顯示沒有」的痛點
   async function checkMyCardEntry() {
       const entryEl = document.getElementById('my-card-entry');
       const infoEl = document.getElementById('my-card-info');
       
       entryEl.classList.remove('hidden');
+      
+      if (!userProfile) return;
 
       try {
-          let myCard = null;
+          const uid = userProfile.userId;
+          const myName = document.getElementById('edit-name').value.trim() || userProfile.displayName;
           
-          if (typeof globalCardContacts !== 'undefined' && Array.isArray(globalCardContacts) && globalCardContacts.length > 0) {
-              myCard = globalCardContacts.find(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId || c['Line ID'] === userProfile.userId || c['lineId'] === userProfile.userId);
+          let myPhone = document.getElementById('edit-phone').value.trim();
+          if (myPhone) {
+              myPhone = String(myPhone).replace(/[^\d]/g, '');
+              if (myPhone.startsWith('886')) myPhone = '0' + myPhone.substring(3);
+          }
+
+          const isMatch = (c) => {
+              if (!c) return false;
+              // 1. 第一關：比對 LINE ID 
+              if (String(c['LINE ID']).trim() === uid || String(c.userId).trim() === uid) return true;
+              
+              // 2. 第二關：若管理員未登錄 LINE ID，比對「手機號碼」
+              if (myPhone && (c['手機號碼'] || c['Mobile'])) {
+                  let cPhone = String(c['手機號碼'] || c['Mobile']).replace(/[^\d]/g, '');
+                  if (cPhone.startsWith('886')) cPhone = '0' + cPhone.substring(3);
+                  if (cPhone === myPhone) return true;
+              }
+              
+              // 3. 第三關：若連手機都沒留，比對「真實姓名」(嚴格比對)
+              if (myName && c['姓名'] && String(c['姓名']).trim() === myName) return true;
+              
+              return false;
+          };
+
+          let myCard = null;
+          if (globalCardContacts && Array.isArray(globalCardContacts)) {
+              myCard = globalCardContacts.find(isMatch);
           }
           
+          // 若快取找不到，強制不使用快取，向伺服器要最新鮮的資料！
           if (!myCard) {
-              const data = await fetchAPI('getCardContacts', {}, true);
+              infoEl.querySelector('p').innerText = '同步最新資料庫中...';
+              const data = await fetchAPI('getCardContacts', {}, false); 
               if (data && Array.isArray(data)) {
                   globalCardContacts = data;
-                  myCard = globalCardContacts.find(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId || c['Line ID'] === userProfile.userId || c['lineId'] === userProfile.userId);
+                  myCard = globalCardContacts.find(isMatch);
+                  sessionStorage.setItem('getCardContacts{}', JSON.stringify(data)); 
               }
           }
 
           if (myCard) {
+              // ⭐ 背景默默認領：如果這張卡是靠姓名或電話認出來的，但資料庫裡還沒有他的 LINE ID，立刻幫他補上！
+              if (!myCard['LINE ID'] || String(myCard['LINE ID']).trim() !== uid) {
+                  myCard['LINE ID'] = uid;
+                  myCard.userId = uid;
+                  fetchAPI('updateCard', { rowId: myCard.rowId, 'LINE ID': uid, userId: uid }).catch(e => console.log("背景綁定 LINE ID 失敗", e));
+              }
+
               infoEl.innerHTML = `
                 <div class="flex items-center gap-1.5 mb-1.5">
                   <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span>
@@ -842,7 +880,8 @@
       showToast("🎉 專屬名片建檔成功！"); 
       
       sessionStorage.removeItem('getCardContacts{}');
-      globalCardContacts = await fetchAPI('getCardContacts', {}, true);
+      // 不依賴快取，強制重抓以確保按鈕會出來
+      globalCardContacts = await fetchAPI('getCardContacts', {}, false);
       checkMyCardEntry();
       
     } catch(err) { 
@@ -1186,6 +1225,10 @@
     const p = { userId: userProfile.userId, name: document.getElementById('edit-name').value.trim() || userProfile.displayName, gender: document.getElementById('edit-gender').value, phone: document.getElementById('edit-phone').value.trim(), industry: document.getElementById('edit-industry').value.trim(), birthday: document.getElementById('edit-birthday').value, region: document.getElementById('edit-region').value.trim(), address: document.getElementById('edit-address').value.trim() }; 
     try {
       await fetchAPI('updateUser', p); registeredInfo = p; showToast("儲存成功"); 
+      
+      // 更新完個人資料後，重新觸發一次名片比對
+      checkMyCardEntry();
+      
     } catch(e) {
       console.error(e);
     } finally {

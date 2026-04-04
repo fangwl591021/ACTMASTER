@@ -1,6 +1,6 @@
 /**
  * card-ecard.js
- * Version: v5.3.0 (滿版修正與 VOOM 短影音自動偵測版)
+ * Version: v5.4.0 (修復分享按鈕位置與 404 問題版)
  */
 
 window.toggleECardType = function(type) {
@@ -86,34 +86,39 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
         btnContents.push({ "type": "button", "style": "primary", "color": btnColor, "height": "sm", "margin": "sm", "action": { "type": "uri", "label": label.substring(0, 20), "uri": safeU.substring(0, 1000) } });
     }
   
-    const badgeUrl = `https://liff.line.me/${myLiffId}/card.html?shareCardId=${card.rowId}`;
+    // ⭐ QQ終極修復：把 badgeUrl 改成無路徑的純 query 參數，交由 index.html 的轉轍器處理，徹底消除 404！
+    const badgeUrl = `https://liff.line.me/${myLiffId}?shareCardId=${card.rowId}`;
   
-    // ⭐ QQ原生滿版：刪除 headerBlock，把分享按鈕改用 absolute 放到 body 裡面
-    const shareBadge = {
+    // ⭐ QQ終極修復：將分享按鈕退回最頂端的 Header 區塊
+    const headerBlock = {
         "type": "box",
-        "layout": "vertical",
-        "position": "absolute",
-        "backgroundColor": "#FF0000",
-        "cornerRadius": "xl",
-        "paddingTop": "4px",
-        "paddingBottom": "4px",
-        "paddingStart": "14px",
-        "paddingEnd": "14px",
-        "offsetTop": "15px",
-        "offsetEnd": "15px",
-        "action": {
-            "type": "uri",
-            "label": "share",
-            "uri": badgeUrl
-        },
+        "layout": "horizontal",
+        "justifyContent": "flex-end",
+        "paddingAll": "7px",
         "contents": [
             {
-                "type": "text",
-                "text": "分享",
-                "weight": "bold",
-                "align": "center",
-                "color": "#FFFFFF",
-                "size": "xs"
+                "type": "box",
+                "layout": "vertical",
+                "justifyContent": "center",
+                "backgroundColor": "#FF0000",
+                "width": "65px",
+                "height": "25px",
+                "cornerRadius": "25px",
+                "contents": [
+                    {
+                        "type": "text",
+                        "text": "分享",
+                        "weight": "bold",
+                        "align": "center",
+                        "color": "#FFFFFF",
+                        "size": "xs"
+                    }
+                ],
+                "action": {
+                    "type": "uri",
+                    "label": "share",
+                    "uri": badgeUrl
+                }
             }
         ]
     };
@@ -147,6 +152,7 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
     const flexContents = {
         "type": "bubble", 
         "size": imgSize,
+        "header": headerBlock,
         "hero": heroBlock,
         "body": {
             "type": "box", "layout": "vertical", "paddingAll": "0px",
@@ -157,8 +163,7 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
                         { "type": "text", "text": title, "weight": "bold", "size": "xl", "align": titleAlign, "wrap": true }, 
                         { "type": "text", "text": desc, "size": "sm", "margin": "md", "color": "#666666", "wrap": true } 
                     ] 
-                },
-                shareBadge
+                }
             ]
         }
     };
@@ -416,8 +421,27 @@ window.updateECardPreview = function() {
           }
         }
     }
+    
+    // ⭐ QQ終極修復：將網頁上的預覽氣泡中的分享按鈕退回最頂部
+    const previewBubble = document.getElementById('preview-ec-bubble');
+    if (previewBubble) {
+        let existingShare = previewBubble.querySelector('.preview-share-btn');
+        if (existingShare) existingShare.remove();
+        
+        let existingHeader = previewBubble.querySelector('.preview-header');
+        if (!existingHeader) {
+            const headerHTML = `<div class="preview-header w-full flex justify-end p-2 bg-white pb-1"><div class="preview-share-btn bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-sm tracking-widest">分享</div></div>`;
+            previewBubble.insertAdjacentHTML('afterbegin', headerHTML);
+        } else {
+            existingHeader.innerHTML = `<div class="preview-share-btn bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-sm tracking-widest">分享</div>`;
+        }
+        
+        const absoluteShare = previewBubble.querySelector('.absolute.top-4.right-4.bg-red-500');
+        if (absoluteShare) absoluteShare.remove();
+    }
 }
-  
+
+// ⭐ 放寬網址格式檢查：允許包含 line 字眼的連結 (LINE VOOM / LINE SCDN)
 window.checkFormat = function(showAlert = false) {
     let errors = [];
     
@@ -429,6 +453,7 @@ window.checkFormat = function(showAlert = false) {
         const vUrl = vUrlEl ? vUrlEl.value.trim() : '';
         if (!vUrl) errors.push("❌ 【動態影片版】必須填寫影片網址。");
         else if (!vUrl.match(/^https:\/\//i)) errors.push("❌ 【影片網址】必須以 https:// 開頭。");
+        // 允許 mp4 或是 line 相關的連結
         else if (!vUrl.toLowerCase().includes('mp4') && !vUrl.toLowerCase().includes('line')) errors.push("❌ 【影片網址】必須為 MP4 格式或 LINE 影片連結。");
     }
   
@@ -571,8 +596,9 @@ window.shareECardToLine = async function() {
 
       const altText = `您收到一張數位名片：${config && config.title ? config.title : (currentActiveCard ? (currentActiveCard['姓名'] || currentActiveCard['Name']) : '商務名片')}`;
       
+      // ⭐ 取得正確的根目錄，避免 fallback 發生 404
       const myLiffId = (typeof LIFF_ID !== 'undefined') ? LIFF_ID : '2009367829-DLtYBDUm';
-      const shareUrl = `https://liff.line.me/${myLiffId}/card.html?shareCardId=${currentActiveCard.rowId}`;
+      const shareUrl = `https://liff.line.me/${myLiffId}?shareCardId=${currentActiveCard.rowId}`;
   
       if (typeof liff !== 'undefined' && liff.isApiAvailable('shareTargetPicker')) {
           try {

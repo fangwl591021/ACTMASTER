@@ -1,4 +1,4 @@
-<!-- Version: v7.5.0 (QQ 鐵律修復版：強制補回被閹割的「複製梯次」功能，並優化原生雙按鈕排版) -->
+<!-- Version: v7.6.0 (QQ 鐵律修復版：強制補回三種活動模式的「原生相片上傳與裁切」功能) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -10,6 +10,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   
+  <!-- ⭐ 補回裁切器依賴套件 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
   <script id="tailwind-config">
     tailwind.config = {
       theme: {
@@ -57,6 +61,9 @@
     .nav-active { @apply text-slate-800 font-bold; }
     .nav-active .icon-box { @apply bg-slate-100 text-slate-800; }
     .nav-active .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
+    
+    .bottom-sheet-up { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
   </style>
 </head>
 <body class="font-sans text-text-main min-h-screen flex flex-col items-center">
@@ -65,7 +72,7 @@
   
   <nav class="fixed top-0 w-full max-w-md z-40 bg-white/90 backdrop-blur-md px-5 py-3.5 flex justify-between items-center left-1/2 -translate-x-1/2 border-b border-slate-100">
     <div class="text-[20px] font-extrabold text-slate-800 tracking-tight flex items-center gap-1">
-      建立活動 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v7.5</span>
+      建立活動 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v7.6</span>
     </div>
     <button onclick="window.location.href='index.html?view=admin-activities'" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-90 transition-transform">
       <span class="material-symbols-outlined text-[20px]">close</span>
@@ -90,6 +97,23 @@
 
       <!-- Tab 1: 快速匯入 -->
       <div id="tab-content-quick" class="space-y-5 bg-white p-5 rounded-[2rem] shadow-sm mx-1">
+        
+        <!-- ⭐ 補回快速匯入的上傳圖片區塊 -->
+        <div class="flex flex-col">
+          <label class="input-label">活動封面圖 <span class="text-slate-400 font-normal text-[11px]">(選填)</span></label>
+          <div class="w-full relative">
+              <div onclick="document.getElementById('q-upload-input').click()" class="w-full h-36 rounded-2xl flex flex-col items-center justify-center bg-slate-100 cursor-pointer overflow-hidden transition-colors hover:bg-slate-200 relative border-none">
+                  <div class="text-center text-slate-400 flex flex-col items-center z-10" id="q-upload-placeholder">
+                      <span class="material-symbols-outlined text-[32px] mb-2 text-slate-300">add_photo_alternate</span>
+                      <p class="text-[13px] font-bold tracking-wider">點擊上傳圖片</p>
+                  </div>
+                  <img id="q-img-preview" class="absolute inset-0 w-full h-full object-cover hidden z-0">
+              </div>
+              <input type="hidden" id="q-img" value="">
+              <input type="file" id="q-upload-input" accept="image/*" class="hidden" onchange="openCropper(this, 'q')">
+          </div>
+        </div>
+
         <div class="flex flex-col">
             <label class="input-label">活動名稱</label>
             <input type="text" id="q-name" class="custom-input" placeholder="例如：2026 商務交流會">
@@ -138,6 +162,23 @@
 
       <!-- Tab 2: 完整發佈 -->
       <div id="tab-content-full" class="hidden space-y-5 bg-white p-5 rounded-[2rem] shadow-sm mx-1">
+        
+        <!-- ⭐ 補回完整發佈的上傳圖片區塊 -->
+        <div class="flex flex-col">
+          <label class="input-label">活動封面圖 <span class="text-slate-400 font-normal text-[11px]">(選填)</span></label>
+          <div class="w-full relative">
+              <div onclick="document.getElementById('f-upload-input').click()" class="w-full h-40 rounded-2xl flex flex-col items-center justify-center bg-slate-100 cursor-pointer overflow-hidden transition-colors hover:bg-slate-200 relative border-none">
+                  <div class="text-center text-slate-400 flex flex-col items-center z-10" id="f-upload-placeholder">
+                      <span class="material-symbols-outlined text-[32px] mb-2 text-slate-300">add_photo_alternate</span>
+                      <p class="text-[13px] font-bold tracking-wider">點擊上傳圖片</p>
+                  </div>
+                  <img id="f-img-preview" class="absolute inset-0 w-full h-full object-cover hidden z-0">
+              </div>
+              <input type="hidden" id="f-img" value="">
+              <input type="file" id="f-upload-input" accept="image/*" class="hidden" onchange="openCropper(this, 'f')">
+          </div>
+        </div>
+
         <div class="flex flex-col">
             <label class="input-label">活動標題</label>
             <input type="text" id="f-name" class="custom-input" placeholder="輸入活動標題">
@@ -175,11 +216,6 @@
         </div>
 
         <div class="flex flex-col">
-            <label class="input-label">封面圖片網址</label>
-            <input type="url" id="f-img" class="custom-input" placeholder="https://...">
-        </div>
-
-        <div class="flex flex-col">
             <label class="input-label">活動說明</label>
             <textarea id="f-desc" class="textarea-block h-32" placeholder="輸入活動詳細說明..."></textarea>
         </div>
@@ -189,16 +225,28 @@
         </div>
       </div>
 
-      <!-- ⭐ Tab 3: 系列梯次 (補回複製功能，並擴大右側防擋留白) -->
+      <!-- Tab 3: 系列梯次 -->
       <div id="tab-content-series" class="hidden space-y-5 bg-white p-5 rounded-[2rem] shadow-sm mx-1">
+        
+        <!-- ⭐ 補回系列梯次的上傳圖片區塊 -->
         <div class="flex flex-col">
-            <label class="input-label">活動總標題</label>
-            <input type="text" id="s-name" class="custom-input" placeholder="例如：2026 商務進階系列課程">
+          <label class="input-label">系列總封面圖 <span class="text-slate-400 font-normal text-[11px]">(選填)</span></label>
+          <div class="w-full relative">
+              <div onclick="document.getElementById('s-upload-input').click()" class="w-full h-40 rounded-2xl flex flex-col items-center justify-center bg-slate-100 cursor-pointer overflow-hidden transition-colors hover:bg-slate-200 relative border-none">
+                  <div class="text-center text-slate-400 flex flex-col items-center z-10" id="s-upload-placeholder">
+                      <span class="material-symbols-outlined text-[32px] mb-2 text-slate-300">add_photo_alternate</span>
+                      <p class="text-[13px] font-bold tracking-wider">點擊上傳圖片</p>
+                  </div>
+                  <img id="s-img-preview" class="absolute inset-0 w-full h-full object-cover hidden z-0">
+              </div>
+              <input type="hidden" id="s-img" value="">
+              <input type="file" id="s-upload-input" accept="image/*" class="hidden" onchange="openCropper(this, 's')">
+          </div>
         </div>
 
         <div class="flex flex-col">
-            <label class="input-label">封面圖片網址</label>
-            <input type="url" id="s-img" class="custom-input" placeholder="https://...">
+            <label class="input-label">活動總標題</label>
+            <input type="text" id="s-name" class="custom-input" placeholder="例如：2026 商務進階系列課程">
         </div>
         
         <div class="flex flex-col">
@@ -239,12 +287,24 @@
 
 </div>
 
+<!-- ⭐ 加入裁切器 Modal -->
+<div id="section-image-cropper" class="hidden fixed inset-0 bg-slate-900 flex flex-col animate-in fade-in duration-300 w-full max-w-md mx-auto z-[1080]">
+    <div class="flex justify-between items-center p-4 bg-slate-900 text-white shrink-0 z-10 shadow-sm border-b border-slate-800">
+      <button onclick="cancelCrop()" class="px-3 py-2 font-bold text-slate-400 active:scale-90 transition-transform text-[15px]">取消</button>
+      <span class="font-bold text-[16px] tracking-wider text-white flex items-center gap-1.5"><span class="material-symbols-outlined text-[20px]">crop</span> 裁切活動封面</span>
+      <button onclick="confirmCrop()" class="px-4 py-1.5 font-bold text-white bg-[#06C755] rounded active:scale-95 transition-transform text-[15px] shadow-sm">完成</button>
+    </div>
+    <div class="flex-1 relative bg-black flex items-center justify-center overflow-hidden"><img id="cropper-image" src="" class="max-w-full max-h-full block opacity-0 transition-opacity duration-300"></div>
+</div>
+
 <script>
   const LIFF_ID = "2009367829-DLtYBDUm";
   const WORKER_URL = "https://actmaster.fangwl591021.workers.dev";
   const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55", "U8932b891ad24da512afb9c1a6f41567b"];
   
   let batchCount = 0;
+  let currentCropTarget = '';
+  let cropperInstance = null;
 
   document.addEventListener("DOMContentLoaded", async () => {
     try {
@@ -257,7 +317,6 @@
           return; 
       }
       
-      // 預設新增一個梯次表單
       addBatchRow();
       
       document.getElementById('view-loading').classList.add('hidden');
@@ -267,7 +326,9 @@
     }
   });
 
-  // UI 切換邏輯
+  // =====================
+  // UI 邏輯
+  // =====================
   function switchTab(tabId) {
       ['quick', 'full', 'series'].forEach(id => {
           document.getElementById(`tab-content-${id}`).classList.add('hidden');
@@ -291,16 +352,13 @@
       }
   }
 
-  // ⭐ 修復點 1：新增與複製梯次按鈕邏輯 (原生無框設計，帶有智慧插入位置)
   function addBatchRow(defaultValues = null, insertAfterId = null) {
       batchCount++;
       const container = document.getElementById('batch-container');
       const rowId = `batch-${batchCount}`;
       
-      // 注意：為容納右上角的「複製」與「刪除」雙按鈕，輸入框右側邊距拉大至 pr-20
       const html = `
       <div id="${rowId}" class="bg-slate-50 p-4 rounded-2xl relative border-none animate-in slide-in-from-top-2">
-          
           <div class="absolute top-3 right-3 flex gap-1.5 z-10">
               <button onclick="copyBatchRow('${rowId}')" class="w-8 h-8 bg-white text-blue-500 hover:bg-blue-50 rounded-full flex items-center justify-center shadow-sm transition-colors" title="複製此梯次">
                   <span class="material-symbols-outlined text-[15px]">content_copy</span>
@@ -328,15 +386,10 @@
       </div>
       `;
       
-      // 如果是點擊「複製」，就智慧插在被複製對象的下方，否則插在最底端
-      if (insertAfterId) {
-          document.getElementById(insertAfterId).insertAdjacentHTML('afterend', html);
-      } else {
-          container.insertAdjacentHTML('beforeend', html);
-      }
+      if (insertAfterId) document.getElementById(insertAfterId).insertAdjacentHTML('afterend', html);
+      else container.insertAdjacentHTML('beforeend', html);
   }
 
-  // ⭐ 修復點 2：實作「複製梯次」將資料帶入的邏輯
   function copyBatchRow(sourceId) {
       const srcName = document.getElementById(`${sourceId}-name`).value;
       const srcStart = document.getElementById(`${sourceId}-start`).value;
@@ -351,7 +404,118 @@
       }, sourceId);
   }
 
-  // 統一的 API 發送邏輯
+  // =====================
+  // ⭐ 影像裁切邏輯 
+  // =====================
+  function openCropper(input, targetMode) {
+      const file = input.files[0];
+      if (!file) return;
+      currentCropTarget = targetMode; // 'q', 'f', 's'
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+          const img = document.getElementById('cropper-image');
+          if (!img) return;
+          
+          img.onload = () => {
+              const modal = document.getElementById('section-image-cropper');
+              if (modal) modal.classList.remove('hidden');
+              if (cropperInstance) cropperInstance.destroy();
+              img.style.opacity = '1';
+              
+              cropperInstance = new Cropper(img, {
+                  aspectRatio: 4 / 3, 
+                  viewMode: 1,
+                  dragMode: 'move',
+                  autoCropArea: 0.9,
+                  guides: true,
+                  center: true,
+                  highlight: false
+              });
+          };
+          img.src = e.target.result;
+          input.value = ""; // 防止 iOS 靜默 abort
+      };
+      reader.onerror = () => alert("讀取圖片失敗，請重試");
+      reader.readAsDataURL(file);
+  }
+
+  function cancelCrop() {
+      if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+      const modal = document.getElementById('section-image-cropper');
+      if (modal) modal.classList.add('hidden');
+      const img = document.getElementById('cropper-image');
+      if (img) { img.src = ''; img.style.opacity = '0'; }
+  }
+
+  async function confirmCrop() {
+      if (!cropperInstance) return;
+      let quality = 0.8;
+      let base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1000, maxHeight: 1000 }).toDataURL('image/jpeg', quality);
+      
+      while (base64.length > 400000 && quality > 0.1) {
+          quality -= 0.1;
+          base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1000, maxHeight: 1000 }).toDataURL('image/jpeg', quality);
+      }
+      cancelCrop();
+
+      // ⭐ Optimistic UI: 即時顯示在表單上
+      const previewImg = document.getElementById(`${currentCropTarget}-img-preview`);
+      const placeholder = document.getElementById(`${currentCropTarget}-upload-placeholder`);
+      if (previewImg && placeholder) {
+          previewImg.src = base64;
+          previewImg.classList.remove('hidden');
+          placeholder.classList.add('hidden');
+      }
+
+      // 按鈕鎖定與狀態提示
+      let submitBtnId = '';
+      if (currentCropTarget === 'q') submitBtnId = 'btn-submit-quick';
+      if (currentCropTarget === 'f') submitBtnId = 'btn-submit-full';
+      if (currentCropTarget === 's') submitBtnId = 'btn-submit-series';
+      
+      const submitBtn = document.getElementById(submitBtnId);
+      const originalText = submitBtn ? submitBtn.innerHTML : '建立';
+      if (submitBtn) {
+          submitBtn.innerHTML = '<span class="material-symbols-outlined animate-spin align-middle mr-1 text-[20px]">refresh</span> 圖片上傳中...';
+          submitBtn.disabled = true;
+          submitBtn.classList.add('opacity-70');
+      }
+
+      try {
+          // 背景非同步上傳至 Google Drive
+          const res = await fetch(WORKER_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'uploadImage', payload: { base64Image: base64 } })
+          });
+          const json = await res.json();
+          if (!json.success) throw new Error(json.error);
+          
+          // 寫入真實網址到 hidden input
+          const hiddenInput = document.getElementById(`${currentCropTarget}-img`);
+          if (hiddenInput) hiddenInput.value = json.data;
+          
+      } catch (e) {
+          alert('圖片上傳失敗：' + e.message);
+          // 若上傳失敗，復原預覽畫面
+          if (previewImg && placeholder) {
+              previewImg.src = '';
+              previewImg.classList.add('hidden');
+              placeholder.classList.remove('hidden');
+          }
+      } finally {
+          if (submitBtn) {
+              submitBtn.innerHTML = originalText;
+              submitBtn.disabled = false;
+              submitBtn.classList.remove('opacity-70');
+          }
+      }
+  }
+
+  // =====================
+  // API 發送邏輯
+  // =====================
   async function handleSubmit(mode) {
       let payload = {};
       
@@ -362,6 +526,7 @@
           const feeType = document.querySelector('input[name="q-fee-type"]:checked').value;
           const price = feeType === '收費' ? (document.getElementById('q-price').value || 0) : 0;
           const names = document.getElementById('q-names').value.split('\n').filter(n => n.trim());
+          const img = document.getElementById('q-img') ? document.getElementById('q-img').value.trim() : '';
 
           if(!name) return alert('⚠️ 請輸入活動名稱');
           if(feeType === '收費' && (!price || price <= 0)) return alert('⚠️ 請輸入正確的收費金額');
@@ -373,7 +538,7 @@
               feeType: feeType,
               price: price,
               names: names,
-              startTime: '', endTime: '', description: '', imageUrl: ''
+              startTime: '', endTime: '', description: '', imageUrl: img
           };
           
       } else if (mode === 'full') {
@@ -383,7 +548,7 @@
           const feeType = document.querySelector('input[name="f-fee-type"]:checked').value;
           const price = feeType === '收費' ? (document.getElementById('f-price').value || 0) : 0;
           const desc = document.getElementById('f-desc').value.trim();
-          const img = document.getElementById('f-img').value.trim();
+          const img = document.getElementById('f-img') ? document.getElementById('f-img').value.trim() : '';
 
           if(!name) return alert('⚠️ 請輸入活動標題');
           if(feeType === '收費' && (!price || price <= 0)) return alert('⚠️ 請輸入正確的收費金額');
@@ -402,10 +567,9 @@
           };
           
       } else if (mode === 'series') {
-          // ⭐ 處理系列梯次的表單邏輯
           const name = document.getElementById('s-name').value.trim();
           const desc = document.getElementById('s-desc').value.trim();
-          const img = document.getElementById('s-img').value.trim();
+          const img = document.getElementById('s-img') ? document.getElementById('s-img').value.trim() : '';
           
           if(!name) return alert('⚠️ 請輸入活動總標題');
 
@@ -435,7 +599,6 @@
 
           if (hasError) return alert('⚠️ 每個梯次的名稱都必須填寫');
 
-          // 只要有任何一個梯次有設定金額，總類型就標示為「收費」
           const isPaid = batches.some(b => b.price > 0);
 
           payload = {
@@ -445,11 +608,11 @@
               feeType: isPaid ? '收費' : '免費',
               price: isPaid ? '多票種' : 0,
               names: [],
-              startTime: batches[0].startTime, // 抓第一場的時間當作列表顯示的預設時間
+              startTime: batches[0].startTime, 
               endTime: batches[batches.length-1].endTime,
               description: desc,
               imageUrl: img,
-              batches: batches // 將梯次陣列帶入 payload 傳給後端
+              batches: batches
           };
       }
 

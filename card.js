@@ -1,6 +1,6 @@
 /**
  * card.js 
- * Version: v3.1.0 (QQ 修復版：還原分離架構、還原原生排版與圖片 placeholder 邏輯、保留 rowId 防呆導航)
+ * Version: v3.1.2 (QQ 修復版：優雅處理初始化錯誤、防護載入圈圈卡死)
  */
 const LIFF_ID = "2009367829-DLtYBDUm"; 
 const WORKER_URL = "https://actmaster.fangwl591021.workers.dev"; 
@@ -17,7 +17,7 @@ let currentActiveCard = null;
 let isProcessing = false;
 let isAdmin = false;
 let myCardOpened = false;
-let uploadTargetMode = 'card'; 
+let currentCropTarget = '';
 
 window.showToast = function(msg, isError = false) {
   const t = document.getElementById('toast');
@@ -25,7 +25,7 @@ window.showToast = function(msg, isError = false) {
   t.innerHTML = `<span class="material-symbols-outlined icon-filled">${isError ? 'error' : 'info'}</span> ${msg}`;
   t.className = `fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all font-bold flex items-center gap-2 w-max max-w-[90vw] ${isError ? 'bg-red-500 text-white border-red-600' : 'bg-slate-800 text-white border-slate-700'} opacity-100`;
   t.classList.remove('hidden');
-  setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -1rem)'; setTimeout(() => t.classList.add('hidden'), 300); }, 3000); 
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.classList.add('hidden'), 300); }, 3000); 
 };
 
 window.fetchAPI = async function(action, payload = {}, silent = false) {
@@ -39,7 +39,7 @@ window.fetchAPI = async function(action, payload = {}, silent = false) {
     clearTimeout(timeoutId);
     const resText = await response.text();
     let result;
-    try { result = JSON.parse(resText); } catch(e) { throw new Error(`系統連線失敗 (非 JSON)`); }
+    try { result = JSON.parse(resText); } catch(e) { throw new Error(`伺服器回應異常`); }
     if (!result.success) throw new Error(result.error);
     return result.data;
   } catch (err) {
@@ -95,7 +95,7 @@ function setButtonLoading(btnId, isLoading, originalText = '') {
     }
 }
 
-// ⭐ DOM防呆：首頁傳過來的 rowId 絕對信任，打破退回首頁的死胡同
+// ⭐ DOM防呆：首頁傳過來的 rowId 絕對信任
 function checkAndOpenMyCard() {
     const params = new URLSearchParams(window.location.search);
     const mode = params.get('mode');
@@ -132,19 +132,12 @@ function applyUserFilter(contacts) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const params = new URLSearchParams(window.location.search);
-  const claimCardId = params.get('claimCardId');
-  if (claimCardId) {
-      window.location.replace(`index.html?view=user-profile&claimCardId=${claimCardId}&referrer=${params.get('referrer') || ''}`);
-      return;
-  }
-  if (!document.getElementById('card-search-input')) return;
-
   try {
     await liff.init({ liffId: LIFF_ID });
     if (!liff.isLoggedIn()) { liff.login({ redirectUri: window.location.href }); return; }
     
     userProfile = await liff.getProfile();
+    const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55", "U8932b891ad24da512afb9c1a6f41567b"];
     isAdmin = ADMIN_IDS.includes(userProfile.userId);
 
     const userAvatarEl = document.getElementById('user-avatar');
@@ -153,16 +146,33 @@ document.addEventListener("DOMContentLoaded", async () => {
     const userProfileBadge = document.getElementById('user-profile-badge');
     if (userProfileBadge) userProfileBadge.classList.remove('hidden');
     
-    if (!isAdmin) { 
+    // ⭐ DOM防呆護盾：確認身分後再解鎖管理員介面
+    if (isAdmin) {
+        const roleBtn = document.getElementById('role-switch-btn');
+        if (roleBtn) roleBtn.classList.remove('hidden');
+        
+        const adminNav = document.getElementById('bottom-nav-admin');
+        if (adminNav) adminNav.classList.remove('hidden');
+    } else { 
         document.getElementById('role-switch-btn')?.remove(); 
         document.getElementById('admin-tools-container')?.remove(); 
         document.getElementById('bottom-nav-admin')?.remove(); 
+    }
+
+    if (new URLSearchParams(window.location.search).get('mode') === 'mycard') {
+        loadCardContacts();
+        return; 
     }
     
     switchView('list');
     loadCardContacts();
   } catch (err) {
     window.showToast("初始化失敗", true);
+    // ⭐ 終極防護：若初始化失敗，停止轉圈圈，並顯示錯誤文字
+    const loadText = document.getElementById('loading-text');
+    if (loadText) loadText.innerText = "初始化失敗，請確認網路連線";
+    const spinner = document.querySelector('#view-loading .animate-spin');
+    if (spinner) spinner.classList.add('hidden');
   }
 });
 
@@ -220,7 +230,11 @@ async function loadCardContacts() {
             checkAndOpenMyCard();
         }
     } catch(e) {
-        if (!cachedDataString && container) container.innerHTML = `<div class="text-center py-10 text-error font-bold">讀取失敗</div>`;
+        if (!cachedDataString && container) container.innerHTML = `<div class="text-center py-10 text-error font-bold">連線異常</div>`;
+        const loadText = document.getElementById('loading-text');
+        if (loadText) loadText.innerText = "資料讀取失敗，請重新載入";
+        const spinner = document.querySelector('#view-loading .animate-spin');
+        if (spinner) spinner.classList.add('hidden');
     }
 }
 
@@ -274,7 +288,6 @@ function renderCardPage(isReset = false) {
 
 window.loadMoreCards = function() { currentPage++; renderCardPage(false); }
 
-// ⭐ QQ 終極修復：還原完整圖片切換與原生資訊流多行備註顯示邏輯
 window.openCardDetailByRowId = function(rowId) { 
     try {
       const card = globalCardContacts.find(c => String(c.rowId) === String(rowId));
@@ -318,7 +331,6 @@ window.openCardDetailByRowId = function(rowId) {
       const tagsContainer = document.getElementById('ro-fate-tags-container');
       if (tagsContainer) { tagsContainer.innerHTML = ''; tagsContainer.style.display = 'none'; }
 
-      // 還原：多行組合備註邏輯
       const notesArr = [];
       const slogan = card['服務項目/品牌標語']||card['Slogan'];
       if(slogan) notesArr.push(`【品牌與服務】\n${slogan}`);
@@ -335,7 +347,6 @@ window.openCardDetailByRowId = function(rowId) {
       const notesEl = document.getElementById('ro-notes');
       if (notesEl) notesEl.innerText = finalNotes || '無其他資訊';
 
-      // 還原：圖片缺圖自動切換邏輯
       const imgEl = document.getElementById('ro-image');
       const noImgEl = document.getElementById('ro-no-image');
       if (card['名片圖檔'] && card['名片圖檔'] !== '圖片儲存失敗' && card['名片圖檔'] !== '無圖檔') {
@@ -419,9 +430,9 @@ window.submitCardEdit = async function() {
 
   try {
     await window.fetchAPI('updateCard', payload);
-    loadCardContacts();
+    window.showToast("✅ 資料更新成功");
     window.closeCardEdit();
-    window.showToast("✅ 資料更新成功，背景同步中...");
+    loadCardContacts();
   } catch(err) { window.showToast("更新失敗", true); }
   finally { setButtonLoading('btn-save-card-edit', false, '儲存變更'); isProcessing = false; }
 }

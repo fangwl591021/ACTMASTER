@@ -1,4 +1,4 @@
-<!-- Version: v1.3.1 (QQ 終極修復版：解決首頁名片預覽按鈕崩潰問題，並強制破除快取) -->
+<!-- Version: v1.6.0 (QQ 終極破冰版：加入版本標記與最強防呆，徹底擊碎快取綁架) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -87,7 +87,7 @@
       <div class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shadow-md shadow-blue-500/20">
         <span class="material-symbols-outlined text-[20px]">event_note</span>
       </div>
-      報名大師
+      報名大師 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v1.6.0</span>
       <span id="header-admin-badge" class="hidden bg-slate-800 text-white text-[9px] px-2 py-0.5 rounded-md uppercase tracking-wider font-bold ml-1">Admin</span>
     </div>
     <div class="flex items-center gap-3">
@@ -178,7 +178,7 @@
 
     <!-- 個人資料與專屬名片入口 -->
     <div id="view-user-profile" class="hidden animate-in fade-in pt-4 pb-10 space-y-4">
-      <h2 class="text-2xl font-extrabold font-headline mb-4 text-slate-800">個人資料</h2>
+      <h2 class="text-2xl font-extrabold font-headline mb-4 text-slate-800">個人資料 (通訊錄)</h2>
       <div class="flex flex-col"><label class="input-label">姓名</label><input type="text" id="edit-name" class="custom-input"></div>
       <div class="grid grid-cols-2 gap-3">
         <div class="flex flex-col"><label class="input-label">業種</label><input type="text" id="edit-industry" class="custom-input"></div>
@@ -194,7 +194,7 @@
       </div>
       <button id="btn-save-profile" onclick="submitProfileUpdate()" class="btn-primary mt-4">儲存變更</button>
 
-      <!-- 名片入口橫幅 -->
+      <!-- ⭐ 強制顯示的數位名片入口 -->
       <div id="my-card-entry" class="mt-8 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-5 text-white shadow-xl shadow-slate-900/20 flex justify-between items-center relative overflow-hidden cursor-pointer active:scale-[0.98] transition-transform">
           <div class="absolute -right-4 -top-4 opacity-10"><span class="material-symbols-outlined text-[100px]">contact_mail</span></div>
           <div class="relative z-10" id="my-card-info">
@@ -210,7 +210,16 @@
           </div>
       </div>
       
+      <!-- 獨立的名片上傳觸發器 -->
       <input type="file" id="profile-card-upload" accept="image/*" class="hidden" onchange="openCropper(this, 'profile')">
+
+      <!-- 終極連線雷達 (Debug Tool) -->
+      <div class="mt-8 p-4 bg-red-50 border border-red-200 rounded-xl">
+        <h3 class="text-red-700 font-bold text-[14px] flex items-center gap-1 mb-2"><span class="material-symbols-outlined">bug_report</span> 終極系統偵錯區</h3>
+        <p class="text-red-600 text-[12px] mb-3 leading-snug">如果還是抓不到名片，點擊下方按鈕強制連線，一秒抓出問題！</p>
+        <button onclick="runUltimateDebug()" class="w-full py-2 bg-red-600 text-white rounded-lg font-bold text-[13px] active:scale-95 shadow-sm hover:bg-red-700 transition-colors">執行一鍵強制偵錯</button>
+      </div>
+
     </div>
 
     <!-- 後台：管理核銷 -->
@@ -270,33 +279,6 @@
   <div class="flex-1 relative overflow-hidden flex items-center justify-center bg-black"><img id="cropper-image" src="" class="max-w-full max-h-full block opacity-0"></div>
 </div>
 
-<!-- 名片預覽 Modal -->
-<div id="readonly-card-modal" class="hidden fixed inset-0 bg-slate-100/95 backdrop-blur-sm flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl" style="z-index: 1050;">
-  <div class="bg-white px-5 py-4 flex justify-between items-center border-b border-slate-200 z-10 shrink-0 shadow-sm">
-    <h3 class="text-lg font-black text-slate-800">數位名片</h3>
-    <button onclick="closeReadOnlyCard()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-90 transition-transform"><span class="material-symbols-outlined">close</span></button>
-  </div>
-
-  <div class="flex-1 overflow-y-auto pb-28 pt-8 px-5 flex flex-col items-center">
-    <div class="w-full max-w-[340px] bg-white rounded-[20px] shadow-[0_10px_30px_rgba(0,0,0,0.08)] overflow-hidden relative border border-slate-100">
-      <div class="absolute top-3 left-3 bg-[#FF0000] text-white text-[13px] font-bold px-3 py-1 rounded-full z-10 shadow-sm tracking-widest">分享</div>
-      <img id="ro-img" src="" class="w-full h-auto max-h-[220px] object-cover bg-slate-50">
-      <div class="p-6">
-        <h2 id="ro-title" class="text-[22px] font-black text-slate-800 leading-tight mb-3"></h2>
-        <p id="ro-desc" class="text-[14px] text-slate-500 whitespace-pre-wrap leading-relaxed mb-6"></p>
-        <div id="ro-buttons" class="space-y-2.5"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-100 p-4 pb-safe flex justify-center" style="z-index: 1060; box-shadow: 0 -10px 30px rgba(0,0,0,0.05);">
-    <!-- ⭐ QQ 終極修復：移除 index.html 中錯誤綁定的產生名片按鈕，改為單純分享 -->
-    <button onclick="shareReadOnlyCardToLine(this)" class="w-[90%] py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[17px] shadow-lg shadow-green-500/30 active:scale-95 transition-all flex items-center justify-center gap-2">
-      🚀 轉發名片至 LINE
-    </button>
-  </div>
-</div>
-
 <!-- 自訂彈窗 -->
 <div id="custom-modal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-6">
   <div class="bg-white w-full max-w-[300px] rounded-3xl p-6 shadow-2xl text-center scale-95 transition-all duration-200 border border-slate-100">
@@ -326,7 +308,6 @@
   let crmPageLimit = 10;
   let currentCrmViewCount = 10;
   let isProcessing = false;
-  let currentActiveCard = null;
 
   let regStep1Data = {};
   let regCompressedBase64 = "";
@@ -360,29 +341,8 @@
     const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; l.onload = res; l.onerror = rej; document.head.appendChild(l);
   });
 
-  async function fetchAPI(action, payload = {}, useCache = false) {
-    const cacheKey = action + JSON.stringify(payload);
-    if (useCache) {
-      const cachedStr = sessionStorage.getItem(cacheKey);
-      if (cachedStr) {
-        try {
-          const cachedData = JSON.parse(cachedStr);
-          fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, payload }) })
-            .then(r => r.text())
-            .then(resText => {
-                try {
-                    const res = JSON.parse(resText);
-                    if (res.success) sessionStorage.setItem(cacheKey, JSON.stringify(res.data));
-                } catch(e) {}
-            })
-            .catch(e => console.log('Cache update failed', e));
-          return cachedData;
-        } catch(e) {
-          sessionStorage.removeItem(cacheKey); 
-        }
-      }
-    }
-    
+  // 強制禁用 sessionStorage 快取，確保永遠抓到最新資料
+  async function fetchAPI(action, payload = {}) {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 20000); 
@@ -404,13 +364,30 @@
       }
       
       if (!result.success) throw new Error(result.error);
-      
-      if (useCache) sessionStorage.setItem(cacheKey, JSON.stringify(result.data));
       return result.data;
     } catch (err) { 
       if (err.name === 'AbortError') err.message = '連線已經超時 (20秒)，請檢查網路或伺服器狀態。';
       throw err; 
     }
+  }
+
+  window.runUltimateDebug = async function() {
+      try {
+          alert('🚀 正在強制連線 Google 試算表抓取名片通訊錄...');
+          const data = await fetchAPI('getCardContacts');
+          
+          if (!data || data.length === 0) {
+              alert('🚨 偵錯結果：連線成功，但 Google 試算表回傳了「空資料 []」！\n\n請確認您的 Code.gs 是否有成功部署新版，且它找的是「會員通訊錄」！');
+          } else {
+              const first = data[0];
+              alert(`✅ 偵錯結果：成功抓到資料！\n資料庫共有 ${data.length} 筆名片。\n第一筆姓名是：${first['姓名'] || first['Name'] || '無'}`);
+              console.log("Raw Data:", data);
+              globalCardContacts = data;
+              checkMyCardEntry();
+          }
+      } catch(e) {
+          alert('❌ 偵錯失敗，連線錯誤：\n' + e.message);
+      }
   }
 
   window.onload = async () => {
@@ -572,7 +549,7 @@
                   updatePayload.Birthday = bday;
                   
                   try {
-                      const newTags = await fetchAPI('calculateFateTags', { Name: updatePayload.Name, Mobile: updatePayload.Mobile, Birthday: bday }, true);
+                      const newTags = await fetchAPI('calculateFateTags', { Name: updatePayload.Name, Mobile: updatePayload.Mobile, Birthday: bday });
                       Object.assign(updatePayload, newTags);
                   } catch(e) {}
               }
@@ -580,7 +557,7 @@
               await fetchAPI('updateCard', updatePayload);
               showToast("✅ 名片已成功認領並綁定至您的帳號");
 
-              globalCardContacts = await fetchAPI('getCardContacts', {}, false);
+              globalCardContacts = await fetchAPI('getCardContacts');
               if (!document.getElementById('view-user-profile').classList.contains('hidden')) {
                   checkMyCardEntry();
               }
@@ -622,11 +599,8 @@
   }
 
   async function checkMyCardEntry() {
-      const entryEl = document.getElementById('my-card-entry');
       const infoEl = document.getElementById('my-card-info');
-      
-      entryEl.classList.remove('hidden');
-      
+      const entryEl = document.getElementById('my-card-entry');
       if (!userProfile) return;
 
       const errorTemplate = (msg) => `
@@ -640,6 +614,15 @@
       `;
 
       try {
+          infoEl.innerHTML = `
+            <div class="flex items-center gap-1.5 mb-1.5">
+              <span class="w-2 h-2 rounded-full bg-slate-400 animate-pulse"></span>
+              <span class="text-[11px] font-bold text-slate-300 tracking-wider">比對資料庫中...</span>
+            </div>
+            <h3 class="text-[18px] font-black mb-1">數位電子名片</h3>
+            <p class="text-[12px] text-slate-300 font-medium">正在尋找您的名片紀錄</p>
+          `;
+
           const uid = userProfile.userId;
           const myName = document.getElementById('edit-name').value.trim() || userProfile.displayName;
           
@@ -671,6 +654,7 @@
                   if (checkPhone(c['手機號碼']) || checkPhone(c['Mobile']) || checkPhone(c['公司電話']) || checkPhone(c['Tel'])) {
                       return true;
                   }
+                  if (allValuesStr.includes(myPhone)) return true;
               }
               
               if (myName) {
@@ -694,12 +678,10 @@
           }
           
           if (!myCard) {
-              infoEl.querySelector('p').innerText = '同步最新資料庫中...';
-              const data = await fetchAPI('getCardContacts', {}, false); 
+              const data = await fetchAPI('getCardContacts'); 
               if (data && Array.isArray(data)) {
                   globalCardContacts = data;
                   myCard = globalCardContacts.find(isMatch);
-                  sessionStorage.setItem('getCardContacts{}', JSON.stringify(data)); 
               }
           }
 
@@ -801,7 +783,7 @@
                   });
 
                   try {
-                      const newTags = await fetchAPI('calculateFateTags', { Name: p.name, Mobile: p.phone, Birthday: p.birthday }, true);
+                      const newTags = await fetchAPI('calculateFateTags', { Name: p.name, Mobile: p.phone, Birthday: p.birthday });
                       Object.assign(updatePayload, newTags);
                   } catch(e) {}
 
@@ -932,8 +914,7 @@
       await fetchAPI('saveCard', payload); 
       showToast("🎉 專屬名片建檔成功！"); 
       
-      sessionStorage.removeItem('getCardContacts{}');
-      globalCardContacts = await fetchAPI('getCardContacts', {}, false);
+      globalCardContacts = await fetchAPI('getCardContacts');
       checkMyCardEntry();
       
     } catch(err) { 
@@ -1505,7 +1486,6 @@
            const currentImgUrl = (typeof window.getDirectImageUrl === 'function') ? window.getDirectImageUrl(rawImg) : rawImg;
            const detectedAr = (typeof window.getTrueAspectRatio === 'function') ? await window.getTrueAspectRatio(currentImgUrl) : "20:13";
            
-           // ⭐ QQ 終極修復：確保 buildFlexMessageFromCard 存在，否則給予警告
            if (typeof buildFlexMessageFromCard !== 'function') {
                throw new Error("轉發模組載入失敗，請重新整理網頁");
            }

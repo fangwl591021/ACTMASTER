@@ -1,4 +1,4 @@
-<!-- Version: v1.2.0 (QQ 修復版：加入啟動診斷雷達，徹底解決首頁卡死無反應的隱性報錯) -->
+<!-- Version: v1.2.1 (QQ 修復版：修正名片入口按鈕隱性延遲，改為記憶體瞬間比對顯示) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -102,7 +102,6 @@
 
   <main id="main-content" class="flex-1 overflow-y-auto pb-32 pt-20 px-5 space-y-6">
 
-    <!-- ⭐ QQ修復：加入啟動診斷雷達，追蹤卡死進度 -->
     <div id="view-loading" class="h-full flex flex-col items-center justify-center space-y-4 pb-20 relative">
       <div class="w-10 h-10 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
       <p class="text-slate-500 font-bold tracking-widest text-[13px]">系統載入中</p>
@@ -414,7 +413,6 @@
     const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; l.onload = res; l.onerror = rej; document.head.appendChild(l);
   });
 
-  // ⭐ QQ修復：強化 API 錯誤捕捉與超時攔截，確保錯誤 100% 拋出
   async function fetchAPI(action, payload = {}, useCache = false) {
     const cacheKey = action + JSON.stringify(payload);
     if (useCache && sessionStorage.getItem(cacheKey)) {
@@ -426,7 +424,7 @@
     
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒超時保護
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
 
       const response = await fetch(WORKER_URL, { 
           method: 'POST', 
@@ -454,7 +452,6 @@
     }
   }
 
-  // ⭐ QQ修復：首頁載入崩潰雷達！
   window.onload = async () => {
     const debugLog = document.getElementById('boot-debug-log');
     const panel = document.getElementById('boot-debug-panel');
@@ -494,6 +491,11 @@
 
       if (claimCardId) { window.claimCardId = claimCardId; }
       
+      // ⭐ 先去背景抓名片清單，為了 checkMyCardEntry 準備
+      fetchAPI('getCardContacts').then(data => {
+          globalCardContacts = data || [];
+      }).catch(e => console.log("背景抓取名單失敗", e));
+
       document.getElementById('view-loading').classList.add('hidden'); 
       
       if (isAdmin) {
@@ -534,7 +536,6 @@
         }
       }
     } catch (err) { 
-      // ⭐ QQ修復：當發生隱性崩潰時，強迫顯示超大紅色錯誤面板，絕不卡死！
       document.getElementById('view-loading').classList.add('hidden');
       const container = document.getElementById('main-content');
       if (container) {
@@ -655,16 +656,33 @@
     else if (view === 'user-history') loadUserHistory();
   }
 
+  // ⭐ QQ修復：徹底重寫這支函式，讓它優先從全域快取瞬間比對，不再陷入網路延遲卡死的窘境
   async function checkMyCardEntry() {
       try {
-          const data = await fetchAPI('getCardContacts', {}, true);
-          const myCard = data.find(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId || c['Line ID'] === userProfile.userId);
+          let myCard = null;
+          // 優先從剛剛背景載入的 globalCardContacts 中比對 (瞬間完成)
+          if (globalCardContacts && globalCardContacts.length > 0) {
+              myCard = globalCardContacts.find(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId || c['Line ID'] === userProfile.userId || c['lineId'] === userProfile.userId);
+          }
+          
+          // 如果真的找不到，才花時間去跟伺服器要一次資料作最終確認 (防呆)
+          if (!myCard) {
+              const data = await fetchAPI('getCardContacts', {}, true);
+              if (data && data.length > 0) {
+                  globalCardContacts = data;
+                  myCard = globalCardContacts.find(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId || c['Line ID'] === userProfile.userId || c['lineId'] === userProfile.userId);
+              }
+          }
+
+          // 判定成功，瞬間顯示按鈕
           if (myCard) {
               document.getElementById('my-card-entry').classList.remove('hidden');
           } else {
               document.getElementById('my-card-entry').classList.add('hidden');
           }
-      } catch(e) {}
+      } catch(e) {
+          console.error("判斷名片權限時發生錯誤：", e);
+      }
   }
 
   function showModal(title, desc, targetView = '') {

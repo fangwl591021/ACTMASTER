@@ -75,13 +75,13 @@
       <div class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shadow-sm">
         <span class="material-symbols-outlined text-[20px]">contact_mail</span>
       </div>
-      名片管理 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v7.0</span>
+      名片管理 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v7.1.0</span>
     </div>
     <div class="flex items-center gap-3">
       <div id="user-profile-badge" class="hidden flex items-center gap-2">
         <img id="user-avatar" src="" class="w-9 h-9 rounded-full object-cover border border-slate-200 shadow-sm">
       </div>
-      <button id="role-switch-btn" onclick="window.location.href='index.html'" class="hidden w-9 h-9 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center active:scale-95 transition-all hover:bg-slate-200">
+      <button id="role-switch-btn" onclick="if(typeof window.toggleRoleMode === 'function') window.toggleRoleMode(); else window.location.href='index.html'" class="hidden w-9 h-9 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center active:scale-95 transition-all hover:bg-slate-200">
         <span class="material-symbols-outlined text-[20px]">swap_horiz</span>
       </button>
     </div>
@@ -94,7 +94,6 @@
       <p id="loading-text" class="text-slate-500 font-bold text-[14px] tracking-wider">資料載入中</p>
     </div>
 
-    <!-- 主畫面 -->
     <div id="view-list" class="hidden animate-in fade-in">
       <div id="admin-tools-container" class="px-5 pt-4">
         <div class="bg-white rounded-2xl shadow-sm p-6 text-center border border-slate-100">
@@ -114,13 +113,13 @@
           </div>
           
           <div class="text-center mt-4">
-            <button id="btn-batch-regenerate" onclick="batchRegenerateECards()" class="text-[12px] text-slate-400 hover:text-primary transition-colors font-bold flex items-center justify-center mx-auto gap-1 active:scale-95">
+            <button id="btn-batch-regenerate" onclick="if(typeof window.batchRegenerateECards === 'function') window.batchRegenerateECards()" class="text-[12px] text-slate-400 hover:text-primary transition-colors font-bold flex items-center justify-center mx-auto gap-1 active:scale-95">
               <span class="material-symbols-outlined text-[15px]">sync</span> 批次重新讀取寫入所有名片按鈕
             </button>
           </div>
 
-          <input type="file" id="card-camera" accept="image/*" capture="environment" class="hidden" onchange="openCropper(this, 'card')">
-          <input type="file" id="card-upload" accept="image/*" class="hidden" onchange="openCropper(this, 'card')">
+          <input type="file" id="card-camera" accept="image/*" capture="environment" class="hidden" onchange="if(typeof window.openCropper === 'function') window.openCropper(this, 'card')">
+          <input type="file" id="card-upload" accept="image/*" class="hidden" onchange="if(typeof window.openCropper === 'function') window.openCropper(this, 'card')">
         </div>
       </div>
 
@@ -128,22 +127,21 @@
         <div class="px-5 mb-3">
           <div class="relative flex flex-col">
             <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
-            <input type="text" id="card-search-input" onkeyup="filterCardList()" class="w-full h-[48px] pl-11 pr-4 bg-white border border-transparent rounded-xl text-[15px] outline-none focus:ring-4 focus:ring-primary/10 transition-all shadow-sm font-medium" placeholder="搜尋姓名或公司...">
+            <input type="text" id="card-search-input" onkeyup="if(typeof window.filterCardList === 'function') window.filterCardList()" class="w-full h-[48px] pl-11 pr-4 bg-white border border-transparent rounded-xl text-[15px] outline-none focus:ring-4 focus:ring-primary/10 transition-all shadow-sm font-medium" placeholder="搜尋姓名或公司...">
           </div>
         </div>
         <div id="admin-card-list-container" class="flex flex-col mt-2"></div>
         <div id="card-load-more-box" class="hidden py-6 text-center">
-          <button onclick="loadMoreCards()" class="text-slate-600 font-bold text-[14px] px-6 py-2.5 bg-white shadow-sm rounded-full active:scale-95 transition-all">
+          <button onclick="if(typeof window.loadMoreCards === 'function') window.loadMoreCards()" class="text-slate-600 font-bold text-[14px] px-6 py-2.5 bg-white shadow-sm rounded-full active:scale-95 transition-all">
             顯示更多名片
           </button>
         </div>
       </div>
     </div>
 
-    <!-- AI 處理與確認表單 -->
     <div id="view-process" class="hidden space-y-6 animate-in fade-in pt-4 px-5">
       <div class="flex items-center gap-3 mb-2">
-        <button onclick="resetUI()" class="w-9 h-9 bg-white rounded-full flex items-center justify-center text-slate-600 shadow-sm active:scale-90 transition-all"><span class="material-symbols-outlined text-[20px]">arrow_back</span></button>
+        <button onclick="if(typeof window.resetUI === 'function') window.resetUI()" class="w-9 h-9 bg-white rounded-full flex items-center justify-center text-slate-600 shadow-sm active:scale-90 transition-all"><span class="material-symbols-outlined text-[20px]">arrow_back</span></button>
         <h2 class="text-[20px] font-bold text-slate-800 tracking-tight">辨識結果確認</h2>
       </div>
 
@@ -190,8 +188,8 @@
           </div>
 
           <div class="flex gap-3 mt-8">
-            <button onclick="resetUI()" class="w-1/3 py-3.5 bg-slate-100 text-slate-600 rounded-xl font-bold text-[15px] active:scale-95 transition-all">取消</button>
-            <button id="btn-save" onclick="saveToCloud()" class="flex-1 btn-primary">存入雲端 <span class="material-symbols-outlined text-[18px]">cloud_upload</span></button>
+            <button onclick="if(typeof window.resetUI === 'function') window.resetUI()" class="w-1/3 py-3.5 bg-slate-100 text-slate-600 rounded-xl font-bold text-[15px] active:scale-95 transition-all">取消</button>
+            <button id="btn-save" onclick="if(typeof window.saveToCloud === 'function') window.saveToCloud()" class="flex-1 btn-primary">存入雲端 <span class="material-symbols-outlined text-[18px]">cloud_upload</span></button>
           </div>
         </div>
       </div>
@@ -208,12 +206,11 @@
   </nav>
 </div>
 
-<!-- 名片詳情 Modal -->
 <div id="readonly-card-modal" class="hidden fixed inset-0 bg-white flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl overflow-hidden" style="z-index: 1000;">
   
   <div class="absolute top-4 right-4 z-50 flex gap-3">
-    <button onclick="openCardEdit()" class="w-10 h-10 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-blue-600 shadow-sm"><span class="material-symbols-outlined text-[20px]">edit</span></button>
-    <button onclick="closeReadOnlyCard()" class="w-10 h-10 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center text-white shadow-sm"><span class="material-symbols-outlined text-[20px]">close</span></button>
+    <button onclick="if(typeof window.openCardEdit === 'function') window.openCardEdit()" class="w-10 h-10 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-blue-600 shadow-sm"><span class="material-symbols-outlined text-[20px]">edit</span></button>
+    <button onclick="if(typeof window.closeReadOnlyCard === 'function') window.closeReadOnlyCard()" class="w-10 h-10 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center text-white shadow-sm"><span class="material-symbols-outlined text-[20px]">close</span></button>
   </div>
 
   <div class="flex-1 overflow-y-auto pb-28">
@@ -249,16 +246,15 @@
   </div>
 
   <div class="fixed bottom-0 w-full max-w-md bg-white p-4 pb-safe flex gap-3 z-[1005] border-t border-slate-100 shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
-    <button id="btn-share-claim" onclick="shareClaimLink()" class="hidden flex-1 py-3.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-[16px] active:scale-95 transition-all">邀請認領</button>
-    <button onclick="if(typeof openECardGenerator === 'function') openECardGenerator(); else alert('編輯器尚未載入，請重新整理頁面');" class="flex-1 py-3.5 bg-[#06C755] text-white rounded-xl font-bold text-[16px] active:scale-95 transition-all shadow-sm">產生數位名片</button>
+    <button id="btn-share-claim" onclick="if(typeof window.shareClaimLink === 'function') window.shareClaimLink()" class="hidden flex-1 py-3.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-[16px] active:scale-95 transition-all">邀請認領</button>
+    <button onclick="if(typeof window.openECardGenerator === 'function') window.openECardGenerator(); else alert('編輯器尚未載入，請重新整理頁面');" class="flex-1 py-3.5 bg-[#06C755] text-white rounded-xl font-bold text-[16px] active:scale-95 transition-all shadow-sm">產生數位名片</button>
   </div>
 </div>
 
-<!-- 名片編輯 Modal -->
 <div id="card-edit-modal" class="hidden fixed inset-0 bg-slate-50 flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl overflow-hidden" style="z-index: 1010;">
   <div class="bg-white px-5 py-4 flex justify-between items-center border-b border-slate-100 shrink-0 shadow-sm">
     <h3 class="text-[18px] font-extrabold text-slate-800">編輯名片資料</h3>
-    <button onclick="closeCardEdit()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-90 transition-transform"><span class="material-symbols-outlined">close</span></button>
+    <button onclick="if(typeof window.closeCardEdit === 'function') window.closeCardEdit()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-90 transition-transform"><span class="material-symbols-outlined">close</span></button>
   </div>
   <div class="flex-1 overflow-y-auto px-5 py-6 space-y-6 pb-28">
     <div class="grid grid-cols-2 gap-4"><div class="flex flex-col"><label class="input-label">姓名</label><input type="text" id="edit-c-Name" class="custom-input"></div><div class="flex flex-col"><label class="input-label">英文名</label><input type="text" id="edit-c-EnglishName" class="custom-input"></div></div>
@@ -279,38 +275,35 @@
     <div class="flex flex-col pt-4 border-t border-slate-200 mt-4"><label class="input-label text-primary">內部建檔備註</label><textarea id="edit-c-Notes" class="textarea-block h-24"></textarea></div>
   </div>
   <div class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-100 p-4 pb-safe z-[1015]">
-    <button id="btn-save-card-edit" onclick="submitCardEdit()" class="btn-primary">儲存變更</button>
+    <button id="btn-save-card-edit" onclick="if(typeof window.submitCardEdit === 'function') window.submitCardEdit()" class="btn-primary">儲存變更</button>
   </div>
 </div>
 
-<!-- 數位電子名片產生器 -->
 <div id="ecard-generator-modal" class="hidden fixed inset-0 bg-slate-50 flex flex-col animate-in fade-in duration-300 w-full z-[1020] overflow-hidden">
   <div class="bg-white px-5 py-4 border-b border-slate-100 flex justify-between items-center shadow-sm shrink-0 w-full z-20">
     <div class="flex items-center gap-3">
-      <button onclick="closeECardGenerator()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-90 transition-transform"><span class="material-symbols-outlined">close</span></button>
+      <button onclick="if(typeof window.closeECardGenerator === 'function') window.closeECardGenerator()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-90 transition-transform"><span class="material-symbols-outlined">close</span></button>
       <div class="flex flex-col">
         <h3 class="text-[17px] font-extrabold text-slate-800 tracking-tight leading-tight">數位名片編輯器</h3>
         <p class="text-[11px] text-slate-400 font-bold tracking-widest mt-0.5">PREVIEW & PUBLISH</p>
       </div>
     </div>
-    <button onclick="saveECardConfig()" id="btn-save-ecard" class="px-4 py-2 bg-blue-50 text-blue-700 text-[13px] font-bold rounded-lg active:scale-95 transition-transform">儲存草稿</button>
+    <button onclick="if(typeof window.saveECardConfig === 'function') window.saveECardConfig()" id="btn-save-ecard" class="px-4 py-2 bg-blue-50 text-blue-700 text-[13px] font-bold rounded-lg active:scale-95 transition-transform">儲存草稿</button>
   </div>
 
   <div class="flex-1 overflow-y-auto w-full bg-slate-50 lg:bg-white">
     <div class="container mx-auto max-w-6xl h-full">
       <div class="grid grid-cols-1 lg:grid-cols-5 gap-0 lg:gap-8 h-full">
         
-        <!-- 左側設定區 -->
         <div class="lg:col-span-3">
           <div class="bg-white px-5 py-6">
             <div id="ec-editor-form" class="space-y-6">
               <div class="flex p-1.5 rounded-xl bg-slate-100 mb-6">
-                <button id="ec-tab-image" onclick="toggleECardType('image')" class="flex-1 py-2 rounded-lg text-[14px] font-bold bg-white text-slate-800 shadow-sm transition-all">靜態圖片</button>
-                <button id="ec-tab-video" onclick="toggleECardType('video')" class="flex-1 py-2 rounded-lg text-[14px] font-bold text-slate-400 transition-all hover:text-slate-600 bg-transparent">動態影片</button>
+                <button id="ec-tab-image" onclick="if(typeof window.toggleECardType === 'function') window.toggleECardType('image')" class="flex-1 py-2 rounded-lg text-[14px] font-bold bg-white text-slate-800 shadow-sm transition-all">靜態圖片</button>
+                <button id="ec-tab-video" onclick="if(typeof window.toggleECardType === 'function') window.toggleECardType('video')" class="flex-1 py-2 rounded-lg text-[14px] font-bold text-slate-400 transition-all hover:text-slate-600 bg-transparent">動態影片</button>
               </div>
               <input type="hidden" id="ec-card-type" value="image">
 
-              <!-- 影片區塊 -->
               <div id="ec-video-input-group" class="hidden w-full mb-6 pb-6 border-b border-slate-100">
                 <div class="flex justify-between items-center mb-1.5">
                   <label class="input-label !mb-0">影片網址</label>
@@ -384,7 +377,6 @@
           </div>
         </div>
 
-        <!-- 右側預覽區 -->
         <div class="lg:col-span-2 hidden lg:block bg-slate-50/50 p-6 border-l border-slate-100 flex justify-center">
           <div class="sticky top-6 pb-6 w-full flex justify-center">
             <div class="phone-frame w-full max-w-[340px] h-[680px] flex flex-col shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)]">
@@ -425,7 +417,6 @@
   </div>
 </div>
 
-<!-- LINE VOOM 轉換器 Modal -->
 <div id="voom-modal" class="hidden fixed inset-0 z-[1050] bg-black/40 backdrop-blur-sm flex flex-col justify-end animate-in fade-in duration-300 w-full max-w-md mx-auto left-0 right-0">
   <div class="bg-white w-full rounded-t-[2rem] overflow-hidden flex flex-col max-h-[90vh] bottom-sheet-up">
       <div class="w-full flex justify-center pt-3 pb-2 shrink-0 bg-white z-10 rounded-t-[2rem]"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
@@ -470,9 +461,8 @@
 
 <div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-bold flex items-center gap-2 w-max max-w-[90vw] opacity-0 pointer-events-none border border-slate-700"></div>
 
-<!-- 嚴格載入外部拆分的獨立檔案，加上版本號強制破除快取 -->
-<script src="card.js?v=7.0.0"></script>
-<script src="card-ecard.js?v=7.0.0"></script>
+<script src="card.js?v=20260404_1915"></script>
+<script src="card-ecard.js?v=20260404_1915"></script>
 
 </body>
 </html>

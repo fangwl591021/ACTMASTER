@@ -1,4 +1,4 @@
-<!-- Version: v1.6.0 (QQ 終極破冰版：加入版本標記與最強防呆，徹底擊碎快取綁架) -->
+<!-- Version: v1.7.0 (QQ 終極破冰版：導入全域無差別掃描與霸王強制綁定，徹底打破無限輪迴 Bug) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -87,7 +87,7 @@
       <div class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shadow-md shadow-blue-500/20">
         <span class="material-symbols-outlined text-[20px]">event_note</span>
       </div>
-      報名大師 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v1.6.0</span>
+      報名大師 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v1.7.0</span>
       <span id="header-admin-badge" class="hidden bg-slate-800 text-white text-[9px] px-2 py-0.5 rounded-md uppercase tracking-wider font-bold ml-1">Admin</span>
     </div>
     <div class="flex items-center gap-3">
@@ -194,10 +194,10 @@
       </div>
       <button id="btn-save-profile" onclick="submitProfileUpdate()" class="btn-primary mt-4">儲存變更</button>
 
-      <!-- ⭐ 強制顯示的數位名片入口 -->
+      <!-- 名片入口橫幅 -->
       <div id="my-card-entry" class="mt-8 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-5 text-white shadow-xl shadow-slate-900/20 flex justify-between items-center relative overflow-hidden cursor-pointer active:scale-[0.98] transition-transform">
           <div class="absolute -right-4 -top-4 opacity-10"><span class="material-symbols-outlined text-[100px]">contact_mail</span></div>
-          <div class="relative z-10" id="my-card-info">
+          <div class="relative z-10 w-full pr-4" id="my-card-info">
               <div class="flex items-center gap-1.5 mb-1.5">
                 <span class="w-2 h-2 rounded-full bg-slate-400 animate-pulse"></span>
                 <span class="text-[11px] font-bold text-slate-300 tracking-wider">檢查狀態中...</span>
@@ -205,7 +205,7 @@
               <h3 class="text-[18px] font-black mb-1">數位電子名片</h3>
               <p class="text-[12px] text-slate-300 font-medium">讀取中...</p>
           </div>
-          <div class="relative z-10 w-11 h-11 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20 shadow-sm">
+          <div class="relative z-10 w-11 h-11 shrink-0 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20 shadow-sm">
               <span class="material-symbols-outlined text-[24px]">arrow_forward</span>
           </div>
       </div>
@@ -279,6 +279,32 @@
   <div class="flex-1 relative overflow-hidden flex items-center justify-center bg-black"><img id="cropper-image" src="" class="max-w-full max-h-full block opacity-0"></div>
 </div>
 
+<!-- 名片預覽 Modal -->
+<div id="readonly-card-modal" class="hidden fixed inset-0 bg-slate-100/95 backdrop-blur-sm flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl" style="z-index: 1050;">
+  <div class="bg-white px-5 py-4 flex justify-between items-center border-b border-slate-200 z-10 shrink-0 shadow-sm">
+    <h3 class="text-lg font-black text-slate-800">數位名片</h3>
+    <button onclick="closeReadOnlyCard()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-90 transition-transform"><span class="material-symbols-outlined">close</span></button>
+  </div>
+
+  <div class="flex-1 overflow-y-auto pb-28 pt-8 px-5 flex flex-col items-center">
+    <div class="w-full max-w-[340px] bg-white rounded-[20px] shadow-[0_10px_30px_rgba(0,0,0,0.08)] overflow-hidden relative border border-slate-100">
+      <div class="absolute top-3 left-3 bg-[#FF0000] text-white text-[13px] font-bold px-3 py-1 rounded-full z-10 shadow-sm tracking-widest">分享</div>
+      <img id="ro-img" src="" class="w-full h-auto max-h-[220px] object-cover bg-slate-50">
+      <div class="p-6">
+        <h2 id="ro-title" class="text-[22px] font-black text-slate-800 leading-tight mb-3"></h2>
+        <p id="ro-desc" class="text-[14px] text-slate-500 whitespace-pre-wrap leading-relaxed mb-6"></p>
+        <div id="ro-buttons" class="space-y-2.5"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-100 p-4 pb-safe flex justify-center" style="z-index: 1060; box-shadow: 0 -10px 30px rgba(0,0,0,0.05);">
+    <button onclick="shareReadOnlyCardToLine(this)" class="w-[90%] py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[17px] shadow-lg shadow-green-500/30 active:scale-95 transition-all flex items-center justify-center gap-2">
+      🚀 轉發名片至 LINE
+    </button>
+  </div>
+</div>
+
 <!-- 自訂彈窗 -->
 <div id="custom-modal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-6">
   <div class="bg-white w-full max-w-[300px] rounded-3xl p-6 shadow-2xl text-center scale-95 transition-all duration-200 border border-slate-100">
@@ -308,6 +334,7 @@
   let crmPageLimit = 10;
   let currentCrmViewCount = 10;
   let isProcessing = false;
+  let currentActiveCard = null;
 
   let regStep1Data = {};
   let regCompressedBase64 = "";
@@ -341,7 +368,6 @@
     const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; l.onload = res; l.onerror = rej; document.head.appendChild(l);
   });
 
-  // 強制禁用 sessionStorage 快取，確保永遠抓到最新資料
   async function fetchAPI(action, payload = {}) {
     try {
       const controller = new AbortController();
@@ -598,20 +624,11 @@
     else if (view === 'user-history') loadUserHistory();
   }
 
+  // ⭐ QQ 終極修復：全領域無差別掃描，任何欄位對到就直接找回來！
   async function checkMyCardEntry() {
       const infoEl = document.getElementById('my-card-info');
       const entryEl = document.getElementById('my-card-entry');
       if (!userProfile) return;
-
-      const errorTemplate = (msg) => `
-        <div class="flex items-center gap-1.5 mb-1.5">
-          <span class="w-2 h-2 rounded-full bg-red-400"></span>
-          <span class="text-[11px] font-bold text-red-300 tracking-wider">連線異常</span>
-        </div>
-        <h3 class="text-[18px] font-black mb-1">無法讀取狀態</h3>
-        <p class="text-[12px] text-slate-300 font-medium line-clamp-2">${msg}</p>
-        <button onclick="event.stopPropagation(); checkMyCardEntry()" class="mt-2 px-3 py-1 bg-white/20 text-white rounded text-[11px] font-bold active:scale-95 transition-all">重新整理</button>
-      `;
 
       try {
           infoEl.innerHTML = `
@@ -620,11 +637,14 @@
               <span class="text-[11px] font-bold text-slate-300 tracking-wider">比對資料庫中...</span>
             </div>
             <h3 class="text-[18px] font-black mb-1">數位電子名片</h3>
-            <p class="text-[12px] text-slate-300 font-medium">正在尋找您的名片紀錄</p>
+            <p class="text-[12px] text-slate-300 font-medium">正在為您尋找名片紀錄</p>
           `;
+          entryEl.classList.remove('hidden');
 
           const uid = userProfile.userId;
-          const myName = document.getElementById('edit-name').value.trim() || userProfile.displayName;
+          let myName = document.getElementById('edit-name').value.trim();
+          if (!myName && registeredInfo && registeredInfo.name) myName = registeredInfo.name;
+          if (!myName) myName = userProfile.displayName;
           
           let myPhone = document.getElementById('edit-phone').value.trim();
           if (!myPhone && registeredInfo && registeredInfo.phone) myPhone = registeredInfo.phone;
@@ -635,44 +655,45 @@
               if (myPhone.length === 9 && myPhone.startsWith('9')) myPhone = '0' + myPhone;
           }
 
+          // 地毯式搜索邏輯
           const isMatch = (c) => {
               if (!c) return false;
               
-              const cUid = String(c['LINE ID'] || c.userId || c['Line ID'] || c.lineId || '').trim();
-              if (cUid && cUid === uid) return true;
+              // 抽取出該列所有的值與標題，無差別比對
+              const values = Object.values(c).map(v => String(v).trim());
+              const keys = Object.keys(c);
 
-              const allValuesStr = Object.values(c).join('|||');
-              
+              // 1. 比對 LINE ID (防呆：不管 Google 的欄位名稱多幾個空白)
+              for (let k of keys) {
+                  const pureK = k.replace(/\s+/g, '').toUpperCase();
+                  if (pureK.includes('LINEID') || pureK === 'USERID') {
+                      if (String(c[k]).trim() === uid) return true;
+                  }
+              }
+
+              // 2. 比對手機號碼 (全欄位搜索，不管 Google 把電話存在哪一格)
               if (myPhone) {
-                  const checkPhone = (p) => {
-                      if (!p) return false;
-                      let pureP = String(p).replace(/[^\d]/g, '');
+                  for (let v of values) {
+                      let pureP = v.replace(/[^\d]/g, '');
                       if (pureP.startsWith('886')) pureP = '0' + pureP.substring(3);
                       if (pureP.length === 9 && pureP.startsWith('9')) pureP = '0' + pureP;
-                      return pureP === myPhone;
-                  };
-                  if (checkPhone(c['手機號碼']) || checkPhone(c['Mobile']) || checkPhone(c['公司電話']) || checkPhone(c['Tel'])) {
-                      return true;
+                      if (pureP && pureP === myPhone) return true;
                   }
-                  if (allValuesStr.includes(myPhone)) return true;
               }
               
+              // 3. 比對姓名 (全欄位搜索，支援模糊比對)
               if (myName) {
-                  let cName = String(c['姓名'] || c['Name'] || '').trim();
                   let mName = myName.trim();
-                  
-                  if (cName && cName === mName) return true;
-                  if (cName && mName.includes(cName)) return true;
-                  
-                  let mNameFirstPart = mName.split(/[\s\/_+-]/)[0];
-                  if (mNameFirstPart && mNameFirstPart.length >= 2 && allValuesStr.includes(mNameFirstPart)) return true;
+                  let mNameFirstPart = mName.split(/[\s\/_+-]/)[0]; // 切掉後面的雜雜念
+                  for (let v of values) {
+                      if (v === mName) return true;
+                      if (mNameFirstPart && mNameFirstPart.length >= 2 && v.includes(mNameFirstPart)) return true;
+                  }
               }
-              
               return false;
           };
 
           let myCard = null;
-          
           if (globalCardContacts && Array.isArray(globalCardContacts) && globalCardContacts.length > 0) {
               myCard = globalCardContacts.find(isMatch);
           }
@@ -686,10 +707,9 @@
           }
 
           if (myCard) {
+              // 背景默默綁定
               if (!myCard['LINE ID'] || String(myCard['LINE ID']).trim() !== uid) {
-                  myCard['LINE ID'] = uid;
-                  myCard.userId = uid;
-                  fetchAPI('updateCard', { rowId: myCard.rowId, 'LINE ID': uid, userId: uid }).catch(e => console.log("背景綁定 LINE ID 失敗", e));
+                  fetchAPI('updateCard', { rowId: myCard.rowId, 'LINE ID': uid, userId: uid }).catch(e => console.log("綁定 ID 失敗", e));
               }
 
               infoEl.innerHTML = `
@@ -702,19 +722,29 @@
               `;
               entryEl.onclick = () => window.location.href = 'card.html?mode=mycard';
           } else {
+              // ⭐ 透明化診斷：如果找不到，直接把比對條件印出來！
               infoEl.innerHTML = `
                 <div class="flex items-center gap-1.5 mb-1.5">
                   <span class="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]"></span>
-                  <span class="text-[11px] font-bold text-amber-300 tracking-wider">尚未建立名片</span>
+                  <span class="text-[11px] font-bold text-amber-300 tracking-wider">找不到對應的名片</span>
                 </div>
-                <h3 class="text-[18px] font-black mb-1">建立專屬名片</h3>
-                <p class="text-[12px] text-slate-300 font-medium">點擊上傳實體名片，由 AI 自動建檔</p>
+                <h3 class="text-[18px] font-black mb-1">尚未建立名片</h3>
+                <p class="text-[10px] text-slate-300 font-medium line-clamp-2 mb-1">系統比對條件：<br>姓名[${myName}] 或 手機[${myPhone || '未設定'}]</p>
+                <div class="inline-block mt-1 px-3 py-1 bg-white/20 text-white rounded text-[11px] font-bold">點此立即上傳建檔 👉</div>
               `;
               entryEl.onclick = () => document.getElementById('profile-card-upload').click();
           }
       } catch(e) {
-          console.error("判斷名片權限時發生錯誤：", e);
-          infoEl.innerHTML = errorTemplate(e.message || '未知錯誤');
+          console.error("判斷名片時發生錯誤：", e);
+          infoEl.innerHTML = `
+            <div class="flex items-center gap-1.5 mb-1.5">
+              <span class="w-2 h-2 rounded-full bg-red-400"></span>
+              <span class="text-[11px] font-bold text-red-300 tracking-wider">連線異常</span>
+            </div>
+            <h3 class="text-[18px] font-black mb-1">無法讀取狀態</h3>
+            <p class="text-[12px] text-slate-300 font-medium line-clamp-2">${e.message || '未知錯誤'}</p>
+            <button onclick="event.stopPropagation(); checkMyCardEntry()" class="mt-2 px-3 py-1 bg-white/20 text-white rounded text-[11px] font-bold active:scale-95 transition-all">重新整理</button>
+          `;
           entryEl.onclick = null;
       }
   }
@@ -873,7 +903,15 @@
     try {
       const data = await fetchAPI('recognizeCard', { base64Image: regCompressedBase64, Birthday: regStep1Data.birthday });
       const payload = { base64Image: regCompressedBase64, userId: userProfile.userId, 'LINE ID': userProfile.userId, Name: regStep1Data.name, EnglishName: data.EnglishName || '', Title: data.Title || '', Department: data.Department || '', CompanyName: data.CompanyName || '', TaxID: data.TaxID || '', Mobile: regStep1Data.phone, Tel: data.Tel || '', Ext: data.Ext || '', Fax: data.Fax || '', Address: data.Address || regStep1Data.address || '', Email: data.Email || '', Website: data.Website || '', SocialMedia: data.SocialMedia || '', Slogan: data.Slogan || '', Notes: '註冊自動建檔', Birthday: regStep1Data.birthday || '', Personality: data.Personality || '', Hobbies: data.Hobbies || '', Wealth: data.Wealth || '', Health: data.Health || '', Career: data.Career || '' };
-      await fetchAPI('saveCard', payload); showToast("名片建檔成功！"); finishRegistration();
+      
+      await fetchAPI('saveCard', payload); 
+      showToast("名片建檔成功！"); 
+      
+      // ⭐ 霸王硬上弓：建檔後，不管資料庫回傳什麼，強制把這張卡片塞進記憶體！
+      if (!globalCardContacts) globalCardContacts = [];
+      globalCardContacts.unshift(payload);
+
+      finishRegistration();
     } catch(err) { finishRegistration(); }
   }
 
@@ -884,6 +922,7 @@
       const data = await fetchAPI('recognizeCard', { base64Image: regCompressedBase64, Birthday: bday });
       
       const payload = { 
+        rowId: Date.now(), // 先給一個假 ID 防止後續報錯
         base64Image: regCompressedBase64, 
         userId: userProfile.userId, 
         'LINE ID': userProfile.userId, 
@@ -914,7 +953,10 @@
       await fetchAPI('saveCard', payload); 
       showToast("🎉 專屬名片建檔成功！"); 
       
-      globalCardContacts = await fetchAPI('getCardContacts');
+      // ⭐ 霸王硬上弓：打破無限輪迴，只要上傳成功，馬上強制顯示「已開通」！
+      if (!globalCardContacts) globalCardContacts = [];
+      globalCardContacts.unshift(payload);
+      
       checkMyCardEntry();
       
     } catch(err) { 

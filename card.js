@@ -1,11 +1,12 @@
 /**
  * card.js 
- * QQ 大師修復版：確保全域函數被正確綁定至 window 供 card-ecard 呼叫
- * Version: v1.8.2 
+ * QQ 大師升級版：導入 App 級別的 LocalStorage 快取與背景靜默更新引擎 (Stale-While-Revalidate)
+ * Version: v1.9.0 
  */
 
 const LIFF_ID = "2009367829-DLtYBDUm"; 
 const WORKER_URL = "https://actmaster.fangwl591021.workers.dev"; 
+const CACHE_KEY_CONTACTS = "app_cache_card_contacts_v1"; // ⭐ 新增專屬的 LocalStorage Key
 
 let compressedBase64 = "";
 let userProfile = null;
@@ -63,7 +64,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if(loadText) loadText.innerText = '準備轉發數位名片...';
       
       try {
-          const contacts = await fetchAPI('getCardContacts');
+          const contacts = await window.fetchAPI('getCardContacts');
           const card = contacts.find(c => String(c.rowId) === String(shareCardId));
           if (!card) throw new Error('找不到該名片資料');
 
@@ -116,7 +117,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       liff.login({ redirectUri: window.location.href });
     }
   } catch (err) {
-    showToast("⚠️ LIFF 初始化失敗", true);
+    window.showToast("⚠️ LIFF 初始化失敗", true);
   }
 });
 
@@ -368,8 +369,7 @@ async function saveToCloud() {
   try {
     await window.fetchAPI('saveCard', payload);
     window.showToast("🎉 建立成功！");
-    globalCardContacts = [];
-    sessionStorage.removeItem('getCardContacts{}');
+    // ⭐ 當資料寫入成功，不再清空整個畫面，而是觸發 loadCardContacts 讓它做背景同步更新
     setTimeout(() => { resetUI(); }, 1000);
   } catch(err) {
     console.error(err);
@@ -379,6 +379,7 @@ async function saveToCloud() {
   }
 }
 
+// ⭐ QQ 大師升級：導入 App 級 LocalStorage 與 背景靜默同步引擎
 async function loadCardContacts() { 
     const container = document.getElementById('admin-card-list-container');
     if (!container) return; 
@@ -394,59 +395,67 @@ async function loadCardContacts() {
         if (loadMoreBox) loadMoreBox.classList.add('hidden');
     }
 
-    const cacheKey = 'getCardContacts{}';
-    const cached = sessionStorage.getItem(cacheKey);
+    // 1. 嘗試從 LocalStorage 撈取快取資料 (達到秒開效果)
+    const cachedDataString = localStorage.getItem(CACHE_KEY_CONTACTS);
     
-    if (cached) {
+    if (cachedDataString) {
         try {
-            globalCardContacts = JSON.parse(cached);
-            globalCardContacts.forEach(c => {
-                if (c['手機號碼']) c['手機號碼'] = formatPhoneStr(c['手機號碼']);
-                if (c['公司電話']) c['公司電話'] = formatPhoneStr(c['公司電話']);
-            });
+            globalCardContacts = JSON.parse(cachedDataString);
             
             if (!isAdmin) {
                 globalCardContacts = globalCardContacts.filter(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId || c['Line ID'] === userProfile.userId);
                 const mode = new URLSearchParams(window.location.search).get('mode');
                 if (mode === 'mycard' && globalCardContacts.length > 0) {
-                    openCardDetailByRowId(globalCardContacts[0].rowId);
+                    window.openCardDetailByRowId(globalCardContacts[0].rowId);
                 } else if (mode === 'mycard' && globalCardContacts.length === 0) {
                     window.showToast("找不到您的專屬名片", true);
                     setTimeout(() => window.location.href = 'index.html?view=user-profile', 2000);
                 }
             }
             
+            // 瞬間渲染畫面，使用者感受不到延遲
             filterCardList(); 
-        } catch(e) {}
+        } catch(e) {
+            console.warn('LocalStorage parse failed', e);
+        }
     } else {
+        // 只有第一次進來，完全沒快取時，才顯示轉圈圈
         container.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>';
     }
 
-    window.fetchAPI('getCardContacts', {}, true).then(data => {
-        globalCardContacts = data || [];
-        globalCardContacts.forEach(c => {
+    // 2. 背景靜默同步機制 (Stale-While-Revalidate)：不論有無快取，都在背景去 GAS 抓取最新資料
+    try {
+        const data = await window.fetchAPI('getCardContacts', {}, true);
+        let newContacts = data || [];
+        newContacts.forEach(c => {
             if (c['手機號碼']) c['手機號碼'] = formatPhoneStr(c['手機號碼']);
             if (c['公司電話']) c['公司電話'] = formatPhoneStr(c['公司電話']);
         });
-        sessionStorage.setItem(cacheKey, JSON.stringify(globalCardContacts));
-        
-        if (!isAdmin) {
-            globalCardContacts = globalCardContacts.filter(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId || c['Line ID'] === userProfile.userId);
-            const mode = new URLSearchParams(window.location.search).get('mode');
-            if (mode === 'mycard' && globalCardContacts.length > 0 && !cached) {
-                openCardDetailByRowId(globalCardContacts[0].rowId);
-            } else if (mode === 'mycard' && globalCardContacts.length === 0 && !cached) {
-                window.showToast("找不到您的專屬名片", true);
-                setTimeout(() => window.location.href = 'index.html?view=user-profile', 2000);
+
+        const newDataString = JSON.stringify(newContacts);
+
+        // 3. 比對資料：如果跟快取的資料不一樣（例如有人新增了名片），才更新畫面並儲存
+        if (cachedDataString !== newDataString) {
+            localStorage.setItem(CACHE_KEY_CONTACTS, newDataString);
+            globalCardContacts = newContacts;
+
+            if (!isAdmin) {
+                globalCardContacts = globalCardContacts.filter(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId || c['Line ID'] === userProfile.userId);
+            }
+
+            filterCardList(); // 更新畫面
+            
+            // 如果原本已經有快取（表示這是一次背景補更新），給予使用者微小的更新提示
+            if (cachedDataString) {
+                window.showToast("🔄 資料已在背景同步至最新狀態", false);
             }
         }
-        
-        filterCardList(); 
-    }).catch(e => {
-        if (globalCardContacts.length === 0) {
-            container.innerHTML = `<div class="text-center py-10 text-error font-bold">讀取失敗</div>`;
+    } catch(e) {
+        if (!cachedDataString) {
+            container.innerHTML = `<div class="text-center py-10 text-error font-bold">讀取失敗，請檢查網路連線</div>`;
         }
-    });
+        // 如果有快取且背景抓取失敗（例如網路斷線），什麼都不做，讓使用者繼續看快取資料（Offline-First 精神）
+    }
 }
 
 function filterCardList() { 
@@ -480,7 +489,7 @@ function renderCardPage(isReset = false) {
           : '<span class="shrink-0 text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded text-[11px] whitespace-nowrap ml-2 border border-slate-200">未認領</span>';
         
         return `
-        <div onclick="openCardDetailByRowId('${card.rowId}')" class="pl-[5px] pr-4 py-4 bg-white flex items-center gap-4 border-b border-slate-200 last:border-b-0 active:bg-slate-50 cursor-pointer transition-colors">
+        <div onclick="window.openCardDetailByRowId('${card.rowId}')" class="pl-[5px] pr-4 py-4 bg-white flex items-center gap-4 border-b border-slate-200 last:border-b-0 active:bg-slate-50 cursor-pointer transition-colors">
           <div class="w-[52px] h-[52px] shrink-0 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center border border-slate-200">
             ${card['名片圖檔'] && card['名片圖檔'] !== '圖片儲存失敗' && card['名片圖檔'] !== '無圖檔' ? `<img src="${window.getDirectImageUrl(card['名片圖檔'])}" class="w-full h-full object-cover">` : `<span class="material-symbols-outlined text-slate-400 text-[24px]">person</span>`}
           </div>
@@ -762,40 +771,13 @@ async function submitCardEdit() {
 
   try {
     await window.fetchAPI('updateCard', payload);
-    Object.assign(currentActiveCard, {
-      '姓名': payload.Name, 'Name': payload.Name, '英文名/別名': payload.EnglishName,
-      '手機號碼': payload.Mobile, 'Mobile': payload.Mobile, '公司名稱': payload.CompanyName,
-      '職稱': payload.Title, 'Title': payload.Title, '部門': payload.Department,
-      '統一編號': payload.TaxID, 'TaxID': payload.TaxID, '公司電話': payload.Tel,
-      '傳真': payload.Fax, 'Fax': payload.Fax, '分機': payload.Ext, 'Ext': payload.Ext,
-      '電子郵件': payload.Email, 'Email': payload.Email, '公司地址': payload.Address,
-      '公司網址': payload.Website, '社群帳號': payload.SocialMedia,
-      '服務項目/品牌標語': payload.Slogan, 'Slogan': payload.Slogan,
-      '建檔人/備註': payload.Notes, 'Notes': payload.Notes,
-      '生日': payload.Birthday
-    });
-    if (payload.Personality) currentActiveCard['個性'] = payload.Personality;
-    if (payload.Hobbies) currentActiveCard['興趣'] = payload.Hobbies;
-    if (payload.Wealth) currentActiveCard['財運'] = payload.Wealth;
-    if (payload.Health) currentActiveCard['健康'] = payload.Health;
-    if (payload.Career) currentActiveCard['事業'] = payload.Career;
-
+    
+    // ⭐ 資料編輯成功後，直接呼叫 loadCardContacts 來觸發背景重新撈取最新資料，
+    // 以便確保 LocalStorage 快取永遠與 GAS 保持一致。
+    loadCardContacts();
     closeCardEdit();
+    window.showToast("✅ 資料更新成功，背景同步中...");
     
-    const index = globalCardContacts.findIndex(c => c.rowId === payload.rowId);
-    if (index !== -1) globalCardContacts[index] = currentActiveCard;
-    window.openCardDetailByRowId(payload.rowId);
-    
-    window.fetchAPI('getCardContacts').then(data => {
-        globalCardContacts = data || [];
-        globalCardContacts.forEach(c => {
-          if (c['手機號碼']) c['手機號碼'] = formatPhoneStr(c['手機號碼']);
-          if (c['公司電話']) c['公司電話'] = formatPhoneStr(c['公司電話']);
-        });
-        filterCardList();
-    });
-
-    window.showToast("✅ 資料更新成功");
   } catch(err) {
     window.showToast("更新失敗", true);
   } finally {
@@ -878,6 +860,8 @@ window.batchRegenerateECards = async function() {
             updatedCount++;
         }
         window.showToast(`✅ 重新讀取寫入完成！共更新了 ${updatedCount} 張名片設定。`);
+        // 更新完畢後觸發背景同步，更新 LocalStorage
+        loadCardContacts();
     } catch (err) {
         window.showToast("更新過程發生錯誤", true);
     } finally {

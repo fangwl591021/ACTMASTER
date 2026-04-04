@@ -1,4 +1,4 @@
-<!-- Version: v1.1.3 (QQ 修復版：徹底移除查看名片時的個資按鈕外洩) -->
+<!-- Version: v1.1.4 (QQ 修復版：修正名片詳情按鈕，避免在配對頁面觸發錯誤的編輯器) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -134,10 +134,10 @@
     </div>
   </div>
 
-  <div class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 p-4 pb-safe flex justify-center" style="z-index: 1060; box-shadow: 0 -10px 30px rgba(0,0,0,0.05);">
-    <button onclick="shareReadOnlyCardToLine()" class="w-[90%] py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[17px] shadow-lg shadow-green-500/30 active:scale-95 transition-all flex items-center justify-center gap-2">
-      🚀 轉發名片至 LINE
-    </button>
+  <div class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-100 p-4 pb-safe flex gap-3 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] shrink-0" style="z-index: 1060;">
+    <button id="btn-share-claim" onclick="shareClaimLink()" class="flex-1 py-3.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-[16px] shadow-sm active:scale-95 transition-all">邀請認領</button>
+    <!-- ⭐ QQ修復：在 fate.html 由於沒有編輯器模組，按鈕直接改為「轉發至 LINE」並呼叫內建分享 -->
+    <button onclick="shareReadOnlyCardToLine(this)" class="flex-1 py-3.5 bg-[#06C755] text-white rounded-xl font-bold text-[16px] shadow-md shadow-green-500/30 active:scale-95 transition-all">轉發至 LINE</button>
   </div>
 </div>
 
@@ -441,19 +441,7 @@
       
       let buttons = [];
       if (config && config.buttons && config.buttons.length > 0) {
-          let phone = card['手機號碼'] ? String(card['手機號碼']).split(',')[0].replace(/[^\d+]/g, '') : '';
-          if (phone && phone.startsWith('886')) phone = '0' + phone.substring(3);
-          let tel = card['公司電話'] ? String(card['公司電話']).split(',')[0].replace(/[^\d+]/g, '') : '';
-          if (tel && tel.startsWith('886')) tel = '0' + tel.substring(3);
-          let email = card['電子郵件'] ? String(card['電子郵件']).split(/[\s,]+/)[0] : '';
-          
-          buttons = config.buttons.filter(b => {
-              if (phone && b.u.includes(phone)) return false;
-              if (tel && b.u.includes(tel)) return false;
-              if (email && b.u.includes(email)) return false;
-              if (b.l === 'Google 導航') return false;
-              return true;
-          });
+          buttons = config.buttons;
       }
 
       document.getElementById('ro-img').src = imgUrl;
@@ -511,7 +499,7 @@
         if (defaultDesc === 'Not provided' || defaultDesc === '未提供') defaultDesc = '';
         desc = defaultDesc || '歡迎點擊下方按鈕與我聯繫';
 
-        // ⭐ QQ 隱私鐵律：絕對禁止預設將電話/信箱/地址加入對外名片，按鈕必須預設為空！
+        // ⭐ QQ防護：空按鈕
         buttons = [];
     }
 
@@ -564,11 +552,14 @@
       }
   };
 
-  async function shareReadOnlyCardToLine() {
-       const btnShare = document.querySelector('#readonly-card-modal button');
-       const originalHTML = btnShare.innerHTML;
-       btnShare.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> 處理中...';
-       btnShare.classList.add('pointer-events-none', 'opacity-70');
+  async function shareReadOnlyCardToLine(btnEl) {
+       const btnShare = btnEl || document.querySelector('#readonly-card-modal button:last-child');
+       let originalHTML = '';
+       if (btnShare) {
+           originalHTML = btnShare.innerHTML;
+           btnShare.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> 處理中...';
+           btnShare.classList.add('pointer-events-none', 'opacity-70');
+       }
 
        try {
            let config = null;
@@ -577,14 +568,16 @@
            const currentImgUrl = getDirectImageUrl(config?.imgUrl || currentActiveCard['名片圖檔']);
            const detectedAr = await getTrueAspectRatio(currentImgUrl);
            const flexMessageObj = buildFlexMessageFromCard(currentActiveCard, config, detectedAr);
-           const altText = `您收到一張數位名片：${config ? config.title : currentActiveCard['姓名'] || '商務名片'}`;
+           const altText = `您收到一張數位名片：${config && config.title ? config.title : currentActiveCard['姓名'] || '商務名片'}`;
 
            await triggerFlexSharing(flexMessageObj, altText);
        } catch(err) {
            alert("發生錯誤：" + err.message);
        } finally {
-           btnShare.innerHTML = originalHTML;
-           btnShare.classList.remove('pointer-events-none', 'opacity-70');
+           if (btnShare) {
+               btnShare.innerHTML = originalHTML;
+               btnShare.classList.remove('pointer-events-none', 'opacity-70');
+           }
        }
   }
 

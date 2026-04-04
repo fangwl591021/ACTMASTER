@@ -1,4 +1,4 @@
-<!-- Version: v1.6.0 (QQ 鐵律修復版：嚴格遵守手冊規範，改用 Base64 儲存格直寫方案，徹底繞過 Drive 破圖問題) -->
+<!-- Version: v1.7.0 (QQ 修復版：解放裁切器自由拉取限制，並補回快速匯入的時間欄位) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -80,7 +80,7 @@
         <span class="material-symbols-outlined text-[20px]">add_circle</span>
       </div>
       建立新活動
-      <span class="bg-slate-800 text-white text-[9px] px-2 py-0.5 rounded uppercase font-bold ml-1">v1.6</span>
+      <span class="bg-slate-800 text-white text-[9px] px-2 py-0.5 rounded uppercase font-bold ml-1">v1.7</span>
     </div>
     <div class="flex items-center gap-3">
       <img id="user-avatar" src="" class="w-8 h-8 rounded-full object-cover border border-slate-200 shadow-sm hidden">
@@ -108,6 +108,13 @@
       <!-- ================= 1. 快速模式 ================= -->
       <div id="form-quick" class="space-y-5 animate-in fade-in">
         <div class="flex flex-col"><label class="input-label">活動名稱</label><input type="text" id="quick-name" class="custom-input" placeholder="例如：2026 商務交流會"></div>
+        
+        <!-- ⭐ 補回：快速匯入的時間欄位 -->
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="input-label">開始時間</label><input type="datetime-local" id="quick-start" class="custom-input !px-1.5 !text-[13px]"></div>
+          <div><label class="input-label">結束時間</label><input type="datetime-local" id="quick-end" class="custom-input !px-1.5 !text-[13px]"></div>
+        </div>
+        
         <div class="grid grid-cols-2 gap-4">
           <div><label class="input-label">活動類型</label><select id="quick-type" class="custom-input cursor-pointer"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option></select></div>
           <div><label class="input-label">預設身份</label><select id="quick-identity" class="custom-input cursor-pointer"><option>會員</option><option>來賓</option></select></div>
@@ -232,7 +239,7 @@
   </main>
 
   <nav id="bottom-nav-admin" class="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-100 flex justify-evenly items-center h-[72px] pb-safe left-1/2 -translate-x-1/2 z-40 hidden">
-    <button onclick="window.location.href='active.html'" class="nav-btn nav-active-btn" id="nav-admin-create"><div class="icon-box"><span class="material-symbols-outlined">add_circle</span></div><span class="text-[10px] font-bold mt-0.5">建立</span></button>
+    <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn nav-active-btn" id="nav-admin-create"><div class="icon-box"><span class="material-symbols-outlined">add_circle</span></div><span class="text-[10px] font-bold mt-0.5">建立</span></button>
     <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn" id="nav-admin-activities"><div class="icon-box"><span class="material-symbols-outlined">fact_check</span></div><span class="text-[10px] mt-0.5">核銷</span></button>
     <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn" id="nav-admin-crm"><div class="icon-box"><span class="material-symbols-outlined">groups</span></div><span class="text-[10px] mt-0.5">CRM</span></button>
     <button onclick="window.location.href='fate.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined">psychology</span></div><span class="text-[10px] mt-0.5">配對</span></button>
@@ -399,6 +406,7 @@
   }
 
   // ⭐ 嚴格遵守手冊雷區 4：徹底繞過 Drive，實作 Base64 直寫儲存格機制
+  // ⭐ QQ修復點：解開 aspectRatio 的比例限制，改為 dragMode: 'crop' 允許自由拉取！
   function openCropper(input, targetMode) {
     const file = input.files[0]; if (!file) return;
     currentCropTarget = targetMode;
@@ -414,9 +422,9 @@
           img.style.opacity = '1';
           
           cropperInstance = new Cropper(img, { 
-            aspectRatio: 4 / 3,
+            aspectRatio: NaN, // 允許自由比例拉取
             viewMode: 1, 
-            dragMode: 'move', 
+            dragMode: 'crop', // 允許使用者自己畫框或拖拉角落
             autoCropArea: 0.9, 
             guides: true, 
             center: true, 
@@ -524,6 +532,11 @@
       p.names = document.getElementById('quick-names').value.split('\n').filter(n=>n.trim()); 
       p.activityType = document.getElementById('quick-type').value;
       p.defaultIdentity = document.getElementById('quick-identity').value;
+      
+      // ⭐ 補回快速匯入的時間讀取
+      p.startTime = document.getElementById('quick-start') ? document.getElementById('quick-start').value : '';
+      p.endTime = document.getElementById('quick-end') ? document.getElementById('quick-end').value : '';
+      
       // 這裡取到的 imageUrl 就是經過壓縮的 Base64 字串
       p.imageUrl = document.getElementById('in-image-url-quick') ? document.getElementById('in-image-url-quick').value : '';
       

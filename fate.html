@@ -1,4 +1,4 @@
-<!-- Version: v1.1.5 (QQ 修復版：加入 Timeout 超時攔截與嚴格錯誤解析，解決「沒反應」死機問題) -->
+<!-- Version: v1.1.6 (QQ 修復版：加入 AI 報錯視覺化渲染，徹底解決畫面卡死沒反應的隱性報錯) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -156,13 +156,11 @@
       
       const profile = await liff.getProfile();
       
-      // ⭐ QQ效能優化：雙線並行抓取，縮短卡在「載入中」的時間
       const [userRes, contacts] = await Promise.all([
           fetchAPI('checkUser', { userId: profile.userId }),
           fetchAPI('getCardContacts')
       ]);
 
-      // ⭐ 修正屬性抓取，解決 undefined 導致 AI 無法辨識本人的問題
       currentUserProfile = {
         name: userRes.isRegistered ? (userRes.info['姓名'] || userRes.info.name) : profile.displayName,
         industry: userRes.isRegistered ? (userRes.info['業種'] || userRes.info.industry) : '未知'
@@ -180,7 +178,6 @@
     }
   };
 
-  // ⭐ QQ防護：加入 45 秒 Timeout 超時強制攔截機制
   async function fetchAPI(action, payload = {}, silent = false) {
     try {
         const controller = new AbortController();
@@ -199,15 +196,15 @@
         try { 
             result = JSON.parse(resText); 
         } catch(e) { 
-            // 若伺服器回傳 HTML (例如 524 Timeout)，直接捕捉並拋出明確錯誤
-            throw new Error(`伺服器回傳異常格式 (可能超時或連線中斷)`); 
+            throw new Error(`伺服器回傳異常 (可能發生逾時或內部錯誤)：${resText.substring(0, 50)}`); 
         }
 
         if (!result.success) throw new Error(result.error);
         return result.data;
     } catch (err) {
-        if (err.name === 'AbortError') err.message = '伺服器分析時間過長已超時，請稍後再試。';
-        if (!silent) alert(`連線錯誤 (${action})：` + err.message);
+        if (err.name === 'AbortError') err.message = '連線已經超時 (45秒)，OpenAI 伺服器目前可能過載，請稍後再試。';
+        
+        // ⭐ 修改：不再強制 alert，而是將 Error 拋出由調用端決定如何呈現
         throw err;
     }
   }
@@ -343,11 +340,21 @@
     const query = document.getElementById('search-query').value.trim();
     if (!query) return alert('請輸入您的業務需求！');
 
+    const container = document.getElementById('results-container');
+
+    if (globalCardContacts.length === 0) {
+        return container.innerHTML = `<div class="bg-amber-50 border border-amber-200 rounded-2xl p-5 mt-4 text-center">
+            <span class="material-symbols-outlined text-amber-500 text-4xl mb-2">warning</span>
+            <h3 class="text-amber-700 font-bold text-[15px]">目前名片通訊錄為空</h3>
+            <p class="text-amber-600 text-[13px]">請先至「名片」分頁建檔或同步資料。</p>
+        </div>`;
+    }
+
     const btn = document.getElementById('btn-match');
     btn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> AI 深度分析中 (約需 15~30 秒)...';
     btn.classList.add('pointer-events-none', 'opacity-70');
     
-    document.getElementById('results-container').innerHTML = '';
+    container.innerHTML = '';
 
     try {
       const slimContacts = globalCardContacts.map(c => ({
@@ -370,14 +377,21 @@
       });
 
       if (!matches || matches.length === 0) {
-          document.getElementById('results-container').innerHTML = '<p class="text-center text-slate-400 mt-10 font-bold">目前資料庫沒有找到高度吻合的對象。</p>';
+          container.innerHTML = '<p class="text-center text-slate-400 mt-10 font-bold">目前資料庫沒有找到高度吻合的對象。</p>';
       } else {
           renderMatches(matches);
       }
 
     } catch (err) {
-      // 錯誤由 fetchAPI 拋出，這裡不需額外做 alert 以免重複
-      console.error(err);
+      console.error("Matchmaking Error:", err);
+      // ⭐ QQ 終極防護：把後端的隱性報錯直接血淋淋地畫在螢幕上，拒絕「沒反應」！
+      container.innerHTML = `
+      <div class="bg-red-50 border border-red-200 rounded-2xl p-5 mt-4 text-center animate-in zoom-in-95">
+          <span class="material-symbols-outlined text-red-500 text-4xl mb-2">error</span>
+          <h3 class="text-red-700 font-bold text-lg mb-1">配對連線中斷</h3>
+          <p class="text-red-600 text-[13px] break-all max-w-[90%] mx-auto">${err.message}</p>
+          <div class="text-[11px] text-red-400 mt-3 border-t border-red-100 pt-2">若為 API 額度用盡或伺服器忙碌，請稍後重試。</div>
+      </div>`;
     } finally {
       btn.innerHTML = '<span class="material-symbols-outlined">magic_button</span> 重新啟動媒合';
       btn.classList.remove('pointer-events-none', 'opacity-70');
@@ -527,7 +541,6 @@
         if (defaultDesc === 'Not provided' || defaultDesc === '未提供') defaultDesc = '';
         desc = defaultDesc || '歡迎點擊下方按鈕與我聯繫';
 
-        // ⭐ QQ防護：空按鈕
         buttons = [];
     }
 

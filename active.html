@@ -1,4 +1,4 @@
-<!-- Version: v7.4.0 (QQ 鐵律修復版：強制補回被閹割的「系列梯次」功能與原生 UI) -->
+<!-- Version: v7.5.0 (QQ 鐵律修復版：強制補回被閹割的「複製梯次」功能，並優化原生雙按鈕排版) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -65,7 +65,7 @@
   
   <nav class="fixed top-0 w-full max-w-md z-40 bg-white/90 backdrop-blur-md px-5 py-3.5 flex justify-between items-center left-1/2 -translate-x-1/2 border-b border-slate-100">
     <div class="text-[20px] font-extrabold text-slate-800 tracking-tight flex items-center gap-1">
-      建立活動
+      建立活動 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v7.5</span>
     </div>
     <button onclick="window.location.href='index.html?view=admin-activities'" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-90 transition-transform">
       <span class="material-symbols-outlined text-[20px]">close</span>
@@ -189,7 +189,7 @@
         </div>
       </div>
 
-      <!-- ⭐ Tab 3: 系列梯次 (完美回歸，原生無框設計) -->
+      <!-- ⭐ Tab 3: 系列梯次 (補回複製功能，並擴大右側防擋留白) -->
       <div id="tab-content-series" class="hidden space-y-5 bg-white p-5 rounded-[2rem] shadow-sm mx-1">
         <div class="flex flex-col">
             <label class="input-label">活動總標題</label>
@@ -291,31 +291,64 @@
       }
   }
 
-  // ⭐ 新增梯次按鈕邏輯 (原生無框設計)
-  function addBatchRow() {
+  // ⭐ 修復點 1：新增與複製梯次按鈕邏輯 (原生無框設計，帶有智慧插入位置)
+  function addBatchRow(defaultValues = null, insertAfterId = null) {
       batchCount++;
       const container = document.getElementById('batch-container');
       const rowId = `batch-${batchCount}`;
+      
+      // 注意：為容納右上角的「複製」與「刪除」雙按鈕，輸入框右側邊距拉大至 pr-20
       const html = `
       <div id="${rowId}" class="bg-slate-50 p-4 rounded-2xl relative border-none animate-in slide-in-from-top-2">
-          ${batchCount > 1 ? `<button onclick="document.getElementById('${rowId}').remove()" class="absolute top-4 right-4 w-7 h-7 bg-white text-slate-400 hover:text-red-500 rounded-full flex items-center justify-center shadow-sm transition-colors"><span class="material-symbols-outlined text-[16px]">close</span></button>` : ''}
           
-          <div class="flex flex-col mb-3 pr-10">
-              <input type="text" id="${rowId}-name" class="custom-input !h-[44px] !bg-white shadow-sm" placeholder="梯次名稱 (例如: 台北平日班)">
+          <div class="absolute top-3 right-3 flex gap-1.5 z-10">
+              <button onclick="copyBatchRow('${rowId}')" class="w-8 h-8 bg-white text-blue-500 hover:bg-blue-50 rounded-full flex items-center justify-center shadow-sm transition-colors" title="複製此梯次">
+                  <span class="material-symbols-outlined text-[15px]">content_copy</span>
+              </button>
+              ${batchCount > 1 || insertAfterId ? `
+              <button onclick="document.getElementById('${rowId}').remove()" class="w-8 h-8 bg-white text-slate-400 hover:text-red-500 rounded-full flex items-center justify-center shadow-sm transition-colors" title="刪除此梯次">
+                  <span class="material-symbols-outlined text-[18px]">close</span>
+              </button>
+              ` : ''}
+          </div>
+          
+          <div class="flex flex-col mb-3 pr-20">
+              <input type="text" id="${rowId}-name" class="custom-input !h-[44px] !bg-white shadow-sm" placeholder="梯次名稱 (例如: 台北平日班)" value="${defaultValues ? defaultValues.name : ''}">
           </div>
           
           <div class="grid grid-cols-2 gap-3 mb-3">
-              <input type="datetime-local" id="${rowId}-start" class="custom-input !h-[44px] !bg-white shadow-sm !text-[13px] !px-3 text-slate-600">
-              <input type="datetime-local" id="${rowId}-end" class="custom-input !h-[44px] !bg-white shadow-sm !text-[13px] !px-3 text-slate-600">
+              <input type="datetime-local" id="${rowId}-start" class="custom-input !h-[44px] !bg-white shadow-sm !text-[13px] !px-3 text-slate-600" value="${defaultValues ? defaultValues.start : ''}">
+              <input type="datetime-local" id="${rowId}-end" class="custom-input !h-[44px] !bg-white shadow-sm !text-[13px] !px-3 text-slate-600" value="${defaultValues ? defaultValues.end : ''}">
           </div>
           
           <div class="flex items-center gap-2">
               <span class="text-[13px] font-bold text-slate-500 shrink-0 ml-1">收費 NT$</span>
-              <input type="number" id="${rowId}-price" class="custom-input !h-[44px] !bg-white shadow-sm" placeholder="免費請留空或填 0">
+              <input type="number" id="${rowId}-price" class="custom-input !h-[44px] !bg-white shadow-sm" placeholder="免費請留空或填 0" value="${defaultValues ? defaultValues.price : ''}">
           </div>
       </div>
       `;
-      container.insertAdjacentHTML('beforeend', html);
+      
+      // 如果是點擊「複製」，就智慧插在被複製對象的下方，否則插在最底端
+      if (insertAfterId) {
+          document.getElementById(insertAfterId).insertAdjacentHTML('afterend', html);
+      } else {
+          container.insertAdjacentHTML('beforeend', html);
+      }
+  }
+
+  // ⭐ 修復點 2：實作「複製梯次」將資料帶入的邏輯
+  function copyBatchRow(sourceId) {
+      const srcName = document.getElementById(`${sourceId}-name`).value;
+      const srcStart = document.getElementById(`${sourceId}-start`).value;
+      const srcEnd = document.getElementById(`${sourceId}-end`).value;
+      const srcPrice = document.getElementById(`${sourceId}-price`).value;
+      
+      addBatchRow({
+          name: srcName ? srcName + ' (複製)' : '',
+          start: srcStart,
+          end: srcEnd,
+          price: srcPrice
+      }, sourceId);
   }
 
   // 統一的 API 發送邏輯

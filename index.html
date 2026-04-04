@@ -1,4 +1,4 @@
-<!-- Version: v5.1.0 (QQ 掃碼修復版：更換穩定相機模組 CDN，確保掃碼功能 100% 啟動) -->
+<!-- Version: v5.1.1 (QQ 修復版：還原活動列表為一排2個雙欄排版，並保留 App-like 視覺) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -12,7 +12,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
-  <!-- ⭐ QQ 修復：強制預先載入最穩定的相機與裁切模組 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
@@ -46,7 +45,6 @@
     .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400; vertical-align: middle; }
     .icon-filled { font-variation-settings: 'FILL' 1, 'wght' 400; }
     
-    /* 阻斷網頁感：防反白、防下拉回彈 */
     body { background-color: #f8fafc; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; overscroll-behavior-y: none; }
     input, textarea, select { -webkit-user-select: auto; user-select: auto; }
     
@@ -58,14 +56,12 @@
     
     select.custom-input { -webkit-appearance: none !important; appearance: none !important; background-image: none !important; }
     
-    /* LINE原生無框設計 */
     .custom-input { @apply w-full h-[50px] px-4 bg-slate-100 border-none rounded-2xl outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all font-medium text-slate-800 text-[15px] placeholder-slate-400; }
     .textarea-block { @apply w-full p-4 bg-slate-100 border-none rounded-2xl outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all text-[15px] text-slate-800 resize-none leading-relaxed placeholder-slate-400; }
     
     input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     input[type=number] { -moz-appearance: textfield; }
 
-    /* 原生肥大按鈕 */
     .btn-primary { @apply w-full py-4 bg-primary text-white rounded-2xl font-bold text-[16px] shadow-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2; }
     .btn-secondary { @apply w-full py-4 bg-slate-200 text-slate-700 rounded-2xl font-bold text-[16px] active:scale-[0.98] transition-transform flex items-center justify-center gap-2; }
     
@@ -78,7 +74,6 @@
     .refresh-spin { animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-    /* 底部抽屜進場動畫 */
     .bottom-sheet-up { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
   </style>
@@ -87,7 +82,6 @@
 
 <div id="app-container" class="w-full max-w-md h-screen relative flex flex-col overflow-hidden bg-background">
   
-  <!-- 頂部 Navbar -->
   <nav id="top-nav" class="fixed top-0 w-full max-w-md z-40 bg-white/90 backdrop-blur-md px-5 py-3.5 flex justify-between items-center left-1/2 -translate-x-1/2">
     <div class="text-[20px] font-extrabold text-slate-800 tracking-tight flex items-center gap-1">
       報名大師
@@ -103,7 +97,6 @@
     </div>
   </nav>
 
-  <!-- 主要內容區 -->
   <main id="main-content" class="flex-1 overflow-y-auto pb-32 pt-20 px-4 space-y-5">
 
     <div id="view-loading" class="h-full flex flex-col items-center justify-center space-y-4 pb-20 relative">
@@ -163,7 +156,7 @@
         </button>
       </div>
       <div class="flex gap-2 overflow-x-auto hide-scrollbar pb-1" id="activity-categories"></div>
-      <div id="user-activities-container" class="grid grid-cols-1 gap-4"></div>
+      <div id="user-activities-container" class="grid grid-cols-2 gap-3 px-1"></div>
     </div>
 
     <!-- 報名紀錄 -->
@@ -348,7 +341,7 @@
   <div class="flex-1 flex items-center justify-center relative"><div id="qr-reader" class="w-full h-full max-h-[80vh]"></div></div>
 </div>
 
-<!-- 自訂彈窗：改成圓潤的 Bottom Sheet 樣式 -->
+<!-- 自訂彈窗：也改成圓潤的 Bottom Sheet 樣式 -->
 <div id="custom-modal" class="hidden fixed inset-0 z-[9999] flex items-end justify-center bg-black/40 backdrop-blur-sm">
   <div class="bg-white w-full max-w-md rounded-t-[2rem] p-8 shadow-2xl text-center bottom-sheet-up pb-safe">
     <div class="w-16 h-16 bg-primary-light text-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><span class="material-symbols-outlined text-[32px] icon-filled">info</span></div>
@@ -516,14 +509,14 @@
   }
 
   function renderActivitiesSkeleton() {
-    const skeletonHTML = Array(3).fill(0).map(() => `
-      <div class="bg-white rounded-3xl overflow-hidden shadow-sm animate-pulse flex flex-col h-[280px]">
-        <div class="h-[140px] w-full bg-slate-100 shrink-0"></div>
-        <div class="p-5 flex flex-col flex-1 gap-3"><div class="h-3 w-1/3 bg-slate-100 rounded-full"></div><div class="h-5 w-full bg-slate-100 rounded-full"></div><div class="h-10 w-full bg-slate-100 rounded-2xl mt-auto"></div></div>
+    const skeletonHTML = Array(4).fill(0).map(() => `
+      <div class="bg-white rounded-[1.2rem] overflow-hidden shadow-sm animate-pulse flex flex-col h-[200px]">
+        <div class="h-[100px] w-full bg-slate-100 shrink-0"></div>
+        <div class="p-3 flex flex-col flex-1 gap-2"><div class="h-3 w-1/3 bg-slate-100 rounded-full"></div><div class="h-4 w-full bg-slate-100 rounded-full"></div><div class="h-8 w-full bg-slate-100 rounded-xl mt-auto"></div></div>
       </div>
     `).join('');
     const el = document.getElementById('user-activities-container');
-    if (el) { el.className = 'grid grid-cols-1 gap-4'; el.innerHTML = skeletonHTML; }
+    if (el) { el.className = 'grid grid-cols-2 gap-3 px-1'; el.innerHTML = skeletonHTML; }
   }
 
   async function processClaimInBackground(claimCardId) {
@@ -773,19 +766,20 @@
 
   async function loadUserActivities() {
     const container = document.getElementById('user-activities-container'); if(!container) return;
-    container.className = 'grid grid-cols-1 gap-4';
+    // ⭐ QQ 復原：雙欄排版 grid-cols-2
+    container.className = 'grid grid-cols-2 gap-3 px-1';
     if (!globalPublicActivities.length) renderActivitiesSkeleton();
     try {
       const data = await fetchAPI('getPublicActivities', {}, true); globalPublicActivities = data || [];
-      if (!globalPublicActivities.length) { container.innerHTML = '<div class="text-center py-16 bg-white rounded-[2rem] shadow-sm text-slate-400 font-bold w-full">目前無開放的活動</div>'; return; }
+      if (!globalPublicActivities.length) { container.className = 'block px-1'; container.innerHTML = '<div class="text-center py-16 bg-white rounded-[2rem] shadow-sm text-slate-400 font-bold w-full">目前無開放的活動</div>'; return; }
       renderCategories(); filterActivities();
-    } catch(e) { container.innerHTML = '<div class="text-center py-16 bg-white rounded-[2rem] shadow-sm text-red-400 font-bold w-full">讀取失敗，請重新整理</div>'; }
+    } catch(e) { container.className = 'block px-1'; container.innerHTML = '<div class="text-center py-16 bg-white rounded-[2rem] shadow-sm text-red-400 font-bold w-full">讀取失敗，請重新整理</div>'; }
   }
 
   function renderCategories() {
       const types = ['全部活動', ...new Set(globalPublicActivities.map(a => a.type).filter(Boolean))];
       const container = document.getElementById('activity-categories'); if (!container) return;
-      container.innerHTML = types.map(t => `<button onclick="filterByCategory('${t}')" class="shrink-0 px-4 py-2 rounded-xl font-bold text-[13px] transition-all ${currentCategory === t ? 'bg-slate-800 text-white shadow-sm' : 'bg-white text-slate-500 shadow-sm'}">${t}</button>`).join('');
+      container.innerHTML = types.map(t => `<button onclick="filterByCategory('${t}')" class="shrink-0 px-4 py-1.5 rounded-full font-bold text-[12px] transition-all ${currentCategory === t ? 'bg-slate-800 text-white shadow-sm' : 'bg-white text-slate-500 shadow-sm'}">${t}</button>`).join('');
   }
 
   function filterByCategory(type) { currentCategory = type; renderCategories(); filterActivities(); }
@@ -794,20 +788,28 @@
   function renderActivityList(data, mode) {
     const list = document.getElementById(mode === 'user' ? 'user-activities-container' : 'admin-activity-list-container');
     if (!list) return;
-    if (!data.length) { list.innerHTML = `<div class="text-center py-16 bg-white rounded-[2rem] shadow-sm text-slate-400 font-bold w-full">無符合的活動</div>`; return; }
+    if (!data.length) { list.className = 'block px-1'; list.innerHTML = `<div class="text-center py-16 bg-white rounded-[2rem] shadow-sm text-slate-400 font-bold w-full">無符合的活動</div>`; return; }
     
     let html = '';
     data.forEach((a, i) => {
       const safeName = a.name.replace(/'/g, "\\'");
       if (mode === 'user') {
         const bgImg = a.imageUrl || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80';
+        // ⭐ QQ 復原：為雙欄最佳化的 2-col App-like UI 
         html += `
-        <div onclick="openActivityDetailByName('${safeName}')" class="bg-white rounded-3xl overflow-hidden shadow-sm flex flex-col h-full cursor-pointer active:scale-[0.98] transition-transform" style="animation-delay: ${i*50}ms">
-          <div class="relative w-full h-[160px] shrink-0 bg-slate-100"><img src="${bgImg}" class="w-full h-full object-cover"><div class="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div><div class="absolute top-3 left-3 flex gap-1.5"><span class="bg-white/90 backdrop-blur-sm text-slate-800 text-[11px] font-bold px-2.5 py-1 rounded-lg shadow-sm">${a.type}</span><span class="bg-[#06C755] text-white text-[11px] font-bold px-2.5 py-1 rounded-lg shadow-sm">${a.feeType === '收費' ? 'NT$ '+a.price : '免費'}</span></div></div>
-          <div class="p-5 flex flex-col flex-1 bg-white">
-            <p class="text-[11px] text-slate-500 font-bold flex items-center gap-1 mb-1.5 uppercase tracking-wider"><span class="material-symbols-outlined text-[14px]">calendar_today</span>${formatTimeShort(a.startTime)}</p>
-            <h3 class="text-[17px] font-extrabold text-slate-800 leading-snug line-clamp-2 mb-4 flex-1">${a.name}</h3>
-            <div class="flex gap-2 mt-auto"><button class="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl font-bold text-[14px] transition-colors flex items-center justify-center">查看詳情</button></div>
+        <div onclick="openActivityDetailByName('${safeName}')" class="bg-white rounded-[1.2rem] overflow-hidden shadow-[0_4px_15px_-3px_rgba(0,0,0,0.05)] flex flex-col h-full cursor-pointer active:scale-[0.98] transition-transform" style="animation-delay: ${i*50}ms">
+          <div class="relative w-full aspect-[4/3] shrink-0 bg-slate-100">
+            <img src="${bgImg}" class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+            <div class="absolute top-2 left-2"><span class="bg-white/95 backdrop-blur-sm text-slate-800 text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm">${a.type}</span></div>
+          </div>
+          <div class="p-3.5 flex flex-col flex-1 bg-white">
+            <p class="text-[10px] text-primary font-bold flex items-center gap-1 mb-1.5 uppercase tracking-wider"><span class="material-symbols-outlined text-[13px]">calendar_today</span>${formatTimeShort(a.startTime)}</p>
+            <h3 class="text-[14px] font-extrabold text-slate-800 leading-snug line-clamp-2 mb-3 flex-1">${a.name}</h3>
+            <div class="flex items-center justify-between mt-auto">
+              <span class="text-[13px] font-black ${a.feeType === '收費' ? 'text-orange-500' : 'text-emerald-500'}">${a.feeType === '收費' ? 'NT$ '+a.price : '免費'}</span>
+              <div class="w-7 h-7 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center"><span class="material-symbols-outlined text-[16px]">arrow_forward</span></div>
+            </div>
           </div>
         </div>`;
       } else {
@@ -819,7 +821,7 @@
         </div>`;
       }
     });
-    list.innerHTML = html; list.className = mode === 'user' ? 'grid grid-cols-1 gap-4' : 'space-y-4';
+    list.innerHTML = html; list.className = mode === 'user' ? 'grid grid-cols-2 gap-3 px-1' : 'space-y-4';
   }
 
   function openActivityDetailByName(name) {

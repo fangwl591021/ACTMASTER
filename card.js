@@ -1,6 +1,6 @@
 /**
  * card.js 
- * Version: v20260404_1915 (QQ 最終修復版：確保 DOM ID 呼叫正確，且無痛裁切預覽開啟)
+ * Version: v20260404_2000 (QQ 終極修復：FileReader 手機端中斷防呆、本地端高清預覽)
  */
 const LIFF_ID = "2009367829-DLtYBDUm"; 
 const WORKER_URL = "https://actmaster.fangwl591021.workers.dev"; 
@@ -521,32 +521,69 @@ window.submitCardEdit = async function() {
   }
 }
 
+// ⭐ QQ 終極防呆：保證 `input.value = ""` 絕不干擾手機端 `FileReader` 非同步讀取
 window.openCropper = async function(input, targetMode) {
-    const file = input.files[0]; if (!file) return;
+    const file = input.files[0]; 
+    if (!file) return;
+    
     currentCropTarget = targetMode;
     const reader = new FileReader();
+    
     reader.onload = (e) => {
       const img = document.getElementById('cropper-image'); 
       if (!img) return;
-      img.src = e.target.result; img.style.opacity = '0';
-      const modal = document.getElementById('section-image-cropper');
-      if (modal) modal.classList.remove('hidden');
-      if (cropperInstance) cropperInstance.destroy();
-      setTimeout(() => { img.style.opacity = '1'; cropperInstance = new Cropper(img, { aspectRatio: NaN, viewMode: 1, dragMode: 'move', autoCropArea: 0.9, guides: true, center: true, highlight: false }); }, 100);
+      
+      // ⭐ 確保 Base64 完全注入畫面後，才啟動 Cropper，絕不靜默死亡
+      img.onload = () => {
+          const modal = document.getElementById('section-image-cropper');
+          if (modal) modal.classList.remove('hidden');
+          
+          if (cropperInstance) cropperInstance.destroy();
+          img.style.opacity = '1';
+          
+          cropperInstance = new Cropper(img, { 
+              aspectRatio: NaN, 
+              viewMode: 1, 
+              dragMode: 'move', 
+              autoCropArea: 0.9, 
+              guides: true, 
+              center: true, 
+              highlight: false 
+          });
+      };
+      img.src = e.target.result;
+      
+      // ⭐ 絕對必須在 onload 內部清空，否則 iOS Safari 會直接 abort 讀取程序！
+      input.value = ""; 
     }; 
-    reader.readAsDataURL(file); input.value = ""; 
+    
+    reader.onerror = () => {
+        window.showToast("讀取圖片失敗，請重試", true);
+    };
+    
+    reader.readAsDataURL(file); 
 }
 
 window.cancelCrop = function() { 
     if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; } 
     const modal = document.getElementById('section-image-cropper');
     if (modal) modal.classList.add('hidden'); 
+    
+    // 釋放記憶體
+    const img = document.getElementById('cropper-image');
+    if (img) { img.src = ''; img.style.opacity = '0'; }
 }
 
+// ⭐ QQ 本地即時渲染防破圖 (Optimistic UI)
 window.confirmCrop = async function() { 
     if (!cropperInstance) return; 
-    let quality = 0.8; let base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1200, maxHeight: 1200 }).toDataURL('image/jpeg', quality); 
-    while (base64.length > 400000 && quality > 0.1) { quality -= 0.1; base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1200, maxHeight: 1200 }).toDataURL('image/jpeg', quality); }
+    let quality = 0.8; 
+    // 轉為 JPEG 大幅縮小檔案，提升上傳穩定度
+    let base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1200, maxHeight: 1200 }).toDataURL('image/jpeg', quality); 
+    while (base64.length > 400000 && quality > 0.1) { 
+        quality -= 0.1; 
+        base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1200, maxHeight: 1200 }).toDataURL('image/jpeg', quality); 
+    }
     window.cancelCrop(); 
     
     if (currentCropTarget === 'ecard') {
@@ -554,16 +591,20 @@ window.confirmCrop = async function() {
       const originalHtml = btn ? btn.innerHTML : '';
       if(btn) { btn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin">refresh</span> 上傳中'; btn.classList.add('pointer-events-none'); }
       
+      // ⭐ 先把本地的高清 base64 存起來，強制更新預覽畫面，不等 Google 伺服器！
       window.optimisticBase64 = base64;
       if (typeof window.updateECardPreview === 'function') window.updateECardPreview(base64);
 
       try {
           window.showToast("圖片上傳中...", false);
           const url = await window.fetchAPI('uploadImage', { base64Image: base64 });
+          
           if (!url || !url.startsWith('http')) throw new Error("伺服器無法回傳有效網址");
+
           const imgInput = document.getElementById('ec-img-input');
           if(imgInput) imgInput.value = url;
-          window.optimisticImageUrl = url; 
+          window.optimisticImageUrl = url; // 記錄真實網址供後續比對
+          
           window.showToast("✅ 圖片上傳成功");
       } catch (err) { 
           window.showToast("⚠️ 上傳失敗：" + err.message, true); 
@@ -639,3 +680,37 @@ window.batchRegenerateECards = async function() {
         window.showToast(`✅ 重新讀取寫入完成！共更新了 ${updatedCount} 張。`); loadCardContacts();
     } catch (err) { window.showToast("更新錯誤", true); } finally { if (btn) { btn.innerHTML = '<span class="material-symbols-outlined text-[15px]">sync</span> 批次重新讀取寫入所有名片按鈕'; btn.classList.remove('pointer-events-none', 'opacity-50'); } }
 }
+
+window.fallbackShare = function(url, altText) {
+    const fullText = `${altText}\n${url}`;
+    const fallbackInput = document.createElement('textarea');
+    fallbackInput.value = fullText;
+    fallbackInput.style.position = 'fixed'; fallbackInput.style.opacity = '0';
+    document.body.appendChild(fallbackInput);
+    fallbackInput.focus(); fallbackInput.select();
+    try {
+        document.execCommand('copy');
+        alert("⚠️ 電腦版或外部瀏覽器無法直接傳送圖文訊息。\n\n✅ 已複製「專屬連結」至剪貼簿！\n請直接貼上給好友。");
+    } catch(err) {
+        alert("請複製以下連結分享：\n\n" + url);
+    }
+    document.body.removeChild(fallbackInput);
+    window.open(`https://line.me/R/share?text=${encodeURIComponent(fullText)}`, '_blank');
+};
+
+window.triggerFlexSharing = async (flexContents, altText) => {
+    if (!liff.isLoggedIn()) { liff.login({ redirectUri: window.location.href }); return; }
+    try {
+        const message = { type: "flex", altText: altText || "收到一張數位名片", contents: flexContents };
+        const res = await liff.shareTargetPicker([message]);
+        if (res) window.showToast('🚀 數位名片已成功轉發！');
+        setTimeout(() => liff.closeWindow(), 1500);
+    } catch (error) {
+        if (error.message && error.message.includes('not allowed')) {
+            alert("⚠️ 系統權限更新，即將重新登入");
+            liff.logout(); window.location.reload(); 
+        } else {
+            alert('發送取消或發生錯誤');
+        }
+    }
+};

@@ -1,4 +1,4 @@
-<!-- Version: v1.1.6 (QQ 修復版：加入 AI 報錯視覺化渲染，徹底解決畫面卡死沒反應的隱性報錯) -->
+<!-- Version: v1.1.7 (QQ 修復版：解決 AI 型別錯亂導致的隱性 Bug，並加強報錯視覺化) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -203,8 +203,6 @@
         return result.data;
     } catch (err) {
         if (err.name === 'AbortError') err.message = '連線已經超時 (45秒)，OpenAI 伺服器目前可能過載，請稍後再試。';
-        
-        // ⭐ 修改：不再強制 alert，而是將 Error 拋出由調用端決定如何呈現
         throw err;
     }
   }
@@ -384,7 +382,6 @@
 
     } catch (err) {
       console.error("Matchmaking Error:", err);
-      // ⭐ QQ 終極防護：把後端的隱性報錯直接血淋淋地畫在螢幕上，拒絕「沒反應」！
       container.innerHTML = `
       <div class="bg-red-50 border border-red-200 rounded-2xl p-5 mt-4 text-center animate-in zoom-in-95">
           <span class="material-symbols-outlined text-red-500 text-4xl mb-2">error</span>
@@ -401,9 +398,15 @@
   function renderMatches(matches) {
     const container = document.getElementById('results-container');
     
-    container.innerHTML = matches.map((match, idx) => {
-      const contact = globalCardContacts.find(c => c.rowId === match.rowId);
-      if (!contact) return '';
+    let htmlOutput = matches.map((match, idx) => {
+      // ⭐ QQ 終極修復：強制轉成字串比對，防止 AI 回傳字串 "2" 但本地是數字 2，導致程式找不到人而變成空白！
+      const targetId = String(match.rowId).replace(/\D/g, ''); // 雙重防護：過濾非數字字元
+      const contact = globalCardContacts.find(c => String(c.rowId) === String(match.rowId) || String(c.rowId) === targetId);
+      
+      if (!contact) {
+          console.warn("無法匹配 rowId:", match.rowId);
+          return ''; // 如果真的找不到，會回傳空字串
+      }
 
       let phoneStr = contact['手機號碼'] ? String(contact['手機號碼']).replace(/[^\d+]/g,'') : '';
 
@@ -431,6 +434,18 @@
       </div>
       `;
     }).join('');
+
+    // ⭐ 防呆：如果配對成功，但所有人都找不到而導致 HTML 空白，跳出警告而不是裝死
+    if (!htmlOutput || htmlOutput.trim() === '') {
+        container.innerHTML = `
+        <div class="bg-red-50 border border-red-200 rounded-2xl p-5 mt-4 text-center">
+            <span class="material-symbols-outlined text-red-500 text-4xl mb-2">warning</span>
+            <h3 class="text-red-700 font-bold text-[15px]">配對成功但無法顯示</h3>
+            <p class="text-red-600 text-[13px]">AI 推薦了名單，但在本地通訊錄中找不到對應的人選。這通常是暫時性的錯亂，請重新點擊配對。</p>
+        </div>`;
+    } else {
+        container.innerHTML = htmlOutput;
+    }
   }
 
   function getDirectImageUrl(url) { 

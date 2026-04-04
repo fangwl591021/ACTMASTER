@@ -1,4 +1,4 @@
-<!-- Version: v1.2.4 (QQ 修復版：導入智慧多重比對名片尋回機制、清除 UI 冗餘代碼) -->
+<!-- Version: v1.2.5 (QQ 修復版：強化名片多重比對演算法，解決 Google Sheet 數字掉零與暱稱模糊比對問題) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -589,7 +589,7 @@
     else if (view === 'user-history') loadUserHistory();
   }
 
-  // ⭐ QQ 終極修復：智慧多重比對名片，解決「有資料卻顯示沒有」的痛點
+  // ⭐ QQ修復：導入最高級智慧多重比對演算法 (解決 Google Sheet 數字掉零、與 LINE 暱稱干擾問題)
   async function checkMyCardEntry() {
       const entryEl = document.getElementById('my-card-entry');
       const infoEl = document.getElementById('my-card-info');
@@ -603,35 +603,58 @@
           const myName = document.getElementById('edit-name').value.trim() || userProfile.displayName;
           
           let myPhone = document.getElementById('edit-phone').value.trim();
+          if (!myPhone && registeredInfo && registeredInfo.phone) myPhone = registeredInfo.phone;
+          
           if (myPhone) {
               myPhone = String(myPhone).replace(/[^\d]/g, '');
               if (myPhone.startsWith('886')) myPhone = '0' + myPhone.substring(3);
+              // 補回被 Google Sheet 吃掉的開頭 0
+              if (myPhone.length === 9 && myPhone.startsWith('9')) myPhone = '0' + myPhone;
           }
 
+          // 核心智慧比對函數
           const isMatch = (c) => {
               if (!c) return false;
-              // 1. 第一關：比對 LINE ID 
-              if (String(c['LINE ID']).trim() === uid || String(c.userId).trim() === uid) return true;
               
-              // 2. 第二關：若管理員未登錄 LINE ID，比對「手機號碼」
+              // 1. 第一關：絕對比對 LINE ID 
+              const cUid = String(c['LINE ID'] || c.userId || '').trim();
+              if (cUid && cUid === uid) return true;
+              
+              // 2. 第二關：比對「手機號碼」
               if (myPhone && (c['手機號碼'] || c['Mobile'])) {
                   let cPhone = String(c['手機號碼'] || c['Mobile']).replace(/[^\d]/g, '');
                   if (cPhone.startsWith('886')) cPhone = '0' + cPhone.substring(3);
+                  // 解決 Google Sheet 開頭 0 被吃掉變成純數字的問題 (例如 953740237 -> 0953740237)
+                  if (cPhone.length === 9 && cPhone.startsWith('9')) cPhone = '0' + cPhone;
+                  
                   if (cPhone === myPhone) return true;
               }
               
-              // 3. 第三關：若連手機都沒留，比對「真實姓名」(嚴格比對)
-              if (myName && c['姓名'] && String(c['姓名']).trim() === myName) return true;
+              // 3. 第三關：比對「真實姓名」(包含高智慧模糊比對)
+              if (myName && (c['姓名'] || c['Name'])) {
+                  let cName = String(c['姓名'] || c['Name']).trim();
+                  let mName = myName.trim();
+                  
+                  if (cName === mName) return true;
+                  
+                  // 模糊比對 A：如果 LINE 暱稱帶有一堆綴詞 (例如 王子齊 bit.ly/遊戲達人)，我們只取前半段真實姓名來比
+                  let mNameFirstPart = mName.split(/[\s\/_+-]/)[0];
+                  if (mNameFirstPart && mNameFirstPart.length >= 2 && cName.includes(mNameFirstPart)) return true;
+                  
+                  // 模糊比對 B：資料庫的姓名剛好被包含在 LINE 暱稱中
+                  if (cName && mName.includes(cName)) return true;
+              }
               
               return false;
           };
 
           let myCard = null;
-          if (globalCardContacts && Array.isArray(globalCardContacts)) {
+          
+          if (globalCardContacts && Array.isArray(globalCardContacts) && globalCardContacts.length > 0) {
               myCard = globalCardContacts.find(isMatch);
           }
           
-          // 若快取找不到，強制不使用快取，向伺服器要最新鮮的資料！
+          // 若快取找不到，強制不使用快取，直接去伺服器要最新鮮的資料！
           if (!myCard) {
               infoEl.querySelector('p').innerText = '同步最新資料庫中...';
               const data = await fetchAPI('getCardContacts', {}, false); 
@@ -643,7 +666,7 @@
           }
 
           if (myCard) {
-              // ⭐ 背景默默認領：如果這張卡是靠姓名或電話認出來的，但資料庫裡還沒有他的 LINE ID，立刻幫他補上！
+              // ⭐ 背景默默認領：如果這張卡是靠姓名或電話「模糊比對」認出來的，但資料庫裡還沒有他的 LINE ID，立刻幫他補上！
               if (!myCard['LINE ID'] || String(myCard['LINE ID']).trim() !== uid) {
                   myCard['LINE ID'] = uid;
                   myCard.userId = uid;

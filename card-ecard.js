@@ -1,7 +1,6 @@
 /**
  * card-ecard.js
- * 數位電子名片 (ECard) 專用模組 - QQ修復版 (全面加入 DOM 防呆保護，解決 null 崩潰問題)
- * Version: v1.9.1
+ * Version: v3.0.1 (數位名片編輯與轉發模組 - 完美還原雙欄介面邏輯)
  */
 
 window.toggleECardType = function(type) {
@@ -42,7 +41,6 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
         rawImg = 'https://images.unsplash.com/photo-1616628188550-808682f3926d?w=800&q=80'; 
     }
     
-    // ⭐ 防呆保護：若 window 尚未載入 getDirectImageUrl (可能是舊版快取)，就直接用原本的網址，防止 TypeError 崩潰
     imgUrl = typeof window.getDirectImageUrl === 'function' ? window.getDirectImageUrl(rawImg) : rawImg;
     
     const myLiffId = (typeof LIFF_ID !== 'undefined') ? LIFF_ID : '2009367829-DLtYBDUm';
@@ -70,7 +68,6 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
         if (defaultDesc === 'Not provided' || defaultDesc === '未提供') defaultDesc = '';
         desc = defaultDesc || '歡迎點擊下方按鈕與我聯繫';
   
-        // ⭐ QQ 隱私鐵律：絕對禁止預設將電話/信箱/地址加入對外名片，按鈕必須預設為空！
         buttons = [];
     }
   
@@ -171,7 +168,6 @@ window.openECardGenerator = function() {
         if (typeof currentActiveCard === 'undefined' || !currentActiveCard) return;
         const c = currentActiveCard;
       
-        // ⭐ 防呆保護：若 HTML 缺失標籤，絕對不會報錯中斷
         try {
             if (typeof userProfile !== 'undefined' && userProfile && userProfile.pictureUrl) {
                 const avatarImg = document.getElementById('preview-user-avatar');
@@ -189,7 +185,6 @@ window.openECardGenerator = function() {
       
         const myLiffId = (typeof LIFF_ID !== 'undefined') ? LIFF_ID : '2009367829-DLtYBDUm';
 
-        // 封裝安全賦值函數
         const safeSetValue = (id, val) => {
             const el = document.getElementById(id);
             if (el) el.value = val;
@@ -215,7 +210,6 @@ window.openECardGenerator = function() {
           safeSetValue('ec-title-input', savedConfig.title || '');
           safeSetValue('ec-desc-input', savedConfig.desc || '');
       
-          // 防呆保護：若舊資料庫沒有 buttons 屬性，給予空陣列
           const sBtns = savedConfig.buttons || [];
           for(let i=1; i<=4; i++) {
             const btn = sBtns[i-1];
@@ -263,9 +257,7 @@ window.openECardGenerator = function() {
         if (modalEl) modalEl.classList.remove('hidden');
         
     } catch (err) {
-        // ⭐ QQ 終極保護：若還是因為某些奇怪的 HTML 結構遺失而報錯，至少讓您能看到警告，不會「沒反應」
         alert("開啟編輯器時發生系統異常：" + err.message);
-        console.error(err);
     }
 }
   
@@ -294,7 +286,6 @@ window.updateECardPreview = function() {
         }
     }
     
-    // ⭐ 防呆保護：若 getDirectImageUrl 不存在，直接使用 rawUrl
     let imgUrl = typeof window.getDirectImageUrl === 'function' ? window.getDirectImageUrl(rawUrl) : rawUrl;
     
     const heroEl = document.getElementById('preview-ec-hero');
@@ -303,7 +294,6 @@ window.updateECardPreview = function() {
     const playIcon = document.getElementById('preview-ec-play-icon');
     const bubbleEl = document.getElementById('preview-ec-bubble');
     
-    // 終極防呆
     if (!heroEl || !imgEl || !bubbleEl) return;
 
     const sizeEl = document.getElementById('ec-img-size');

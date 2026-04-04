@@ -1,4 +1,3 @@
-<!-- Version: v1.8.0 (QQ 終極破冰版：加入名片精準導航，打破編輯器跳轉無限輪迴) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -16,23 +15,9 @@
     tailwind.config = {
       theme: {
         extend: {
-          colors: { 
-            primary: "#2563eb", 
-            "primary-light": "#eff6ff", 
-            background: "#ffffff", 
-            "text-main": "#0f172a", 
-            "text-muted": "#64748b", 
-            error: "#ef4444" 
-          },
-          fontFamily: { 
-            headline: ["Manrope", "Noto Sans TC", "sans-serif"],
-            sans: ["Inter", "Noto Sans TC", "sans-serif"] 
-          },
-          boxShadow: {
-            'app-card': '0 4px 20px -2px rgba(0,0,0,0.05)',
-            'app-nav': '0 -4px 20px rgba(0,0,0,0.03)',
-            'floating': '0 10px 40px -10px rgba(37,99,235,0.2)',
-          }
+          colors: { primary: "#2563eb", "primary-light": "#eff6ff", background: "#ffffff", "text-main": "#0f172a", "text-muted": "#64748b", error: "#ef4444" },
+          fontFamily: { headline: ["Manrope", "Noto Sans TC", "sans-serif"], sans: ["Inter", "Noto Sans TC", "sans-serif"] },
+          boxShadow: { 'app-card': '0 4px 20px -2px rgba(0,0,0,0.05)', 'app-nav': '0 -4px 20px rgba(0,0,0,0.03)', 'floating': '0 10px 40px -10px rgba(37,99,235,0.2)' }
         }
       }
     }
@@ -40,40 +25,23 @@
   <style>
     .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400; vertical-align: middle; }
     .icon-filled { font-variation-settings: 'FILL' 1, 'wght' 400; }
-    
     body { background-color: #ffffff; -webkit-tap-highlight-color: transparent; }
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1.5rem); }
-    
     .input-label { @apply block text-[14px] text-slate-700 mb-1.5 font-medium tracking-wide; }
-    
-    select.custom-input {
-      -webkit-appearance: none !important;
-      -moz-appearance: none !important;
-      appearance: none !important;
-      background-image: none !important;
-    }
-
+    select.custom-input { -webkit-appearance: none !important; appearance: none !important; background-image: none !important; }
     .custom-input { @apply w-full py-2.5 px-3 bg-white border border-slate-300 rounded-lg outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-medium text-text-main text-[15px] shadow-sm; }
     .custom-input::placeholder { @apply text-slate-400 font-normal; }
-    
-    input[type=number]::-webkit-inner-spin-button, 
-    input[type=number]::-webkit-outer-spin-button { 
-      -webkit-appearance: none; 
-      margin: 0; 
-    }
+    input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     input[type=number] { -moz-appearance: textfield; }
-
     .btn-primary { @apply w-full py-3 bg-primary text-white rounded-lg font-bold text-[16px] shadow-sm active:scale-[0.98] transition-all flex items-center justify-center gap-2 hover:bg-blue-700; }
     .btn-secondary { @apply w-full py-3 bg-white border border-slate-200 text-slate-700 rounded-lg font-bold text-[16px] hover:bg-slate-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-sm; }
-    
     .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-slate-400 h-full; min-width: 48px;}
     .nav-btn .icon-box { @apply px-4 py-1 rounded-full transition-all flex items-center justify-center mb-0.5; }
     .nav-active { @apply text-primary font-bold; }
     .nav-active .icon-box { @apply bg-primary-light text-primary; }
     .nav-active .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
-
     .refresh-spin { animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   </style>
@@ -81,176 +49,82 @@
 <body class="font-sans text-text-main min-h-screen flex flex-col items-center">
 
 <div id="app-container" class="w-full max-w-md h-screen relative flex flex-col shadow-2xl overflow-hidden bg-background">
-  
   <nav id="top-nav" class="fixed top-0 w-full max-w-md z-40 bg-white/90 backdrop-blur-xl px-5 py-3.5 flex justify-between items-center left-1/2 -translate-x-1/2 border-b border-slate-200 shadow-sm">
     <div class="text-[19px] font-extrabold text-slate-800 flex items-center gap-2 font-headline tracking-tight">
-      <div class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shadow-md shadow-blue-500/20">
-        <span class="material-symbols-outlined text-[20px]">event_note</span>
-      </div>
-      報名大師 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v1.8.0</span>
+      <div class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shadow-md shadow-blue-500/20"><span class="material-symbols-outlined text-[20px]">event_note</span></div>
+      報名大師 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v3.0.0</span>
       <span id="header-admin-badge" class="hidden bg-slate-800 text-white text-[9px] px-2 py-0.5 rounded-md uppercase tracking-wider font-bold ml-1">Admin</span>
     </div>
     <div class="flex items-center gap-3">
-      <div id="user-profile-badge" class="hidden flex items-center gap-2">
-        <img id="user-avatar" src="" class="w-9 h-9 rounded-full object-cover border border-slate-200 shadow-sm">
-      </div>
-      <button id="role-switch-btn" onclick="toggleRoleMode()" class="hidden w-9 h-9 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center active:scale-95 transition-all hover:bg-slate-200">
-        <span class="material-symbols-outlined text-[20px]">swap_horiz</span>
-      </button>
+      <div id="user-profile-badge" class="hidden flex items-center gap-2"><img id="user-avatar" src="" class="w-9 h-9 rounded-full object-cover border border-slate-200 shadow-sm"></div>
+      <button id="role-switch-btn" onclick="toggleRoleMode()" class="hidden w-9 h-9 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center active:scale-95 transition-all hover:bg-slate-200"><span class="material-symbols-outlined text-[20px]">swap_horiz</span></button>
     </div>
   </nav>
 
   <main id="main-content" class="flex-1 overflow-y-auto pb-32 pt-20 px-5 space-y-6">
-
     <div id="view-loading" class="h-full flex flex-col items-center justify-center space-y-4 pb-20 relative">
       <div class="w-10 h-10 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
       <p class="text-slate-500 font-bold tracking-widest text-[13px]">系統載入中</p>
-      
       <div id="boot-debug-panel" class="absolute bottom-10 left-5 right-5 bg-slate-800/90 backdrop-blur-md text-emerald-400 text-[11px] font-mono p-4 rounded-xl shadow-lg border border-slate-700 hidden">
-         <div class="text-white font-bold mb-2 border-b border-slate-600 pb-1.5 flex items-center gap-1">
-             <span class="material-symbols-outlined text-[14px]">radar</span> 系統啟動診斷雷達
-         </div>
+         <div class="text-white font-bold mb-2 border-b border-slate-600 pb-1.5 flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">radar</span> 系統啟動診斷雷達</div>
          <div id="boot-debug-log" class="space-y-1.5 max-h-[120px] overflow-y-auto hide-scrollbar"></div>
       </div>
     </div>
 
-    <!-- 註冊畫面 -->
     <div id="view-user-register" class="hidden animate-in fade-in duration-500 pt-4 pb-10 space-y-6">
-      <div class="mb-2">
-        <h1 class="text-2xl font-extrabold font-headline text-slate-800 tracking-tight">建立會員檔案</h1>
-        <p class="text-slate-500 text-[13px] font-medium mt-1">完善資料以獲得精準的商務推薦</p>
-      </div>
-      
+      <div class="mb-2"><h1 class="text-2xl font-extrabold font-headline text-slate-800 tracking-tight">建立會員檔案</h1><p class="text-slate-500 text-[13px] font-medium mt-1">完善資料以獲得精準的商務推薦</p></div>
       <div id="reg-step-1" class="space-y-4">
         <div class="flex flex-col"><label class="input-label">真實姓名</label><input id="reg-name" class="custom-input" placeholder="不填則自動代入 LINE 暱稱" type="text"/></div>
-        <div class="grid grid-cols-2 gap-3">
-          <div class="flex flex-col"><label class="input-label">所屬業種</label><input id="reg-industry" class="custom-input" placeholder="例如：資訊科技" type="text"/></div>
-          <div class="flex flex-col"><label class="input-label">性別</label><select id="reg-gender" class="custom-input cursor-pointer"><option value="" disabled selected>選擇性別</option><option value="男">男</option><option value="女">女</option></select></div>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div class="flex flex-col"><label class="input-label">手機號碼</label><input id="reg-phone" class="custom-input" placeholder="0912-345-678" type="tel"/></div>
-          <div class="flex flex-col"><label class="input-label">生日</label><input id="reg-birthday" class="custom-input !px-2 text-slate-600" type="date"/></div>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div class="flex flex-col"><label class="input-label">居住地區</label><input id="reg-region" class="custom-input" placeholder="例如：台北市" type="text"/></div>
-          <div class="flex flex-col"><label class="input-label">完整地址</label><input id="reg-address" class="custom-input" placeholder="選填" type="text"/></div>
-        </div>
+        <div class="grid grid-cols-2 gap-3"><div class="flex flex-col"><label class="input-label">所屬業種</label><input id="reg-industry" class="custom-input" placeholder="例如：資訊科技" type="text"/></div><div class="flex flex-col"><label class="input-label">性別</label><select id="reg-gender" class="custom-input cursor-pointer"><option value="" disabled selected>選擇性別</option><option value="男">男</option><option value="女">女</option></select></div></div>
+        <div class="grid grid-cols-2 gap-3"><div class="flex flex-col"><label class="input-label">手機號碼</label><input id="reg-phone" class="custom-input" placeholder="0912-345-678" type="tel"/></div><div class="flex flex-col"><label class="input-label">生日</label><input id="reg-birthday" class="custom-input !px-2 text-slate-600" type="date"/></div></div>
+        <div class="grid grid-cols-2 gap-3"><div class="flex flex-col"><label class="input-label">居住地區</label><input id="reg-region" class="custom-input" placeholder="例如：台北市" type="text"/></div><div class="flex flex-col"><label class="input-label">完整地址</label><input id="reg-address" class="custom-input" placeholder="選填" type="text"/></div></div>
         <button id="btn-reg-step1" onclick="submitUserRegistrationStep1()" class="btn-primary mt-4">儲存並繼續 <span class="material-symbols-outlined text-[20px]">arrow_forward</span></button>
       </div>
-
       <div id="reg-step-2" class="space-y-4 opacity-30 pointer-events-none transition-opacity duration-300 border-t border-slate-200 pt-6 mt-6">
-        <div>
-           <h3 class="font-bold text-slate-800 text-[15px]">上傳名片建立通訊錄 <span class="text-slate-400 font-normal text-xs">(建議)</span></h3>
-           <p class="text-[12px] text-slate-500 mt-1">系統將自動辨識名片，並生成數位專屬命理標籤。</p>
-        </div>
-        <div class="flex gap-3 mt-3">
-          <button onclick="document.getElementById('reg-card-camera').click()" class="btn-secondary flex-1 border-primary/30 text-primary bg-blue-50/50"><span class="material-symbols-outlined text-[20px]">photo_camera</span> 拍照</button>
-          <button onclick="document.getElementById('reg-card-upload').click()" class="btn-secondary flex-1"><span class="material-symbols-outlined text-[20px]">image</span> 相簿</button>
-        </div>
+        <div><h3 class="font-bold text-slate-800 text-[15px]">上傳名片建立通訊錄 <span class="text-slate-400 font-normal text-xs">(建議)</span></h3><p class="text-[12px] text-slate-500 mt-1">系統將自動辨識名片，並生成數位專屬命理標籤。</p></div>
+        <div class="flex gap-3 mt-3"><button onclick="document.getElementById('reg-card-camera').click()" class="btn-secondary flex-1 border-primary/30 text-primary bg-blue-50/50"><span class="material-symbols-outlined text-[20px]">photo_camera</span> 拍照</button><button onclick="document.getElementById('reg-card-upload').click()" class="btn-secondary flex-1"><span class="material-symbols-outlined text-[20px]">image</span> 相簿</button></div>
         <input type="file" id="reg-card-camera" accept="image/*" capture="environment" class="hidden" onchange="openCropper(this, 'reg')">
         <input type="file" id="reg-card-upload" accept="image/*" class="hidden" onchange="openCropper(this, 'reg')">
-        <div class="text-center mt-3 pt-2">
-          <button onclick="finishRegistration()" class="text-[13px] text-slate-400 font-bold hover:text-slate-600 transition-colors py-2 px-4 rounded-lg">略過上傳，直接進入系統</button>
-        </div>
+        <div class="text-center mt-3 pt-2"><button onclick="finishRegistration()" class="text-[13px] text-slate-400 font-bold hover:text-slate-600 transition-colors py-2 px-4 rounded-lg">略過上傳，直接進入系統</button></div>
       </div>
     </div>
 
-    <!-- 探索活動 -->
     <div id="view-user-activities" class="hidden animate-in fade-in duration-500 pt-2 space-y-4">
-      <div class="flex justify-between items-center mb-1">
-        <div>
-          <h2 class="text-2xl font-extrabold font-headline text-slate-800 tracking-tight">探索精彩活動</h2>
-          <p class="text-slate-500 text-[13px] font-medium mt-1">為您精選最合適的講座與交流聚會</p>
-        </div>
-        <button onclick="reloadActivities()" id="btn-refresh-activities" class="w-9 h-9 rounded-full bg-slate-50 flex items-center justify-center text-slate-600 active:scale-90 transition-all border border-slate-200 hover:bg-slate-100 shrink-0">
-          <span class="material-symbols-outlined text-[20px]">refresh</span>
-        </button>
-      </div>
+      <div class="flex justify-between items-center mb-1"><div><h2 class="text-2xl font-extrabold font-headline text-slate-800 tracking-tight">探索精彩活動</h2><p class="text-slate-500 text-[13px] font-medium mt-1">為您精選最合適的講座與交流聚會</p></div><button onclick="reloadActivities()" id="btn-refresh-activities" class="w-9 h-9 rounded-full bg-slate-50 flex items-center justify-center text-slate-600 active:scale-90 transition-all border border-slate-200 hover:bg-slate-100 shrink-0"><span class="material-symbols-outlined text-[20px]">refresh</span></button></div>
       <div class="flex gap-2.5 overflow-x-auto hide-scrollbar pb-2" id="activity-categories"></div>
       <div id="user-activities-container" class="grid grid-cols-2 gap-3"></div>
     </div>
 
-    <!-- 報名紀錄 -->
     <div id="view-user-history" class="hidden animate-in fade-in pt-2">
       <h2 class="text-2xl font-extrabold font-headline text-slate-800 mb-4">報名紀錄</h2>
       <div id="user-history-container" class="flex flex-col gap-3"></div>
     </div>
 
-    <!-- 個人資料與專屬名片入口 -->
     <div id="view-user-profile" class="hidden animate-in fade-in pt-4 pb-10 space-y-4">
       <h2 class="text-2xl font-extrabold font-headline mb-4 text-slate-800">個人資料 (通訊錄)</h2>
       <div class="flex flex-col"><label class="input-label">姓名</label><input type="text" id="edit-name" class="custom-input"></div>
-      <div class="grid grid-cols-2 gap-3">
-        <div class="flex flex-col"><label class="input-label">業種</label><input type="text" id="edit-industry" class="custom-input"></div>
-        <div class="flex flex-col"><label class="input-label">性別</label><select id="edit-gender" class="custom-input cursor-pointer"><option value="" disabled selected>選擇性別</option><option value="男">男</option><option value="女">女</option></select></div>
-      </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div class="flex flex-col"><label class="input-label">手機</label><input type="tel" id="edit-phone" class="custom-input"></div>
-        <div class="flex flex-col"><label class="input-label">生日</label><input type="date" id="edit-birthday" class="custom-input !px-2 text-slate-600"></div>
-      </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div class="flex flex-col"><label class="input-label">居住地區</label><input type="text" id="edit-region" class="custom-input"></div>
-        <div class="flex flex-col"><label class="input-label">完整地址</label><input type="text" id="edit-address" class="custom-input"></div>
-      </div>
+      <div class="grid grid-cols-2 gap-3"><div class="flex flex-col"><label class="input-label">業種</label><input type="text" id="edit-industry" class="custom-input"></div><div class="flex flex-col"><label class="input-label">性別</label><select id="edit-gender" class="custom-input cursor-pointer"><option value="" disabled selected>選擇性別</option><option value="男">男</option><option value="女">女</option></select></div></div>
+      <div class="grid grid-cols-2 gap-3"><div class="flex flex-col"><label class="input-label">手機</label><input type="tel" id="edit-phone" class="custom-input"></div><div class="flex flex-col"><label class="input-label">生日</label><input type="date" id="edit-birthday" class="custom-input !px-2 text-slate-600"></div></div>
+      <div class="grid grid-cols-2 gap-3"><div class="flex flex-col"><label class="input-label">居住地區</label><input type="text" id="edit-region" class="custom-input"></div><div class="flex flex-col"><label class="input-label">完整地址</label><input type="text" id="edit-address" class="custom-input"></div></div>
       <button id="btn-save-profile" onclick="submitProfileUpdate()" class="btn-primary mt-4">儲存變更</button>
 
-      <!-- 名片入口橫幅 (預設無 onclick 避免誤觸) -->
-      <div id="my-card-entry" class="mt-8 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-5 text-white shadow-xl shadow-slate-900/20 flex justify-between items-center relative overflow-hidden cursor-pointer active:scale-[0.98] transition-transform">
+      <div id="my-card-entry" class="mt-8 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-5 text-white shadow-xl shadow-slate-900/20 flex justify-between items-center relative overflow-hidden cursor-pointer active:scale-[0.98] transition-transform hidden">
           <div class="absolute -right-4 -top-4 opacity-10"><span class="material-symbols-outlined text-[100px]">contact_mail</span></div>
-          <div class="relative z-10 w-full pr-4" id="my-card-info">
-              <div class="flex items-center gap-1.5 mb-1.5">
-                <span class="w-2 h-2 rounded-full bg-slate-400 animate-pulse"></span>
-                <span class="text-[11px] font-bold text-slate-300 tracking-wider">檢查狀態中...</span>
-              </div>
-              <h3 class="text-[18px] font-black mb-1">數位電子名片</h3>
-              <p class="text-[12px] text-slate-300 font-medium">讀取中...</p>
-          </div>
-          <div class="relative z-10 w-11 h-11 shrink-0 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20 shadow-sm">
-              <span class="material-symbols-outlined text-[24px]">arrow_forward</span>
-          </div>
+          <div class="relative z-10 w-full pr-4" id="my-card-info"></div>
+          <div class="relative z-10 w-11 h-11 shrink-0 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20 shadow-sm"><span class="material-symbols-outlined text-[24px]">arrow_forward</span></div>
       </div>
-      
-      <!-- 獨立的名片上傳觸發器 -->
       <input type="file" id="profile-card-upload" accept="image/*" class="hidden" onchange="openCropper(this, 'profile')">
 
-      <!-- 終極連線雷達 (Debug Tool) -->
-      <div class="mt-8 p-4 bg-red-50 border border-red-200 rounded-xl">
-        <h3 class="text-red-700 font-bold text-[14px] flex items-center gap-1 mb-2"><span class="material-symbols-outlined">bug_report</span> 終極系統偵錯區</h3>
-        <p class="text-red-600 text-[12px] mb-3 leading-snug">如果還是抓不到名片，點擊下方按鈕強制連線，一秒抓出問題！</p>
-        <button onclick="runUltimateDebug()" class="w-full py-2 bg-red-600 text-white rounded-lg font-bold text-[13px] active:scale-95 shadow-sm hover:bg-red-700 transition-colors">執行一鍵強制偵錯</button>
+      <div class="mt-8 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+        <h3 class="text-slate-700 font-bold text-[14px] flex items-center gap-1 mb-2"><span class="material-symbols-outlined">bug_report</span> 系統偵錯區</h3>
+        <p class="text-slate-500 text-[12px] mb-3 leading-snug">若名片狀態無法正確讀取，點擊強制連線重新抓取。</p>
+        <button onclick="runUltimateDebug()" class="w-full py-2 bg-white border border-slate-300 text-slate-700 rounded-lg font-bold text-[13px] active:scale-95 shadow-sm">強制重新連線</button>
       </div>
-
     </div>
 
-    <!-- 後台：管理核銷 -->
-    <div id="view-admin-activities" class="hidden space-y-4 animate-in fade-in pt-4">
-      <h2 class="text-2xl font-extrabold font-headline text-slate-800">管理核銷</h2>
-      <div id="admin-activity-list-container" class="space-y-4"></div>
-    </div>
-
-    <!-- 後台：CRM -->
-    <div id="view-admin-crm" class="hidden space-y-2 animate-in fade-in pt-4">
-      <div class="px-1 mb-4">
-        <h2 class="text-2xl font-extrabold font-headline text-slate-800 tracking-tight">會員 CRM</h2>
-        <p class="text-slate-500 text-[13px] font-medium mt-1">追蹤所有會員的活躍度與出席次數。</p>
-      </div>
-      <div class="relative flex flex-col mb-2 px-1">
-        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
-        <input type="text" id="crm-search-input" onkeyup="filterCrmList()" class="w-full py-2.5 pl-10 pr-4 bg-slate-100 border-none rounded-xl text-[14px] outline-none focus:bg-white focus:ring-1 focus:ring-primary/20 transition-all shadow-none" placeholder="搜尋參與者姓名...">
-      </div>
-      <div id="admin-crm-list-container" class="flex flex-col"></div>
-      <div id="crm-load-more-box" class="hidden py-6 text-center"><button onclick="loadMoreCrm()" class="text-primary font-bold text-[14px] px-6 py-2 border border-primary/20 rounded-full hover:bg-primary-light transition-all">顯示更多</button></div>
-    </div>
-
-    <!-- 後台：系統參數 -->
-    <div id="view-admin-settings" class="hidden animate-in fade-in pt-4 space-y-4">
-      <h2 class="text-2xl font-extrabold font-headline mb-4 text-slate-800">系統參數</h2>
-      <div class="flex flex-col"><label class="input-label">Telegram Bot Token</label><div class="flex gap-2"><input type="text" id="set-tg-token" class="custom-input flex-1"><button onclick="autoFetchTgChatId()" id="btn-fetch-tg" class="bg-white text-slate-600 px-4 rounded-lg font-bold border border-slate-300 hover:bg-slate-50 active:scale-95 transition-all shadow-sm">轉換</button></div></div>
-      <div class="flex flex-col"><label class="input-label">Telegram Chat ID</label><input type="text" id="set-tg-chat" class="custom-input bg-slate-50 text-slate-500" readonly placeholder="由上方轉換取得"></div>
-      <div class="flex flex-col"><label class="input-label">官方 LINE 連結</label><input type="text" id="set-line-link" class="custom-input" placeholder="https://lin.ee/..."></div>
-      <button id="btn-submit-settings" onclick="submitSettings()" class="btn-primary mt-2">儲存設定</button>
-    </div>
-
+    <div id="view-admin-activities" class="hidden space-y-4 animate-in fade-in pt-4"><h2 class="text-2xl font-extrabold font-headline text-slate-800">管理核銷</h2><div id="admin-activity-list-container" class="space-y-4"></div></div>
+    <div id="view-admin-crm" class="hidden space-y-2 animate-in fade-in pt-4"><div class="px-1 mb-4"><h2 class="text-2xl font-extrabold font-headline text-slate-800 tracking-tight">會員 CRM</h2><p class="text-slate-500 text-[13px] font-medium mt-1">追蹤所有會員的活躍度與出席次數。</p></div><div class="relative flex flex-col mb-2 px-1"><span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span><input type="text" id="crm-search-input" onkeyup="filterCrmList()" class="w-full py-2.5 pl-10 pr-4 bg-slate-100 border-none rounded-xl text-[14px] outline-none focus:bg-white focus:ring-1 focus:ring-primary/20 transition-all shadow-none" placeholder="搜尋參與者姓名..."></div><div id="admin-crm-list-container" class="flex flex-col"></div><div id="crm-load-more-box" class="hidden py-6 text-center"><button onclick="loadMoreCrm()" class="text-primary font-bold text-[14px] px-6 py-2 border border-primary/20 rounded-full hover:bg-primary-light transition-all">顯示更多</button></div></div>
+    <div id="view-admin-settings" class="hidden animate-in fade-in pt-4 space-y-4"><h2 class="text-2xl font-extrabold font-headline mb-4 text-slate-800">系統參數</h2><div class="flex flex-col"><label class="input-label">Telegram Bot Token</label><div class="flex gap-2"><input type="text" id="set-tg-token" class="custom-input flex-1"><button onclick="autoFetchTgChatId()" id="btn-fetch-tg" class="bg-white text-slate-600 px-4 rounded-lg font-bold border border-slate-300 hover:bg-slate-50 active:scale-95 transition-all shadow-sm">轉換</button></div></div><div class="flex flex-col"><label class="input-label">Telegram Chat ID</label><input type="text" id="set-tg-chat" class="custom-input bg-slate-50 text-slate-500" readonly placeholder="由上方轉換取得"></div><div class="flex flex-col"><label class="input-label">官方 LINE 連結</label><input type="text" id="set-line-link" class="custom-input" placeholder="https://lin.ee/..."></div><button id="btn-submit-settings" onclick="submitSettings()" class="btn-primary mt-2">儲存設定</button></div>
   </main>
 
   <nav id="bottom-nav-user" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-around items-center px-2 py-2 z-40 pb-safe shadow-app-nav left-1/2 -translate-x-1/2 h-[72px]">
@@ -258,7 +132,6 @@
     <button onclick="switchView('user-history')" id="nav-user-history" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">receipt_long</span></div><span class="text-[11px] mt-0.5 font-normal tracking-wide">紀錄</span></button>
     <button onclick="switchView('user-profile')" id="nav-user-profile" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">person</span></div><span class="text-[11px] mt-0.5 font-normal tracking-wide">設定</span></button>
   </nav>
-
   <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-evenly items-center px-1 py-2 z-40 pb-safe shadow-app-nav left-1/2 -translate-x-1/2 h-[72px]">
     <button onclick="switchView('admin-activities')" class="nav-btn" id="nav-admin-activities"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">fact_check</span></div><span class="text-[10px] font-normal mt-0.5">核銷</span></button>
     <button onclick="window.location.href='active.html'" class="nav-btn" id="nav-admin-create"><div class="icon-box"><span class="material-symbols-outlined text-[22px]">add_circle</span></div><span class="text-[10px] font-normal mt-0.5">建立</span></button>
@@ -269,82 +142,28 @@
   </nav>
 </div>
 
-<!-- 共同的圖片裁切 Modal -->
-<div id="section-image-cropper" class="hidden fixed inset-0 bg-slate-900 flex flex-col animate-in fade-in duration-200 w-full max-w-md mx-auto z-[1080]">
-  <div class="flex justify-between items-center p-4 bg-slate-900 text-white shrink-0 border-b border-slate-800 shadow-sm">
-    <button onclick="cancelCrop()" class="text-slate-400 font-bold text-sm px-3 py-2 active:scale-90 transition-transform">取消</button>
-    <span class="font-bold text-[15px] tracking-wider flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px]">crop</span> 裁切圖片</span>
-    <button onclick="confirmCrop()" class="px-4 py-1.5 font-bold text-white bg-primary rounded-md text-sm active:scale-95 transition-transform shadow-md">完成</button>
-  </div>
-  <div class="flex-1 relative overflow-hidden flex items-center justify-center bg-black"><img id="cropper-image" src="" class="max-w-full max-h-full block opacity-0"></div>
-</div>
-
-<!-- 名片預覽 Modal -->
-<div id="readonly-card-modal" class="hidden fixed inset-0 bg-slate-100/95 backdrop-blur-sm flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl" style="z-index: 1050;">
-  <div class="bg-white px-5 py-4 flex justify-between items-center border-b border-slate-200 z-10 shrink-0 shadow-sm">
-    <h3 class="text-lg font-black text-slate-800">數位名片</h3>
-    <button onclick="closeReadOnlyCard()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-90 transition-transform"><span class="material-symbols-outlined">close</span></button>
-  </div>
-
-  <div class="flex-1 overflow-y-auto pb-28 pt-8 px-5 flex flex-col items-center">
-    <div class="w-full max-w-[340px] bg-white rounded-[20px] shadow-[0_10px_30px_rgba(0,0,0,0.08)] overflow-hidden relative border border-slate-100">
-      <div class="absolute top-3 left-3 bg-[#FF0000] text-white text-[13px] font-bold px-3 py-1 rounded-full z-10 shadow-sm tracking-widest">分享</div>
-      <img id="ro-img" src="" class="w-full h-auto max-h-[220px] object-cover bg-slate-50">
-      <div class="p-6">
-        <h2 id="ro-title" class="text-[22px] font-black text-slate-800 leading-tight mb-3"></h2>
-        <p id="ro-desc" class="text-[14px] text-slate-500 whitespace-pre-wrap leading-relaxed mb-6"></p>
-        <div id="ro-buttons" class="space-y-2.5"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-100 p-4 pb-safe flex justify-center" style="z-index: 1060; box-shadow: 0 -10px 30px rgba(0,0,0,0.05);">
-    <button onclick="shareReadOnlyCardToLine(this)" class="w-[90%] py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[17px] shadow-lg shadow-green-500/30 active:scale-95 transition-all flex items-center justify-center gap-2">
-      🚀 轉發名片至 LINE
-    </button>
-  </div>
-</div>
-
-<!-- 自訂彈窗 -->
-<div id="custom-modal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-6">
-  <div class="bg-white w-full max-w-[300px] rounded-3xl p-6 shadow-2xl text-center scale-95 transition-all duration-200 border border-slate-100">
-    <div class="w-14 h-14 bg-blue-50 text-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><span class="material-symbols-outlined text-[28px] icon-filled">info</span></div>
-    <h3 id="modal-title" class="text-[19px] font-extrabold mb-2 text-slate-800 tracking-tight font-headline">系統通知</h3>
-    <p id="modal-desc" class="text-slate-500 font-medium mb-6 leading-relaxed text-[14px]"></p>
-    <button onclick="closeModalAndGo()" class="btn-primary !py-2.5 !text-[15px]">我知道了</button>
-  </div>
-</div>
+<div id="section-image-cropper" class="hidden fixed inset-0 bg-slate-900 flex flex-col animate-in fade-in duration-200 w-full max-w-md mx-auto z-[1080]"><div class="flex justify-between items-center p-4 bg-slate-900 text-white shrink-0 border-b border-slate-800 shadow-sm"><button onclick="cancelCrop()" class="text-slate-400 font-bold text-sm px-3 py-2 active:scale-90 transition-transform">取消</button><span class="font-bold text-[15px] tracking-wider flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px]">crop</span> 裁切圖片</span><button onclick="confirmCrop()" class="px-4 py-1.5 font-bold text-white bg-primary rounded-md text-sm active:scale-95 transition-transform shadow-md">完成</button></div><div class="flex-1 relative overflow-hidden flex items-center justify-center bg-black"><img id="cropper-image" src="" class="max-w-full max-h-full block opacity-0"></div></div>
+<div id="activity-detail-modal" class="hidden fixed inset-0 z-[1000] bg-white flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 overflow-hidden shadow-2xl"><div class="absolute top-4 right-4 z-[1050]"><button onclick="closeActivityDetail()" class="w-9 h-9 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white shadow-sm active:scale-90 transition-transform"><span class="material-symbols-outlined text-[20px]">close</span></button></div><div class="flex-1 overflow-y-auto pb-28"><div id="detail-modal-image-container" class="w-full aspect-[4/3] bg-slate-100 relative"><img id="detail-modal-image" src="" class="w-full h-full object-cover hidden"><div id="detail-modal-no-image" class="absolute inset-0 flex items-center justify-center bg-slate-100"><span class="material-symbols-outlined text-6xl text-slate-300">local_activity</span></div></div><div class="bg-white p-6 space-y-5"><div><div class="flex items-center gap-2 mb-2.5"><span id="detail-modal-type" class="bg-slate-100 text-slate-600 px-2.5 py-0.5 text-[11px] font-bold rounded"></span><span id="detail-modal-fee" class="px-2.5 py-0.5 text-[11px] font-bold rounded"></span></div><h2 id="detail-modal-title" class="text-[20px] font-extrabold text-slate-800 leading-snug"></h2></div><div class="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-3"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded bg-white shadow-sm flex items-center justify-center text-slate-400 shrink-0"><span class="material-symbols-outlined text-[18px]">event</span></div><div><p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">開始時間</p><p id="detail-modal-start" class="text-[14px] font-bold text-slate-700"></p></div></div><div id="detail-modal-end-container" class="flex items-center gap-3 hidden border-t border-slate-200 pt-3"><div class="w-8 h-8 rounded bg-white shadow-sm flex items-center justify-center text-slate-400 shrink-0"><span class="material-symbols-outlined text-[18px]">event_busy</span></div><div><p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">結束時間</p><p id="detail-modal-end" class="text-[14px] font-bold text-slate-700"></p></div></div></div><div id="detail-modal-batch-container" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-2 mt-4"><h3 class="text-[13px] font-bold text-slate-800 flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px] text-primary">format_list_bulleted</span> 請選擇報名梯次</h3><select id="detail-modal-batch-select" class="custom-input cursor-pointer !bg-white"></select></div><div><h3 class="text-[15px] font-bold text-slate-800 mb-2 flex items-center gap-1.5"><span class="material-symbols-outlined text-primary text-[20px]">subject</span> 內容說明</h3><p id="detail-modal-desc" class="text-[14px] text-slate-600 leading-relaxed whitespace-pre-wrap"></p></div></div></div><div class="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-100 p-4 pb-safe z-[1010]"><button id="detail-modal-join-btn" class="btn-primary">我要報名 <span class="material-symbols-outlined text-[20px]">arrow_forward</span></button></div></div>
+<div id="admin-registrants-modal" class="hidden fixed inset-0 z-[1050] bg-slate-50 flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl"><div class="bg-white px-4 pt-12 pb-3 flex justify-between items-center shrink-0 border-b border-slate-200 shadow-sm"><div class="flex items-center gap-2.5"><button onclick="closeAdminRegistrants()" class="w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 active:scale-90 transition-transform"><span class="material-symbols-outlined text-[20px]">arrow_back</span></button><h3 id="admin-reg-title" class="text-[17px] font-extrabold text-slate-800 truncate max-w-[180px]">活動名單</h3></div><button onclick="document.getElementById('qr-scanner-modal').classList.remove('hidden'); startScanner();" class="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg font-bold text-[13px] flex items-center gap-1 active:scale-95 transition-all shadow-sm"><span class="material-symbols-outlined text-[16px]">qr_code_scanner</span> 掃碼</button></div><div class="bg-white px-4 py-3 shrink-0 flex gap-2 border-b border-slate-100"><div class="relative flex-1 flex flex-col"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span><input type="text" id="admin-search-reg" onkeyup="filterAdminReg()" class="w-full py-2.5 pl-9 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-[13px] outline-none focus:bg-white focus:ring-1 focus:ring-primary placeholder-slate-400 transition-all" placeholder="搜尋姓名或電話..."></div><button onclick="document.getElementById('walkin-modal').classList.remove('hidden')" class="w-10 h-10 bg-primary-light text-primary rounded-lg flex items-center justify-center active:scale-90 transition-all shadow-sm"><span class="material-symbols-outlined text-[20px]">person_add</span></button></div><div class="flex-1 overflow-y-auto p-3 space-y-3 pb-safe bg-slate-50" id="admin-reg-list"></div></div>
+<div id="walkin-modal" class="hidden fixed inset-0 z-[1060] bg-slate-900/40 backdrop-blur-sm flex items-end justify-center animate-in fade-in duration-200 w-full max-w-md mx-auto left-0 right-0"><div class="bg-white w-full rounded-t-3xl p-6 pb-safe shadow-2xl"><div class="flex justify-between items-center mb-5"><h3 class="text-[18px] font-extrabold text-slate-800 flex items-center gap-2"><span class="material-symbols-outlined text-primary">person_add</span> 現場來賓登記</h3><button onclick="document.getElementById('walkin-modal').classList.add('hidden')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center active:scale-90 transition-all"><span class="material-symbols-outlined text-[18px]">close</span></button></div><div class="flex flex-col mb-5"><label class="input-label">來賓姓名</label><input type="text" id="f-walkin-name" class="custom-input" placeholder="請輸入姓名"></div><button id="btn-walkin" onclick="submitWalkIn()" class="btn-primary shadow-floating">新增並自動簽到 <span class="material-symbols-outlined text-[20px]">how_to_reg</span></button></div></div>
+<div id="qr-scanner-modal" class="hidden fixed inset-0 z-[1070] bg-black flex flex-col animate-in fade-in duration-300 w-full max-w-md mx-auto left-0 right-0"><div class="flex justify-between items-center p-4 bg-gradient-to-b from-black/80 to-transparent absolute top-0 w-full z-10"><span class="text-white font-bold tracking-widest text-[13px]">請對準學員 QR Code</span><button onclick="stopScanner()" class="w-9 h-9 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white active:scale-90 transition-transform"><span class="material-symbols-outlined text-[20px]">close</span></button></div><div class="flex-1 flex items-center justify-center relative"><div id="qr-reader" class="w-full h-full max-h-[80vh]"></div></div></div>
+<div id="custom-modal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-6"><div class="bg-white w-full max-w-[300px] rounded-3xl p-6 shadow-2xl text-center scale-95 transition-all duration-200 border border-slate-100"><div class="w-14 h-14 bg-blue-50 text-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><span class="material-symbols-outlined text-[28px] icon-filled">info</span></div><h3 id="modal-title" class="text-[19px] font-extrabold mb-2 text-slate-800 tracking-tight font-headline">系統通知</h3><p id="modal-desc" class="text-slate-500 font-medium mb-6 leading-relaxed text-[14px]"></p><button onclick="closeModalAndGo()" class="btn-primary !py-2.5 !text-[15px]">我知道了</button></div></div>
 <div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-bold flex items-center gap-2 w-max max-w-[90vw] opacity-0 pointer-events-none border border-slate-700"></div>
 
 <script>
   const LIFF_ID = "2009367829-DLtYBDUm"; 
   const WORKER_URL = "https://actmaster.fangwl591021.workers.dev"; 
-  
-  document.addEventListener('wheel', function(e) {
-    if (document.activeElement.type === 'number') {
-        document.activeElement.blur();
-    }
-  }, { passive: true });
+  const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55", "U8932b891ad24da512afb9c1a6f41567b"]; 
+
+  document.addEventListener('wheel', function(e) { if (document.activeElement.type === 'number') document.activeElement.blur(); }, { passive: true });
 
   let userProfile = null, isAdmin = false, isViewModeAdmin = false, isRegistered = false, registeredInfo = null;
   let globalPublicActivities = [], currentActivities = [], currentRegistrants = [], activeActivityName = '', modalTargetView = '';
-  let globalCrmData = []; 
-  let filteredCrmData = [];
-  let globalCardContacts = []; 
-  let crmPageLimit = 10;
-  let currentCrmViewCount = 10;
-  let isProcessing = false;
-  let currentActiveCard = null;
-
-  let regStep1Data = {};
-  let regCompressedBase64 = "";
-  let cropperInstance = null;
-  let currentCropTarget = ''; 
-  let html5QrcodeScanner = null;
+  let globalCrmData = [], filteredCrmData = [], globalCardContacts = [], crmPageLimit = 10, currentCrmViewCount = 10, isProcessing = false;
+  let regStep1Data = {}, regCompressedBase64 = "", cropperInstance = null, currentCropTarget = '', html5QrcodeScanner = null;
 
   function setButtonLoading(btnId, isLoading, originalText = '') {
-      const btn = document.getElementById(btnId);
-      if (!btn) return false;
+      const btn = document.getElementById(btnId); if (!btn) return false;
       if (isLoading) {
           if (!btn.dataset.oriText) btn.dataset.oriText = btn.innerHTML;
           btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[18px] align-middle">refresh</span> 處理中...';
@@ -357,115 +176,61 @@
       }
   }
 
-  const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55", "U8932b891ad24da512afb9c1a6f41567b"]; 
-
-  const loadScript = (src) => new Promise((res, rej) => {
-    if (document.querySelector(`script[src="${src}"]`)) return res();
-    const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s);
-  });
-  const loadCSS = (href) => new Promise((res, rej) => {
-    if (document.querySelector(`link[href="${href}"]`)) return res();
-    const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; l.onload = res; l.onerror = rej; document.head.appendChild(l);
-  });
+  const loadScript = (src) => new Promise((res, rej) => { if (document.querySelector(`script[src="${src}"]`)) return res(); const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+  const loadCSS = (href) => new Promise((res, rej) => { if (document.querySelector(`link[href="${href}"]`)) return res(); const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; l.onload = res; l.onerror = rej; document.head.appendChild(l); });
 
   async function fetchAPI(action, payload = {}) {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 20000); 
-
-      const response = await fetch(WORKER_URL, { 
-          method: 'POST', 
-          headers: { 'Content-Type': 'application/json' }, 
-          body: JSON.stringify({ action, payload }),
-          signal: controller.signal
-      });
+      const response = await fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, payload }), signal: controller.signal });
       clearTimeout(timeoutId);
-
       const resText = await response.text();
-      let result; 
-      try { 
-        result = JSON.parse(resText); 
-      } catch(e) { 
-        throw new Error(`伺服器回應異常:\n${resText.substring(0, 100)}`); 
-      }
-      
+      let result; try { result = JSON.parse(resText); } catch(e) { throw new Error(`伺服器回應異常:\n${resText.substring(0, 100)}`); }
       if (!result.success) throw new Error(result.error);
       return result.data;
     } catch (err) { 
-      if (err.name === 'AbortError') err.message = '連線已經超時 (20秒)，請檢查網路或伺服器狀態。';
+      if (err.name === 'AbortError') err.message = '連線已經超時 (20秒)，請檢查網路。';
       throw err; 
     }
   }
 
   window.runUltimateDebug = async function() {
       try {
-          alert('🚀 正在強制連線 Google 試算表抓取名片通訊錄...');
+          alert('🚀 正在強制連線抓取名單...');
           const data = await fetchAPI('getCardContacts');
-          
-          if (!data || data.length === 0) {
-              alert('🚨 偵錯結果：連線成功，但 Google 試算表回傳了「空資料 []」！\n\n請確認您的 Code.gs 是否有成功部署新版，且它找的是「會員通訊錄」！');
-          } else {
-              const first = data[0];
-              alert(`✅ 偵錯結果：成功抓到資料！\n資料庫共有 ${data.length} 筆名片。\n第一筆姓名是：${first['姓名'] || first['Name'] || '無'}`);
-              console.log("Raw Data:", data);
-              globalCardContacts = data;
-              checkMyCardEntry();
+          if (!data || data.length === 0) alert('🚨 連線成功，但 Google 回傳「空資料 []」！\n請確認 Code.gs 是最新版且找的是「會員通訊錄」');
+          else {
+              alert(`✅ 成功抓到資料！\n資料庫共 ${data.length} 筆。\n第一筆姓名：${data[0]['姓名'] || data[0]['Name'] || '無'}`);
+              globalCardContacts = data; checkMyCardEntry();
           }
-      } catch(e) {
-          alert('❌ 偵錯失敗，連線錯誤：\n' + e.message);
-      }
+      } catch(e) { alert('❌ 偵錯失敗：\n' + e.message); }
   }
 
   window.onload = async () => {
-    const debugLog = document.getElementById('boot-debug-log');
-    const panel = document.getElementById('boot-debug-panel');
-    const addLog = (msg) => { 
-        if(debugLog && panel) { 
-            panel.classList.remove('hidden'); 
-            debugLog.innerHTML += `<div>[${new Date().toLocaleTimeString().split(' ')[0]}] ${msg}</div>`; 
-            debugLog.scrollTop = debugLog.scrollHeight;
-        } 
-        console.log(msg); 
-    };
-
     try {
-      addLog("1. 初始化 LIFF...");
       await liff.init({ liffId: LIFF_ID });
-      if (!liff.isLoggedIn()) { addLog("尚未登入，跳轉中..."); liff.login(); return; }
+      if (!liff.isLoggedIn()) { liff.login(); return; }
       
-      addLog("2. 取得 LINE 使用者資料...");
       userProfile = await liff.getProfile();
       document.getElementById('user-avatar').src = userProfile.pictureUrl || '';
       document.getElementById('user-profile-badge').classList.remove('hidden');
       isAdmin = ADMIN_IDS.includes(userProfile.userId);
       
-      addLog(`3. 連線資料庫檢查身分... (${userProfile.userId.substring(0,6)}...)`);
       const res = await fetchAPI('checkUser', { userId: userProfile.userId });
-      addLog("✅ 伺服器回應成功！");
-      
       isRegistered = res.isRegistered; registeredInfo = res.info;
       
       const params = new URLSearchParams(window.location.search);
       const targetView = params.get('view');
       const claimCardId = params.get('claimCardId');
-      const referrer = params.get('referrer');
-
-      if (referrer) window.claimReferrer = referrer;
-      else window.claimReferrer = '';
-
-      if (claimCardId) { window.claimCardId = claimCardId; }
       
-      fetchAPI('getCardContacts').then(data => {
-          globalCardContacts = data || [];
-      }).catch(e => console.log("背景抓取名單失敗", e));
+      fetchAPI('getCardContacts').then(data => { globalCardContacts = data || []; }).catch(e => console.log("背景抓取名單失敗", e));
 
       document.getElementById('view-loading').classList.add('hidden'); 
       
       if (isAdmin) {
-        document.getElementById('role-switch-btn').classList.remove('hidden');
-        document.getElementById('header-admin-badge').classList.remove('hidden');
-        isViewModeAdmin = true; 
-        switchView(targetView || 'admin-activities');
+        document.getElementById('role-switch-btn').classList.remove('hidden'); document.getElementById('header-admin-badge').classList.remove('hidden');
+        isViewModeAdmin = true; switchView(targetView || 'admin-activities');
         if (claimCardId) processClaimInBackground(claimCardId);
       } else {
         if (isRegistered) {
@@ -486,15 +251,10 @@
                         if (phoneStr.startsWith('886')) phoneStr = '0' + phoneStr.substring(3);
                         document.getElementById('reg-phone').value = phoneStr;
                     }
-                    if (cardData['公司名稱'] || cardData['服務項目/品牌標語']) {
-                        document.getElementById('reg-industry').value = cardData['公司名稱'] || cardData['服務項目/品牌標語'] || '';
-                    }
+                    if (cardData['公司名稱'] || cardData['服務項目/品牌標語']) document.getElementById('reg-industry').value = cardData['公司名稱'] || cardData['服務項目/品牌標語'] || '';
                     showToast("✅ 名片資料已預填，請確認完成註冊");
                 }
-             } catch(e) {
-                console.log("Claim Error:", e);
-                showToast("名片載入失敗，請手動輸入", true);
-             }
+             } catch(e) { showToast("名片載入失敗，請手動輸入", true); }
           }
         }
       }
@@ -504,19 +264,12 @@
       if (container) {
           container.innerHTML = `
           <div class="bg-red-50 border border-red-200 rounded-2xl p-5 mx-4 mt-10 text-left shadow-sm animate-in zoom-in-95">
-              <div class="flex items-center gap-2 mb-3 text-red-700">
-                 <span class="material-symbols-outlined text-3xl">error</span>
-                 <h3 class="font-bold text-[17px]">首頁載入中斷</h3>
-              </div>
-              <div class="bg-white p-3 rounded-xl border border-red-100 text-red-600 text-[12px] font-mono break-all mb-4 shadow-inner max-h-[150px] overflow-y-auto">
-                  ${err.message}
-              </div>
+              <div class="flex items-center gap-2 mb-3 text-red-700"><span class="material-symbols-outlined text-3xl">error</span><h3 class="font-bold text-[17px]">首頁載入中斷</h3></div>
+              <div class="bg-white p-3 rounded-xl border border-red-100 text-red-600 text-[12px] font-mono break-all mb-4 shadow-inner max-h-[150px] overflow-y-auto">${err.message}</div>
               <div class="text-[13px] text-slate-700 font-medium border-t border-red-100 pt-3">
                  <p class="font-bold mb-1.5 flex items-center gap-1"><span class="material-symbols-outlined text-[16px] text-primary">tips_and_updates</span> 診斷建議：</p>
                  <ul class="list-disc pl-5 space-y-1.5 text-[12px] text-slate-600">
-                   <li>若錯誤為 <span class="bg-slate-200 px-1 rounded text-red-500">Failed to parse URL</span>：Cloudflare Worker 的 <b>GAS_URL</b> 未設定或遺失。</li>
-                   <li>若錯誤包含 <span class="bg-slate-200 px-1 rounded text-red-500">Unexpected token &lt;</span>：GAS 網址無效或權限錯誤，回傳了 Google 登入網頁。請確認 GAS 已發布為「網頁應用程式」，且存取權限設為「所有人」。</li>
-                   <li>若錯誤為 <span class="bg-slate-200 px-1 rounded text-red-500">連線已經超時</span>：Google Sheets 處理過慢或當機。</li>
+                   <li>若錯誤包含 <span class="bg-slate-200 px-1 rounded text-red-500">Failed to parse URL</span>：Cloudflare Worker 的 <b>GAS_URL</b> 未設定或遺失。</li>
                  </ul>
               </div>
           </div>`;
@@ -525,13 +278,11 @@
   };
 
   function formatTime(isoString) {
-    if(!isoString) return '';
-    const d = new Date(isoString);
+    if(!isoString) return ''; const d = new Date(isoString);
     return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   }
   function formatTimeShort(isoString) {
-    if(!isoString) return '';
-    const d = new Date(isoString);
+    if(!isoString) return ''; const d = new Date(isoString);
     return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   }
 
@@ -539,12 +290,7 @@
     const skeletonHTML = Array(4).fill(0).map(() => `
       <div class="bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm animate-pulse flex flex-col h-[240px]">
         <div class="h-[120px] w-full bg-slate-200 shrink-0"></div>
-        <div class="p-3 flex flex-col flex-1 gap-2">
-          <div class="h-3 w-1/3 bg-slate-200 rounded"></div>
-          <div class="h-4 w-full bg-slate-200 rounded"></div>
-          <div class="h-4 w-3/4 bg-slate-200 rounded mb-2"></div>
-          <div class="h-8 w-full bg-slate-200 rounded-lg mt-auto"></div>
-        </div>
+        <div class="p-3 flex flex-col flex-1 gap-2"><div class="h-3 w-1/3 bg-slate-200 rounded"></div><div class="h-4 w-full bg-slate-200 rounded"></div><div class="h-4 w-3/4 bg-slate-200 rounded mb-2"></div><div class="h-8 w-full bg-slate-200 rounded-lg mt-auto"></div></div>
       </div>
     `).join('');
     const el = document.getElementById('user-activities-container');
@@ -555,11 +301,7 @@
       try {
           const cardData = await fetchAPI('getCardById', { rowId: claimCardId });
           if (cardData) {
-              const updatePayload = {
-                  rowId: claimCardId,
-                  'LINE ID': userProfile.userId,
-                  userId: userProfile.userId
-              };
+              const updatePayload = { rowId: claimCardId, 'LINE ID': userProfile.userId, userId: userProfile.userId };
               const fields = ['Name', 'EnglishName', 'Title', 'Department', 'CompanyName', 'TaxID', 'Mobile', 'Tel', 'Ext', 'Fax', 'Address', 'Email', 'Website', 'SocialMedia', 'Slogan', 'Notes'];
               const zhKeys = {'Name':'姓名', 'EnglishName':'英文名/別名', 'Title':'職稱', 'Department':'部門', 'CompanyName':'公司名稱', 'TaxID':'統一編號', 'Mobile':'手機號碼', 'Tel':'公司電話', 'Ext':'分機', 'Fax':'傳真', 'Address':'公司地址', 'Email':'電子郵件', 'Website':'公司網址', 'SocialMedia':'社群帳號', 'Slogan':'服務項目/品牌標語', 'Notes':'建檔人/備註'};
               fields.forEach(f => {
@@ -569,11 +311,9 @@
               });
 
               if (registeredInfo && registeredInfo.birthday) {
-                  let bday = registeredInfo.birthday;
-                  const d = new Date(bday);
+                  let bday = registeredInfo.birthday; const d = new Date(bday);
                   if(!isNaN(d.getTime())) bday = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
                   updatePayload.Birthday = bday;
-                  
                   try {
                       const newTags = await fetchAPI('calculateFateTags', { Name: updatePayload.Name, Mobile: updatePayload.Mobile, Birthday: bday });
                       Object.assign(updatePayload, newTags);
@@ -584,13 +324,9 @@
               showToast("✅ 名片已成功認領並綁定至您的帳號");
 
               globalCardContacts = await fetchAPI('getCardContacts');
-              if (!document.getElementById('view-user-profile').classList.contains('hidden')) {
-                  checkMyCardEntry();
-              }
+              if (!document.getElementById('view-user-profile').classList.contains('hidden')) checkMyCardEntry();
           }
-      } catch(e) {
-          console.error("Claim failed", e);
-      }
+      } catch(e) { console.error("Claim failed", e); }
   }
 
   function toggleRoleMode() {
@@ -617,37 +353,32 @@
     else if (view === 'admin-settings') loadAdminSettings();
     else if (view === 'admin-crm') loadCrmData();
     else if (view === 'user-activities') loadUserActivities();
-    else if (view === 'user-profile') {
-        populateUserProfile();
-        checkMyCardEntry();
-    }
+    else if (view === 'user-profile') { populateUserProfile(); checkMyCardEntry(); }
     else if (view === 'user-history') loadUserHistory();
   }
 
-  // ⭐ QQ 終極修復：加入強制 rowId 導航，避免 card.js 迷路
   async function checkMyCardEntry() {
       const infoEl = document.getElementById('my-card-info');
       const entryEl = document.getElementById('my-card-entry');
       if (!userProfile) return;
 
+      const errorTemplate = (msg) => `
+        <div class="flex items-center gap-1.5 mb-1.5"><span class="w-2 h-2 rounded-full bg-red-400"></span><span class="text-[11px] font-bold text-red-300 tracking-wider">連線異常</span></div>
+        <h3 class="text-[18px] font-black mb-1">無法讀取狀態</h3>
+        <p class="text-[12px] text-slate-300 font-medium line-clamp-2">${msg}</p>
+        <button onclick="event.stopPropagation(); checkMyCardEntry()" class="mt-2 px-3 py-1 bg-white/20 text-white rounded text-[11px] font-bold active:scale-95 transition-all">重新整理</button>
+      `;
+
       try {
           infoEl.innerHTML = `
-            <div class="flex items-center gap-1.5 mb-1.5">
-              <span class="w-2 h-2 rounded-full bg-slate-400 animate-pulse"></span>
-              <span class="text-[11px] font-bold text-slate-300 tracking-wider">比對資料庫中...</span>
-            </div>
-            <h3 class="text-[18px] font-black mb-1">數位電子名片</h3>
-            <p class="text-[12px] text-slate-300 font-medium">正在為您尋找名片紀錄</p>
+            <div class="flex items-center gap-1.5 mb-1.5"><span class="w-2 h-2 rounded-full bg-slate-400 animate-pulse"></span><span class="text-[11px] font-bold text-slate-300 tracking-wider">比對資料庫中...</span></div>
+            <h3 class="text-[18px] font-black mb-1">數位電子名片</h3><p class="text-[12px] text-slate-300 font-medium">正在為您尋找名片紀錄</p>
           `;
           entryEl.classList.remove('hidden');
 
           const uid = userProfile.userId;
-          let myName = document.getElementById('edit-name').value.trim();
-          if (!myName && registeredInfo && registeredInfo.name) myName = registeredInfo.name;
-          if (!myName) myName = userProfile.displayName;
-          
-          let myPhone = document.getElementById('edit-phone').value.trim();
-          if (!myPhone && registeredInfo && registeredInfo.phone) myPhone = registeredInfo.phone;
+          let myName = document.getElementById('edit-name').value.trim() || registeredInfo?.name || userProfile.displayName;
+          let myPhone = document.getElementById('edit-phone').value.trim() || registeredInfo?.phone;
           
           if (myPhone) {
               myPhone = String(myPhone).replace(/[^\d]/g, '');
@@ -655,36 +386,30 @@
               if (myPhone.length === 9 && myPhone.startsWith('9')) myPhone = '0' + myPhone;
           }
 
-          // 地毯式搜索邏輯
           const isMatch = (c) => {
               if (!c) return false;
-              
-              const values = Object.values(c).map(v => String(v).trim());
-              const keys = Object.keys(c);
+              const cUid = String(c['LINE ID'] || c.userId || c['Line ID'] || c.lineId || '').trim();
+              if (cUid && cUid === uid) return true;
 
-              for (let k of keys) {
-                  const pureK = k.replace(/\s+/g, '').toUpperCase();
-                  if (pureK.includes('LINEID') || pureK === 'USERID') {
-                      if (String(c[k]).trim() === uid) return true;
-                  }
-              }
-
+              const allValuesStr = Object.values(c).join('|||');
               if (myPhone) {
-                  for (let v of values) {
-                      let pureP = v.replace(/[^\d]/g, '');
+                  const checkPhone = (p) => {
+                      if (!p) return false;
+                      let pureP = String(p).replace(/[^\d]/g, '');
                       if (pureP.startsWith('886')) pureP = '0' + pureP.substring(3);
                       if (pureP.length === 9 && pureP.startsWith('9')) pureP = '0' + pureP;
-                      if (pureP && pureP === myPhone) return true;
-                  }
+                      return pureP === myPhone;
+                  };
+                  if (checkPhone(c['手機號碼']) || checkPhone(c['Mobile']) || checkPhone(c['公司電話']) || checkPhone(c['Tel'])) return true;
+                  if (allValuesStr.includes(myPhone)) return true;
               }
-              
               if (myName) {
+                  let cName = String(c['姓名'] || c['Name'] || '').trim();
                   let mName = myName.trim();
+                  if (cName && cName === mName) return true;
+                  if (cName && mName.includes(cName)) return true;
                   let mNameFirstPart = mName.split(/[\s\/_+-]/)[0];
-                  for (let v of values) {
-                      if (v === mName) return true;
-                      if (mNameFirstPart && mNameFirstPart.length >= 2 && v.includes(mNameFirstPart)) return true;
-                  }
+                  if (mNameFirstPart && mNameFirstPart.length >= 2 && allValuesStr.includes(mNameFirstPart)) return true;
               }
               return false;
           };
@@ -693,7 +418,6 @@
           if (globalCardContacts && Array.isArray(globalCardContacts) && globalCardContacts.length > 0) {
               myCard = globalCardContacts.find(isMatch);
           }
-          
           if (!myCard) {
               const data = await fetchAPI('getCardContacts'); 
               if (data && Array.isArray(data)) {
@@ -706,55 +430,33 @@
               if (!myCard['LINE ID'] || String(myCard['LINE ID']).trim() !== uid) {
                   fetchAPI('updateCard', { rowId: myCard.rowId, 'LINE ID': uid, userId: uid }).catch(e => console.log("綁定 ID 失敗", e));
               }
-
               infoEl.innerHTML = `
-                <div class="flex items-center gap-1.5 mb-1.5">
-                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span>
-                  <span class="text-[11px] font-bold text-emerald-300 tracking-wider">已開通專屬權限</span>
-                </div>
-                <h3 class="text-[18px] font-black mb-1">數位電子名片</h3>
-                <p class="text-[12px] text-slate-300 font-medium">預覽、編輯與轉發至 LINE</p>
+                <div class="flex items-center gap-1.5 mb-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span><span class="text-[11px] font-bold text-emerald-300 tracking-wider">已開通專屬權限</span></div>
+                <h3 class="text-[18px] font-black mb-1">數位電子名片</h3><p class="text-[12px] text-slate-300 font-medium">預覽、編輯與轉發至 LINE</p>
               `;
-              // ⭐ QQ終極修復：強制把剛剛找到的 rowId 送給 card.html，不准它再找一次而迷路
+              // 帶著 rowId 飛過去，保證不被編輯器踢出
               entryEl.onclick = () => window.location.href = `card.html?mode=mycard&rowId=${myCard.rowId}`;
           } else {
               infoEl.innerHTML = `
-                <div class="flex items-center gap-1.5 mb-1.5">
-                  <span class="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]"></span>
-                  <span class="text-[11px] font-bold text-amber-300 tracking-wider">找不到對應的名片</span>
-                </div>
+                <div class="flex items-center gap-1.5 mb-1.5"><span class="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]"></span><span class="text-[11px] font-bold text-amber-300 tracking-wider">找不到對應的名片</span></div>
                 <h3 class="text-[18px] font-black mb-1">尚未建立名片</h3>
-                <p class="text-[10px] text-slate-300 font-medium line-clamp-2 mb-1">系統比對條件：<br>姓名[${myName}] 或 手機[${myPhone || '未設定'}]</p>
+                <p class="text-[10px] text-slate-300 font-medium line-clamp-2 mb-1">比對條件：<br>姓名[${myName}] 或 手機[${myPhone || '未設定'}]</p>
                 <div class="inline-block mt-1 px-3 py-1 bg-white/20 text-white rounded text-[11px] font-bold">點此立即上傳建檔 👉</div>
               `;
               entryEl.onclick = () => document.getElementById('profile-card-upload').click();
           }
       } catch(e) {
-          console.error("判斷名片時發生錯誤：", e);
-          infoEl.innerHTML = `
-            <div class="flex items-center gap-1.5 mb-1.5">
-              <span class="w-2 h-2 rounded-full bg-red-400"></span>
-              <span class="text-[11px] font-bold text-red-300 tracking-wider">連線異常</span>
-            </div>
-            <h3 class="text-[18px] font-black mb-1">無法讀取狀態</h3>
-            <p class="text-[12px] text-slate-300 font-medium line-clamp-2">${e.message || '未知錯誤'}</p>
-            <button onclick="event.stopPropagation(); checkMyCardEntry()" class="mt-2 px-3 py-1 bg-white/20 text-white rounded text-[11px] font-bold active:scale-95 transition-all">重新整理</button>
-          `;
-          entryEl.onclick = null;
+          infoEl.innerHTML = errorTemplate(e.message || '未知錯誤'); entryEl.onclick = null;
       }
   }
 
   function showModal(title, desc, targetView = '') {
-    document.getElementById('modal-title').innerText = title;
-    document.getElementById('modal-desc').innerText = desc;
-    modalTargetView = targetView;
-    const m = document.getElementById('custom-modal');
-    m.classList.remove('hidden');
+    document.getElementById('modal-title').innerText = title; document.getElementById('modal-desc').innerText = desc;
+    modalTargetView = targetView; const m = document.getElementById('custom-modal'); m.classList.remove('hidden');
     setTimeout(()=> m.querySelector('div').classList.remove('scale-95'), 10);
   }
   function closeModalAndGo() {
-    const m = document.getElementById('custom-modal');
-    m.querySelector('div').classList.add('scale-95');
+    const m = document.getElementById('custom-modal'); m.querySelector('div').classList.add('scale-95');
     setTimeout(()=> { m.classList.add('hidden'); if(modalTargetView) switchView(`user-${modalTargetView}`); }, 200);
   }
 
@@ -766,131 +468,50 @@
   }
 
   async function submitUserRegistrationStep1() {
-    if (isProcessing) return; isProcessing = true;
-    setButtonLoading('btn-reg-step1', true);
-    
-    const p = { 
-      userId: userProfile.userId, 
-      name: document.getElementById('reg-name').value.trim() || userProfile.displayName, 
-      gender: document.getElementById('reg-gender').value, 
-      industry: document.getElementById('reg-industry').value.trim(), 
-      phone: document.getElementById('reg-phone').value.trim(), 
-      birthday: document.getElementById('reg-birthday').value, 
-      region: document.getElementById('reg-region').value.trim(), 
-      address: document.getElementById('reg-address').value.trim(),
-      referrerId: window.claimReferrer || '',
-      claimCardId: window.claimCardId || ''
-    };
-    
+    if (isProcessing) return; isProcessing = true; setButtonLoading('btn-reg-step1', true);
+    const p = { userId: userProfile.userId, name: document.getElementById('reg-name').value.trim() || userProfile.displayName, gender: document.getElementById('reg-gender').value, industry: document.getElementById('reg-industry').value.trim(), phone: document.getElementById('reg-phone').value.trim(), birthday: document.getElementById('reg-birthday').value, region: document.getElementById('reg-region').value.trim(), address: document.getElementById('reg-address').value.trim(), referrerId: window.claimReferrer || '', claimCardId: window.claimCardId || '' };
     try { 
-      await fetchAPI('registerUser', p); 
-      regStep1Data = p; 
-
+      await fetchAPI('registerUser', p); regStep1Data = p; 
       if (window.claimCardId) {
           try {
               const cardData = await fetchAPI('getCardById', { rowId: window.claimCardId });
               if (cardData) {
-                  const updatePayload = {
-                      rowId: window.claimCardId,
-                      'LINE ID': userProfile.userId,
-                      userId: userProfile.userId,
-                      Name: p.name,
-                      Mobile: p.phone,
-                      CompanyName: p.industry,
-                      Birthday: p.birthday 
-                  };
+                  const updatePayload = { rowId: window.claimCardId, 'LINE ID': userProfile.userId, userId: userProfile.userId, Name: p.name, Mobile: p.phone, CompanyName: p.industry, Birthday: p.birthday };
                   const fields = ['EnglishName', 'Title', 'Department', 'TaxID', 'Tel', 'Ext', 'Fax', 'Address', 'Email', 'Website', 'SocialMedia', 'Slogan', 'Notes'];
                   const zhKeys = {'EnglishName':'英文名/別名', 'Title':'職稱', 'Department':'部門', 'TaxID':'統一編號', 'Tel':'公司電話', 'Ext':'分機', 'Fax':'傳真', 'Address':'公司地址', 'Email':'電子郵件', 'Website':'公司網址', 'SocialMedia':'社群帳號', 'Slogan':'服務項目/品牌標語', 'Notes':'建檔人/備註'};
-                  fields.forEach(f => {
-                      if (cardData[f] !== undefined) updatePayload[f] = cardData[f];
-                      else if (zhKeys[f] && cardData[zhKeys[f]] !== undefined) updatePayload[f] = cardData[zhKeys[f]];
-                      else updatePayload[f] = '';
-                  });
-
-                  try {
-                      const newTags = await fetchAPI('calculateFateTags', { Name: p.name, Mobile: p.phone, Birthday: p.birthday });
-                      Object.assign(updatePayload, newTags);
-                  } catch(e) {}
-
+                  fields.forEach(f => { if (cardData[f] !== undefined) updatePayload[f] = cardData[f]; else if (zhKeys[f] && cardData[zhKeys[f]] !== undefined) updatePayload[f] = cardData[zhKeys[f]]; else updatePayload[f] = ''; });
+                  try { const newTags = await fetchAPI('calculateFateTags', { Name: p.name, Mobile: p.phone, Birthday: p.birthday }); Object.assign(updatePayload, newTags); } catch(e) {}
                   await fetchAPI('updateCard', updatePayload);
               }
           } catch(e) { console.error("Update card failed", e); }
       }
-
-      document.getElementById('reg-step-1').classList.add('hidden'); 
-      document.getElementById('reg-step-2').classList.remove('opacity-30', 'pointer-events-none'); 
+      document.getElementById('reg-step-1').classList.add('hidden'); document.getElementById('reg-step-2').classList.remove('opacity-30', 'pointer-events-none'); 
       showToast("基礎資料已建立"); 
-    } catch(e) {
-      console.error(e);
-    } finally { 
-      isProcessing = false;
-      setButtonLoading('btn-reg-step1', false, '儲存並繼續 <span class="material-symbols-outlined text-[20px]">arrow_forward</span>'); 
-    }
+    } catch(e) { console.error(e); } finally { isProcessing = false; setButtonLoading('btn-reg-step1', false, '儲存並繼續 <span class="material-symbols-outlined text-[20px]">arrow_forward</span>'); }
   }
 
   async function openCropper(input, targetMode) {
-    const file = input.files[0]; if (!file) return;
-    currentCropTarget = targetMode;
-
-    if (!window.Cropper) {
-       showToast("載入影像模組中...", false);
-       await loadCSS("https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css");
-       await loadScript("https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js");
-    }
+    const file = input.files[0]; if (!file) return; currentCropTarget = targetMode;
+    if (!window.Cropper) { showToast("載入影像模組中...", false); await loadCSS("https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"); await loadScript("https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"); }
     const reader = new FileReader();
     reader.onload = (e) => {
-      const img = document.getElementById('cropper-image'); 
-      img.src = e.target.result; 
-      img.style.opacity = '0';
+      const img = document.getElementById('cropper-image'); img.src = e.target.result; img.style.opacity = '0';
       document.getElementById('section-image-cropper').classList.remove('hidden');
       if (cropperInstance) cropperInstance.destroy();
-      
-      const aspectRatio = currentCropTarget === 'reg' ? NaN : 4 / 3;
-
-      setTimeout(() => { 
-        img.style.opacity = '1'; 
-        cropperInstance = new Cropper(img, { 
-          aspectRatio: aspectRatio,
-          viewMode: 1, 
-          dragMode: 'move', 
-          autoCropArea: 0.9, 
-          guides: true, 
-          center: true, 
-          highlight: false 
-        }); 
-      }, 100);
+      setTimeout(() => { img.style.opacity = '1'; cropperInstance = new Cropper(img, { aspectRatio: currentCropTarget === 'reg' ? NaN : 4 / 3, viewMode: 1, dragMode: 'move', autoCropArea: 0.9, guides: true, center: true, highlight: false }); }, 100);
     }; 
-    reader.readAsDataURL(file); 
-    input.value = ""; 
+    reader.readAsDataURL(file); input.value = ""; 
   }
 
-  function cancelCrop() { 
-    if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; } 
-    document.getElementById('section-image-cropper').classList.add('hidden'); 
-  }
+  function cancelCrop() { if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; } document.getElementById('section-image-cropper').classList.add('hidden'); }
 
   function confirmCrop() { 
     if (!cropperInstance) return; 
-    let quality = 0.8;
-    let base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1000, maxHeight: 1000 }).toDataURL('image/webp', quality); 
-    
-    while (base64.length > 40000 && quality > 0.1) {
-       quality -= 0.1;
-       base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1000, maxHeight: 1000 }).toDataURL('image/webp', quality);
-    }
-    if (base64.length > 49000) {
-       return showToast("圖片仍過大，請裁切更小的範圍", true);
-    }
-
+    let quality = 0.8; let base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1000, maxHeight: 1000 }).toDataURL('image/webp', quality); 
+    while (base64.length > 40000 && quality > 0.1) { quality -= 0.1; base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1000, maxHeight: 1000 }).toDataURL('image/webp', quality); }
+    if (base64.length > 49000) return showToast("圖片仍過大，請裁切更小的範圍", true);
     cancelCrop(); 
-
-    if (currentCropTarget === 'reg') {
-      regCompressedBase64 = base64;
-      recognizeAndSaveRegCard();
-    } else if (currentCropTarget === 'profile') {
-      regCompressedBase64 = base64;
-      recognizeAndSaveProfileCard();
-    }
+    if (currentCropTarget === 'reg') { regCompressedBase64 = base64; recognizeAndSaveRegCard(); } else if (currentCropTarget === 'profile') { regCompressedBase64 = base64; recognizeAndSaveProfileCard(); }
   }
 
   async function recognizeAndSaveRegCard() {
@@ -907,94 +528,36 @@
     try {
       const bday = document.getElementById('edit-birthday').value || '';
       const data = await fetchAPI('recognizeCard', { base64Image: regCompressedBase64, Birthday: bday });
-      
-      const payload = { 
-        rowId: Date.now(), // 先給一個假 ID 防止後續報錯
-        base64Image: regCompressedBase64, 
-        userId: userProfile.userId, 
-        'LINE ID': userProfile.userId, 
-        Name: document.getElementById('edit-name').value || userProfile.displayName, 
-        EnglishName: data.EnglishName || '', 
-        Title: data.Title || '', 
-        Department: data.Department || '', 
-        CompanyName: data.CompanyName || '', 
-        TaxID: data.TaxID || '', 
-        Mobile: document.getElementById('edit-phone').value || '', 
-        Tel: data.Tel || '', 
-        Ext: data.Ext || '', 
-        Fax: data.Fax || '', 
-        Address: data.Address || document.getElementById('edit-address').value || '', 
-        Email: data.Email || '', 
-        Website: data.Website || '', 
-        SocialMedia: data.SocialMedia || '', 
-        Slogan: data.Slogan || '', 
-        Notes: '使用者自行上傳', 
-        Birthday: bday, 
-        Personality: data.Personality || '', 
-        Hobbies: data.Hobbies || '', 
-        Wealth: data.Wealth || '', 
-        Health: data.Health || '', 
-        Career: data.Career || '' 
-      };
-      
-      await fetchAPI('saveCard', payload); 
-      showToast("🎉 專屬名片建檔成功！"); 
-      
-      globalCardContacts = await fetchAPI('getCardContacts');
-      checkMyCardEntry();
-      
-    } catch(err) { 
-      showToast("辨識發生異常：" + err.message, true); 
-    }
+      const payload = { rowId: Date.now(), base64Image: regCompressedBase64, userId: userProfile.userId, 'LINE ID': userProfile.userId, Name: document.getElementById('edit-name').value || userProfile.displayName, EnglishName: data.EnglishName || '', Title: data.Title || '', Department: data.Department || '', CompanyName: data.CompanyName || '', TaxID: data.TaxID || '', Mobile: document.getElementById('edit-phone').value || '', Tel: data.Tel || '', Ext: data.Ext || '', Fax: data.Fax || '', Address: data.Address || document.getElementById('edit-address').value || '', Email: data.Email || '', Website: data.Website || '', SocialMedia: data.SocialMedia || '', Slogan: data.Slogan || '', Notes: '使用者自行上傳', Birthday: bday, Personality: data.Personality || '', Hobbies: data.Hobbies || '', Wealth: data.Wealth || '', Health: data.Health || '', Career: data.Career || '' };
+      await fetchAPI('saveCard', payload); showToast("🎉 專屬名片建檔成功！"); 
+      globalCardContacts = await fetchAPI('getCardContacts'); checkMyCardEntry();
+    } catch(err) { showToast("辨識發生異常：" + err.message, true); }
   }
 
   function finishRegistration() { isRegistered = true; registeredInfo = regStep1Data; document.getElementById('bottom-nav-user').classList.remove('hidden'); switchView('user-activities'); }
 
   let currentCategory = '全部活動';
   async function reloadActivities() { 
-    if(isProcessing) return;
-    const btn = document.getElementById('btn-refresh-activities');
-    isProcessing = true;
+    if(isProcessing) return; const btn = document.getElementById('btn-refresh-activities'); isProcessing = true;
     btn.classList.add('pointer-events-none', 'opacity-50'); btn.querySelector('span').classList.add('refresh-spin');
     sessionStorage.removeItem('getPublicActivities{}'); 
-    try {
-      await loadUserActivities(); 
-    } finally {
-      isProcessing = false;
-      btn.classList.remove('pointer-events-none', 'opacity-50'); btn.querySelector('span').classList.remove('refresh-spin');
-    }
+    try { await loadUserActivities(); } finally { isProcessing = false; btn.classList.remove('pointer-events-none', 'opacity-50'); btn.querySelector('span').classList.remove('refresh-spin'); }
   }
 
   async function loadUserActivities() {
-    const container = document.getElementById('user-activities-container');
-    container.className = 'grid grid-cols-2 gap-3 px-2';
+    const container = document.getElementById('user-activities-container'); container.className = 'grid grid-cols-2 gap-3 px-2';
     if (!globalPublicActivities.length) renderActivitiesSkeleton();
-    
     try {
-      const data = await fetchAPI('getPublicActivities', {}, true); 
-      globalPublicActivities = data || [];
-      
-      if (!globalPublicActivities.length) {
-        container.className = 'block px-2'; 
-        container.innerHTML = '<div class="text-center py-16 bg-white rounded-3xl shadow-sm border border-slate-100 text-slate-400 font-bold w-full">目前無開放的活動</div>'; 
-        return; 
-      }
+      const data = await fetchAPI('getPublicActivities', {}, true); globalPublicActivities = data || [];
+      if (!globalPublicActivities.length) { container.className = 'block px-2'; container.innerHTML = '<div class="text-center py-16 bg-white rounded-3xl shadow-sm border border-slate-100 text-slate-400 font-bold w-full">目前無開放的活動</div>'; return; }
       renderCategories(); filterActivities();
-    } catch(e) {
-      container.className = 'block px-2'; 
-      container.innerHTML = '<div class="text-center py-16 bg-white rounded-3xl shadow-sm border border-slate-100 text-red-400 font-bold w-full">讀取失敗，請重新整理</div>'; 
-    }
+    } catch(e) { container.className = 'block px-2'; container.innerHTML = '<div class="text-center py-16 bg-white rounded-3xl shadow-sm border border-slate-100 text-red-400 font-bold w-full">讀取失敗，請重新整理</div>'; }
   }
 
   function renderCategories() {
       const types = ['全部活動', ...new Set(globalPublicActivities.map(a => a.type).filter(Boolean))];
-      const container = document.getElementById('activity-categories');
-      if (!container) return;
-      container.innerHTML = types.map(t => `
-          <button onclick="filterByCategory('${t}')" class="shrink-0 px-4 py-1.5 rounded-full font-bold text-[13px] transition-all ${currentCategory === t ? 'bg-primary text-white shadow-md shadow-blue-500/30' : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'}">
-              ${t}
-          </button>
-      `).join('');
+      const container = document.getElementById('activity-categories'); if (!container) return;
+      container.innerHTML = types.map(t => `<button onclick="filterByCategory('${t}')" class="shrink-0 px-4 py-1.5 rounded-full font-bold text-[13px] transition-all ${currentCategory === t ? 'bg-primary text-white shadow-md shadow-blue-500/30' : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'}">${t}</button>`).join('');
   }
 
   function filterByCategory(type) { currentCategory = type; renderCategories(); filterActivities(); }
@@ -1006,7 +569,6 @@
         if(mode === 'user') return list.innerHTML = `<div class="col-span-2 text-center py-10 text-slate-400 font-bold">無符合的活動</div>`;
         else return list.innerHTML = `<div class="text-center py-16 bg-white rounded-3xl shadow-sm border border-slate-100 text-slate-400 font-bold mx-1">無符合的活動</div>`;
     }
-    
     let html = '';
     data.forEach((a, i) => {
       const safeName = a.name.replace(/'/g, "\\'");
@@ -1014,309 +576,124 @@
         const bgImg = a.imageUrl || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80';
         html += `
         <div onclick="openActivityDetailByName('${safeName}')" class="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm flex flex-col h-full cursor-pointer active:scale-[0.98] transition-transform animate-in fade-in zoom-in-95 hover:shadow-md" style="animation-delay: ${i*50}ms">
-          <div class="relative w-full aspect-[4/3] shrink-0 bg-slate-100">
-            <img src="${bgImg}" class="w-full h-full object-cover">
-            <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-            <div class="absolute top-2 left-2 flex gap-1">
-              <span class="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm tracking-wide">${a.type}</span>
-              <span class="bg-white/95 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm tracking-wide">${a.feeType === '收費' ? 'NT$ '+a.price : '免費'}</span>
-            </div>
-          </div>
+          <div class="relative w-full aspect-[4/3] shrink-0 bg-slate-100"><img src="${bgImg}" class="w-full h-full object-cover"><div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div><div class="absolute top-2 left-2 flex gap-1"><span class="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm tracking-wide">${a.type}</span><span class="bg-white/95 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm tracking-wide">${a.feeType === '收費' ? 'NT$ '+a.price : '免費'}</span></div></div>
           <div class="p-3 flex flex-col flex-1 bg-white">
-            <p class="text-[10px] text-primary font-bold flex items-center gap-1 mb-1.5 uppercase tracking-wider">
-              <span class="material-symbols-outlined text-[12px]">calendar_today</span>
-              ${formatTimeShort(a.startTime)}
-            </p>
+            <p class="text-[10px] text-primary font-bold flex items-center gap-1 mb-1.5 uppercase tracking-wider"><span class="material-symbols-outlined text-[12px]">calendar_today</span>${formatTimeShort(a.startTime)}</p>
             <h3 class="text-[14px] font-bold text-slate-800 leading-snug line-clamp-2 mb-3 flex-1">${a.name}</h3>
-            <div class="flex gap-2 mt-auto">
-              <button class="flex-[1] py-2 bg-white text-slate-600 rounded-lg font-bold text-[12px] transition-colors flex items-center justify-center border border-slate-300 shadow-sm">
-                說明
-              </button>
-              <button class="flex-[1.5] py-2 bg-primary text-white rounded-lg font-bold text-[12px] transition-colors flex items-center justify-center shadow-sm">
-                報名
-              </button>
-            </div>
+            <div class="flex gap-2 mt-auto"><button class="flex-[1] py-2 bg-white text-slate-600 rounded-lg font-bold text-[12px] transition-colors flex items-center justify-center border border-slate-300 shadow-sm">說明</button><button class="flex-[1.5] py-2 bg-primary text-white rounded-lg font-bold text-[12px] transition-colors flex items-center justify-center shadow-sm">報名</button></div>
           </div>
         </div>`;
       } else {
         html += `
         <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 animate-in fade-in slide-in-from-bottom-2 mx-1">
-          <div class="flex justify-between items-start mb-4">
-            <div>
-              <span class="text-[10px] font-bold text-primary bg-primary-light px-2 py-0.5 rounded uppercase tracking-widest mb-1.5 inline-block">${a.type}</span>
-              <h3 class="font-extrabold text-[17px] text-slate-800 leading-tight">${a.name}</h3>
-            </div>
-            <div class="flex items-center gap-1 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
-              <span class="material-symbols-outlined text-[14px] text-slate-400">group</span>
-              <span class="font-bold text-sm text-slate-700">${a.total}</span>
-            </div>
-          </div>
-          
-          <div class="grid grid-cols-3 gap-2 bg-slate-50 rounded-xl p-3 mb-4 border border-slate-100">
-             <div class="text-center"><p class="text-[10px] text-slate-500 font-bold mb-0.5">狀態</p><p class="font-bold text-xs ${a.status==='上架'?'text-emerald-500':'text-slate-500'}">${a.status}</p></div>
-             <div class="text-center border-l border-slate-200"><p class="text-[10px] text-slate-500 font-bold mb-0.5">已到</p><p class="font-bold text-xs text-primary">${a.attended}</p></div>
-             <div class="text-center border-l border-slate-200"><p class="text-[10px] text-slate-500 font-bold mb-0.5">取消</p><p class="font-bold text-xs text-error">${a.cancelled}</p></div>
-          </div>
-
-          <div class="flex gap-2">
-            <button onclick="toggleActivityStatus('${safeName}')" class="flex-1 py-2.5 bg-white border border-slate-300 text-slate-600 rounded-xl font-bold text-[13px] active:scale-95 transition-all flex items-center justify-center hover:bg-slate-50 shadow-sm">${a.status==='上架'?'下架':'上架'}</button>
-            <button onclick="openAdminRegistrants('${safeName}')" class="flex-1 py-2.5 bg-slate-800 text-white rounded-xl font-bold text-[13px] shadow-sm active:scale-95 transition-all flex items-center justify-center hover:bg-slate-700">名單核銷</button>
-          </div>
+          <div class="flex justify-between items-start mb-4"><div><span class="text-[10px] font-bold text-primary bg-primary-light px-2 py-0.5 rounded uppercase tracking-widest mb-1.5 inline-block">${a.type}</span><h3 class="font-extrabold text-[17px] text-slate-800 leading-tight">${a.name}</h3></div><div class="flex items-center gap-1 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100"><span class="material-symbols-outlined text-[14px] text-slate-400">group</span><span class="font-bold text-sm text-slate-700">${a.total}</span></div></div>
+          <div class="grid grid-cols-3 gap-2 bg-slate-50 rounded-xl p-3 mb-4 border border-slate-100"><div class="text-center"><p class="text-[10px] text-slate-500 font-bold mb-0.5">狀態</p><p class="font-bold text-xs ${a.status==='上架'?'text-emerald-500':'text-slate-500'}">${a.status}</p></div><div class="text-center border-l border-slate-200"><p class="text-[10px] text-slate-500 font-bold mb-0.5">已到</p><p class="font-bold text-xs text-primary">${a.attended}</p></div><div class="text-center border-l border-slate-200"><p class="text-[10px] text-slate-500 font-bold mb-0.5">取消</p><p class="font-bold text-xs text-error">${a.cancelled}</p></div></div>
+          <div class="flex gap-2"><button onclick="toggleActivityStatus('${safeName}')" class="flex-1 py-2.5 bg-white border border-slate-300 text-slate-600 rounded-xl font-bold text-[13px] active:scale-95 transition-all flex items-center justify-center hover:bg-slate-50 shadow-sm">${a.status==='上架'?'下架':'上架'}</button><button onclick="openAdminRegistrants('${safeName}')" class="flex-1 py-2.5 bg-slate-800 text-white rounded-xl font-bold text-[13px] shadow-sm active:scale-95 transition-all flex items-center justify-center hover:bg-slate-700">名單核銷</button></div>
         </div>`;
       }
     });
-    list.innerHTML = html;
-    list.className = mode === 'user' ? 'grid grid-cols-2 gap-3 px-1' : 'space-y-4';
+    list.innerHTML = html; list.className = mode === 'user' ? 'grid grid-cols-2 gap-3 px-1' : 'space-y-4';
   }
 
   function openActivityDetailByName(name) {
     const act = globalPublicActivities.find(a => a.name === name); if (!act) return;
-    const imgEl = document.getElementById('detail-modal-image');
-    const noImgEl = document.getElementById('detail-modal-no-image');
-    if (act.imageUrl) {
-      imgEl.src = act.imageUrl; imgEl.classList.remove('hidden'); noImgEl.classList.add('hidden');
-    } else {
-      imgEl.src = ''; imgEl.classList.add('hidden'); noImgEl.classList.remove('hidden');
-    }
-
+    const imgEl = document.getElementById('detail-modal-image'); const noImgEl = document.getElementById('detail-modal-no-image');
+    if (act.imageUrl) { imgEl.src = act.imageUrl; imgEl.classList.remove('hidden'); noImgEl.classList.add('hidden'); } else { imgEl.src = ''; imgEl.classList.add('hidden'); noImgEl.classList.remove('hidden'); }
     document.getElementById('detail-modal-type').innerText = act.type;
     const feeEl = document.getElementById('detail-modal-fee');
     feeEl.innerText = act.feeType === '收費' ? `NT$ ${act.price}` : '免費';
     feeEl.className = `px-2.5 py-0.5 text-[11px] font-bold rounded-md shadow-sm ${act.feeType === '收費' ? 'bg-orange-50 text-orange-600 border border-orange-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`;
     document.getElementById('detail-modal-title').innerText = act.name;
-
     document.getElementById('detail-modal-start').innerText = act.startTime ? formatTime(act.startTime) : '未定';
     const endContainer = document.getElementById('detail-modal-end-container');
-    if (act.endTime) {
-      document.getElementById('detail-modal-end').innerText = formatTime(act.endTime);
-      endContainer.classList.remove('hidden');
-    } else {
-      endContainer.classList.add('hidden');
-    }
-
+    if (act.endTime) { document.getElementById('detail-modal-end').innerText = formatTime(act.endTime); endContainer.classList.remove('hidden'); } else { endContainer.classList.add('hidden'); }
     document.getElementById('detail-modal-desc').innerText = act.description || '主辦單位尚未提供說明。';
 
-    let batches = [];
-    try { 
-        if (act.batches) batches = typeof act.batches === 'string' ? JSON.parse(act.batches) : act.batches; 
-    } catch(e) {}
-    
-    const batchContainer = document.getElementById('detail-modal-batch-container');
-    const batchSelect = document.getElementById('detail-modal-batch-select');
-    
+    let batches = []; try { if (act.batches) batches = typeof act.batches === 'string' ? JSON.parse(act.batches) : act.batches; } catch(e) {}
+    const batchContainer = document.getElementById('detail-modal-batch-container'); const batchSelect = document.getElementById('detail-modal-batch-select');
     batchSelect.onchange = function() {
-        const selectedOpt = this.options[this.selectedIndex];
-        const bPrice = parseInt(selectedOpt.dataset.price || 0);
-        const bStart = selectedOpt.dataset.start;
-        const bEnd = selectedOpt.dataset.end;
-
-        if (bPrice > 0) {
-            feeEl.innerText = `NT$ ${bPrice}`;
-            feeEl.className = 'px-2.5 py-0.5 text-[11px] font-bold rounded-md shadow-sm bg-orange-50 text-orange-600 border border-orange-100';
-        } else {
-            feeEl.innerText = '免費';
-            feeEl.className = 'px-2.5 py-0.5 text-[11px] font-bold rounded-md shadow-sm bg-emerald-50 text-emerald-600 border border-emerald-100';
-        }
-
+        const selectedOpt = this.options[this.selectedIndex]; const bPrice = parseInt(selectedOpt.dataset.price || 0); const bStart = selectedOpt.dataset.start; const bEnd = selectedOpt.dataset.end;
+        if (bPrice > 0) { feeEl.innerText = `NT$ ${bPrice}`; feeEl.className = 'px-2.5 py-0.5 text-[11px] font-bold rounded-md shadow-sm bg-orange-50 text-orange-600 border border-orange-100'; } else { feeEl.innerText = '免費'; feeEl.className = 'px-2.5 py-0.5 text-[11px] font-bold rounded-md shadow-sm bg-emerald-50 text-emerald-600 border border-emerald-100'; }
         if (bStart) document.getElementById('detail-modal-start').innerText = formatTime(bStart);
-        if (bEnd) {
-            document.getElementById('detail-modal-end').innerText = formatTime(bEnd);
-            endContainer.classList.remove('hidden');
-        } else {
-            endContainer.classList.add('hidden');
-        }
+        if (bEnd) { document.getElementById('detail-modal-end').innerText = formatTime(bEnd); endContainer.classList.remove('hidden'); } else { endContainer.classList.add('hidden'); }
     };
 
     if (act.isBatch || batches.length > 0) {
-        batchSelect.innerHTML = batches.map(b => {
-            const tStr = b.startTime ? formatTimeShort(b.startTime) : '時間未定';
-            const pStr = (b.price && parseInt(b.price) > 0) ? ` - NT$${b.price}` : ' - 免費';
-            return `<option value="${b.name}" data-price="${b.price || 0}" data-start="${b.startTime || ''}" data-end="${b.endTime || ''}">${b.name} (${tStr}${pStr})</option>`;
-        }).join('');
-        batchContainer.classList.remove('hidden');
-        batchSelect.onchange(); 
-    } else {
-        batchContainer.classList.add('hidden');
-    }
+        batchSelect.innerHTML = batches.map(b => { const tStr = b.startTime ? formatTimeShort(b.startTime) : '時間未定'; const pStr = (b.price && parseInt(b.price) > 0) ? ` - NT$${b.price}` : ' - 免費'; return `<option value="${b.name}" data-price="${b.price || 0}" data-start="${b.startTime || ''}" data-end="${b.endTime || ''}">${b.name} (${tStr}${pStr})</option>`; }).join('');
+        batchContainer.classList.remove('hidden'); batchSelect.onchange(); 
+    } else { batchContainer.classList.add('hidden'); }
 
     const joinBtn = document.getElementById('detail-modal-join-btn');
     joinBtn.onclick = async function() {
-      let selectedBatchName = null;
-      let finalFeeType = act.feeType;
-      let finalPrice = act.price;
-
+      let selectedBatchName = null, finalFeeType = act.feeType, finalPrice = act.price;
       if ((act.isBatch || batches.length > 0) && !batchContainer.classList.contains('hidden')) {
-          selectedBatchName = batchSelect.value;
-          const selectedOption = batchSelect.options[batchSelect.selectedIndex];
-          const bPrice = parseInt(selectedOption.dataset.price || 0);
-          if (bPrice > 0) {
-              finalFeeType = '收費';
-              finalPrice = bPrice;
-          } else {
-              finalFeeType = '免費';
-              finalPrice = 0;
-          }
+          selectedBatchName = batchSelect.value; const selectedOption = batchSelect.options[batchSelect.selectedIndex]; const bPrice = parseInt(selectedOption.dataset.price || 0);
+          if (bPrice > 0) { finalFeeType = '收費'; finalPrice = bPrice; } else { finalFeeType = '免費'; finalPrice = 0; }
       }
-
-      closeActivityDetail(); 
-      await userJoinActivity(this, act.name, finalFeeType, finalPrice, selectedBatchName);
+      closeActivityDetail(); await userJoinActivity(this, act.name, finalFeeType, finalPrice, selectedBatchName);
     };
-
     document.getElementById('activity-detail-modal').classList.remove('hidden');
   }
 
-  function closeActivityDetail() {
-    document.getElementById('activity-detail-modal').classList.add('hidden');
-  }
+  function closeActivityDetail() { document.getElementById('activity-detail-modal').classList.add('hidden'); }
 
   async function userJoinActivity(btn, name, feeType, price, batchName = null) {
-    if (isProcessing) return;
-    
-    const confirmMsg = batchName ? `確定報名「${name} - ${batchName}」？` : `確定報名「${name}」？`;
-    if (!confirm(confirmMsg)) return;
-
-    isProcessing = true; 
-    setButtonLoading('detail-modal-join-btn', true);
+    if (isProcessing) return; const confirmMsg = batchName ? `確定報名「${name} - ${batchName}」？` : `確定報名「${name}」？`; if (!confirm(confirmMsg)) return;
+    isProcessing = true; setButtonLoading('detail-modal-join-btn', true);
     try {
       await fetchAPI('joinActivity', { userId: userProfile.userId, activityName: name, batchName: batchName, price: price });
-      
       if (feeType === '收費' || parseInt(price) > 0) showModal("報名成功", `此為收費活動，請完成匯款 \nNT$ ${price} 後，至「報名紀錄」填寫後五碼。`, "history");
       else showModal("報名成功", `您已成功報名！期待現場見到您。`, "activities");
-      
-      sessionStorage.removeItem('getUserHistory{"userId":"' + userProfile.userId + '"}');
-    } catch(e) {
-      console.error(e);
-    } finally { 
-      isProcessing = false; 
-      setButtonLoading('detail-modal-join-btn', false, '我要報名 <span class="material-symbols-outlined text-[20px]">arrow_forward</span>');
-    }
+    } catch(e) { console.error(e); } finally { isProcessing = false; setButtonLoading('detail-modal-join-btn', false, '我要報名 <span class="material-symbols-outlined text-[20px]">arrow_forward</span>'); }
   }
 
   async function loadUserHistory() {
-    const container = document.getElementById('user-history-container');
-    container.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>';
-    
+    const container = document.getElementById('user-history-container'); container.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>';
     try {
         const history = await fetchAPI('getUserHistory', { userId: userProfile.userId }, true);
-        
-        if (!history || history.length === 0) {
-            container.innerHTML = '<div class="text-center py-16 bg-white shadow-sm border border-slate-200 rounded-3xl text-slate-400 font-bold mx-1">尚無報名紀錄</div>'; 
-            return;
-        }
-        
+        if (!history || history.length === 0) { container.innerHTML = '<div class="text-center py-16 bg-white shadow-sm border border-slate-200 rounded-3xl text-slate-400 font-bold mx-1">尚無報名紀錄</div>'; return; }
         container.innerHTML = history.map(item => {
-          const isCanceled = item.regStatus === '已取消'; const safeName = item.name.replace(/'/g, "\\'");
-          let pC = item.payStatus==='已完款'?'bg-blue-50 text-blue-600 border-blue-100':(item.payStatus==='匯款審核中'?'bg-slate-800 text-white border-slate-800':'bg-orange-50 text-orange-600 border-orange-100');
+          const isCanceled = item.regStatus === '已取消'; const safeName = item.name.replace(/'/g, "\\'"); let pC = item.payStatus==='已完款'?'bg-blue-50 text-blue-600 border-blue-100':(item.payStatus==='匯款審核中'?'bg-slate-800 text-white border-slate-800':'bg-orange-50 text-orange-600 border-orange-100');
           return `
           <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 relative overflow-hidden animate-in slide-in-from-bottom-2 mx-1 mb-3">
             ${isCanceled ? '<div class="absolute top-0 right-0 bg-slate-500 text-white text-[10px] px-3 py-0.5 rounded-bl-lg tracking-wider">已取消</div>' : ''}
-            
-            <div class="flex gap-3 items-start">
-              <div id="qr-${item.name.replace(/\s+/g,'')}" class="w-[60px] h-[60px] bg-slate-50 border border-slate-100 rounded-lg p-1 shrink-0 ${isCanceled?'opacity-30 grayscale':''}"></div>
-              <div class="flex-1 overflow-hidden pr-6">
-                <h4 class="font-medium text-slate-800 text-[15px] leading-snug mb-1 truncate">${item.name}</h4>
-                <p class="text-[12px] text-slate-500 flex items-center gap-1 mb-2"><span class="material-symbols-outlined text-[14px]">event</span> ${item.startTime ? item.startTime.substring(0,10) : '未定'}</p>
-                <div class="flex items-center gap-1.5 flex-wrap">
-                  <span class="px-2 py-0.5 text-[10px] rounded tracking-wider border ${item.checkedIn ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-50 text-slate-500 border-slate-200'}">${item.checkedIn ? '已簽到' : '待簽到'}</span>
-                  ${item.isPaidAct && !isCanceled ? `<span class="px-2 py-0.5 text-[10px] rounded tracking-wider border ${pC}">${item.payStatus}</span>` : ''}
-                </div>
-              </div>
-            </div>
-            
+            <div class="flex gap-3 items-start"><div id="qr-${item.name.replace(/\s+/g,'')}" class="w-[60px] h-[60px] bg-slate-50 border border-slate-100 rounded-lg p-1 shrink-0 ${isCanceled?'opacity-30 grayscale':''}"></div><div class="flex-1 overflow-hidden pr-6"><h4 class="font-medium text-slate-800 text-[15px] leading-snug mb-1 truncate">${item.name}</h4><p class="text-[12px] text-slate-500 flex items-center gap-1 mb-2"><span class="material-symbols-outlined text-[14px]">event</span> ${item.startTime ? item.startTime.substring(0,10) : '未定'}</p><div class="flex items-center gap-1.5 flex-wrap"><span class="px-2 py-0.5 text-[10px] rounded tracking-wider border ${item.checkedIn ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-50 text-slate-500 border-slate-200'}">${item.checkedIn ? '已簽到' : '待簽到'}</span>${item.isPaidAct && !isCanceled ? `<span class="px-2 py-0.5 text-[10px] rounded tracking-wider border ${pC}">${item.payStatus}</span>` : ''}</div></div></div>
             ${!isCanceled ? `<button id="btn-cancel-${item.name.replace(/\s+/g,'')}" onclick="userCancelRegistration(this, '${safeName}')" class="absolute top-3 right-3 text-slate-300 hover:text-red-500 transition-colors bg-white"><span class="material-symbols-outlined text-[20px]">cancel</span></button>` : ''}
-            
-            ${item.isPaidAct && item.payStatus === '未繳費' && !isCanceled ? `
-              <div class="mt-3 pt-3 border-t border-slate-100 flex gap-2 items-center">
-                 <input type="text" id="pay-${item.name.replace(/\s+/g,'')}" class="flex-1 w-0 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-[14px] text-slate-700 outline-none focus:border-primary focus:bg-white" placeholder="輸入末五碼" maxlength="5">
-                 <button id="btn-report-${item.name.replace(/\s+/g,'')}" onclick="submitLast5(this, '${safeName}', '${item.name.replace(/\s+/g,'')}')" class="shrink-0 whitespace-nowrap bg-primary text-white px-4 py-2.5 rounded-lg text-[14px] active:scale-95 transition-transform shadow-sm">回報</button>
-              </div>` : ''}
+            ${item.isPaidAct && item.payStatus === '未繳費' && !isCanceled ? `<div class="mt-3 pt-3 border-t border-slate-100 flex gap-2 items-center"><input type="text" id="pay-${item.name.replace(/\s+/g,'')}" class="flex-1 w-0 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-[14px] text-slate-700 outline-none focus:border-primary focus:bg-white" placeholder="輸入末五碼" maxlength="5"><button id="btn-report-${item.name.replace(/\s+/g,'')}" onclick="submitLast5(this, '${safeName}', '${item.name.replace(/\s+/g,'')}')" class="shrink-0 whitespace-nowrap bg-primary text-white px-4 py-2.5 rounded-lg text-[14px] active:scale-95 transition-transform shadow-sm">回報</button></div>` : ''}
           </div>`;
         }).join('');
-        
         setTimeout(() => { history.forEach(h => { if(h.regStatus!=='已取消') { const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(userProfile.userId)}`; document.getElementById(`qr-${h.name.replace(/\s+/g,'')}`).innerHTML = `<img src="${qrUrl}" class="w-full h-full object-contain rounded-md">`; } }); }, 100);
-    } catch(err) {
-        container.innerHTML = '<div class="text-center py-16 bg-white shadow-sm border border-slate-200 rounded-3xl text-red-500 font-bold mx-1">載入失敗</div>'; 
-    }
+    } catch(err) { container.innerHTML = '<div class="text-center py-16 bg-white shadow-sm border border-slate-200 rounded-3xl text-red-500 font-bold mx-1">載入失敗</div>';  }
   }
 
   async function submitLast5(btn, actName, inputId) { 
-    if(isProcessing) return;
-    const val = document.getElementById(`pay-${inputId}`).value; 
-    if(!val || val.length < 4) return showToast("輸入錯誤",true); 
-    isProcessing = true;
-    setButtonLoading(btn.id, true);
-    try {
-      await fetchAPI('updateLast5Digits', { userId: userProfile.userId, activityName: actName, last5Digits: val }); 
-      showToast("回報成功"); 
-      sessionStorage.removeItem('getUserHistory{"userId":"' + userProfile.userId + '"}'); 
-      await loadUserHistory(); 
-    } catch(e) {
-      console.error(e);
-    } finally {
-      isProcessing = false; 
-      setButtonLoading(btn.id, false, '回報');
-    }
+    if(isProcessing) return; const val = document.getElementById(`pay-${inputId}`).value; if(!val || val.length < 4) return showToast("輸入錯誤",true); 
+    isProcessing = true; setButtonLoading(btn.id, true);
+    try { await fetchAPI('updateLast5Digits', { userId: userProfile.userId, activityName: actName, last5Digits: val }); showToast("回報成功"); await loadUserHistory(); } catch(e) { console.error(e); } finally { isProcessing = false; setButtonLoading(btn.id, false, '回報'); }
   }
 
   async function userCancelRegistration(btn, actName) { 
-    if(isProcessing) return;
-    if(!confirm(`確定要取消？`)) return; 
-    isProcessing = true;
-    setButtonLoading(btn.id, true);
-    try {
-      await fetchAPI('cancelRegistration', { userId: userProfile.userId, activityName: actName }); 
-      showToast("已取消"); 
-      sessionStorage.removeItem('getUserHistory{"userId":"' + userProfile.userId + '"}'); 
-      await loadUserHistory(); 
-    } catch(e) {
-      console.error(e);
-    } finally {
-      isProcessing = false; 
-      setButtonLoading(btn.id, false, '取消');
-    }
+    if(isProcessing) return; if(!confirm(`確定要取消？`)) return; isProcessing = true; setButtonLoading(btn.id, true);
+    try { await fetchAPI('cancelRegistration', { userId: userProfile.userId, activityName: actName }); showToast("已取消"); await loadUserHistory(); } catch(e) { console.error(e); } finally { isProcessing = false; setButtonLoading(btn.id, false, '取消'); }
   }
 
   function populateUserProfile() { if(registeredInfo) { ['name','gender','phone','industry','birthday','region','address'].forEach(k => { if(document.getElementById('edit-'+k)) document.getElementById('edit-'+k).value=registeredInfo[k]||''; }); } }
   
   async function submitProfileUpdate() { 
-    if(isProcessing) return; isProcessing = true;
-    setButtonLoading('btn-save-profile', true);
+    if(isProcessing) return; isProcessing = true; setButtonLoading('btn-save-profile', true);
     const p = { userId: userProfile.userId, name: document.getElementById('edit-name').value.trim() || userProfile.displayName, gender: document.getElementById('edit-gender').value, phone: document.getElementById('edit-phone').value.trim(), industry: document.getElementById('edit-industry').value.trim(), birthday: document.getElementById('edit-birthday').value, region: document.getElementById('edit-region').value.trim(), address: document.getElementById('edit-address').value.trim() }; 
-    try {
-      await fetchAPI('updateUser', p); registeredInfo = p; showToast("儲存成功"); 
-      
-      checkMyCardEntry();
-      
-    } catch(e) {
-      console.error(e);
-    } finally {
-      isProcessing = false;
-      setButtonLoading('btn-save-profile', false, '儲存變更');
-    }
+    try { await fetchAPI('updateUser', p); registeredInfo = p; showToast("儲存成功"); checkMyCardEntry(); } catch(e) { console.error(e); } finally { isProcessing = false; setButtonLoading('btn-save-profile', false, '儲存變更'); }
   }
 
   async function loadAdminActivities() { 
-    const list = document.getElementById('admin-activity-list-container');
-    list.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>'; 
-    try {
-      currentActivities = await fetchAPI('getActivityDashboard', {}, true); 
-      renderActivityList(currentActivities, 'admin'); 
-    } catch (e) {
-      list.innerHTML = `<p class="text-center text-red-400 font-bold py-10">載入失敗</p>`;
-    }
+    const list = document.getElementById('admin-activity-list-container'); list.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>'; 
+    try { currentActivities = await fetchAPI('getActivityDashboard', {}, true); renderActivityList(currentActivities, 'admin'); } catch (e) { list.innerHTML = `<p class="text-center text-red-400 font-bold py-10">載入失敗</p>`; }
   }
 
   async function openAdminRegistrants(actName) {
-    activeActivityName = actName; document.getElementById('admin-reg-title').innerText = actName; 
-    const list = document.getElementById('admin-reg-list');
-    list.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>'; 
-    document.getElementById('admin-registrants-modal').classList.remove('hidden');
-    try { 
-      currentRegistrants = await fetchAPI('getRegistrants', { activityName: actName }); 
-      renderAdminRegList(currentRegistrants); 
-    } catch(e) { 
-      list.innerHTML = `<p class="text-center text-red-400 font-bold py-10">讀取失敗</p>`; 
-    }
+    activeActivityName = actName; document.getElementById('admin-reg-title').innerText = actName; const list = document.getElementById('admin-reg-list');
+    list.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>'; document.getElementById('admin-registrants-modal').classList.remove('hidden');
+    try { currentRegistrants = await fetchAPI('getRegistrants', { activityName: actName }); renderAdminRegList(currentRegistrants); } catch(e) { list.innerHTML = `<p class="text-center text-red-400 font-bold py-10">讀取失敗</p>`; }
   }
 
   function closeAdminRegistrants() { document.getElementById('admin-registrants-modal').classList.add('hidden'); stopScanner(); document.getElementById('admin-search-reg').value=''; }
@@ -1325,73 +702,34 @@
   function renderAdminRegList(data) {
     const list = document.getElementById('admin-reg-list');
     if(!data.length) return list.innerHTML = `<div class="text-center py-16 bg-white rounded-3xl shadow-sm border border-slate-200 text-slate-400 font-bold mx-1">尚無名單或找不到符合者</div>`;
-    
     let html = '';
     data.forEach(r => {
       const isCanceled = r.regStatus === '已取消'; const cIn = r.checkedIn;
       html += `
       <div class="bg-white rounded-2xl shadow-sm border ${cIn ? 'border-emerald-300 bg-emerald-50/50' : 'border-slate-200'} p-4 relative overflow-hidden transition-all ${isCanceled ? 'opacity-50 grayscale' : ''} mx-1">
         ${isCanceled ? '<div class="absolute top-0 right-0 bg-slate-500 text-white text-[10px] px-3 py-0.5 rounded-bl-lg">已取消</div>' : ''}
-        <div class="flex justify-between items-start mb-3">
-          <div class="flex flex-col">
-            <h4 class="font-bold text-[15px] text-slate-800 flex items-center gap-1">${r['姓名']} ${cIn ? '<span class="material-symbols-outlined text-[15px] text-emerald-500 icon-filled">check_circle</span>' : ''}</h4>
-            <p class="text-[11px] text-slate-500 font-medium mt-1">${r['電話'] || '無電話'}</p>
-          </div>
-          <button id="btn-chk-${r.rowId}" ${isCanceled ? 'disabled' : ''} onclick="toggleCheckIn(this, ${r.rowId}, ${cIn})" class="px-3 py-1.5 rounded-md flex items-center justify-center gap-1 transition-all font-bold text-[12px] ${cIn ? 'bg-emerald-500 text-white shadow-sm' : 'bg-white border border-slate-300 text-slate-600 active:scale-95 hover:bg-slate-50'}">
-            <span class="material-symbols-outlined text-[16px] ${cIn?'icon-filled':''}">${cIn ? 'check_circle' : 'touch_app'}</span>
-            ${cIn ? '已簽到' : '手動簽到'}
-          </button>
-        </div>
-        <div class="flex items-center gap-2 pt-3 border-t ${cIn?'border-emerald-100':'border-slate-100'}">
-           <select onchange="updatePayStatus(${r.rowId}, this.value)" class="text-[12px] font-bold border border-slate-300 bg-white rounded-md py-1.5 px-2 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer ${r.payStatus==='已繳費'?'text-emerald-600':(r.payStatus==='匯款審核中'?'text-amber-500':'text-red-500')}" ${isCanceled ? 'disabled' : ''}>
-             <option value="未繳費" ${r.payStatus==='未繳費'?'selected':''}>未繳費</option><option value="匯款審核中" ${r.payStatus==='匯款審核中'?'selected':''}>審核中</option><option value="已完款" ${r.payStatus==='已完款'?'selected':''}>已完款</option>
-           </select>
-        </div>
+        <div class="flex justify-between items-start mb-3"><div class="flex flex-col"><h4 class="font-bold text-[15px] text-slate-800 flex items-center gap-1">${r['姓名']} ${cIn ? '<span class="material-symbols-outlined text-[15px] text-emerald-500 icon-filled">check_circle</span>' : ''}</h4><p class="text-[11px] text-slate-500 font-medium mt-1">${r['電話'] || '無電話'}</p></div><button id="btn-chk-${r.rowId}" ${isCanceled ? 'disabled' : ''} onclick="toggleCheckIn(this, ${r.rowId}, ${cIn})" class="px-3 py-1.5 rounded-md flex items-center justify-center gap-1 transition-all font-bold text-[12px] ${cIn ? 'bg-emerald-500 text-white shadow-sm' : 'bg-white border border-slate-300 text-slate-600 active:scale-95 hover:bg-slate-50'}"><span class="material-symbols-outlined text-[16px] ${cIn?'icon-filled':''}">${cIn ? 'check_circle' : 'touch_app'}</span>${cIn ? '已簽到' : '手動簽到'}</button></div>
+        <div class="flex items-center gap-2 pt-3 border-t ${cIn?'border-emerald-100':'border-slate-100'}"><select onchange="updatePayStatus(${r.rowId}, this.value)" class="text-[12px] font-bold border border-slate-300 bg-white rounded-md py-1.5 px-2 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer ${r.payStatus==='已繳費'?'text-emerald-600':(r.payStatus==='匯款審核中'?'text-amber-500':'text-red-500')}" ${isCanceled ? 'disabled' : ''}><option value="未繳費" ${r.payStatus==='未繳費'?'selected':''}>未繳費</option><option value="匯款審核中" ${r.payStatus==='匯款審核中'?'selected':''}>審核中</option><option value="已完款" ${r.payStatus==='已完款'?'selected':''}>已完款</option></select></div>
       </div>`;
     });
     list.innerHTML = html;
   }
 
   async function toggleCheckIn(btn, rowId, currentStatus) { 
-    if(isProcessing) return; isProcessing = true;
-    setButtonLoading(btn.id, true);
-    try { 
-      await fetchAPI('toggleStatus', { activityName: activeActivityName, rowId: rowId, currentStatus: currentStatus }); 
-      const reg = currentRegistrants.find(r => r.rowId === rowId); if(reg) reg.checkedIn = !currentStatus; 
-      filterAdminReg(); 
-    } catch(e) { 
-      console.error(e); showToast("錯誤", true); 
-    } finally { 
-      isProcessing = false; 
-    }
+    if(isProcessing) return; isProcessing = true; setButtonLoading(btn.id, true);
+    try { await fetchAPI('toggleStatus', { activityName: activeActivityName, rowId: rowId, currentStatus: currentStatus }); const reg = currentRegistrants.find(r => r.rowId === rowId); if(reg) reg.checkedIn = !currentStatus; filterAdminReg(); } catch(e) { console.error(e); showToast("錯誤", true); } finally { isProcessing = false; }
   }
 
   async function updatePayStatus(rowId, val) { try { await fetchAPI('updateCellStatus', { activityName: activeActivityName, rowId: rowId, colName: '繳費', val: val }); const reg = currentRegistrants.find(r => r.rowId === rowId); if(reg) reg.payStatus = val; } catch(e) {} }
   
   async function submitWalkIn() { 
-    if(isProcessing) return;
-    const name = document.getElementById('f-walkin-name').value; if(!name) return; 
-    isProcessing = true;
-    setButtonLoading('btn-walkin', true);
-    try {
-      await fetchAPI('addWalkIn', { activityName: activeActivityName, name: name }); 
-      document.getElementById('f-walkin-name').value = ''; 
-      document.getElementById('walkin-modal').classList.add('hidden'); 
-      await openAdminRegistrants(activeActivityName); 
-    } catch(e) { 
-      console.error(e); 
-    } finally { 
-      isProcessing = false; 
-      setButtonLoading('btn-walkin', false, '新增並自動簽到 <span class="material-symbols-outlined text-[20px]">how_to_reg</span>');
-    }
+    if(isProcessing) return; const name = document.getElementById('f-walkin-name').value; if(!name) return; isProcessing = true; setButtonLoading('btn-walkin', true);
+    try { await fetchAPI('addWalkIn', { activityName: activeActivityName, name: name }); document.getElementById('f-walkin-name').value = ''; document.getElementById('walkin-modal').classList.add('hidden'); await openAdminRegistrants(activeActivityName); } catch(e) { console.error(e); } finally { isProcessing = false; setButtonLoading('btn-walkin', false, '新增並自動簽到 <span class="material-symbols-outlined text-[20px]">how_to_reg</span>'); }
   }
 
   async function startScanner() {
     if (html5QrcodeScanner) return;
-    if (!window.Html5Qrcode) {
-       showToast("載入掃描器...", false);
-       await loadScript("https://unpkg.com/html5-qrcode");
-    }
+    if (!window.Html5Qrcode) { showToast("載入掃描器...", false); await loadScript("https://unpkg.com/html5-qrcode"); }
     document.getElementById('qr-scanner-modal').classList.remove('hidden');
     html5QrcodeScanner = new Html5Qrcode("qr-reader");
     html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
@@ -1400,133 +738,41 @@
         try { 
           const uRes = await fetchAPI('checkUser', { userId: decodedText }); 
           if(!uRes.isRegistered) return showToast("非會員", true); 
-          const name = uRes.info.name; 
-          const reg = currentRegistrants.find(r => r['姓名'] === name); 
-          if(reg) { 
-            if(!reg.checkedIn) { 
-              await fetchAPI('toggleStatus', { activityName: activeActivityName, rowId: reg.rowId, currentStatus: false }); 
-              showToast(`${name} 簽到成功`); 
-              openAdminRegistrants(activeActivityName);
-            } else showToast("已簽到過"); 
-          } else { 
-            if(confirm(`未報名，是否現場報名簽到？`)) { 
-              await fetchAPI('addWalkIn', { activityName: activeActivityName, name: name }); 
-              openAdminRegistrants(activeActivityName); 
-            } 
-          } 
+          const name = uRes.info.name; const reg = currentRegistrants.find(r => r['姓名'] === name); 
+          if(reg) { if(!reg.checkedIn) { await fetchAPI('toggleStatus', { activityName: activeActivityName, rowId: reg.rowId, currentStatus: false }); showToast(`${name} 簽到成功`); openAdminRegistrants(activeActivityName); } else showToast("已簽到過"); } else { if(confirm(`未報名，是否現場報名簽到？`)) { await fetchAPI('addWalkIn', { activityName: activeActivityName, name: name }); openAdminRegistrants(activeActivityName); } } 
         } catch(e) {} 
-      },
-      () => {}
+      }, () => {}
     ).catch(err => { showToast("相機錯誤", true); stopScanner(); });
   }
   function stopScanner() { if(html5QrcodeScanner) { html5QrcodeScanner.stop().then(() => { html5QrcodeScanner.clear(); html5QrcodeScanner = null; }); } document.getElementById('qr-scanner-modal').classList.add('hidden'); }
 
   async function loadCrmData() { 
-    const list = document.getElementById('admin-crm-list-container');
-    list.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>'; 
-    try {
-      globalCrmData = await fetchAPI('getAllCrmData', {}, true); 
-      filteredCrmData = [...globalCrmData];
-      currentCrmViewCount = crmPageLimit;
-      renderCrmList(); 
-    } catch(e) {
-      list.innerHTML = `<p class="text-center text-red-400 font-bold py-10">載入失敗</p>`;
-    }
+    const list = document.getElementById('admin-crm-list-container'); list.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>'; 
+    try { globalCrmData = await fetchAPI('getAllCrmData', {}, true); filteredCrmData = [...globalCrmData]; currentCrmViewCount = crmPageLimit; renderCrmList(); } catch(e) { list.innerHTML = `<p class="text-center text-red-400 font-bold py-10">載入失敗</p>`; }
   }
 
-  function filterCrmList() { 
-    const term = document.getElementById('crm-search-input').value.toLowerCase(); 
-    filteredCrmData = globalCrmData.filter(u => u.name.toLowerCase().includes(term));
-    currentCrmViewCount = crmPageLimit;
-    renderCrmList(); 
-  }
-
-  function loadMoreCrm() {
-    currentCrmViewCount += crmPageLimit;
-    renderCrmList();
-  }
+  function filterCrmList() { const term = document.getElementById('crm-search-input').value.toLowerCase(); filteredCrmData = globalCrmData.filter(u => u.name.toLowerCase().includes(term)); currentCrmViewCount = crmPageLimit; renderCrmList(); }
+  function loadMoreCrm() { currentCrmViewCount += crmPageLimit; renderCrmList(); }
 
   function renderCrmList() {
-    const list = document.getElementById('admin-crm-list-container');
-    const moreBtnBox = document.getElementById('crm-load-more-box');
-    
-    if(!filteredCrmData.length) {
-      moreBtnBox.classList.add('hidden');
-      return list.innerHTML = `<div class="text-center text-slate-400 py-16 text-[14px]">找不到符合的會員</div>`;
-    }
-
+    const list = document.getElementById('admin-crm-list-container'); const moreBtnBox = document.getElementById('crm-load-more-box');
+    if(!filteredCrmData.length) { moreBtnBox.classList.add('hidden'); return list.innerHTML = `<div class="text-center text-slate-400 py-16 text-[14px]">找不到符合的會員</div>`; }
     const displayItems = filteredCrmData.slice(0, currentCrmViewCount);
-    
     let html = '';
     displayItems.forEach((r, i) => {
       html += `
-      <div class="px-4 py-4 flex justify-between items-center border-b border-slate-100 active:bg-slate-50 transition-colors">
-        <div class="flex items-center gap-4">
-          <span class="text-[13px] text-slate-400 w-5 text-center">${i + 1}</span>
-          <div class="flex flex-col">
-            <span class="text-[16px] text-slate-800 font-medium">${r.name}</span>
-            <span class="text-[11px] text-slate-400 uppercase tracking-tight">VIP Member</span>
-          </div>
-        </div>
-        <div class="flex flex-col items-end">
-          <span class="text-[15px] text-slate-700">${r.attended} 次</span>
-          <span class="text-[10px] text-slate-400 font-medium uppercase">出席總計</span>
-        </div>
-      </div>`;
+      <div class="px-4 py-4 flex justify-between items-center border-b border-slate-100 active:bg-slate-50 transition-colors"><div class="flex items-center gap-4"><span class="text-[13px] text-slate-400 w-5 text-center">${i + 1}</span><div class="flex flex-col"><span class="text-[16px] text-slate-800 font-medium">${r.name}</span><span class="text-[11px] text-slate-400 uppercase tracking-tight">VIP Member</span></div></div><div class="flex flex-col items-end"><span class="text-[15px] text-slate-700">${r.attended} 次</span><span class="text-[10px] text-slate-400 font-medium uppercase">出席總計</span></div></div>`;
     });
-    
     list.innerHTML = html;
-
-    if (filteredCrmData.length > currentCrmViewCount) {
-      moreBtnBox.classList.remove('hidden');
-    } else {
-      moreBtnBox.classList.add('hidden');
-    }
+    if (filteredCrmData.length > currentCrmViewCount) moreBtnBox.classList.remove('hidden'); else moreBtnBox.classList.add('hidden');
   }
 
   async function loadAdminSettings() { const s = await fetchAPI('getSettings'); document.getElementById('set-tg-token').value = s.TG_BOT_TOKEN || ''; document.getElementById('set-tg-chat').value = s.TG_CHAT_ID || ''; document.getElementById('set-line-link').value = s.LINE_LINK || ''; }
   async function autoFetchTgChatId() { const token = document.getElementById('set-tg-token').value; if(!token) return; document.getElementById('set-tg-chat').value = "獲取中..."; try { document.getElementById('set-tg-chat').value = await fetchAPI('getTgChatId', { token }); } catch(e) { document.getElementById('set-tg-chat').value = ""; } }
   
   async function submitSettings() { 
-    if(isProcessing) return; isProcessing = true;
-    setButtonLoading('btn-submit-settings', true);
-    try {
-      await fetchAPI('saveSettings', { TG_BOT_TOKEN: document.getElementById('set-tg-token').value, TG_CHAT_ID: document.getElementById('set-tg-chat').value, LINE_LINK: document.getElementById('set-line-link').value }); showToast("已儲存"); 
-    } catch(e) { console.error(e); } finally { isProcessing = false; setButtonLoading('btn-submit-settings', false, '儲存設定'); }
-  }
-
-  window.shareReadOnlyCardToLine = async function(btnEl) {
-       const btnShare = btnEl || document.querySelector('#readonly-card-modal button:last-child');
-       let originalHTML = '';
-       if (btnShare) {
-           originalHTML = btnShare.innerHTML;
-           btnShare.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> 處理中...';
-           btnShare.classList.add('pointer-events-none', 'opacity-70');
-       }
-
-       try {
-           let config = null;
-           if (currentActiveCard['自訂名片設定']) { try { config = JSON.parse(currentActiveCard['自訂名片設定']); } catch(e){} }
-           
-           const rawImg = config?.imgUrl || currentActiveCard['名片圖檔'];
-           const currentImgUrl = (typeof window.getDirectImageUrl === 'function') ? window.getDirectImageUrl(rawImg) : rawImg;
-           const detectedAr = (typeof window.getTrueAspectRatio === 'function') ? await window.getTrueAspectRatio(currentImgUrl) : "20:13";
-           
-           if (typeof buildFlexMessageFromCard !== 'function') {
-               throw new Error("轉發模組載入失敗，請重新整理網頁");
-           }
-           const flexMessageObj = buildFlexMessageFromCard(currentActiveCard, config, detectedAr);
-           const altText = `您收到一張數位名片：${config && config.title ? config.title : currentActiveCard['姓名'] || '商務名片'}`;
-
-           await triggerFlexSharing(flexMessageObj, altText);
-       } catch(err) {
-           alert("發生錯誤：" + err.message);
-       } finally {
-           if (btnShare) {
-               btnShare.innerHTML = originalHTML;
-               btnShare.classList.remove('pointer-events-none', 'opacity-70');
-           }
-       }
+    if(isProcessing) return; isProcessing = true; setButtonLoading('btn-submit-settings', true);
+    try { await fetchAPI('saveSettings', { TG_BOT_TOKEN: document.getElementById('set-tg-token').value, TG_CHAT_ID: document.getElementById('set-tg-chat').value, LINE_LINK: document.getElementById('set-line-link').value }); showToast("已儲存"); } catch(e) { console.error(e); } finally { isProcessing = false; setButtonLoading('btn-submit-settings', false, '儲存設定'); }
   }
 </script>
 </body>

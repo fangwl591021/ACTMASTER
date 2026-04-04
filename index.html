@@ -1,4 +1,4 @@
-<!-- Version: v1.8.0 (QQ 修復版：活動卡片加入按鈕與時間防空值解析) -->
+<!-- Version: v1.9.0 (QQ 修復版：暴力渲染我要報名按鈕，徹底解決 Tailwind JIT 破圖問題) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -62,7 +62,7 @@
     input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     input[type=number] { -moz-appearance: textfield; }
 
-    .btn-primary { @apply w-full py-4 bg-primary text-white rounded-2xl font-bold text-[16px] shadow-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2; }
+    /* ⭐ 降低對 @apply 的依賴，避免 JIT 在隱藏元件上失效 */
     .btn-secondary { @apply w-full py-4 bg-slate-200 text-slate-700 rounded-2xl font-bold text-[16px] active:scale-[0.98] transition-transform flex items-center justify-center gap-2; }
     
     .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-slate-400 h-full; min-width: 48px;}
@@ -125,7 +125,8 @@
           <div class="flex flex-col"><label class="input-label">居住地區</label><input id="reg-region" class="custom-input" placeholder="例如：台北市" type="text"/></div>
           <div class="flex flex-col"><label class="input-label">完整地址</label><input id="reg-address" class="custom-input" placeholder="選填" type="text"/></div>
         </div>
-        <button id="btn-reg-step1" onclick="submitUserRegistrationStep1()" class="btn-primary mt-6">儲存並繼續</button>
+        <!-- ⭐ 暴力渲染按鈕 -->
+        <button id="btn-reg-step1" onclick="submitUserRegistrationStep1()" class="w-full py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[16px] shadow-sm active:scale-[0.98] transition-transform mt-6">儲存並繼續</button>
       </div>
 
       <div id="reg-step-2" class="space-y-4 opacity-30 pointer-events-none transition-opacity duration-300 bg-white p-5 rounded-3xl shadow-sm mt-4">
@@ -183,7 +184,8 @@
             <div class="flex flex-col"><label class="input-label">居住地區</label><input type="text" id="edit-region" class="custom-input"></div>
             <div class="flex flex-col"><label class="input-label">完整地址</label><input type="text" id="edit-address" class="custom-input"></div>
           </div>
-          <button id="btn-save-profile" onclick="submitProfileUpdate()" class="btn-primary mt-2">儲存設定</button>
+          <!-- ⭐ 暴力渲染按鈕 -->
+          <button id="btn-save-profile" onclick="submitProfileUpdate()" class="w-full py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[16px] shadow-sm active:scale-[0.98] transition-transform mt-2">儲存設定</button>
       </div>
 
       <!-- 名片入口橫幅 -->
@@ -225,7 +227,8 @@
           <div class="flex flex-col"><label class="input-label">Telegram Bot Token</label><div class="flex gap-2"><input type="text" id="set-tg-token" class="custom-input flex-1"><button onclick="autoFetchTgChatId()" id="btn-fetch-tg" class="bg-slate-100 text-slate-600 px-4 rounded-xl font-bold active:scale-95 transition-all">轉換</button></div></div>
           <div class="flex flex-col"><label class="input-label">Telegram Chat ID</label><input type="text" id="set-tg-chat" class="custom-input !bg-slate-50 text-slate-500" readonly placeholder="由上方轉換取得"></div>
           <div class="flex flex-col"><label class="input-label">官方 LINE 連結</label><input type="text" id="set-line-link" class="custom-input" placeholder="https://lin.ee/..."></div>
-          <button id="btn-submit-settings" onclick="submitSettings()" class="btn-primary mt-2">儲存設定</button>
+          <!-- ⭐ 暴力渲染按鈕 -->
+          <button id="btn-submit-settings" onclick="submitSettings()" class="w-full py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[16px] shadow-sm active:scale-[0.98] transition-transform mt-2">儲存設定</button>
       </div>
     </div>
 
@@ -294,7 +297,10 @@
           </div>
         </div>
       </div>
-      <div class="bg-white p-4 pb-safe border-t border-slate-100 shrink-0"><button id="detail-modal-join-btn" class="btn-primary">我要報名</button></div>
+      <!-- ⭐ 暴力渲染「我要報名」按鈕 -->
+      <div class="bg-white p-4 pb-safe border-t border-slate-100 shrink-0">
+          <button id="detail-modal-join-btn" class="w-full py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[16px] shadow-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2">我要報名</button>
+      </div>
   </div>
 </div>
 
@@ -328,7 +334,8 @@
       <button onclick="document.getElementById('walkin-modal').classList.add('hidden')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center active:scale-90 transition-all"><span class="material-symbols-outlined text-[20px]">close</span></button>
     </div>
     <div class="flex flex-col mb-6"><label class="input-label">來賓姓名</label><input type="text" id="f-walkin-name" class="custom-input" placeholder="請輸入姓名"></div>
-    <button id="btn-walkin" onclick="submitWalkIn()" class="btn-primary">新增並簽到</button>
+    <!-- ⭐ 暴力渲染按鈕 -->
+    <button id="btn-walkin" onclick="submitWalkIn()" class="w-full py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[16px] shadow-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2">新增並簽到</button>
   </div>
 </div>
 
@@ -340,13 +347,14 @@
   <div class="flex-1 flex items-center justify-center relative"><div id="qr-reader" class="w-full h-full max-h-[80vh]"></div></div>
 </div>
 
-<!-- 自訂彈窗：改成圓潤的 Bottom Sheet 樣式 -->
+<!-- 自訂彈窗 -->
 <div id="custom-modal" class="hidden fixed inset-0 z-[9999] flex items-end justify-center bg-black/40 backdrop-blur-sm">
   <div class="bg-white w-full max-w-md rounded-t-[2rem] p-8 shadow-2xl text-center bottom-sheet-up pb-safe">
     <div class="w-16 h-16 bg-primary-light text-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><span class="material-symbols-outlined text-[32px] icon-filled">info</span></div>
     <h3 id="modal-title" class="text-[22px] font-extrabold mb-2 text-slate-800 tracking-tight">系統通知</h3>
     <p id="modal-desc" class="text-slate-500 font-medium mb-8 leading-relaxed text-[15px]"></p>
-    <button onclick="closeModalAndGo()" class="btn-primary">我知道了</button>
+    <!-- ⭐ 暴力渲染按鈕 -->
+    <button onclick="closeModalAndGo()" class="w-full py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[16px] shadow-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2">我知道了</button>
   </div>
 </div>
 
@@ -517,13 +525,13 @@
 
   // ⭐ QQ 修復點 1：增強時間防空值解析，避免前端顯示 NaN
   function formatTime(isoString) {
-    if(!isoString || isoString.trim() === '') return '時間未定'; 
+    if(!isoString || String(isoString).trim() === '') return '時間未定'; 
     const d = new Date(isoString);
     if(isNaN(d.getTime())) return isoString; 
     return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   }
   function formatTimeShort(isoString) {
-    if(!isoString || isoString.trim() === '') return '時間未定'; 
+    if(!isoString || String(isoString).trim() === '') return '時間未定'; 
     const d = new Date(isoString);
     if(isNaN(d.getTime())) return String(isoString).substring(0, 16);
     return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
@@ -800,7 +808,6 @@
 
   function filterByCategory(type) { currentCategory = type; renderCategories(); filterActivities(); }
   
-  // ⭐ QQ 修復點 2：加入前台活動卡片的 詳細說明 與 報名 按鈕
   function filterActivities() { renderActivityList(globalPublicActivities.filter(a => currentCategory === '全部活動' || a.type === currentCategory), 'user'); }
 
   function renderActivityList(data, mode) {

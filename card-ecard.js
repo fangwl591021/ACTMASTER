@@ -1,6 +1,6 @@
 /**
  * card-ecard.js
- * Version: v5.2.2 (允許 LINE 影片網址通過驗證版)
+ * Version: v5.3.0 (滿版修正與 VOOM 短影音自動偵測版)
  */
 
 window.toggleECardType = function(type) {
@@ -88,35 +88,32 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
   
     const badgeUrl = `https://liff.line.me/${myLiffId}/card.html?shareCardId=${card.rowId}`;
   
-    const headerBlock = {
+    // ⭐ QQ原生滿版：刪除 headerBlock，把分享按鈕改用 absolute 放到 body 裡面
+    const shareBadge = {
         "type": "box",
-        "layout": "horizontal",
-        "justifyContent": "flex-end",
-        "paddingAll": "7px",
+        "layout": "vertical",
+        "position": "absolute",
+        "backgroundColor": "#FF0000",
+        "cornerRadius": "xl",
+        "paddingTop": "4px",
+        "paddingBottom": "4px",
+        "paddingStart": "14px",
+        "paddingEnd": "14px",
+        "offsetTop": "15px",
+        "offsetEnd": "15px",
+        "action": {
+            "type": "uri",
+            "label": "share",
+            "uri": badgeUrl
+        },
         "contents": [
             {
-                "type": "box",
-                "layout": "vertical",
-                "justifyContent": "center",
-                "backgroundColor": "#FF0000",
-                "width": "65px",
-                "height": "25px",
-                "cornerRadius": "25px",
-                "contents": [
-                    {
-                        "type": "text",
-                        "text": "分享",
-                        "weight": "bold",
-                        "align": "center",
-                        "color": "#FFFFFF",
-                        "size": "xs"
-                    }
-                ],
-                "action": {
-                    "type": "uri",
-                    "label": "share",
-                    "uri": badgeUrl
-                }
+                "type": "text",
+                "text": "分享",
+                "weight": "bold",
+                "align": "center",
+                "color": "#FFFFFF",
+                "size": "xs"
             }
         ]
     };
@@ -148,18 +145,27 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
     }
   
     const flexContents = {
-        "type": "bubble", "size": imgSize,
-        "header": headerBlock,
+        "type": "bubble", 
+        "size": imgSize,
         "hero": heroBlock,
         "body": {
             "type": "box", "layout": "vertical", "paddingAll": "0px",
             "contents": [
-                { "type": "box", "layout": "vertical", "paddingAll": "7px", "contents": [ { "type": "text", "text": title, "weight": "bold", "size": "xl", "align": titleAlign, "wrap": true }, { "type": "text", "text": desc, "size": "xs", "margin": "sm", "color": "#666666", "wrap": true } ] }
+                { 
+                    "type": "box", "layout": "vertical", "paddingAll": "20px", 
+                    "contents": [ 
+                        { "type": "text", "text": title, "weight": "bold", "size": "xl", "align": titleAlign, "wrap": true }, 
+                        { "type": "text", "text": desc, "size": "sm", "margin": "md", "color": "#666666", "wrap": true } 
+                    ] 
+                },
+                shareBadge
             ]
         }
     };
     
-    if (btnContents.length > 0) flexContents.footer = { "type": "box", "layout": "vertical", "spacing": "sm", "paddingAll": "7px", "backgroundColor": "#FFFFFF", "contents": btnContents };
+    if (btnContents.length > 0) {
+        flexContents.footer = { "type": "box", "layout": "vertical", "spacing": "sm", "paddingAll": "20px", "paddingTop": "0px", "backgroundColor": "#FFFFFF", "contents": btnContents };
+    }
     return flexContents;
 }
   
@@ -340,7 +346,9 @@ window.updateECardPreview = function() {
         const tempImg = new Image();
         tempImg.onload = function() {
             if (arSetting === 'auto') {
-                let w = this.width; let h = this.height; let ratio = w / h;
+                let w = this.width; let h = this.height; 
+                if (w === 0 || h === 0) w = 20, h = 13;
+                let ratio = w / h;
                 if (ratio > 3) { w = 300; h = 100; }
                 else if (ratio < 0.334) { w = 100; h = 300; }
                 let dynAr = `${Math.round(w)}:${Math.round(h)}`;
@@ -409,8 +417,7 @@ window.updateECardPreview = function() {
         }
     }
 }
-
-// ⭐ 放寬網址格式檢查：允許包含 line 字眼的連結 (LINE VOOM / LINE SCDN)
+  
 window.checkFormat = function(showAlert = false) {
     let errors = [];
     
@@ -422,7 +429,6 @@ window.checkFormat = function(showAlert = false) {
         const vUrl = vUrlEl ? vUrlEl.value.trim() : '';
         if (!vUrl) errors.push("❌ 【動態影片版】必須填寫影片網址。");
         else if (!vUrl.match(/^https:\/\//i)) errors.push("❌ 【影片網址】必須以 https:// 開頭。");
-        // ⭐ 修改此處：允許 mp4 或是 line 相關的連結
         else if (!vUrl.toLowerCase().includes('mp4') && !vUrl.toLowerCase().includes('line')) errors.push("❌ 【影片網址】必須為 MP4 格式或 LINE 影片連結。");
     }
   

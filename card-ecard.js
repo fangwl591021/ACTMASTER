@@ -1,6 +1,6 @@
 /**
  * card-ecard.js
- * Version: v20260404_2000 (同步版本號，確保系統狀態純淨)
+ * Version: v2.1.0 (QQ 修復版：還原原生滿版 Flex 邊距，解決文字擠在中間的問題)
  */
 
 window.toggleECardType = function(type) {
@@ -88,11 +88,12 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
   
     const badgeUrl = `https://liff.line.me/${myLiffId}?shareCardId=${card.rowId}`;
   
+    // ⭐ 將分享按鈕的 Padding 縮減至 8px，確保不浪費空間
     const headerBlock = {
         "type": "box",
         "layout": "horizontal",
         "justifyContent": "flex-end",
-        "paddingAll": "7px",
+        "paddingAll": "8px",
         "contents": [
             {
                 "type": "box",
@@ -147,6 +148,7 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
         };
     }
   
+    // ⭐ 將內文區塊 paddingAll 從 20px 大幅縮減至 10px，徹底解放兩側空間，還原原生滿版感
     const flexContents = {
         "type": "bubble", 
         "size": imgSize,
@@ -156,7 +158,7 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
             "type": "box", "layout": "vertical", "paddingAll": "0px",
             "contents": [
                 { 
-                    "type": "box", "layout": "vertical", "paddingAll": "20px", 
+                    "type": "box", "layout": "vertical", "paddingAll": "10px", 
                     "contents": [ 
                         { "type": "text", "text": title, "weight": "bold", "size": "xl", "align": titleAlign, "wrap": true }, 
                         { "type": "text", "text": desc, "size": "sm", "margin": "md", "color": "#666666", "wrap": true } 
@@ -166,8 +168,9 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
         }
     };
     
+    // ⭐ 按鈕區塊同步縮減邊界至 10px
     if (btnContents.length > 0) {
-        flexContents.footer = { "type": "box", "layout": "vertical", "spacing": "sm", "paddingAll": "20px", "paddingTop": "0px", "backgroundColor": "#FFFFFF", "contents": btnContents };
+        flexContents.footer = { "type": "box", "layout": "vertical", "spacing": "sm", "paddingAll": "10px", "paddingTop": "0px", "backgroundColor": "#FFFFFF", "contents": btnContents };
     }
     return flexContents;
 }
@@ -277,7 +280,7 @@ window.closeECardGenerator = function() {
     const modalEl = document.getElementById('ecard-generator-modal');
     if (modalEl) modalEl.classList.add('hidden'); 
 }
-  
+
 window.updateECardPreview = function(forceBase64 = null) {
     const cardTypeEl = document.getElementById('ec-card-type');
     const cardType = cardTypeEl ? cardTypeEl.value : 'image';
@@ -425,12 +428,22 @@ window.updateECardPreview = function(forceBase64 = null) {
         }
     }
     
+    // ⭐ 同步網頁版的泡泡預覽，縮減左右邊距 (px-5 改為 px-3.5)，使按鈕寬度跟隨放寬
     if (bubbleEl) {
         let existingHeader = bubbleEl.querySelector('.preview-header');
         if (!existingHeader) {
             const headerHTML = `<div class="preview-header w-full flex justify-end p-2 bg-white pb-1"><div class="preview-share-btn bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-sm tracking-widest">分享</div></div>`;
             bubbleEl.insertAdjacentHTML('afterbegin', headerHTML);
         }
+        
+        const titleDescContainer = previewTitleEl?.parentElement;
+        if (titleDescContainer) {
+            titleDescContainer.className = "px-3.5 py-3 text-center bg-white relative";
+        }
+        if (btnContainer) {
+            btnContainer.className = "px-3.5 pb-3.5 pt-0 bg-white space-y-2";
+        }
+
         const absoluteShare = bubbleEl.querySelector('.absolute.top-4.right-4.bg-red-500');
         if (absoluteShare) absoluteShare.remove();
     }

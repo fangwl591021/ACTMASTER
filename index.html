@@ -1,4 +1,4 @@
-<!-- Version: v1.2.1 (QQ 修復版：修正名片入口按鈕隱性延遲，改為記憶體瞬間比對顯示) -->
+<!-- Version: v1.2.2 (QQ 修復版：永遠顯示名片入口，若無名片則提供「立即建立」捷徑) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -194,21 +194,25 @@
       </div>
       <button id="btn-save-profile" onclick="submitProfileUpdate()" class="btn-primary mt-4">儲存變更</button>
 
-      <!-- 專屬名片入口橫幅 -->
-      <div id="my-card-entry" class="hidden mt-8 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-5 text-white shadow-xl shadow-slate-900/20 flex justify-between items-center relative overflow-hidden cursor-pointer active:scale-[0.98] transition-transform" onclick="window.location.href='card.html?mode=mycard'">
+      <!-- ⭐ QQ修復：永遠顯示的專屬名片入口橫幅 -->
+      <div id="my-card-entry" class="mt-8 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-5 text-white shadow-xl shadow-slate-900/20 flex justify-between items-center relative overflow-hidden cursor-pointer active:scale-[0.98] transition-transform">
           <div class="absolute -right-4 -top-4 opacity-10"><span class="material-symbols-outlined text-[100px]">contact_mail</span></div>
-          <div class="relative z-10">
+          <div class="relative z-10" id="my-card-info">
+              <!-- 動態內容，透過 JS 決定是顯示「已開通」還是「立即建立」 -->
               <div class="flex items-center gap-1.5 mb-1.5">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span>
-                <span class="text-[11px] font-bold text-emerald-300 tracking-wider">已開通專屬權限</span>
+                <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                <span class="text-[11px] font-bold text-slate-300 tracking-wider">檢查狀態中...</span>
               </div>
               <h3 class="text-[18px] font-black mb-1">數位電子名片</h3>
-              <p class="text-[12px] text-slate-300 font-medium">預覽、編輯與轉發至 LINE</p>
+              <p class="text-[12px] text-slate-300 font-medium">讀取中...</p>
           </div>
           <div class="relative z-10 w-11 h-11 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20 shadow-sm">
               <span class="material-symbols-outlined text-[24px]">arrow_forward</span>
           </div>
       </div>
+      
+      <!-- ⭐ 新增：獨立的名片上傳觸發器，供未建立名片的用戶補上傳 -->
+      <input type="file" id="profile-card-upload" accept="image/*" class="hidden" onchange="openCropper(this, 'profile')">
     </div>
 
     <!-- 後台：管理核銷 -->
@@ -656,16 +660,21 @@
     else if (view === 'user-history') loadUserHistory();
   }
 
-  // ⭐ QQ修復：徹底重寫這支函式，讓它優先從全域快取瞬間比對，不再陷入網路延遲卡死的窘境
+  // ⭐ QQ修復：保證名片區塊永遠顯示，自動切換「已開通」與「立即建立」狀態
   async function checkMyCardEntry() {
+      const entryEl = document.getElementById('my-card-entry');
+      const infoEl = document.getElementById('my-card-info');
+      
+      // 無論如何，一進來就讓入口區塊顯示
+      entryEl.classList.remove('hidden');
+
       try {
           let myCard = null;
-          // 優先從剛剛背景載入的 globalCardContacts 中比對 (瞬間完成)
+          
           if (globalCardContacts && globalCardContacts.length > 0) {
               myCard = globalCardContacts.find(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId || c['Line ID'] === userProfile.userId || c['lineId'] === userProfile.userId);
           }
           
-          // 如果真的找不到，才花時間去跟伺服器要一次資料作最終確認 (防呆)
           if (!myCard) {
               const data = await fetchAPI('getCardContacts', {}, true);
               if (data && data.length > 0) {
@@ -674,14 +683,38 @@
               }
           }
 
-          // 判定成功，瞬間顯示按鈕
           if (myCard) {
-              document.getElementById('my-card-entry').classList.remove('hidden');
+              infoEl.innerHTML = `
+                <div class="flex items-center gap-1.5 mb-1.5">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span>
+                  <span class="text-[11px] font-bold text-emerald-300 tracking-wider">已開通專屬權限</span>
+                </div>
+                <h3 class="text-[18px] font-black mb-1">數位電子名片</h3>
+                <p class="text-[12px] text-slate-300 font-medium">預覽、編輯與轉發至 LINE</p>
+              `;
+              entryEl.onclick = () => window.location.href = 'card.html?mode=mycard';
           } else {
-              document.getElementById('my-card-entry').classList.add('hidden');
+              infoEl.innerHTML = `
+                <div class="flex items-center gap-1.5 mb-1.5">
+                  <span class="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]"></span>
+                  <span class="text-[11px] font-bold text-amber-300 tracking-wider">尚未建立名片</span>
+                </div>
+                <h3 class="text-[18px] font-black mb-1">建立專屬名片</h3>
+                <p class="text-[12px] text-slate-300 font-medium">點擊上傳實體名片，由 AI 自動建檔</p>
+              `;
+              // 若無名片，點擊則觸發獨立的上傳按鈕
+              entryEl.onclick = () => document.getElementById('profile-card-upload').click();
           }
       } catch(e) {
           console.error("判斷名片權限時發生錯誤：", e);
+          infoEl.innerHTML = `
+            <div class="flex items-center gap-1.5 mb-1.5">
+              <span class="w-2 h-2 rounded-full bg-red-400"></span>
+              <span class="text-[11px] font-bold text-red-300 tracking-wider">連線異常</span>
+            </div>
+            <h3 class="text-[18px] font-black mb-1">無法讀取狀態</h3>
+            <p class="text-[12px] text-slate-300 font-medium">請重新整理頁面後再試</p>
+          `;
       }
   }
 
@@ -828,6 +861,9 @@
     if (currentCropTarget === 'reg') {
       regCompressedBase64 = base64;
       recognizeAndSaveRegCard();
+    } else if (currentCropTarget === 'profile') {
+      regCompressedBase64 = base64;
+      recognizeAndSaveProfileCard();
     }
   }
 
@@ -838,6 +874,54 @@
       const payload = { base64Image: regCompressedBase64, userId: userProfile.userId, 'LINE ID': userProfile.userId, Name: regStep1Data.name, EnglishName: data.EnglishName || '', Title: data.Title || '', Department: data.Department || '', CompanyName: data.CompanyName || '', TaxID: data.TaxID || '', Mobile: regStep1Data.phone, Tel: data.Tel || '', Ext: data.Ext || '', Fax: data.Fax || '', Address: data.Address || regStep1Data.address || '', Email: data.Email || '', Website: data.Website || '', SocialMedia: data.SocialMedia || '', Slogan: data.Slogan || '', Notes: '註冊自動建檔', Birthday: regStep1Data.birthday || '', Personality: data.Personality || '', Hobbies: data.Hobbies || '', Wealth: data.Wealth || '', Health: data.Health || '', Career: data.Career || '' };
       await fetchAPI('saveCard', payload); showToast("名片建檔成功！"); finishRegistration();
     } catch(err) { finishRegistration(); }
+  }
+
+  // ⭐ QQ修復：獨立的個人名片自動辨識建檔功能
+  async function recognizeAndSaveProfileCard() {
+    showToast("AI 正在辨識您的名片...", false); 
+    try {
+      const bday = document.getElementById('edit-birthday').value || '';
+      const data = await fetchAPI('recognizeCard', { base64Image: regCompressedBase64, Birthday: bday });
+      
+      const payload = { 
+        base64Image: regCompressedBase64, 
+        userId: userProfile.userId, 
+        'LINE ID': userProfile.userId, 
+        Name: document.getElementById('edit-name').value || userProfile.displayName, 
+        EnglishName: data.EnglishName || '', 
+        Title: data.Title || '', 
+        Department: data.Department || '', 
+        CompanyName: data.CompanyName || '', 
+        TaxID: data.TaxID || '', 
+        Mobile: document.getElementById('edit-phone').value || '', 
+        Tel: data.Tel || '', 
+        Ext: data.Ext || '', 
+        Fax: data.Fax || '', 
+        Address: data.Address || document.getElementById('edit-address').value || '', 
+        Email: data.Email || '', 
+        Website: data.Website || '', 
+        SocialMedia: data.SocialMedia || '', 
+        Slogan: data.Slogan || '', 
+        Notes: '使用者自行上傳', 
+        Birthday: bday, 
+        Personality: data.Personality || '', 
+        Hobbies: data.Hobbies || '', 
+        Wealth: data.Wealth || '', 
+        Health: data.Health || '', 
+        Career: data.Career || '' 
+      };
+      
+      await fetchAPI('saveCard', payload); 
+      showToast("🎉 專屬名片建檔成功！"); 
+      
+      // 強制清空快取，重新向後端取得最新名單，讓狀態立刻變成「已開通」
+      sessionStorage.removeItem('getCardContacts{}');
+      globalCardContacts = await fetchAPI('getCardContacts', {}, true);
+      checkMyCardEntry();
+      
+    } catch(err) { 
+      showToast("辨識發生異常：" + err.message, true); 
+    }
   }
 
   function finishRegistration() { isRegistered = true; registeredInfo = regStep1Data; document.getElementById('bottom-nav-user').classList.remove('hidden'); switchView('user-activities'); }

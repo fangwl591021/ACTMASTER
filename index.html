@@ -1,11 +1,11 @@
-<!-- Version: v1.8.0 (QQ 修復版：快速匯入補回活動說明欄位) -->
+<!-- Version: v1.8.0 (QQ 修復版：活動卡片加入按鈕與時間防空值解析) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
   <link rel="icon" href="data:,">
-  <title>建立新活動 - 報名大師</title>
+  <title>報名大師</title>
   
   <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Noto+Sans+TC:wght@400;500;700;800&display=swap" rel="stylesheet"/>
@@ -14,314 +14,361 @@
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 
   <script id="tailwind-config">
     tailwind.config = {
       theme: {
         extend: {
           colors: { 
-            primary: "#2563eb", 
-            "primary-light": "#eff6ff", 
-            background: "#ffffff", 
-            "text-main": "#333333", 
+            primary: "#06C755", 
+            "primary-light": "#e6f9ed", 
+            background: "#f8fafc", 
+            "text-main": "#0f172a", 
             "text-muted": "#64748b", 
             error: "#ef4444" 
+          },
+          fontFamily: { 
+            headline: ["Manrope", "Noto Sans TC", "sans-serif"],
+            sans: ["Inter", "Noto Sans TC", "sans-serif"] 
+          },
+          boxShadow: {
+            'app-card': '0 4px 20px -2px rgba(0,0,0,0.05)',
+            'app-nav': '0 -4px 20px rgba(0,0,0,0.03)',
+            'floating': '0 10px 40px -10px rgba(6,199,85,0.2)',
           }
         }
       }
     }
   </script>
-  
-  <style type="text/tailwindcss">
+  <style>
     .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400; vertical-align: middle; }
     .icon-filled { font-variation-settings: 'FILL' 1, 'wght' 400; }
     
-    body { background-color: #ffffff; -webkit-tap-highlight-color: transparent; font-size: 15px; color: #333333; font-weight: 400; }
+    body { background-color: #f8fafc; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; overscroll-behavior-y: none; }
+    input, textarea, select { -webkit-user-select: auto; user-select: auto; }
+    
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1.5rem); }
     
-    .input-label { @apply block text-[15px] text-[#64748b] mb-1.5 font-normal tracking-wide; }
+    .input-label { @apply block text-[13px] text-slate-500 mb-1.5 font-bold tracking-wide pl-1; }
+    
     select.custom-input { -webkit-appearance: none !important; appearance: none !important; background-image: none !important; }
-    .custom-input { @apply w-full py-3 px-3 bg-white border border-slate-300 rounded-lg outline-none focus:border-primary transition-all text-text-main text-[15px]; }
-    .textarea-block { @apply w-full p-4 bg-white border border-slate-300 rounded-lg outline-none focus:border-primary transition-all text-[15px] text-slate-800 resize-none leading-relaxed placeholder-slate-400; }
-    .custom-input::placeholder { @apply text-slate-400 font-normal; }
+    
+    .custom-input { @apply w-full h-[50px] px-4 bg-slate-100 border-none rounded-2xl outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all font-medium text-slate-800 text-[15px] placeholder-slate-400; }
+    .textarea-block { @apply w-full p-4 bg-slate-100 border-none rounded-2xl outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all text-[15px] text-slate-800 resize-none leading-relaxed placeholder-slate-400; }
     
     input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     input[type=number] { -moz-appearance: textfield; }
 
-    .btn-primary { @apply w-full py-4 bg-[#06C755] text-white rounded-xl font-medium text-[16px] active:scale-[0.98] transition-all flex items-center justify-center gap-2; }
-    .btn-add-row { @apply w-full py-3 border border-dashed border-[#06C755] text-[#06C755] bg-[#06C755]/5 rounded-xl text-[14px] font-medium flex items-center justify-center gap-1; }
+    .btn-primary { @apply w-full py-4 bg-primary text-white rounded-2xl font-bold text-[16px] shadow-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2; }
+    .btn-secondary { @apply w-full py-4 bg-slate-200 text-slate-700 rounded-2xl font-bold text-[16px] active:scale-[0.98] transition-transform flex items-center justify-center gap-2; }
     
-    .batch-card { @apply bg-white border border-slate-200 rounded-xl p-4 mb-4 relative shadow-sm; }
-
-    .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-slate-500 h-full; min-width: 48px;}
-    .nav-btn .icon-box { @apply flex items-center justify-center mb-0.5; }
-    .nav-btn .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400; font-size: 24px; }
-    
-    .nav-active-btn { @apply text-slate-800 font-bold; }
-    .nav-active-btn .material-symbols-outlined { font-variation-settings: 'FILL' 1, 'wght' 400; color: #1e293b; }
+    .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-slate-400 h-full; min-width: 48px;}
+    .nav-btn .icon-box { @apply px-4 py-1.5 rounded-2xl transition-all flex items-center justify-center mb-0.5; }
+    .nav-active { @apply text-slate-800 font-bold; }
+    .nav-active .icon-box { @apply bg-slate-100 text-slate-800; }
+    .nav-active .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
 
     .refresh-spin { animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-    /* 裁切器樣式 */
-    .cropper-view-box, .cropper-face { border-radius: 4px; }
-    .cropper-line { background-color: #2563eb; opacity: 0.5; }
-    .cropper-point { background-color: #2563eb; }
+    .bottom-sheet-up { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
   </style>
 </head>
-<body class="font-sans min-h-screen flex flex-col items-center">
+<body class="font-sans text-text-main min-h-screen flex flex-col items-center">
 
-<div id="app-container" class="w-full max-w-md h-screen relative flex flex-col shadow-2xl overflow-hidden bg-background">
+<div id="app-container" class="w-full max-w-md h-screen relative flex flex-col overflow-hidden bg-background">
   
-  <nav class="fixed top-0 w-full max-w-md z-40 bg-white/90 backdrop-blur-xl px-5 py-3.5 flex justify-between items-center left-1/2 -translate-x-1/2 border-b border-slate-200 shadow-sm">
-    <div class="text-[18px] font-medium text-slate-800 flex items-center gap-2 tracking-tight">
-      <div class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shadow-sm">
-        <span class="material-symbols-outlined text-[20px]">add_circle</span>
-      </div>
-      建立新活動
-      <span class="bg-slate-800 text-white text-[9px] px-2 py-0.5 rounded uppercase font-bold ml-1">v1.8</span>
+  <nav id="top-nav" class="fixed top-0 w-full max-w-md z-40 bg-white/90 backdrop-blur-md px-5 py-3.5 flex justify-between items-center left-1/2 -translate-x-1/2">
+    <div class="text-[20px] font-extrabold text-slate-800 tracking-tight flex items-center gap-1">
+      報名大師
+      <span id="header-admin-badge" class="hidden bg-slate-800 text-white text-[9px] px-2 py-0.5 rounded-md uppercase tracking-wider font-bold ml-1">Admin</span>
     </div>
     <div class="flex items-center gap-3">
-      <img id="user-avatar" src="" class="w-8 h-8 rounded-full object-cover border border-slate-200 shadow-sm hidden">
+      <div id="user-profile-badge" class="hidden flex items-center gap-2">
+        <img id="user-avatar" src="" class="w-9 h-9 rounded-full object-cover border border-slate-100">
+      </div>
+      <button id="role-switch-btn" onclick="toggleRoleMode()" class="hidden w-9 h-9 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center active:scale-95 transition-all">
+        <span class="material-symbols-outlined text-[20px]">swap_horiz</span>
+      </button>
     </div>
   </nav>
 
-  <main id="main-content" class="flex-1 overflow-y-auto pb-32 pt-16 px-5 space-y-6">
+  <main id="main-content" class="flex-1 overflow-y-auto pb-32 pt-20 px-4 space-y-5">
 
-    <div id="view-loading" class="h-full flex flex-col items-center justify-center space-y-4 pb-20">
-      <div class="w-8 h-8 border-2 border-slate-200 border-t-primary rounded-full animate-spin"></div>
-      <p class="text-slate-400 text-[13px]">系統權限驗證中</p>
+    <div id="view-loading" class="h-full flex flex-col items-center justify-center space-y-4 pb-20 relative">
+      <div class="w-10 h-10 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
+      <p class="text-slate-500 font-bold tracking-widest text-[13px]">系統載入中</p>
     </div>
 
-    <div id="view-admin-create" class="hidden space-y-6 pt-4">
-      <div class="mb-4">
-        <p class="text-slate-500 text-[14px] mt-1 leading-relaxed">請選擇適合您的發佈模式，完成後將自動建立專屬的報名頁面與資料庫。</p>
-      </div>
-
-      <div class="flex p-1.5 rounded-[1rem] bg-blue-50/60 border border-blue-100/50 mb-6 sticky top-0 z-20 backdrop-blur-md">
-        <button onclick="toggleCreateMode('quick')" id="tab-quick" class="flex-1 py-2.5 rounded-xl text-[14px] font-bold bg-white text-blue-600 shadow-sm transition-all">快速匯入</button>
-        <button onclick="toggleCreateMode('detailed')" id="tab-detailed" class="flex-1 py-2.5 rounded-xl text-[14px] font-bold text-slate-500 transition-all hover:text-slate-700 bg-transparent">完整發佈</button>
-        <button onclick="toggleCreateMode('batch')" id="tab-batch" class="flex-1 py-2.5 rounded-xl text-[14px] font-bold text-slate-500 transition-all hover:text-slate-700 bg-transparent">系列梯次</button>
+    <!-- 註冊畫面 -->
+    <div id="view-user-register" class="hidden animate-in fade-in duration-500 pt-2 pb-10 space-y-6">
+      <div class="mb-4 pl-1">
+        <h1 class="text-[24px] font-extrabold text-slate-800 tracking-tight">建立會員檔案</h1>
+        <p class="text-slate-500 text-[14px] mt-1">完善資料以獲得精準的商務推薦</p>
       </div>
       
-      <!-- ================= 1. 快速模式 ================= -->
-      <div id="form-quick" class="space-y-5 animate-in fade-in">
-        <div class="flex flex-col"><label class="input-label">活動名稱</label><input type="text" id="quick-name" class="custom-input" placeholder="例如：2026 商務交流會"></div>
-        
-        <div class="grid grid-cols-2 gap-4">
-          <div><label class="input-label">開始時間</label><input type="datetime-local" id="quick-start" class="custom-input !px-1.5 !text-[13px]"></div>
-          <div><label class="input-label">結束時間</label><input type="datetime-local" id="quick-end" class="custom-input !px-1.5 !text-[13px]"></div>
+      <div id="reg-step-1" class="space-y-4 bg-white p-5 rounded-3xl shadow-sm">
+        <div class="flex flex-col"><label class="input-label">真實姓名</label><input id="reg-name" class="custom-input" placeholder="不填則自動代入 LINE 暱稱" type="text"/></div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="flex flex-col"><label class="input-label">所屬業種</label><input id="reg-industry" class="custom-input" placeholder="例如：資訊科技" type="text"/></div>
+          <div class="flex flex-col"><label class="input-label">性別</label><select id="reg-gender" class="custom-input cursor-pointer"><option value="" disabled selected>選擇</option><option value="男">男</option><option value="女">女</option></select></div>
         </div>
-        
-        <div class="grid grid-cols-2 gap-4">
-          <div><label class="input-label">活動類型</label><select id="quick-type" class="custom-input cursor-pointer"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option></select></div>
-          <div><label class="input-label">預設身份</label><select id="quick-identity" class="custom-input cursor-pointer"><option>會員</option><option>來賓</option></select></div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="flex flex-col"><label class="input-label">手機號碼</label><input id="reg-phone" class="custom-input" placeholder="09xx" type="tel"/></div>
+          <div class="flex flex-col"><label class="input-label">生日</label><input id="reg-birthday" class="custom-input !px-3 text-slate-600" type="date"/></div>
         </div>
-
-        <div class="flex flex-col">
-            <label class="input-label">收費方式</label>
-            <div class="flex items-center gap-6 p-4 bg-slate-50 rounded-2xl border border-slate-200">
-                <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="quick-fee-type" value="免費" checked onchange="toggleFeeInput('quick')" class="w-5 h-5 text-blue-600 border-slate-300 focus:ring-blue-500 focus:ring-offset-0 bg-white">
-                    <span class="text-[15px] font-bold text-slate-700">免費</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="quick-fee-type" value="收費" onchange="toggleFeeInput('quick')" class="w-5 h-5 text-blue-600 border-slate-300 focus:ring-blue-500 focus:ring-offset-0 bg-white">
-                    <span class="text-[15px] font-bold text-slate-700">收費</span>
-                </label>
-            </div>
-            <div id="quick-price-box" class="hidden mt-3 animate-in slide-in-from-top-2">
-                <div class="relative">
-                  <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400">NT$</span>
-                  <input type="number" id="quick-price" class="custom-input !pl-12" placeholder="請輸入金額">
-                </div>
-            </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="flex flex-col"><label class="input-label">居住地區</label><input id="reg-region" class="custom-input" placeholder="例如：台北市" type="text"/></div>
+          <div class="flex flex-col"><label class="input-label">完整地址</label><input id="reg-address" class="custom-input" placeholder="選填" type="text"/></div>
         </div>
-
-        <!-- ⭐ 補回：快速匯入的活動說明欄位 -->
-        <div class="flex flex-col">
-            <label class="input-label">活動說明</label>
-            <textarea id="quick-desc" class="textarea-block h-32" placeholder="輸入活動詳細說明..."></textarea>
-        </div>
-
-        <div class="flex flex-col"><label class="input-label">名單內容 (每行一位)</label><textarea id="quick-names" class="textarea-block h-36 resize-none" placeholder="王小明&#10;李小華"></textarea></div>
-        
-        <div class="flex flex-col mt-2">
-          <label class="input-label">活動宣傳圖 <span class="text-[12px] text-slate-400 ml-1">(自動壓縮)</span></label>
-          <div onclick="document.getElementById('file-input-quick').click()" class="w-full h-36 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-all hover:bg-slate-100 relative group">
-            <div id="preview-placeholder-quick" class="text-center text-slate-400 flex flex-col items-center"><span class="material-symbols-outlined text-3xl mb-1">add_photo_alternate</span><p class="text-[12px] font-bold">點擊上傳圖片</p></div>
-            <img id="image-preview-quick" class="hidden w-full h-full object-cover absolute inset-0">
-            <input type="file" id="file-input-quick" class="hidden" accept="image/*" onchange="openCropper(this, 'quick')">
-          </div>
-          <!-- 存放 Base64 壓縮字串的隱藏欄位 -->
-          <input type="hidden" id="in-image-url-quick">
-        </div>
-
-        <button onclick="handleCreateActivity('quick')" id="btn-quick-create" class="btn-primary mt-2">建立並發布</button>
-      </div>
-      
-      <!-- ================= 2. 完整模式 ================= -->
-      <div id="form-detailed" class="hidden space-y-5 animate-in fade-in">
-         <div class="flex flex-col"><label class="input-label">活動標題</label><input type="text" id="detail-name" class="custom-input" placeholder="輸入標題"></div>
-         <div class="grid grid-cols-2 gap-4">
-            <div><label class="input-label">開始時間</label><input type="datetime-local" id="detail-start" class="custom-input !px-1.5 !text-[13px]"></div>
-            <div><label class="input-label">結束時間</label><input type="datetime-local" id="detail-end" class="custom-input !px-1.5 !text-[13px]"></div>
-         </div>
-         
-         <div class="flex flex-col">
-             <label class="input-label">收費方式</label>
-             <div class="flex items-center gap-6 p-4 bg-slate-50 rounded-2xl border border-slate-200">
-                 <label class="flex items-center gap-2 cursor-pointer">
-                     <input type="radio" name="detailed-fee-type" value="免費" checked onchange="toggleFeeInput('detailed')" class="w-5 h-5 text-blue-600 border-slate-300 focus:ring-blue-500 focus:ring-offset-0 bg-white">
-                     <span class="text-[15px] font-bold text-slate-700">免費</span>
-                 </label>
-                 <label class="flex items-center gap-2 cursor-pointer">
-                     <input type="radio" name="detailed-fee-type" value="收費" onchange="toggleFeeInput('detailed')" class="w-5 h-5 text-blue-600 border-slate-300 focus:ring-blue-500 focus:ring-offset-0 bg-white">
-                     <span class="text-[15px] font-bold text-slate-700">收費</span>
-                 </label>
-             </div>
-             <div id="detailed-price-box" class="hidden mt-3 animate-in slide-in-from-top-2">
-                 <div class="relative">
-                   <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400">NT$</span>
-                   <input type="number" id="detail-price" class="custom-input !pl-12" placeholder="請輸入金額">
-                 </div>
-             </div>
-         </div>
-
-         <div class="flex flex-col"><label class="input-label">活動說明</label><textarea id="detail-desc" class="textarea-block h-32 resize-none" placeholder="詳細內容..."></textarea></div>
-
-         <div class="flex flex-col mt-2">
-           <label class="input-label">宣傳大圖 <span class="text-[12px] text-slate-400 ml-1">(自動壓縮)</span></label>
-           <div onclick="document.getElementById('file-input-detailed').click()" class="w-full h-36 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-all hover:bg-slate-100 relative group">
-             <div id="preview-placeholder-detailed" class="text-center text-slate-400 flex flex-col items-center"><span class="material-symbols-outlined text-3xl mb-1">add_photo_alternate</span><p class="text-[12px] font-bold">點擊上傳圖片</p></div>
-             <img id="image-preview-detailed" class="hidden w-full h-full object-cover absolute inset-0">
-             <input type="file" id="file-input-detailed" class="hidden" accept="image/*" onchange="openCropper(this, 'detailed')">
-           </div>
-           <!-- 存放 Base64 壓縮字串的隱藏欄位 -->
-           <input type="hidden" id="in-image-url-detailed">
-         </div>
-
-         <button onclick="handleCreateActivity('detailed')" id="btn-detailed-create" class="btn-primary mt-4">發布單場活動</button>
+        <button id="btn-reg-step1" onclick="submitUserRegistrationStep1()" class="btn-primary mt-6">儲存並繼續</button>
       </div>
 
-      <!-- ================= 3. 系列梯次模式 ================= -->
-      <div id="form-batch" class="hidden space-y-5 animate-in fade-in">
-        <div class="flex flex-col"><label class="input-label">主系列標題</label><input type="text" id="batch-name" class="custom-input" placeholder="例如：2026 AI 應用實戰班"></div>
-        <div class="grid grid-cols-2 gap-4">
-          <div><label class="input-label">活動類型</label><select id="batch-type" class="custom-input cursor-pointer"><option>課程</option><option>教學</option><option>講座</option><option>例會</option><option>聯誼</option><option>參訪</option><option>其他</option></select></div>
-          <div><label class="input-label">預設身份</label><select id="batch-identity" class="custom-input cursor-pointer"><option>會員</option><option>來賓</option></select></div>
+      <div id="reg-step-2" class="space-y-4 opacity-30 pointer-events-none transition-opacity duration-300 bg-white p-5 rounded-3xl shadow-sm mt-4">
+        <div>
+           <h3 class="font-bold text-slate-800 text-[16px]">上傳名片 <span class="text-slate-400 font-normal text-[13px]">(建議)</span></h3>
+           <p class="text-[13px] text-slate-500 mt-1">AI 將自動辨識名片，並生成數位專屬命理標籤。</p>
         </div>
-        <div class="flex flex-col"><label class="input-label">系列共同說明</label><textarea id="batch-desc" class="textarea-block h-24 resize-none" placeholder="輸入此系列活動的統整說明..."></textarea></div>
-
-        <div class="flex flex-col mt-2">
-          <label class="input-label">宣傳大圖 <span class="text-[12px] text-slate-400 ml-1">(系列共用, 自動壓縮)</span></label>
-          <div onclick="document.getElementById('file-input-batch').click()" class="w-full h-36 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-all hover:bg-slate-100 relative group">
-            <div id="preview-placeholder-batch" class="text-center text-slate-400 flex flex-col items-center"><span class="material-symbols-outlined text-3xl mb-1">add_photo_alternate</span><p class="text-[12px] font-bold">點擊上傳圖片</p></div>
-            <img id="image-preview-batch" class="hidden w-full h-full object-cover absolute inset-0">
-            <input type="file" id="file-input-batch" class="hidden" accept="image/*" onchange="openCropper(this, 'batch')">
-          </div>
-          <!-- 存放 Base64 壓縮字串的隱藏欄位 -->
-          <input type="hidden" id="in-image-url-batch">
+        <div class="flex gap-3 mt-4">
+          <button onclick="document.getElementById('reg-card-camera').click()" class="btn-secondary flex-1 text-primary bg-primary-light"><span class="material-symbols-outlined text-[20px]">photo_camera</span> 拍照</button>
+          <button onclick="document.getElementById('reg-card-upload').click()" class="btn-secondary flex-1"><span class="material-symbols-outlined text-[20px]">image</span> 相簿</button>
         </div>
-
-        <div class="pt-2">
-          <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-2">
-            <span class="text-[15px] font-medium text-slate-800">梯次與排程設定</span>
-          </div>
-          <div id="batch-list-container">
-            <!-- 梯次項目由 JS 動態生成 -->
-          </div>
-          <button onclick="addBatchItem()" class="btn-add-row mt-4">
-            <span class="material-symbols-outlined text-[18px]">add_circle</span> 新增一個梯次
-          </button>
+        <input type="file" id="reg-card-camera" accept="image/*" capture="environment" class="hidden" onchange="openCropper(this, 'reg')">
+        <input type="file" id="reg-card-upload" accept="image/*" class="hidden" onchange="openCropper(this, 'reg')">
+        <div class="text-center mt-4">
+          <button onclick="finishRegistration()" class="text-[14px] text-slate-400 font-bold hover:text-slate-600 transition-colors py-2 px-4 rounded-lg">略過，直接進入系統</button>
         </div>
-
-        <button onclick="handleCreateActivity('batch')" id="btn-batch-create" class="btn-primary mt-6">發布系列梯次</button>
       </div>
-
     </div>
+
+    <!-- 探索活動 -->
+    <div id="view-user-activities" class="hidden animate-in fade-in duration-500 pt-2 space-y-5">
+      <div class="flex justify-between items-center pl-1">
+        <div>
+          <h2 class="text-[24px] font-extrabold text-slate-800 tracking-tight">探索精彩活動</h2>
+        </div>
+        <button onclick="reloadActivities()" id="btn-refresh-activities" class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-slate-600 active:scale-90 transition-all">
+          <span class="material-symbols-outlined text-[22px]">refresh</span>
+        </button>
+      </div>
+      <div class="flex gap-2 overflow-x-auto hide-scrollbar pb-1" id="activity-categories"></div>
+      <div id="user-activities-container" class="grid grid-cols-2 gap-3 px-1"></div>
+    </div>
+
+    <!-- 報名紀錄 -->
+    <div id="view-user-history" class="hidden animate-in fade-in pt-2 space-y-4">
+      <h2 class="text-[24px] font-extrabold text-slate-800 tracking-tight pl-1">報名紀錄</h2>
+      <div id="user-history-container" class="flex flex-col gap-4"></div>
+    </div>
+
+    <!-- 個人資料與專屬名片入口 -->
+    <div id="view-user-profile" class="hidden animate-in fade-in pt-2 pb-10 space-y-4">
+      <h2 class="text-[24px] font-extrabold text-slate-800 tracking-tight pl-1 mb-4">通訊錄設定</h2>
+      
+      <div class="bg-white p-5 rounded-[2rem] shadow-sm space-y-4">
+          <div class="flex flex-col"><label class="input-label">姓名</label><input type="text" id="edit-name" class="custom-input"></div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="flex flex-col"><label class="input-label">業種</label><input type="text" id="edit-industry" class="custom-input"></div>
+            <div class="flex flex-col"><label class="input-label">性別</label><select id="edit-gender" class="custom-input cursor-pointer"><option value="" disabled selected>選擇</option><option value="男">男</option><option value="女">女</option></select></div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="flex flex-col"><label class="input-label">手機</label><input type="tel" id="edit-phone" class="custom-input"></div>
+            <div class="flex flex-col"><label class="input-label">生日</label><input type="date" id="edit-birthday" class="custom-input !px-3 text-slate-600"></div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="flex flex-col"><label class="input-label">居住地區</label><input type="text" id="edit-region" class="custom-input"></div>
+            <div class="flex flex-col"><label class="input-label">完整地址</label><input type="text" id="edit-address" class="custom-input"></div>
+          </div>
+          <button id="btn-save-profile" onclick="submitProfileUpdate()" class="btn-primary mt-2">儲存設定</button>
+      </div>
+
+      <!-- 名片入口橫幅 -->
+      <div id="my-card-entry" class="mt-4 bg-[#1e293b] rounded-[2rem] p-6 text-white shadow-lg flex justify-between items-center relative overflow-hidden cursor-pointer active:scale-[0.98] transition-transform hidden">
+          <div class="absolute -right-4 -top-4 opacity-10"><span class="material-symbols-outlined text-[120px]">contact_mail</span></div>
+          <div class="relative z-10 w-full pr-4" id="my-card-info"></div>
+          <div class="relative z-10 w-12 h-12 shrink-0 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+              <span class="material-symbols-outlined text-[24px]">chevron_right</span>
+          </div>
+      </div>
+      
+      <input type="file" id="profile-card-upload" accept="image/*" class="hidden" onchange="openCropper(this, 'profile')">
+    </div>
+
+    <!-- 後台：管理核銷 -->
+    <div id="view-admin-activities" class="hidden space-y-4 animate-in fade-in pt-2">
+      <h2 class="text-[24px] font-extrabold text-slate-800 tracking-tight pl-1">管理核銷</h2>
+      <div id="admin-activity-list-container" class="space-y-4"></div>
+    </div>
+
+    <!-- 後台：CRM -->
+    <div id="view-admin-crm" class="hidden space-y-2 animate-in fade-in pt-2">
+      <div class="px-1 mb-4">
+        <h2 class="text-[24px] font-extrabold text-slate-800 tracking-tight">會員 CRM</h2>
+        <p class="text-slate-500 text-[13px] mt-1">追蹤活躍度與出席次數</p>
+      </div>
+      <div class="relative flex flex-col mb-4">
+        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+        <input type="text" id="crm-search-input" onkeyup="filterCrmList()" class="custom-input !pl-11" placeholder="搜尋參與者姓名...">
+      </div>
+      <div id="admin-crm-list-container" class="flex flex-col bg-white rounded-[2rem] shadow-sm overflow-hidden"></div>
+      <div id="crm-load-more-box" class="hidden py-6 text-center"><button onclick="loadMoreCrm()" class="btn-secondary !w-auto px-8 mx-auto">顯示更多</button></div>
+    </div>
+
+    <!-- 後台：系統參數 -->
+    <div id="view-admin-settings" class="hidden animate-in fade-in pt-2 space-y-4">
+      <h2 class="text-[24px] font-extrabold text-slate-800 tracking-tight pl-1 mb-4">系統參數</h2>
+      <div class="bg-white p-5 rounded-[2rem] shadow-sm space-y-4">
+          <div class="flex flex-col"><label class="input-label">Telegram Bot Token</label><div class="flex gap-2"><input type="text" id="set-tg-token" class="custom-input flex-1"><button onclick="autoFetchTgChatId()" id="btn-fetch-tg" class="bg-slate-100 text-slate-600 px-4 rounded-xl font-bold active:scale-95 transition-all">轉換</button></div></div>
+          <div class="flex flex-col"><label class="input-label">Telegram Chat ID</label><input type="text" id="set-tg-chat" class="custom-input !bg-slate-50 text-slate-500" readonly placeholder="由上方轉換取得"></div>
+          <div class="flex flex-col"><label class="input-label">官方 LINE 連結</label><input type="text" id="set-line-link" class="custom-input" placeholder="https://lin.ee/..."></div>
+          <button id="btn-submit-settings" onclick="submitSettings()" class="btn-primary mt-2">儲存設定</button>
+      </div>
+    </div>
+
   </main>
 
-  <nav id="bottom-nav-admin" class="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-100 flex justify-evenly items-center h-[72px] pb-safe left-1/2 -translate-x-1/2 z-40 hidden">
-    <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn nav-active-btn" id="nav-admin-create"><div class="icon-box"><span class="material-symbols-outlined">add_circle</span></div><span class="text-[10px] font-bold mt-0.5">建立</span></button>
-    <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn" id="nav-admin-activities"><div class="icon-box"><span class="material-symbols-outlined">fact_check</span></div><span class="text-[10px] mt-0.5">核銷</span></button>
-    <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn" id="nav-admin-crm"><div class="icon-box"><span class="material-symbols-outlined">groups</span></div><span class="text-[10px] mt-0.5">CRM</span></button>
-    <button onclick="window.location.href='fate.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined">psychology</span></div><span class="text-[10px] mt-0.5">配對</span></button>
-    <button onclick="window.location.href='card.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined">recent_patient</span></div><span class="text-[10px] mt-0.5">名片</span></button>
-    <button onclick="window.location.href='index.html?view=admin-settings'" class="nav-btn" id="nav-admin-settings"><div class="icon-box"><span class="material-symbols-outlined">settings</span></div><span class="text-[10px] mt-0.5">參數</span></button>
+  <nav id="bottom-nav-user" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl flex justify-around items-center px-2 py-2 z-40 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.03)] left-1/2 -translate-x-1/2 h-[76px] rounded-t-3xl border-t border-slate-100">
+    <button onclick="switchView('user-activities')" id="nav-user-activities" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">explore</span></div></button>
+    <button onclick="switchView('user-history')" id="nav-user-history" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">receipt_long</span></div></button>
+    <button onclick="switchView('user-profile')" id="nav-user-profile" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">person</span></div></button>
   </nav>
 
+  <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl flex justify-evenly items-center px-1 py-2 z-40 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.03)] left-1/2 -translate-x-1/2 h-[76px] rounded-t-3xl border-t border-slate-100">
+    <button onclick="switchView('admin-activities')" class="nav-btn" id="nav-admin-activities"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">fact_check</span></div></button>
+    <button onclick="window.location.href='active.html'" class="nav-btn" id="nav-admin-create"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">add_circle</span></div></button>
+    <button onclick="switchView('admin-crm')" class="nav-btn" id="nav-admin-crm"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">groups</span></div></button>
+    <button onclick="window.location.href='fate.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">psychology</span></div></button>
+    <button onclick="window.location.href='card.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">recent_patient</span></div></button>
+    <button onclick="switchView('admin-settings')" class="nav-btn" id="nav-admin-settings"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">settings</span></div></button>
+  </nav>
 </div>
 
-<!-- 共同圖片裁切 Modal -->
+<!-- 圖片裁切 Modal (全螢幕) -->
 <div id="section-image-cropper" class="hidden fixed inset-0 bg-slate-900 flex flex-col animate-in fade-in duration-200 w-full max-w-md mx-auto z-[1080]">
-  <div class="flex justify-between items-center p-4 bg-slate-900 text-white shrink-0 border-b border-slate-800 shadow-sm">
-    <button onclick="cancelCrop()" class="text-slate-400 font-normal text-sm px-3 py-2 active:scale-90 transition-transform">取消</button>
-    <span class="font-normal text-[15px] tracking-wider flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px]">crop</span> 裁切圖片</span>
-    <button onclick="confirmCrop()" class="px-4 py-1.5 font-bold text-white bg-primary rounded-md text-sm active:scale-95 transition-transform shadow-md">完成</button>
+  <div class="flex justify-between items-center p-4 bg-slate-900 text-white shrink-0 z-10">
+    <button onclick="cancelCrop()" class="px-3 py-2 font-bold text-slate-400 active:scale-90 text-[16px]">取消</button>
+    <button onclick="confirmCrop()" class="px-4 py-2 font-bold text-slate-900 bg-white rounded-xl active:scale-95 text-[15px]">完成裁切</button>
   </div>
-  <div class="flex-1 relative overflow-hidden flex items-center justify-center bg-black">
-    <img id="cropper-image" src="" class="max-w-full max-h-full block opacity-0 transition-opacity duration-300">
+  <div class="flex-1 relative bg-black flex items-center justify-center overflow-hidden"><img id="cropper-image" src="" class="max-w-full max-h-full block opacity-0"></div>
+</div>
+
+<!-- 底部抽屜 Modal：活動詳情 -->
+<div id="activity-detail-modal" class="hidden fixed inset-0 z-[1000] bg-black/40 backdrop-blur-sm flex flex-col justify-end animate-in fade-in duration-300 w-full max-w-md mx-auto left-0 right-0">
+  <div class="bg-white w-full rounded-t-[2rem] overflow-hidden flex flex-col max-h-[90vh] bottom-sheet-up">
+      <div class="w-full flex justify-center pt-3 pb-2 shrink-0 bg-white z-10 rounded-t-[2rem]"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
+      <div class="absolute top-4 right-4 z-50">
+        <button onclick="closeActivityDetail()" class="w-9 h-9 bg-slate-100/80 backdrop-blur rounded-full flex items-center justify-center text-slate-600 active:scale-90 transition-transform"><span class="material-symbols-outlined text-[20px]">close</span></button>
+      </div>
+      
+      <div class="flex-1 overflow-y-auto pb-28">
+        <div id="detail-modal-image-container" class="w-full aspect-[4/3] bg-slate-100 relative">
+          <img id="detail-modal-image" src="" class="w-full h-full object-cover hidden">
+          <div id="detail-modal-no-image" class="absolute inset-0 flex items-center justify-center bg-slate-100"><span class="material-symbols-outlined text-6xl text-slate-300">local_activity</span></div>
+        </div>
+        <div class="bg-white p-6 space-y-6 -mt-4 relative rounded-t-[2rem] z-10 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
+          <div>
+            <div class="flex items-center gap-2 mb-3">
+              <span id="detail-modal-type" class="bg-slate-100 text-slate-600 px-3 py-1 text-[12px] font-bold rounded-lg"></span>
+              <span id="detail-modal-fee" class="px-3 py-1 text-[12px] font-bold rounded-lg"></span>
+            </div>
+            <h2 id="detail-modal-title" class="text-[22px] font-black text-slate-800 leading-snug"></h2>
+          </div>
+          
+          <div class="bg-slate-50 p-5 rounded-2xl space-y-4">
+            <div class="flex items-center gap-4"><div class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-primary shrink-0"><span class="material-symbols-outlined text-[20px]">event</span></div><div><p class="text-[11px] font-bold text-slate-400 mb-0.5">開始時間</p><p id="detail-modal-start" class="text-[15px] font-bold text-slate-700"></p></div></div>
+            <div id="detail-modal-end-container" class="flex items-center gap-4 hidden border-t border-slate-200/60 pt-4"><div class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-slate-400 shrink-0"><span class="material-symbols-outlined text-[20px]">event_busy</span></div><div><p class="text-[11px] font-bold text-slate-400 mb-0.5">結束時間</p><p id="detail-modal-end" class="text-[15px] font-bold text-slate-700"></p></div></div>
+          </div>
+          
+          <div id="detail-modal-batch-container" class="hidden bg-slate-50 p-5 rounded-2xl space-y-3">
+            <h3 class="text-[14px] font-bold text-slate-800 flex items-center gap-1.5"><span class="material-symbols-outlined text-[20px] text-primary">format_list_bulleted</span> 請選擇梯次</h3>
+            <select id="detail-modal-batch-select" class="custom-input !bg-white shadow-sm"></select>
+          </div>
+          
+          <div>
+            <h3 class="text-[16px] font-bold text-slate-800 mb-3">內容說明</h3>
+            <p id="detail-modal-desc" class="text-[15px] text-slate-600 leading-relaxed whitespace-pre-wrap"></p>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white p-4 pb-safe border-t border-slate-100 shrink-0"><button id="detail-modal-join-btn" class="btn-primary">我要報名</button></div>
   </div>
 </div>
 
-<!-- 系統 Toast 通知 -->
-<div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-normal flex items-center gap-2 w-max max-w-[90vw] opacity-0 pointer-events-none bg-slate-800 text-white"></div>
+<!-- 底部抽屜 Modal：活動名單 -->
+<div id="admin-registrants-modal" class="hidden fixed inset-0 z-[1050] bg-black/40 backdrop-blur-sm flex flex-col justify-end animate-in fade-in w-full max-w-md mx-auto left-0 right-0">
+  <div class="bg-slate-50 w-full rounded-t-[2rem] overflow-hidden flex flex-col h-[90vh] bottom-sheet-up">
+      <div class="bg-white px-5 pt-5 pb-4 flex justify-between items-center shrink-0 shadow-sm rounded-t-[2rem] z-20">
+        <div class="flex items-center gap-3">
+          <button onclick="closeAdminRegistrants()" class="w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 active:scale-90 transition-transform"><span class="material-symbols-outlined text-[20px]">arrow_drop_down</span></button>
+          <h3 id="admin-reg-title" class="text-[18px] font-extrabold text-slate-800 truncate max-w-[180px]">活動名單</h3>
+        </div>
+        <button onclick="document.getElementById('qr-scanner-modal').classList.remove('hidden'); startScanner();" class="px-4 py-2 bg-primary-light text-primary rounded-xl font-bold text-[13px] flex items-center gap-1.5 active:scale-95 transition-all"><span class="material-symbols-outlined text-[18px]">qr_code_scanner</span> 掃碼</button>
+      </div>
+      
+      <div class="bg-white px-5 py-4 shrink-0 flex gap-3 border-b border-slate-100 z-10">
+         <div class="relative flex-1 flex flex-col">
+            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+            <input type="text" id="admin-search-reg" onkeyup="filterAdminReg()" class="custom-input !h-[44px] !pl-11 !rounded-xl !bg-slate-100" placeholder="搜尋姓名或電話...">
+         </div>
+         <button onclick="document.getElementById('walkin-modal').classList.remove('hidden')" class="w-[44px] h-[44px] bg-slate-800 text-white rounded-xl flex items-center justify-center active:scale-90 transition-all shadow-sm"><span class="material-symbols-outlined text-[22px]">person_add</span></button>
+      </div>
+      <div class="flex-1 overflow-y-auto p-4 space-y-4 pb-safe bg-slate-50" id="admin-reg-list"></div>
+  </div>
+</div>
+
+<!-- 底部抽屜 Modal：現場登記 -->
+<div id="walkin-modal" class="hidden fixed inset-0 z-[1060] bg-black/40 backdrop-blur-sm flex items-end justify-center animate-in fade-in duration-200 w-full max-w-md mx-auto left-0 right-0">
+  <div class="bg-white w-full rounded-t-[2rem] p-6 pb-safe shadow-2xl bottom-sheet-up">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="text-[20px] font-extrabold text-slate-800">現場來賓登記</h3>
+      <button onclick="document.getElementById('walkin-modal').classList.add('hidden')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center active:scale-90 transition-all"><span class="material-symbols-outlined text-[20px]">close</span></button>
+    </div>
+    <div class="flex flex-col mb-6"><label class="input-label">來賓姓名</label><input type="text" id="f-walkin-name" class="custom-input" placeholder="請輸入姓名"></div>
+    <button id="btn-walkin" onclick="submitWalkIn()" class="btn-primary">新增並簽到</button>
+  </div>
+</div>
+
+<div id="qr-scanner-modal" class="hidden fixed inset-0 z-[1070] bg-black flex flex-col animate-in fade-in duration-300 w-full max-w-md mx-auto left-0 right-0">
+  <div class="flex justify-between items-center p-5 bg-gradient-to-b from-black/80 to-transparent absolute top-0 w-full z-10">
+    <span class="text-white font-bold tracking-widest text-[14px]">掃描 QR Code</span>
+    <button onclick="stopScanner()" class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white active:scale-90 transition-transform"><span class="material-symbols-outlined text-[24px]">close</span></button>
+  </div>
+  <div class="flex-1 flex items-center justify-center relative"><div id="qr-reader" class="w-full h-full max-h-[80vh]"></div></div>
+</div>
+
+<!-- 自訂彈窗：改成圓潤的 Bottom Sheet 樣式 -->
+<div id="custom-modal" class="hidden fixed inset-0 z-[9999] flex items-end justify-center bg-black/40 backdrop-blur-sm">
+  <div class="bg-white w-full max-w-md rounded-t-[2rem] p-8 shadow-2xl text-center bottom-sheet-up pb-safe">
+    <div class="w-16 h-16 bg-primary-light text-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><span class="material-symbols-outlined text-[32px] icon-filled">info</span></div>
+    <h3 id="modal-title" class="text-[22px] font-extrabold mb-2 text-slate-800 tracking-tight">系統通知</h3>
+    <p id="modal-desc" class="text-slate-500 font-medium mb-8 leading-relaxed text-[15px]"></p>
+    <button onclick="closeModalAndGo()" class="btn-primary">我知道了</button>
+  </div>
+</div>
+
+<div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-bold flex items-center gap-2 w-max max-w-[90vw] opacity-0 pointer-events-none border border-slate-700"></div>
 
 <script>
   const LIFF_ID = "2009367829-DLtYBDUm"; 
   const WORKER_URL = "https://actmaster.fangwl591021.workers.dev"; 
-  const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55", "U8932b891ad24da512afb9c1a6f41567b"]; 
+  
+  // 防止數字輸入框滾動修改
+  document.addEventListener('wheel', function(e) { if (document.activeElement.type === 'number') document.activeElement.blur(); }, { passive: true });
 
-  let userProfile = null, isProcessing = false;
-  let cropperInstance = null;
-  let currentCropTarget = '';
-
-  document.addEventListener("DOMContentLoaded", async () => {
-    try {
-      await liff.init({ liffId: LIFF_ID });
-      if (!liff.isLoggedIn()) { liff.login({ redirectUri: window.location.href }); return; }
-      userProfile = await liff.getProfile();
-      
-      const avatarEl = document.getElementById('user-avatar');
-      if (avatarEl) {
-        avatarEl.src = userProfile.pictureUrl || '';
-        avatarEl.classList.remove('hidden');
-      }
-      
-      const isAdminUser = ADMIN_IDS.includes(userProfile.userId);
-      document.getElementById('view-loading').classList.add('hidden');
-      
-      if (isAdminUser) {
-        document.getElementById('view-admin-create').classList.remove('hidden');
-        document.getElementById('bottom-nav-admin').classList.remove('hidden');
-        
-        if(document.getElementById('batch-list-container').children.length === 0) addBatchItem();
-      } else {
-        window.location.href = 'index.html';
-      }
-    } catch (err) { 
-      showToast("初始化失敗：" + err.message, true);
-    }
-  });
-
-  // UI 工具函式
-  function showToast(m, e=false) { 
-    const t = document.getElementById('toast'); if(!t) return; 
-    t.innerHTML = `<span class="material-symbols-outlined icon-filled">${e?'error':'check_circle'}</span>` + m; 
-    t.className = `fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-normal transform translate-y-0 opacity-100 ${e ? 'bg-red-500 text-white border-red-600' : 'bg-slate-800 text-white border-slate-700'} flex items-center gap-2 w-max max-w-[90vw]`; 
-    t.classList.remove('hidden');
-    setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -1rem)'; setTimeout(() => t.classList.add('hidden'), 300); }, 3000); 
-  }
+  let userProfile = null, isAdmin = false, isViewModeAdmin = false, isRegistered = false, registeredInfo = null;
+  let globalPublicActivities = [], currentActivities = [], currentRegistrants = [], activeActivityName = '', modalTargetView = '';
+  let globalCrmData = [], filteredCrmData = [], globalCardContacts = [], crmPageLimit = 10, currentCrmViewCount = 10, isProcessing = false;
+  let regStep1Data = {}, regCompressedBase64 = "", cropperInstance = null, currentCropTarget = '', html5QrcodeScanner = null;
 
   function setButtonLoading(btnId, isLoading, originalText = '') {
-      const btn = document.getElementById(btnId);
-      if (!btn) return false;
+      const btn = document.getElementById(btnId); if (!btn) return false;
       if (isLoading) {
           if (!btn.dataset.oriText) btn.dataset.oriText = btn.innerHTML;
-          btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[18px] align-middle">refresh</span> 處理中...';
+          btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[20px] align-middle">refresh</span>';
           btn.classList.add('opacity-50', 'pointer-events-none');
           return true;
       } else {
@@ -331,278 +378,707 @@
       }
   }
 
-  function toggleCreateMode(m) { 
-    ['quick', 'detailed', 'batch'].forEach(t => {
-      const btn = document.getElementById('tab-' + t);
-      const form = document.getElementById('form-' + t);
-      if(btn) {
-          btn.className = (m === t)
-              ? 'flex-1 py-2.5 rounded-xl text-[14px] font-bold bg-white text-blue-600 shadow-sm transition-all'
-              : 'flex-1 py-2.5 rounded-xl text-[14px] font-bold text-slate-500 transition-all hover:text-slate-700 bg-transparent';
-      }
-      if(form) form.classList.toggle('hidden', m !== t);
-    });
+  const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55", "U8932b891ad24da512afb9c1a6f41567b"]; 
 
-    if (m === 'batch' && document.getElementById('batch-list-container').children.length === 0) {
-      addBatchItem();
+  const loadScript = (src) => new Promise((res, rej) => { if (document.querySelector(`script[src="${src}"]`)) return res(); const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+  const loadCSS = (href) => new Promise((res, rej) => { if (document.querySelector(`link[href="${href}"]`)) return res(); const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; l.onload = res; l.onerror = rej; document.head.appendChild(l); });
+
+  async function fetchAPI(action, payload = {}, useCache = false) {
+    const cacheKey = action + JSON.stringify(payload);
+    if (useCache) {
+      const cachedStr = sessionStorage.getItem(cacheKey);
+      if (cachedStr) {
+        try {
+          const cachedData = JSON.parse(cachedStr);
+          fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, payload }) })
+            .then(r => r.text())
+            .then(resText => {
+                try {
+                    const res = JSON.parse(resText);
+                    if (res.success) sessionStorage.setItem(cacheKey, JSON.stringify(res.data));
+                } catch(e) {}
+            })
+            .catch(e => console.log('Cache update failed', e));
+          return cachedData;
+        } catch(e) { sessionStorage.removeItem(cacheKey); }
+      }
+    }
+    
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 20000); 
+      const response = await fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, payload }), signal: controller.signal });
+      clearTimeout(timeoutId);
+      const resText = await response.text();
+      let result; try { result = JSON.parse(resText); } catch(e) { throw new Error(`伺服器回應異常`); }
+      if (!result.success) throw new Error(result.error);
+      if (useCache) sessionStorage.setItem(cacheKey, JSON.stringify(result.data));
+      return result.data;
+    } catch (err) { 
+      if (err.name === 'AbortError') err.message = '連線已經超時 (20秒)，請檢查網路或伺服器狀態。';
+      throw err; 
     }
   }
 
-  function toggleFeeInput(prefix) { 
-      const feeType = document.querySelector(`input[name="${prefix}-fee-type"]:checked`).value;
-      const priceBox = document.getElementById(`${prefix}-price-box`);
-      if (feeType === '收費') {
-          priceBox.classList.remove('hidden');
+  window.toggleActivityStatus = async function(actName) {
+    if (isProcessing) return;
+    if (!confirm(`確定要變更「${actName}」的上架狀態嗎？`)) return;
+    isProcessing = true;
+    try {
+      const newStatus = await fetchAPI('toggleActivityStatus', { activityName: actName });
+      if (typeof window.showToast === 'function') {
+          window.showToast(`✅ 活動已切換為：${newStatus}`);
       } else {
-          priceBox.classList.add('hidden');
-          if (prefix === 'quick') document.getElementById('quick-price').value = '';
-          if (prefix === 'detailed') document.getElementById('detail-price').value = '';
+          alert(`活動已切換為：${newStatus}`);
+      }
+      sessionStorage.removeItem('getActivityDashboard{}'); 
+      await loadAdminActivities(); 
+    } catch(e) {
+      if (typeof window.showToast === 'function') {
+          window.showToast("狀態切換失敗", true);
+      } else {
+          alert("狀態切換失敗: " + e.message);
+      }
+    } finally {
+      isProcessing = false;
+    }
+  };
+
+  window.onload = async () => {
+    const params = new URLSearchParams(window.location.search);
+    const shareCardId = params.get('shareCardId');
+    if (shareCardId) {
+        window.location.replace(`card.html?shareCardId=${shareCardId}`);
+        return;
+    }
+
+    try {
+      await liff.init({ liffId: LIFF_ID });
+      if (!liff.isLoggedIn()) { liff.login(); return; }
+      
+      userProfile = await liff.getProfile();
+      if(document.getElementById('user-avatar')) document.getElementById('user-avatar').src = userProfile.pictureUrl || '';
+      if(document.getElementById('user-profile-badge')) document.getElementById('user-profile-badge').classList.remove('hidden');
+      isAdmin = ADMIN_IDS.includes(userProfile.userId);
+      
+      const res = await fetchAPI('checkUser', { userId: userProfile.userId });
+      isRegistered = res.isRegistered; registeredInfo = res.info;
+      
+      const targetView = params.get('view');
+      const claimCardId = params.get('claimCardId');
+      
+      fetchAPI('getCardContacts').then(data => { globalCardContacts = data || []; }).catch(e => console.log("背景抓取名單失敗", e));
+
+      if(document.getElementById('view-loading')) document.getElementById('view-loading').classList.add('hidden'); 
+      
+      if (isAdmin) {
+        if(document.getElementById('role-switch-btn')) document.getElementById('role-switch-btn').classList.remove('hidden');
+        if(document.getElementById('header-admin-badge')) document.getElementById('header-admin-badge').classList.remove('hidden');
+        isViewModeAdmin = true; switchView(targetView || 'admin-activities');
+        if (claimCardId) processClaimInBackground(claimCardId);
+      } else {
+        if (isRegistered) {
+          switchView(targetView || 'user-activities'); 
+          if (claimCardId) processClaimInBackground(claimCardId);
+        } else { 
+          if(document.getElementById('bottom-nav-user')) document.getElementById('bottom-nav-user').classList.add('hidden');
+          if(document.getElementById('reg-name')) document.getElementById('reg-name').value = userProfile.displayName; 
+          switchView('user-register'); 
+          if (claimCardId) {
+             try {
+                const cardData = await fetchAPI('getCardById', { rowId: claimCardId });
+                if (cardData) {
+                    if(document.getElementById('reg-name')) document.getElementById('reg-name').value = cardData['姓名'] || userProfile.displayName;
+                    if (cardData['手機號碼']) {
+                        let phoneStr = String(cardData['手機號碼']).replace(/[^\d]/g, '');
+                        if (phoneStr.startsWith('886')) phoneStr = '0' + phoneStr.substring(3);
+                        if(document.getElementById('reg-phone')) document.getElementById('reg-phone').value = phoneStr;
+                    }
+                    if (cardData['公司名稱'] || cardData['服務項目/品牌標語']) {
+                        if(document.getElementById('reg-industry')) document.getElementById('reg-industry').value = cardData['公司名稱'] || cardData['服務項目/品牌標語'] || '';
+                    }
+                }
+             } catch(e) { }
+          }
+        }
+      }
+    } catch (err) { 
+      if(document.getElementById('view-loading')) document.getElementById('view-loading').classList.add('hidden');
+      const container = document.getElementById('main-content');
+      if (container) {
+          container.innerHTML = `
+          <div class="bg-red-50 border border-red-200 rounded-[2rem] p-6 mx-4 mt-10 text-left shadow-sm">
+              <div class="flex items-center gap-2 mb-4 text-red-700"><span class="material-symbols-outlined text-[32px]">error</span><h3 class="font-bold text-[18px]">載入中斷</h3></div>
+              <div class="bg-white p-4 rounded-xl border border-red-100 text-red-600 text-[13px] font-mono break-all mb-4 shadow-sm">${err.message}</div>
+          </div>`;
+      }
+    }
+  };
+
+  // ⭐ QQ 修復點 1：增強時間防空值解析，避免前端顯示 NaN
+  function formatTime(isoString) {
+    if(!isoString || isoString.trim() === '') return '時間未定'; 
+    const d = new Date(isoString);
+    if(isNaN(d.getTime())) return isoString; 
+    return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  }
+  function formatTimeShort(isoString) {
+    if(!isoString || isoString.trim() === '') return '時間未定'; 
+    const d = new Date(isoString);
+    if(isNaN(d.getTime())) return String(isoString).substring(0, 16);
+    return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  }
+
+  function renderActivitiesSkeleton() {
+    const skeletonHTML = Array(4).fill(0).map(() => `
+      <div class="bg-white rounded-[1.2rem] overflow-hidden shadow-sm animate-pulse flex flex-col h-[200px]">
+        <div class="h-[100px] w-full bg-slate-100 shrink-0"></div>
+        <div class="p-3 flex flex-col flex-1 gap-2"><div class="h-3 w-1/3 bg-slate-100 rounded-full"></div><div class="h-4 w-full bg-slate-100 rounded-full"></div><div class="h-8 w-full bg-slate-100 rounded-xl mt-auto"></div></div>
+      </div>
+    `).join('');
+    const el = document.getElementById('user-activities-container');
+    if (el) { el.className = 'grid grid-cols-2 gap-3 px-1'; el.innerHTML = skeletonHTML; }
+  }
+
+  async function processClaimInBackground(claimCardId) {
+      try {
+          const cardData = await fetchAPI('getCardById', { rowId: claimCardId });
+          if (cardData) {
+              const updatePayload = { rowId: claimCardId, 'LINE ID': userProfile.userId, userId: userProfile.userId };
+              const fields = ['Name', 'EnglishName', 'Title', 'Department', 'CompanyName', 'TaxID', 'Mobile', 'Tel', 'Ext', 'Fax', 'Address', 'Email', 'Website', 'SocialMedia', 'Slogan', 'Notes'];
+              const zhKeys = {'Name':'姓名', 'EnglishName':'英文名/別名', 'Title':'職稱', 'Department':'部門', 'CompanyName':'公司名稱', 'TaxID':'統一編號', 'Mobile':'手機號碼', 'Tel':'公司電話', 'Ext':'分機', 'Fax':'傳真', 'Address':'公司地址', 'Email':'電子郵件', 'Website':'公司網址', 'SocialMedia':'社群帳號', 'Slogan':'服務項目/品牌標語', 'Notes':'建檔人/備註'};
+              fields.forEach(f => {
+                  if (cardData[f] !== undefined) updatePayload[f] = cardData[f];
+                  else if (zhKeys[f] && cardData[zhKeys[f]] !== undefined) updatePayload[f] = cardData[zhKeys[f]];
+                  else updatePayload[f] = '';
+              });
+
+              if (registeredInfo && registeredInfo.birthday) {
+                  let bday = registeredInfo.birthday; const d = new Date(bday);
+                  if(!isNaN(d.getTime())) bday = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                  updatePayload.Birthday = bday;
+                  try { const newTags = await fetchAPI('calculateFateTags', { Name: updatePayload.Name, Mobile: updatePayload.Mobile, Birthday: bday }); Object.assign(updatePayload, newTags); } catch(e) {}
+              }
+
+              await fetchAPI('updateCard', updatePayload);
+
+              globalCardContacts = await fetchAPI('getCardContacts', {}, false);
+              if (!document.getElementById('view-user-profile').classList.contains('hidden')) checkMyCardEntry();
+          }
+      } catch(e) {}
+  }
+
+  function toggleRoleMode() {
+    isViewModeAdmin = !isViewModeAdmin;
+    const badge = document.getElementById('header-admin-badge'); if(badge) badge.classList.toggle('hidden', !isViewModeAdmin);
+    if (isViewModeAdmin) switchView('admin-activities'); else switchView(isRegistered ? 'user-activities' : 'user-register');
+  }
+
+  function switchView(view) {
+    ['view-loading', 'view-user-register', 'view-user-activities', 'view-user-profile', 'view-user-history', 'view-admin-activities', 'view-admin-crm', 'view-admin-settings'].forEach(v => { const el = document.getElementById(v); if(el) el.classList.add('hidden'); });
+    const activeEl = document.getElementById(`view-${view}`); if (activeEl) activeEl.classList.remove('hidden');
+    const navAdmin = document.getElementById('bottom-nav-admin'); const navUser = document.getElementById('bottom-nav-user');
+    if(navAdmin) navAdmin.classList.add('hidden'); if(navUser) navUser.classList.add('hidden');
+    
+    if (isAdmin && isViewModeAdmin && view.startsWith('admin')) {
+      if(navAdmin) navAdmin.classList.remove('hidden');
+      ['activities', 'crm', 'settings'].forEach(k => { const btn = document.getElementById('nav-admin-'+k); if(btn) btn.className = `nav-btn ${view==='admin-'+k ? 'nav-active' : ''}`; });
+    } else if (isRegistered && (!isAdmin || !isViewModeAdmin) && view.startsWith('user')) {
+      if(navUser) navUser.classList.remove('hidden');
+      ['activities', 'history', 'profile'].forEach(k => { const btn = document.getElementById('nav-user-'+k); if(btn) btn.className = `nav-btn ${view==='user-'+k ? 'nav-active' : ''}`; });
+    }
+    
+    if (view === 'admin-activities') loadAdminActivities();
+    else if (view === 'admin-settings') loadAdminSettings();
+    else if (view === 'admin-crm') loadCrmData();
+    else if (view === 'user-activities') loadUserActivities();
+    else if (view === 'user-profile') { populateUserProfile(); checkMyCardEntry(); }
+    else if (view === 'user-history') loadUserHistory();
+  }
+
+  async function checkMyCardEntry() {
+      const infoEl = document.getElementById('my-card-info');
+      const entryEl = document.getElementById('my-card-entry');
+      if (!userProfile || !infoEl || !entryEl) return;
+
+      const errorTemplate = (msg) => `
+        <div class="flex items-center gap-1.5 mb-1.5"><span class="w-2 h-2 rounded-full bg-red-400"></span><span class="text-[12px] font-bold text-red-300 tracking-wider">連線異常</span></div>
+        <h3 class="text-[20px] font-black mb-1">無法讀取狀態</h3>
+        <p class="text-[13px] text-slate-300 font-medium line-clamp-2">${msg}</p>
+        <button onclick="event.stopPropagation(); checkMyCardEntry()" class="mt-3 px-4 py-1.5 bg-white/20 text-white rounded-lg text-[12px] font-bold active:scale-95 transition-all">重新整理</button>
+      `;
+
+      try {
+          infoEl.innerHTML = `
+            <div class="flex items-center gap-1.5 mb-1.5"><span class="w-2 h-2 rounded-full bg-slate-400 animate-pulse"></span><span class="text-[12px] font-bold text-slate-300 tracking-wider">比對資料庫中...</span></div>
+            <h3 class="text-[20px] font-black mb-1">數位電子名片</h3><p class="text-[13px] text-slate-300 font-medium">正在為您尋找名片紀錄</p>
+          `;
+          entryEl.classList.remove('hidden');
+
+          const uid = userProfile.userId;
+          let myName = document.getElementById('edit-name')?.value.trim() || registeredInfo?.name || userProfile.displayName;
+          let myPhone = document.getElementById('edit-phone')?.value.trim() || registeredInfo?.phone;
+          
+          if (myPhone) {
+              myPhone = String(myPhone).replace(/[^\d]/g, '');
+              if (myPhone.startsWith('886')) myPhone = '0' + myPhone.substring(3);
+              if (myPhone.length === 9 && myPhone.startsWith('9')) myPhone = '0' + myPhone;
+          }
+
+          const isMatch = (c) => {
+              if (!c) return false;
+              const cUid = String(c['LINE ID'] || c.userId || c['Line ID'] || c.lineId || '').trim();
+              if (cUid && cUid === uid) return true;
+
+              const allValuesStr = Object.values(c).join('|||');
+              if (myPhone) {
+                  const checkPhone = (p) => {
+                      if (!p) return false;
+                      let pureP = String(p).replace(/[^\d]/g, '');
+                      if (pureP.startsWith('886')) pureP = '0' + pureP.substring(3);
+                      if (pureP.length === 9 && pureP.startsWith('9')) pureP = '0' + pureP;
+                      return pureP === myPhone;
+                  };
+                  if (checkPhone(c['手機號碼']) || checkPhone(c['Mobile']) || checkPhone(c['公司電話']) || checkPhone(c['Tel'])) return true;
+                  if (allValuesStr.includes(myPhone)) return true;
+              }
+              if (myName) {
+                  let cName = String(c['姓名'] || c['Name'] || '').trim();
+                  let mName = myName.trim();
+                  if (cName && cName === mName) return true;
+                  if (cName && mName.includes(cName)) return true;
+                  let mNameFirstPart = mName.split(/[\s\/_+-]/)[0];
+                  if (mNameFirstPart && mNameFirstPart.length >= 2 && allValuesStr.includes(mNameFirstPart)) return true;
+              }
+              return false;
+          };
+
+          let myCard = null;
+          if (globalCardContacts && Array.isArray(globalCardContacts) && globalCardContacts.length > 0) {
+              myCard = globalCardContacts.find(isMatch);
+          }
+          if (!myCard) {
+              const data = await fetchAPI('getCardContacts', {}, false); 
+              if (data && Array.isArray(data)) {
+                  globalCardContacts = data;
+                  myCard = globalCardContacts.find(isMatch);
+              }
+          }
+
+          if (myCard) {
+              if (!myCard['LINE ID'] || String(myCard['LINE ID']).trim() !== uid) {
+                  fetchAPI('updateCard', { rowId: myCard.rowId, 'LINE ID': uid, userId: uid }).catch(e => {});
+              }
+              entryEl.className = "mt-4 bg-primary rounded-[2rem] p-6 text-white shadow-lg shadow-green-500/20 flex justify-between items-center relative overflow-hidden cursor-pointer active:scale-[0.98] transition-transform";
+              infoEl.innerHTML = `
+                <div class="flex items-center gap-1.5 mb-1.5"><span class="w-2 h-2 rounded-full bg-white/80 animate-pulse"></span><span class="text-[12px] font-bold text-white/90 tracking-wider">已綁定專屬權限</span></div>
+                <h3 class="text-[20px] font-black mb-1">數位電子名片</h3><p class="text-[13px] text-white/80 font-medium">點擊預覽與轉發至 LINE</p>
+              `;
+              entryEl.onclick = () => window.location.href = `card.html?mode=mycard&rowId=${myCard.rowId}`;
+          } else {
+              entryEl.className = "mt-4 bg-[#1e293b] rounded-[2rem] p-6 text-white shadow-lg flex justify-between items-center relative overflow-hidden cursor-pointer active:scale-[0.98] transition-transform";
+              infoEl.innerHTML = `
+                <div class="flex items-center gap-1.5 mb-1.5"><span class="w-2 h-2 rounded-full bg-amber-400"></span><span class="text-[12px] font-bold text-amber-300 tracking-wider">找不到對應的名片</span></div>
+                <h3 class="text-[20px] font-black mb-1">尚未建立名片</h3>
+                <p class="text-[11px] text-slate-300 font-medium line-clamp-2 mb-2">比對條件：<br>姓名[${myName}] 或 手機[${myPhone || '未設定'}]</p>
+                <div class="inline-block px-3 py-1.5 bg-white/20 text-white rounded-lg text-[12px] font-bold backdrop-blur-sm">點此立即上傳建檔</div>
+              `;
+              entryEl.onclick = () => { const up = document.getElementById('profile-card-upload'); if(up) up.click(); };
+          }
+      } catch(e) {
+          entryEl.className = "mt-4 bg-[#1e293b] rounded-[2rem] p-6 text-white shadow-lg flex justify-between items-center relative overflow-hidden cursor-pointer active:scale-[0.98] transition-transform";
+          infoEl.innerHTML = errorTemplate(e.message || '未知錯誤'); entryEl.onclick = null;
       }
   }
 
-  function addBatchItem(data = null) {
-    const container = document.getElementById('batch-list-container');
-    const id = Date.now() + Math.floor(Math.random() * 100);
-    const html = `
-      <div id="batch-item-${id}" class="batch-card animate-in fade-in slide-in-from-top-2">
-        <div class="flex justify-between items-center mb-3">
-          <span class="text-[13px] text-slate-500 font-bold bg-slate-100 px-2 py-1 rounded">梯次細節</span>
-          <div class="flex gap-3">
-            <button onclick="copyBatchItem('${id}')" class="text-slate-400 hover:text-primary active:scale-90 transition-transform"><span class="material-symbols-outlined text-[20px]">content_copy</span></button>
-            <button onclick="removeBatchItem('${id}')" class="text-slate-400 hover:text-red-500 active:scale-90 transition-transform"><span class="material-symbols-outlined text-[20px]">delete</span></button>
-          </div>
-        </div>
-        <div class="mb-3">
-          <input type="text" class="custom-input batch-name-input bg-slate-50" placeholder="梯次名稱，如：第一場 (10/01)" value="${data?.name || ''}">
-        </div>
-        <div class="grid grid-cols-2 gap-3 mb-3">
-          <div><label class="text-[12px] text-slate-500 block mb-1 ml-1">開始時間</label><input type="datetime-local" class="custom-input batch-start-input !py-2 !text-[13px] bg-slate-50" value="${data?.start || ''}"></div>
-          <div><label class="text-[12px] text-slate-500 block mb-1 ml-1">結束時間</label><input type="datetime-local" class="custom-input batch-end-input !py-2 !text-[13px] bg-slate-50" value="${data?.end || ''}"></div>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div><label class="text-[12px] text-slate-500 block mb-1 ml-1">費用</label><input type="number" class="custom-input batch-price-input !py-2 !text-[13px] bg-slate-50" placeholder="免費填0" value="${data?.price || ''}"></div>
-          <div><label class="text-[12px] text-slate-500 block mb-1 ml-1">名額限制</label><input type="number" class="custom-input batch-limit-input !py-2 !text-[13px] bg-slate-50" placeholder="不限留空" value="${data?.limit || ''}"></div>
-        </div>
-      </div>
-    `;
-    container.insertAdjacentHTML('beforeend', html);
+  function showModal(title, desc, targetView = '') {
+    const titleEl = document.getElementById('modal-title'); if(titleEl) titleEl.innerText = title; 
+    const descEl = document.getElementById('modal-desc'); if(descEl) descEl.innerText = desc;
+    modalTargetView = targetView; const m = document.getElementById('custom-modal'); if(m) m.classList.remove('hidden');
+  }
+  function closeModalAndGo() {
+    const m = document.getElementById('custom-modal');
+    if(m) m.classList.add('hidden'); if(modalTargetView) switchView(`user-${modalTargetView}`);
   }
 
-  function removeBatchItem(id) {
-    const el = document.getElementById(`batch-item-${id}`);
-    if (el) {
-      if (document.querySelectorAll('[id^="batch-item-"]').length <= 1) return showToast('⚠️ 系列活動至少需要一個梯次', true);
-      el.remove();
-    }
+  async function submitUserRegistrationStep1() {
+    if (isProcessing) return; isProcessing = true; setButtonLoading('btn-reg-step1', true);
+    
+    const getVal = (id) => document.getElementById(id)?.value.trim() || '';
+    const p = { userId: userProfile.userId, name: getVal('reg-name') || userProfile.displayName, gender: getVal('reg-gender'), industry: getVal('reg-industry'), phone: getVal('reg-phone'), birthday: getVal('reg-birthday'), region: getVal('reg-region'), address: getVal('reg-address'), referrerId: window.claimReferrer || '', claimCardId: window.claimCardId || '' };
+    
+    try { 
+      await fetchAPI('registerUser', p); regStep1Data = p; 
+
+      if (window.claimCardId) {
+          try {
+              const cardData = await fetchAPI('getCardById', { rowId: window.claimCardId });
+              if (cardData) {
+                  const updatePayload = { rowId: window.claimCardId, 'LINE ID': userProfile.userId, userId: userProfile.userId, Name: p.name, Mobile: p.phone, CompanyName: p.industry, Birthday: p.birthday };
+                  const fields = ['EnglishName', 'Title', 'Department', 'TaxID', 'Tel', 'Ext', 'Fax', 'Address', 'Email', 'Website', 'SocialMedia', 'Slogan', 'Notes'];
+                  const zhKeys = {'EnglishName':'英文名/別名', 'Title':'職稱', 'Department':'部門', 'TaxID':'統一編號', 'Tel':'公司電話', 'Ext':'分機', 'Fax':'傳真', 'Address':'公司地址', 'Email':'電子郵件', 'Website':'公司網址', 'SocialMedia':'社群帳號', 'Slogan':'服務項目/品牌標語', 'Notes':'建檔人/備註'};
+                  fields.forEach(f => { if (cardData[f] !== undefined) updatePayload[f] = cardData[f]; else if (zhKeys[f] && cardData[zhKeys[f]] !== undefined) updatePayload[f] = cardData[zhKeys[f]]; else updatePayload[f] = ''; });
+                  try { const newTags = await fetchAPI('calculateFateTags', { Name: p.name, Mobile: p.phone, Birthday: p.birthday }); Object.assign(updatePayload, newTags); } catch(e) {}
+                  await fetchAPI('updateCard', updatePayload);
+              }
+          } catch(e) {}
+      }
+
+      const s1 = document.getElementById('reg-step-1'); if(s1) s1.classList.add('hidden'); 
+      const s2 = document.getElementById('reg-step-2'); if(s2) s2.classList.remove('opacity-30', 'pointer-events-none'); 
+    } catch(e) {} finally { isProcessing = false; setButtonLoading('btn-reg-step1', false, '儲存並繼續'); }
   }
 
-  function copyBatchItem(id) {
-    const el = document.getElementById(`batch-item-${id}`);
-    if (!el) return;
-    addBatchItem({
-      name: el.querySelector('.batch-name-input').value,
-      start: el.querySelector('.batch-start-input').value,
-      end: el.querySelector('.batch-end-input').value,
-      price: el.querySelector('.batch-price-input').value,
-      limit: el.querySelector('.batch-limit-input').value
-    });
-  }
-
-  function openCropper(input, targetMode) {
-    const file = input.files[0]; if (!file) return;
-    currentCropTarget = targetMode;
-
+  async function openCropper(input, targetMode) {
+    const file = input.files[0]; if (!file) return; currentCropTarget = targetMode;
     const reader = new FileReader();
     reader.onload = (e) => {
-      const img = document.getElementById('cropper-image'); 
-      if(!img) return;
-
-      img.onload = () => {
-          document.getElementById('section-image-cropper').classList.remove('hidden');
-          if (cropperInstance) cropperInstance.destroy();
-          img.style.opacity = '1';
-          
-          cropperInstance = new Cropper(img, { 
-            aspectRatio: NaN, // 允許自由比例拉取
-            viewMode: 1, 
-            dragMode: 'crop', // 解放拖曳，允許自由框選
-            autoCropArea: 0.9, 
-            guides: true, 
-            center: true, 
-            highlight: false 
-          }); 
-      };
-      
-      img.src = e.target.result; 
-      img.style.opacity = '0';
-      input.value = ""; 
+      const img = document.getElementById('cropper-image'); if(!img) return;
+      img.src = e.target.result; img.style.opacity = '0';
+      const m = document.getElementById('section-image-cropper'); if(m) m.classList.remove('hidden');
+      if (cropperInstance) cropperInstance.destroy();
+      setTimeout(() => { img.style.opacity = '1'; cropperInstance = new Cropper(img, { aspectRatio: currentCropTarget === 'reg' ? NaN : 4 / 3, viewMode: 1, dragMode: 'move', autoCropArea: 0.9, guides: true, center: true, highlight: false }); }, 100);
     }; 
-    
-    reader.onerror = () => showToast("讀取圖片失敗，請重試", true);
-    reader.readAsDataURL(file); 
+    reader.readAsDataURL(file); input.value = ""; 
   }
 
-  function cancelCrop() { 
-    if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; } 
-    document.getElementById('section-image-cropper').classList.add('hidden'); 
-  }
+  function cancelCrop() { if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; } const m = document.getElementById('section-image-cropper'); if(m) m.classList.add('hidden'); }
 
   function confirmCrop() { 
     if (!cropperInstance) return; 
-    
-    let size = 250;
-    let quality = 0.6;
-    let base64 = cropperInstance.getCroppedCanvas({ maxWidth: size, maxHeight: size }).toDataURL('image/jpeg', quality); 
-    
-    while (base64.length > 48000 && quality > 0.1) {
-       quality -= 0.1;
-       base64 = cropperInstance.getCroppedCanvas({ maxWidth: size, maxHeight: size }).toDataURL('image/jpeg', quality);
-    }
-
-    if (base64.length > 49000) {
-        cancelCrop();
-        return showToast("⚠️ 圖片內容太複雜無法壓縮，請選擇其他單純一點的圖片", true);
-    }
-
+    let quality = 0.8; let base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1000, maxHeight: 1000 }).toDataURL('image/webp', quality); 
+    while (base64.length > 40000 && quality > 0.1) { quality -= 0.1; base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1000, maxHeight: 1000 }).toDataURL('image/webp', quality); }
     cancelCrop(); 
-
-    const modeId = currentCropTarget;
-    const previewImg = document.getElementById(`image-preview-${modeId}`);
-    const placeholder = document.getElementById(`preview-placeholder-${modeId}`);
-    const urlInput = document.getElementById(`in-image-url-${modeId}`);
-
-    if(previewImg && placeholder && urlInput) {
-        previewImg.src = base64; 
-        previewImg.classList.remove('hidden'); 
-        placeholder.classList.add('hidden'); 
-        
-        urlInput.value = base64; 
-        showToast("✅ 圖片預覽設定成功");
-    }
+    if (currentCropTarget === 'reg') { regCompressedBase64 = base64; recognizeAndSaveRegCard(); } else if (currentCropTarget === 'profile') { regCompressedBase64 = base64; recognizeAndSaveProfileCard(); }
   }
 
-  async function handleCreateActivity(mode) { 
-    if(isProcessing) return; 
+  async function recognizeAndSaveRegCard() {
+    const s2 = document.getElementById('reg-step-2'); if(s2) s2.classList.add('pointer-events-none', 'opacity-50');
+    try {
+      const data = await fetchAPI('recognizeCard', { base64Image: regCompressedBase64, Birthday: regStep1Data.birthday });
+      const payload = { base64Image: regCompressedBase64, userId: userProfile.userId, 'LINE ID': userProfile.userId, Name: regStep1Data.name, EnglishName: data.EnglishName || '', Title: data.Title || '', Department: data.Department || '', CompanyName: data.CompanyName || '', TaxID: data.TaxID || '', Mobile: regStep1Data.phone, Tel: data.Tel || '', Ext: data.Ext || '', Fax: data.Fax || '', Address: data.Address || regStep1Data.address || '', Email: data.Email || '', Website: data.Website || '', SocialMedia: data.SocialMedia || '', Slogan: data.Slogan || '', Notes: '註冊自動建檔', Birthday: regStep1Data.birthday || '', Personality: data.Personality || '', Hobbies: data.Hobbies || '', Wealth: data.Wealth || '', Health: data.Health || '', Career: data.Career || '' };
+      await fetchAPI('saveCard', payload); finishRegistration();
+    } catch(err) { finishRegistration(); }
+  }
+
+  async function recognizeAndSaveProfileCard() {
+    try {
+      const bday = document.getElementById('edit-birthday')?.value || '';
+      const data = await fetchAPI('recognizeCard', { base64Image: regCompressedBase64, Birthday: bday });
+      const payload = { rowId: Date.now(), base64Image: regCompressedBase64, userId: userProfile.userId, 'LINE ID': userProfile.userId, Name: document.getElementById('edit-name')?.value || userProfile.displayName, EnglishName: data.EnglishName || '', Title: data.Title || '', Department: data.Department || '', CompanyName: data.CompanyName || '', TaxID: data.TaxID || '', Mobile: document.getElementById('edit-phone')?.value || '', Tel: data.Tel || '', Ext: data.Ext || '', Fax: data.Fax || '', Address: data.Address || document.getElementById('edit-address')?.value || '', Email: data.Email || '', Website: data.Website || '', SocialMedia: data.SocialMedia || '', Slogan: data.Slogan || '', Notes: '使用者自行上傳', Birthday: bday, Personality: data.Personality || '', Hobbies: data.Hobbies || '', Wealth: data.Wealth || '', Health: data.Health || '', Career: data.Career || '' };
+      await fetchAPI('saveCard', payload); 
+      globalCardContacts = await fetchAPI('getCardContacts', {}, false); checkMyCardEntry();
+    } catch(err) { }
+  }
+
+  function finishRegistration() { isRegistered = true; registeredInfo = regStep1Data; const nav = document.getElementById('bottom-nav-user'); if(nav) nav.classList.remove('hidden'); switchView('user-activities'); }
+
+  let currentCategory = '全部活動';
+  async function reloadActivities() { 
+    if(isProcessing) return; const btn = document.getElementById('btn-refresh-activities'); isProcessing = true;
+    if(btn) { btn.classList.add('pointer-events-none', 'opacity-50'); btn.querySelector('span')?.classList.add('refresh-spin'); }
+    sessionStorage.removeItem('getPublicActivities{}'); 
+    try { await loadUserActivities(); } finally { isProcessing = false; if(btn) { btn.classList.remove('pointer-events-none', 'opacity-50'); btn.querySelector('span')?.classList.remove('refresh-spin'); } }
+  }
+
+  async function loadUserActivities() {
+    const container = document.getElementById('user-activities-container'); if(!container) return;
+    container.className = 'grid grid-cols-2 gap-3 px-1';
+    if (!globalPublicActivities.length) renderActivitiesSkeleton();
+    try {
+      const data = await fetchAPI('getPublicActivities', {}, true); globalPublicActivities = data || [];
+      if (!globalPublicActivities.length) { container.className = 'block px-1'; container.innerHTML = '<div class="text-center py-16 bg-white rounded-[2rem] shadow-sm text-slate-400 font-bold w-full">目前無開放的活動</div>'; return; }
+      renderCategories(); filterActivities();
+    } catch(e) { container.className = 'block px-1'; container.innerHTML = '<div class="text-center py-16 bg-white rounded-[2rem] shadow-sm text-red-400 font-bold w-full">讀取失敗，請重新整理</div>'; }
+  }
+
+  function renderCategories() {
+      const types = ['全部活動', ...new Set(globalPublicActivities.map(a => a.type).filter(Boolean))];
+      const container = document.getElementById('activity-categories'); if (!container) return;
+      container.innerHTML = types.map(t => `<button onclick="filterByCategory('${t}')" class="shrink-0 px-4 py-1.5 rounded-full font-bold text-[12px] transition-all ${currentCategory === t ? 'bg-slate-800 text-white shadow-sm' : 'bg-white text-slate-500 shadow-sm'}">${t}</button>`).join('');
+  }
+
+  function filterByCategory(type) { currentCategory = type; renderCategories(); filterActivities(); }
+  
+  // ⭐ QQ 修復點 2：加入前台活動卡片的 詳細說明 與 報名 按鈕
+  function filterActivities() { renderActivityList(globalPublicActivities.filter(a => currentCategory === '全部活動' || a.type === currentCategory), 'user'); }
+
+  function renderActivityList(data, mode) {
+    const list = document.getElementById(mode === 'user' ? 'user-activities-container' : 'admin-activity-list-container');
+    if (!list) return;
+    if (!data.length) { list.className = 'block px-1'; list.innerHTML = `<div class="text-center py-16 bg-white rounded-[2rem] shadow-sm text-slate-400 font-bold w-full">無符合的活動</div>`; return; }
     
-    const nameInput = document.getElementById(mode === 'batch' ? 'batch-name' : (mode === 'quick' ? 'quick-name' : 'detail-name'));
-    const name = nameInput ? nameInput.value.trim() : '';
+    let html = '';
+    data.forEach((a, i) => {
+      const safeName = a.name.replace(/'/g, "\\'");
+      if (mode === 'user') {
+        const bgImg = a.imageUrl || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80';
+        html += `
+        <div class="bg-white rounded-[1.2rem] overflow-hidden shadow-[0_4px_15px_-3px_rgba(0,0,0,0.05)] flex flex-col h-full cursor-default animate-in zoom-in-95" style="animation-delay: ${i*50}ms">
+          <div onclick="openActivityDetailByName('${safeName}')" class="relative w-full aspect-[4/3] shrink-0 bg-slate-100 cursor-pointer group">
+            <img src="${bgImg}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+            <div class="absolute top-2 left-2"><span class="bg-white/95 backdrop-blur-sm text-slate-800 text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm">${a.type}</span></div>
+          </div>
+          <div class="p-3.5 flex flex-col flex-1 bg-white">
+            <p class="text-[11px] text-primary font-bold flex items-center gap-1 mb-1.5 uppercase tracking-wider"><span class="material-symbols-outlined text-[14px]">calendar_today</span>${formatTimeShort(a.startTime)}</p>
+            <h3 class="text-[15px] font-extrabold text-slate-800 leading-snug line-clamp-2 mb-2 flex-1 cursor-pointer" onclick="openActivityDetailByName('${safeName}')">${a.name}</h3>
+            
+            <div class="mt-auto pt-2">
+              <div class="flex items-center mb-2.5 px-1">
+                <span class="text-[15px] font-black ${a.feeType === '收費' ? 'text-orange-500' : 'text-[#06C755]'}">${a.feeType === '收費' ? 'NT$ '+a.price : '免費'}</span>
+              </div>
+              <div class="flex gap-2">
+                <button onclick="openActivityDetailByName('${safeName}')" class="flex-1 py-2 bg-slate-100 text-slate-600 rounded-xl text-[13px] font-bold active:scale-95 transition-all">詳細說明</button>
+                <button onclick="openActivityDetailByName('${safeName}')" class="flex-1 py-2 bg-[#06C755] text-white rounded-xl text-[13px] font-bold active:scale-95 transition-all shadow-sm">我要報名</button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+      } else {
+        html += `
+        <div class="bg-white rounded-[2rem] shadow-sm p-6 mx-1">
+          <div class="flex justify-between items-start mb-5"><div><span class="text-[11px] font-bold text-primary bg-primary-light px-2.5 py-0.5 rounded-md uppercase tracking-widest mb-2 inline-block">${a.type}</span><h3 class="font-extrabold text-[18px] text-slate-800 leading-tight">${a.name}</h3></div><div class="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl"><span class="material-symbols-outlined text-[16px] text-slate-400">group</span><span class="font-bold text-[15px] text-slate-700">${a.total}</span></div></div>
+          <div class="grid grid-cols-3 gap-3 bg-slate-50 rounded-2xl p-4 mb-5"><div class="text-center"><p class="text-[11px] text-slate-500 font-bold mb-0.5">狀態</p><p class="font-bold text-[13px] ${a.status==='上架'?'text-emerald-500':'text-slate-500'}">${a.status}</p></div><div class="text-center border-l border-slate-200"><p class="text-[11px] text-slate-500 font-bold mb-0.5">已到</p><p class="font-bold text-[13px] text-primary">${a.attended}</p></div><div class="text-center border-l border-slate-200"><p class="text-[11px] text-slate-500 font-bold mb-0.5">取消</p><p class="font-bold text-[13px] text-error">${a.cancelled}</p></div></div>
+          <div class="flex gap-3"><button onclick="toggleActivityStatus('${safeName}')" class="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl font-bold text-[14px] active:scale-95 transition-all">${a.status==='上架'?'下架':'上架'}</button><button onclick="openAdminRegistrants('${safeName}')" class="flex-1 py-3 bg-slate-800 text-white rounded-xl font-bold text-[14px] shadow-sm active:scale-95 transition-all">名單核銷</button></div>
+        </div>`;
+      }
+    });
+    list.innerHTML = html; list.className = mode === 'user' ? 'grid grid-cols-2 gap-3 px-1' : 'space-y-4';
+  }
+
+  function openActivityDetailByName(name) {
+    const act = globalPublicActivities.find(a => a.name === name); if (!act) return;
+    const imgEl = document.getElementById('detail-modal-image'); const noImgEl = document.getElementById('detail-modal-no-image');
+    if (act.imageUrl) { if(imgEl) { imgEl.src = act.imageUrl; imgEl.classList.remove('hidden'); } if(noImgEl) noImgEl.classList.add('hidden'); } else { if(imgEl) { imgEl.src = ''; imgEl.classList.add('hidden'); } if(noImgEl) noImgEl.classList.remove('hidden'); }
     
-    if(!name) {
-      showToast('⚠️ 請填寫活動名稱', true);
-      return nameInput?.focus();
+    const typeEl = document.getElementById('detail-modal-type'); if(typeEl) typeEl.innerText = act.type;
+    const feeEl = document.getElementById('detail-modal-fee');
+    if(feeEl) {
+        feeEl.innerText = act.feeType === '收費' ? `NT$ ${act.price}` : '免費';
+        feeEl.className = `px-3 py-1 text-[12px] font-bold rounded-lg ${act.feeType === '收費' ? 'bg-orange-50 text-orange-600' : 'bg-emerald-50 text-emerald-600'}`;
+    }
+    
+    const titleEl = document.getElementById('detail-modal-title'); if(titleEl) titleEl.innerText = act.name;
+    const startEl = document.getElementById('detail-modal-start'); if(startEl) startEl.innerText = act.startTime ? formatTime(act.startTime) : '未定';
+    
+    const endContainer = document.getElementById('detail-modal-end-container');
+    const endEl = document.getElementById('detail-modal-end');
+    if (act.endTime) { if(endEl) endEl.innerText = formatTime(act.endTime); if(endContainer) endContainer.classList.remove('hidden'); } else { if(endContainer) endContainer.classList.add('hidden'); }
+    
+    const descEl = document.getElementById('detail-modal-desc'); if(descEl) descEl.innerText = act.description || '無詳細說明。';
+
+    let batches = []; try { if (act.batches) batches = typeof act.batches === 'string' ? JSON.parse(act.batches) : act.batches; } catch(e) {}
+    const batchContainer = document.getElementById('detail-modal-batch-container'); const batchSelect = document.getElementById('detail-modal-batch-select');
+    if (batchSelect) {
+        batchSelect.onchange = function() {
+            const selectedOpt = this.options[this.selectedIndex]; const bPrice = parseInt(selectedOpt.dataset.price || 0); const bStart = selectedOpt.dataset.start; const bEnd = selectedOpt.dataset.end;
+            if (bPrice > 0 && feeEl) { feeEl.innerText = `NT$ ${bPrice}`; feeEl.className = 'px-3 py-1 text-[12px] font-bold rounded-lg bg-orange-50 text-orange-600'; } else if (feeEl) { feeEl.innerText = '免費'; feeEl.className = 'px-3 py-1 text-[12px] font-bold rounded-lg bg-emerald-50 text-emerald-600'; }
+            if (bStart && startEl) startEl.innerText = formatTime(bStart);
+            if (bEnd) { if(endEl) endEl.innerText = formatTime(bEnd); if(endContainer) endContainer.classList.remove('hidden'); } else { if(endContainer) endContainer.classList.add('hidden'); }
+        };
     }
 
-    const btnId = `btn-${mode === 'quick' ? 'quick' : (mode === 'detailed' ? 'detailed' : 'batch')}-create`;
-    const btn = document.getElementById(btnId);
-    const oriText = btn ? btn.innerHTML : '建立';
-    isProcessing = true;
-    
-    setButtonLoading(btnId, true);
+    if (act.isBatch || batches.length > 0) {
+        if (batchSelect) {
+            batchSelect.innerHTML = batches.map(b => { const tStr = b.startTime ? formatTimeShort(b.startTime) : '時間未定'; const pStr = (b.price && parseInt(b.price) > 0) ? ` - NT$${b.price}` : ' - 免費'; return `<option value="${b.name}" data-price="${b.price || 0}" data-start="${b.startTime || ''}" data-end="${b.endTime || ''}">${b.name} (${tStr}${pStr})</option>`; }).join('');
+            if(batchContainer) batchContainer.classList.remove('hidden'); batchSelect.onchange(); 
+        }
+    } else { if(batchContainer) batchContainer.classList.add('hidden'); }
 
-    let p = { 
-      activityName: name,
-      activityType: '例會', 
-      feeType: '免費',
-      price: '',
-      startTime: '',
-      endTime: '',
-      description: '',
-      imageUrl: '',
-      names: [],
-      defaultIdentity: '來賓',
-      isBatch: (mode === 'batch'),
-      userId: userProfile.userId
-    }; 
-    
-    if(mode==='quick') {
-      const feeRadioQ = document.querySelector('input[name="quick-fee-type"]:checked');
-      p.feeType = feeRadioQ ? feeRadioQ.value : '免費';
-      p.price = document.getElementById('quick-price') ? document.getElementById('quick-price').value : '';
-      
-      if(p.feeType === '收費' && (!p.price || p.price <= 0)) {
-          isProcessing=false; setButtonLoading(btnId, false, oriText);
-          return showToast("⚠️ 請輸入正確的收費金額", true);
-      }
-
-      p.names = document.getElementById('quick-names').value.split('\n').filter(n=>n.trim()); 
-      p.activityType = document.getElementById('quick-type').value;
-      p.defaultIdentity = document.getElementById('quick-identity').value;
-      
-      // ⭐ 讀取快速匯入的時間與活動說明
-      p.startTime = document.getElementById('quick-start') ? document.getElementById('quick-start').value : '';
-      p.endTime = document.getElementById('quick-end') ? document.getElementById('quick-end').value : '';
-      p.description = document.getElementById('quick-desc') ? document.getElementById('quick-desc').value.trim() : '';
-      p.imageUrl = document.getElementById('in-image-url-quick') ? document.getElementById('in-image-url-quick').value : '';
-      
-    } else if(mode==='detailed') {
-      p.activityType = document.getElementById('detail-type') ? document.getElementById('detail-type').value : '例會';
-      p.defaultIdentity = document.getElementById('detail-identity') ? document.getElementById('detail-identity').value : '來賓';
-      
-      const feeRadioD = document.querySelector('input[name="detailed-fee-type"]:checked');
-      p.feeType = feeRadioD ? feeRadioD.value : '免費'; 
-      p.price = document.getElementById('detail-price') ? document.getElementById('detail-price').value : ''; 
-      
-      if(p.feeType === '收費' && (!p.price || p.price <= 0)) {
-          isProcessing=false; setButtonLoading(btnId, false, oriText);
-          return showToast("⚠️ 請輸入正確的收費金額", true);
-      }
-      
-      p.startTime = document.getElementById('detail-start').value; 
-      p.endTime = document.getElementById('detail-end').value; 
-      p.description = document.getElementById('detail-desc').value;
-      p.imageUrl = document.getElementById('in-image-url-detailed') ? document.getElementById('in-image-url-detailed').value : '';
-      
-    } else if(mode==='batch') {
-      p.activityType = document.getElementById('batch-type').value;
-      p.defaultIdentity = document.getElementById('batch-identity').value;
-      p.description = document.getElementById('batch-desc').value;
-      p.imageUrl = document.getElementById('in-image-url-batch') ? document.getElementById('in-image-url-batch').value : '';
-      
-      const cards = document.querySelectorAll('[id^="batch-item-"]');
-      p.batches = Array.from(cards).map(card => ({
-        name: card.querySelector('.batch-name-input').value.trim(),
-        startTime: card.querySelector('.batch-start-input').value,
-        endTime: card.querySelector('.batch-end-input').value,
-        price: card.querySelector('.batch-price-input').value,
-        limit: card.querySelector('.batch-limit-input').value
-      }));
-
-      if(p.batches.length === 0) { isProcessing=false; setButtonLoading(btnId, false, oriText); return showToast("⚠️ 至少需新增一個梯次", true); }
-      for(let b of p.batches) { if(!b.name) { isProcessing=false; setButtonLoading(btnId, false, oriText); return showToast("⚠️ 梯次名稱必填", true); } }
-
-      if(p.batches.length > 0) {
-           p.startTime = p.batches[0].startTime;
-           p.endTime = p.batches[p.batches.length - 1].endTime;
-           const hasPaid = p.batches.some(b => parseInt(b.price) > 0);
-           if (hasPaid) {
-               p.feeType = '收費';
-               p.price = Math.max(...p.batches.map(b => parseInt(b.price) || 0)); 
-           }
-      }
+    const joinBtn = document.getElementById('detail-modal-join-btn');
+    if (joinBtn) {
+        joinBtn.onclick = async function() {
+          let selectedBatchName = null, finalFeeType = act.feeType, finalPrice = act.price;
+          if ((act.isBatch || batches.length > 0) && batchContainer && !batchContainer.classList.contains('hidden') && batchSelect) {
+              selectedBatchName = batchSelect.value; const selectedOption = batchSelect.options[batchSelect.selectedIndex]; const bPrice = parseInt(selectedOption.dataset.price || 0);
+              if (bPrice > 0) { finalFeeType = '收費'; finalPrice = bPrice; } else { finalFeeType = '免費'; finalPrice = 0; }
+          }
+          closeActivityDetail(); await userJoinActivity(this, act.name, finalFeeType, finalPrice, selectedBatchName);
+        };
     }
-    
-    try { 
-      const response = await fetch(WORKER_URL, { 
-          method: 'POST', 
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'bulkAddRegistrants', payload: p }) 
-      });
-      const res = await response.json();
-      if (!res.success) throw new Error(res.error);
+    const modal = document.getElementById('activity-detail-modal'); if(modal) modal.classList.remove('hidden');
+  }
 
-      showToast('🎉 活動建立成功！即將跳轉...');
-      
-      sessionStorage.removeItem('getActivityDashboard{}');
-      setTimeout(() => {
-        window.location.href = 'index.html?view=admin-activities';
-      }, 1500);
-      
-    } catch(e) { 
-      showToast('⚠️ 建立失敗：' + e.message, true);
-    } finally {
-      setButtonLoading(btnId, false, oriText);
-      isProcessing = false;
+  function closeActivityDetail() { const m = document.getElementById('activity-detail-modal'); if(m) m.classList.add('hidden'); }
+
+  async function userJoinActivity(btn, name, feeType, price, batchName = null) {
+    if (isProcessing) return; const confirmMsg = batchName ? `確定報名「${name} - ${batchName}」？` : `確定報名「${name}」？`; if (!confirm(confirmMsg)) return;
+    isProcessing = true; setButtonLoading('detail-modal-join-btn', true);
+    try {
+      await fetchAPI('joinActivity', { userId: userProfile.userId, activityName: name, batchName: batchName, price: price });
+      if (feeType === '收費' || parseInt(price) > 0) showModal("報名成功", `請完成匯款 NT$ ${price} 後，至「報名紀錄」填寫後五碼。`, "history");
+      else showModal("報名成功", `期待活動現場見到您！`, "activities");
+    } catch(e) {} finally { isProcessing = false; setButtonLoading('detail-modal-join-btn', false, '我要報名'); }
+  }
+
+  async function loadUserHistory() {
+    const container = document.getElementById('user-history-container'); if(!container) return;
+    container.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>';
+    try {
+        const history = await fetchAPI('getUserHistory', { userId: userProfile.userId }, true);
+        if (!history || history.length === 0) { container.innerHTML = '<div class="text-center py-16 bg-white shadow-sm rounded-[2rem] text-slate-400 font-bold mx-1">尚無報名紀錄</div>'; return; }
+        container.innerHTML = history.map(item => {
+          const isCanceled = item.regStatus === '已取消'; const safeName = item.name.replace(/'/g, "\\'"); let pC = item.payStatus==='已完款'?'bg-blue-50 text-blue-600':(item.payStatus==='匯款審核中'?'bg-slate-800 text-white':'bg-orange-50 text-orange-600');
+          return `
+          <div class="bg-white rounded-[2rem] shadow-sm p-5 relative overflow-hidden animate-in slide-in-from-bottom-2 mx-1 mb-4">
+            ${isCanceled ? '<div class="absolute top-0 right-0 bg-slate-500 text-white text-[10px] px-3 py-1 rounded-bl-xl tracking-wider font-bold">已取消</div>' : ''}
+            <div class="flex gap-4 items-start">
+              <div id="qr-${item.name.replace(/\s+/g,'')}" class="w-[64px] h-[64px] bg-slate-50 rounded-xl p-1.5 shrink-0 ${isCanceled?'opacity-30 grayscale':''}"></div>
+              <div class="flex-1 overflow-hidden pr-6">
+                <h4 class="font-bold text-slate-800 text-[16px] leading-snug mb-1.5 truncate">${item.name}</h4>
+                <p class="text-[13px] text-slate-500 flex items-center gap-1 mb-2 font-medium"><span class="material-symbols-outlined text-[15px]">event</span> ${item.startTime ? item.startTime.substring(0,10) : '未定'}</p>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="px-2.5 py-1 text-[11px] font-bold rounded-md tracking-wider ${item.checkedIn ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}">${item.checkedIn ? '已簽到' : '待簽到'}</span>
+                  ${item.isPaidAct && !isCanceled ? `<span class="px-2.5 py-1 text-[11px] font-bold rounded-md tracking-wider ${pC}">${item.payStatus}</span>` : ''}
+                </div>
+              </div>
+            </div>
+            ${!isCanceled ? `<button id="btn-cancel-${item.name.replace(/\s+/g,'')}" onclick="userCancelRegistration(this, '${safeName}')" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"><span class="material-symbols-outlined text-[18px]">close</span></button>` : ''}
+            ${item.isPaidAct && item.payStatus === '未繳費' && !isCanceled ? `<div class="mt-4 pt-4 border-t border-slate-100 flex gap-2 items-center"><input type="text" id="pay-${item.name.replace(/\s+/g,'')}" class="flex-1 w-0 h-[44px] bg-slate-50 border-none rounded-xl px-4 text-[14px] text-slate-700 outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 font-medium" placeholder="輸入末五碼" maxlength="5"><button id="btn-report-${item.name.replace(/\s+/g,'')}" onclick="submitLast5(this, '${safeName}', '${item.name.replace(/\s+/g,'')}')" class="shrink-0 bg-primary text-white px-5 h-[44px] rounded-xl text-[14px] font-bold active:scale-95 transition-transform shadow-sm">回報</button></div>` : ''}
+          </div>`;
+        }).join('');
+        setTimeout(() => { history.forEach(h => { if(h.regStatus!=='已取消') { const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(userProfile.userId)}`; const el = document.getElementById(`qr-${h.name.replace(/\s+/g,'')}`); if(el) el.innerHTML = `<img src="${qrUrl}" class="w-full h-full object-contain rounded-lg">`; } }); }, 100);
+    } catch(err) { if(container) container.innerHTML = '<div class="text-center py-16 bg-white shadow-sm rounded-[2rem] text-red-500 font-bold mx-1">載入失敗</div>'; }
+  }
+
+  async function submitLast5(btn, actName, inputId) { 
+    if(isProcessing) return; const el = document.getElementById(`pay-${inputId}`); if(!el) return; const val = el.value; if(!val || val.length < 4) return; 
+    isProcessing = true; setButtonLoading(btn.id, true);
+    try { await fetchAPI('updateLast5Digits', { userId: userProfile.userId, activityName: actName, last5Digits: val }); sessionStorage.removeItem('getUserHistory{"userId":"' + userProfile.userId + '"}'); await loadUserHistory(); } catch(e) {} finally { isProcessing = false; setButtonLoading(btn.id, false, '回報'); }
+  }
+
+  async function userCancelRegistration(btn, actName) { 
+    if(isProcessing) return; if(!confirm(`確定要取消？`)) return; isProcessing = true; setButtonLoading(btn.id, true);
+    try { await fetchAPI('cancelRegistration', { userId: userProfile.userId, activityName: actName }); sessionStorage.removeItem('getUserHistory{"userId":"' + userProfile.userId + '"}'); await loadUserHistory(); } catch(e) {} finally { isProcessing = false; setButtonLoading(btn.id, false, '取消'); }
+  }
+
+  function populateUserProfile() { 
+      if(registeredInfo) { 
+          ['name','gender','phone','industry','birthday','region','address'].forEach(k => { 
+              const el = document.getElementById('edit-'+k); 
+              if(el) el.value=registeredInfo[k]||''; 
+          }); 
+      } 
+  }
+  
+  async function submitProfileUpdate() { 
+    if(isProcessing) return; isProcessing = true; setButtonLoading('btn-save-profile', true);
+    const getVal = (id) => document.getElementById(id)?.value.trim() || '';
+    const p = { userId: userProfile.userId, name: getVal('edit-name') || userProfile.displayName, gender: getVal('edit-gender'), phone: getVal('edit-phone'), industry: getVal('edit-industry'), birthday: getVal('edit-birthday'), region: getVal('edit-region'), address: getVal('edit-address') }; 
+    try { await fetchAPI('updateUser', p); registeredInfo = p; checkMyCardEntry(); } catch(e) {} finally { isProcessing = false; setButtonLoading('btn-save-profile', false, '儲存設定'); }
+  }
+
+  async function loadAdminActivities() { 
+    const list = document.getElementById('admin-activity-list-container'); if(!list) return;
+    list.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>'; 
+    try { currentActivities = await fetchAPI('getActivityDashboard', {}, true); renderActivityList(currentActivities, 'admin'); } catch (e) { list.innerHTML = `<p class="text-center text-red-400 font-bold py-10">載入失敗</p>`; }
+  }
+
+  async function openAdminRegistrants(actName) {
+    activeActivityName = actName; const tEl = document.getElementById('admin-reg-title'); if(tEl) tEl.innerText = actName; 
+    const list = document.getElementById('admin-reg-list'); if(!list) return;
+    list.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>'; 
+    const m = document.getElementById('admin-registrants-modal'); if(m) m.classList.remove('hidden');
+    try { currentRegistrants = await fetchAPI('getRegistrants', { activityName: actName }); renderAdminRegList(currentRegistrants); } catch(e) { list.innerHTML = `<p class="text-center text-red-400 font-bold py-10">讀取失敗</p>`; }
+  }
+
+  window.closeAdminRegistrants = function() { const m = document.getElementById('admin-registrants-modal'); if(m) m.classList.add('hidden'); window.stopScanner(); const s = document.getElementById('admin-search-reg'); if(s) s.value=''; }
+  window.filterAdminReg = function() { const s = document.getElementById('admin-search-reg'); const term = s ? s.value.toLowerCase() : ''; renderAdminRegList(currentRegistrants.filter(r => (r['姓名']||'').toLowerCase().includes(term) || String(r['電話']||'').includes(term))); }
+
+  function renderAdminRegList(data) {
+    const list = document.getElementById('admin-reg-list'); if(!list) return;
+    if(!data.length) { list.innerHTML = `<div class="text-center py-16 bg-white rounded-[2rem] shadow-sm text-slate-400 font-bold mx-1">尚無名單</div>`; return; }
+    let html = '';
+    data.forEach(r => {
+      const isCanceled = r.regStatus === '已取消'; const cIn = r.checkedIn;
+      html += `
+      <div class="bg-white rounded-[2rem] shadow-sm p-5 relative overflow-hidden transition-all ${isCanceled ? 'opacity-50 grayscale' : ''} mx-1">
+        ${isCanceled ? '<div class="absolute top-0 right-0 bg-slate-500 text-white text-[10px] px-3 py-1 rounded-bl-xl font-bold">已取消</div>' : ''}
+        <div class="flex justify-between items-start mb-4">
+          <div class="flex flex-col"><h4 class="font-bold text-[16px] text-slate-800 flex items-center gap-1">${r['姓名']} ${cIn ? '<span class="material-symbols-outlined text-[16px] text-emerald-500 icon-filled">check_circle</span>' : ''}</h4><p class="text-[12px] text-slate-500 font-medium mt-1">${r['電話'] || '無電話'}</p></div>
+          <button id="btn-chk-${r.rowId}" ${isCanceled ? 'disabled' : ''} onclick="toggleCheckIn(this, ${r.rowId}, ${cIn})" class="px-4 py-2 rounded-xl flex items-center justify-center gap-1 transition-all font-bold text-[13px] ${cIn ? 'bg-emerald-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600 active:scale-95 hover:bg-slate-200'}">${cIn ? '已簽到' : '手動簽到'}</button>
+        </div>
+        <div class="flex items-center gap-2 pt-4 border-t border-slate-100">
+           <select onchange="updatePayStatus(${r.rowId}, this.value)" class="text-[13px] font-bold bg-slate-50 border-none rounded-xl py-2 px-3 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer ${r.payStatus==='已繳費'?'text-emerald-600':(r.payStatus==='匯款審核中'?'text-amber-500':'text-red-500')}" ${isCanceled ? 'disabled' : ''}><option value="未繳費" ${r.payStatus==='未繳費'?'selected':''}>未繳費</option><option value="匯款審核中" ${r.payStatus==='匯款審核中'?'selected':''}>審核中</option><option value="已完款" ${r.payStatus==='已完款'?'selected':''}>已完款</option></select>
+        </div>
+      </div>`;
+    });
+    list.innerHTML = html;
+  }
+
+  window.toggleCheckIn = async function(btn, rowId, currentStatus) { 
+    if(isProcessing) return; isProcessing = true; setButtonLoading(btn.id, true);
+    try { await fetchAPI('toggleStatus', { activityName: activeActivityName, rowId: rowId, currentStatus: currentStatus }); const reg = currentRegistrants.find(r => r.rowId === rowId); if(reg) reg.checkedIn = !currentStatus; renderAdminRegList(currentRegistrants); } catch(e) { } finally { isProcessing = false; }
+  }
+
+  window.updatePayStatus = async function(rowId, val) { try { await fetchAPI('updateCellStatus', { activityName: activeActivityName, rowId: rowId, colName: '繳費', val: val }); const reg = currentRegistrants.find(r => r.rowId === rowId); if(reg) reg.payStatus = val; } catch(e) {} }
+  
+  window.submitWalkIn = async function() { 
+    if(isProcessing) return; const el = document.getElementById('f-walkin-name'); if(!el) return; const name = el.value; if(!name) return; isProcessing = true; setButtonLoading('btn-walkin', true);
+    try { await fetchAPI('addWalkIn', { activityName: activeActivityName, name: name }); el.value = ''; const m = document.getElementById('walkin-modal'); if(m) m.classList.add('hidden'); await openAdminRegistrants(activeActivityName); } catch(e) {} finally { isProcessing = false; setButtonLoading('btn-walkin', false, '新增並簽到'); }
+  }
+
+  window.startScanner = async function() {
+    if (html5QrcodeScanner) {
+        html5QrcodeScanner.clear().catch(e=>{});
+        html5QrcodeScanner = null;
     }
+    const m = document.getElementById('qr-scanner-modal'); if(m) m.classList.remove('hidden');
+    
+    if (typeof Html5Qrcode === 'undefined') {
+        return;
+    }
+
+    html5QrcodeScanner = new Html5Qrcode("qr-reader");
+    html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
+      async (decodedText) => { 
+        window.stopScanner(); 
+        try { 
+          const uRes = await fetchAPI('checkUser', { userId: decodedText }); 
+          if(!uRes.isRegistered) return; 
+          const name = uRes.info.name; const reg = currentRegistrants.find(r => r['姓名'] === name); 
+          if(reg) { if(!reg.checkedIn) { await fetchAPI('toggleStatus', { activityName: activeActivityName, rowId: reg.rowId, currentStatus: false }); openAdminRegistrants(activeActivityName); } } else { if(confirm(`未報名，是否現場報名簽到？`)) { await fetchAPI('addWalkIn', { activityName: activeActivityName, name: name }); openAdminRegistrants(activeActivityName); } } 
+        } catch(e) {} 
+      }, () => {}
+    ).catch(err => { window.stopScanner(); });
+  }
+
+  window.stopScanner = function() { 
+      if(html5QrcodeScanner) { html5QrcodeScanner.stop().then(() => { html5QrcodeScanner.clear(); html5QrcodeScanner = null; }).catch(e=>{}); } 
+      const m = document.getElementById('qr-scanner-modal'); if(m) m.classList.add('hidden'); 
+  }
+
+  async function loadCrmData() { 
+    const list = document.getElementById('admin-crm-list-container'); if(!list) return;
+    list.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>'; 
+    try { globalCrmData = await fetchAPI('getAllCrmData', {}, true); filteredCrmData = [...globalCrmData]; currentCrmViewCount = crmPageLimit; renderCrmList(); } catch(e) { list.innerHTML = `<p class="text-center text-red-400 font-bold py-10">載入失敗</p>`; }
+  }
+
+  window.filterCrmList = function() { const s = document.getElementById('crm-search-input'); const term = s ? s.value.toLowerCase() : ''; filteredCrmData = globalCrmData.filter(u => u.name.toLowerCase().includes(term)); currentCrmViewCount = crmPageLimit; renderCrmList(); }
+  window.loadMoreCrm = function() { currentCrmViewCount += crmPageLimit; renderCrmList(); }
+
+  function renderCrmList() {
+    const list = document.getElementById('admin-crm-list-container'); const moreBtnBox = document.getElementById('crm-load-more-box');
+    if(!list) return;
+    if(!filteredCrmData.length) { if(moreBtnBox) moreBtnBox.classList.add('hidden'); list.innerHTML = `<div class="text-center text-slate-400 py-16 text-[14px]">查無會員</div>`; return; }
+    const displayItems = filteredCrmData.slice(0, currentCrmViewCount);
+    let html = '';
+    displayItems.forEach((r, i) => {
+      html += `
+      <div class="px-5 py-4 flex justify-between items-center border-b border-slate-50 last:border-b-0 active:bg-slate-50 transition-colors"><div class="flex items-center gap-4"><span class="text-[13px] text-slate-400 font-bold w-6 text-center">${i + 1}</span><div class="flex flex-col"><span class="text-[16px] text-slate-800 font-bold">${r.name}</span><span class="text-[11px] text-slate-400 uppercase tracking-tight">VIP Member</span></div></div><div class="flex flex-col items-end"><span class="text-[16px] font-black text-primary">${r.attended} <span class="text-[12px] font-medium text-slate-500">次</span></span><span class="text-[10px] text-slate-400 font-bold uppercase mt-0.5">出席總計</span></div></div>`;
+    });
+    list.innerHTML = html;
+    if(moreBtnBox) { if (filteredCrmData.length > currentCrmViewCount) moreBtnBox.classList.remove('hidden'); else moreBtnBox.classList.add('hidden'); }
+  }
+
+  async function loadAdminSettings() { const s = await fetchAPI('getSettings'); const t1 = document.getElementById('set-tg-token'); if(t1) t1.value = s.TG_BOT_TOKEN || ''; const t2 = document.getElementById('set-tg-chat'); if(t2) t2.value = s.TG_CHAT_ID || ''; const l = document.getElementById('set-line-link'); if(l) l.value = s.LINE_LINK || ''; }
+  window.autoFetchTgChatId = async function() { const t1 = document.getElementById('set-tg-token'); if(!t1) return; const token = t1.value; if(!token) return; const t2 = document.getElementById('set-tg-chat'); if(t2) { t2.value = "獲取中..."; try { t2.value = await fetchAPI('getTgChatId', { token }); } catch(e) { t2.value = ""; } } }
+  
+  window.submitSettings = async function() { 
+    if(isProcessing) return; isProcessing = true; setButtonLoading('btn-submit-settings', true);
+    const getVal = (id) => document.getElementById(id)?.value || '';
+    try { await fetchAPI('saveSettings', { TG_BOT_TOKEN: getVal('set-tg-token'), TG_CHAT_ID: getVal('set-tg-chat'), LINE_LINK: getVal('set-line-link') }); } catch(e) {} finally { isProcessing = false; setButtonLoading('btn-submit-settings', false, '儲存設定'); }
   }
 </script>
 </body>

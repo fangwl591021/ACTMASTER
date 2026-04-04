@@ -1,7 +1,7 @@
 /**
  * card-ecard.js
- * 數位電子名片 (ECard) 專用模組 - QQ修復版 (究極防呆保護，解決 Null 崩潰)
- * Version: v1.8.2
+ * 數位電子名片 (ECard) 專用模組 - QQ修復版 (全面加入 DOM 防呆保護，解決 null 崩潰問題)
+ * Version: v1.9.1
  */
 
 window.toggleECardType = function(type) {
@@ -41,6 +41,8 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
     if (!rawImg || typeof rawImg !== 'string' || !rawImg.startsWith('http') || rawImg === '無圖檔' || rawImg === '圖片儲存失敗') {
         rawImg = 'https://images.unsplash.com/photo-1616628188550-808682f3926d?w=800&q=80'; 
     }
+    
+    // ⭐ 防呆保護：若 window 尚未載入 getDirectImageUrl (可能是舊版快取)，就直接用原本的網址，防止 TypeError 崩潰
     imgUrl = typeof window.getDirectImageUrl === 'function' ? window.getDirectImageUrl(rawImg) : rawImg;
     
     const myLiffId = (typeof LIFF_ID !== 'undefined') ? LIFF_ID : '2009367829-DLtYBDUm';
@@ -68,35 +70,8 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
         if (defaultDesc === 'Not provided' || defaultDesc === '未提供') defaultDesc = '';
         desc = defaultDesc || '歡迎點擊下方按鈕與我聯繫';
   
-        // ⭐ QQ 修復：還原自動填入個資按鈕的機制 (您需要的重新讀取寫入功能)
+        // ⭐ QQ 隱私鐵律：絕對禁止預設將電話/信箱/地址加入對外名片，按鈕必須預設為空！
         buttons = [];
-        let p1 = card['手機號碼'] || card['Mobile'];
-        if (p1) {
-            let phone = String(p1).split(',')[0].replace(/[^\d+]/g, '');
-            if (phone.startsWith('886')) phone = '0' + phone.substring(3);
-            if (phone) buttons.push({ l: '撥打手機', u: `tel:${phone}`, c: '#06C755' });
-        }
-        let p2 = card['公司電話'] || card['Tel'];
-        if (p2) {
-            let tel = String(p2).split(',')[0].replace(/[^\d+]/g, '');
-            if (tel.startsWith('886')) tel = '0' + tel.substring(3);
-            if (tel) buttons.push({ l: '撥打電話', u: `tel:${tel}`, c: '#06C755' });
-        }
-        let p3 = card['電子郵件'] || card['Email'];
-        if (p3) {
-            let email = String(p3).split(/[\s,]+/)[0];
-            if (email.includes('@')) buttons.push({ l: '發送信箱', u: `mailto:${email}`, c: '#06C755' });
-        }
-        let p4 = card['公司地址'] || card['Address'];
-        if (p4) {
-            buttons.push({ l: 'Google 導航', u: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p4.split(',')[0])}`, c: '#06C755' });
-        }
-        let p5 = card['公司網址'] || card['Website'];
-        if (p5 && buttons.length < 4) {
-            let wUrl = String(p5).trim();
-            if (wUrl && !wUrl.startsWith('http')) wUrl = 'https://' + wUrl;
-            if (wUrl) buttons.push({ l: '公司網站', u: wUrl, c: '#06C755' });
-        }
     }
   
     const validSizes = ['nano', 'micro', 'kilo', 'mega', 'giga'];
@@ -192,99 +167,106 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
 }
   
 window.openECardGenerator = function() {
-    if (typeof currentActiveCard === 'undefined' || !currentActiveCard) return;
-    const c = currentActiveCard;
-  
-    // ⭐ 防呆保護：若 HTML 缺失標籤，絕對不會報錯中斷
     try {
-        if (typeof userProfile !== 'undefined' && userProfile && userProfile.pictureUrl) {
-            const avatarImg = document.getElementById('preview-user-avatar');
-            if (avatarImg) {
-                avatarImg.src = userProfile.pictureUrl;
-                avatarImg.classList.remove('hidden');
+        if (typeof currentActiveCard === 'undefined' || !currentActiveCard) return;
+        const c = currentActiveCard;
+      
+        // ⭐ 防呆保護：若 HTML 缺失標籤，絕對不會報錯中斷
+        try {
+            if (typeof userProfile !== 'undefined' && userProfile && userProfile.pictureUrl) {
+                const avatarImg = document.getElementById('preview-user-avatar');
+                if (avatarImg) {
+                    avatarImg.src = userProfile.pictureUrl;
+                    avatarImg.classList.remove('hidden');
+                }
+                const fallback = document.querySelector('.avatar-fallback');
+                if (fallback) fallback.classList.add('hidden');
             }
-            const fallback = document.querySelector('.avatar-fallback');
-            if (fallback) fallback.classList.add('hidden');
+        } catch(e) {}
+      
+        let savedConfig = null;
+        if (c['自訂名片設定']) { try { savedConfig = JSON.parse(c['自訂名片設定']); } catch(e){} }
+      
+        const myLiffId = (typeof LIFF_ID !== 'undefined') ? LIFF_ID : '2009367829-DLtYBDUm';
+
+        // 封裝安全賦值函數
+        const safeSetValue = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.value = val;
+        };
+
+        if (savedConfig) {
+          if (savedConfig.title) savedConfig.title = savedConfig.title.replace(/Not provided/gi, '').replace(/未提供/g, '').trim();
+          if (savedConfig.desc) savedConfig.desc = savedConfig.desc.replace(/Not provided/gi, '').replace(/未提供/g, '').trim();
+          
+          if (!savedConfig.title) {
+              let cName = c['公司名稱'] && c['公司名稱'] !== 'Not provided' ? c['公司名稱'] : '';
+              let uName = c['姓名'] && c['姓名'] !== 'Not provided' ? c['姓名'] : '';
+              savedConfig.title = [cName, uName].filter(Boolean).join(' - ') || c['Name'] || '商務名片';
+          }
+
+          safeSetValue('ec-card-type', savedConfig.cardType || 'image');
+          safeSetValue('ec-video-url', savedConfig.videoUrl || '');
+          safeSetValue('ec-img-input', savedConfig.imgUrl || '');
+          safeSetValue('ec-img-action-url', savedConfig.imgActionUrl || `https://liff.line.me/${myLiffId}`);
+          safeSetValue('ec-img-size', savedConfig.imgSize || 'mega');
+          safeSetValue('ec-aspect-ratio', savedConfig.ar || 'auto');
+          safeSetValue('ec-title-align', savedConfig.titleAlign || 'center');
+          safeSetValue('ec-title-input', savedConfig.title || '');
+          safeSetValue('ec-desc-input', savedConfig.desc || '');
+      
+          // 防呆保護：若舊資料庫沒有 buttons 屬性，給予空陣列
+          const sBtns = savedConfig.buttons || [];
+          for(let i=1; i<=4; i++) {
+            const btn = sBtns[i-1];
+            safeSetValue(`ec-btn${i}-label`, btn ? btn.l : '');
+            safeSetValue(`ec-btn${i}-url`, btn ? btn.u : '');
+            safeSetValue(`ec-btn${i}-color`, btn && btn.c ? btn.c : '#06C755');
+          }
+        } else {
+          const defaultFlex = window.buildFlexMessageFromCard(c, null);
+          
+          safeSetValue('ec-card-type', 'image');
+          safeSetValue('ec-video-url', '');
+          safeSetValue('ec-img-input', defaultFlex.hero.url || '');
+          safeSetValue('ec-img-action-url', `https://liff.line.me/${myLiffId}`);
+          safeSetValue('ec-img-size', defaultFlex.size);
+          safeSetValue('ec-aspect-ratio', 'auto');
+          safeSetValue('ec-title-align', 'center');
+          
+          let defaultTitle = '';
+          let defaultDesc = '';
+          if (defaultFlex.body && defaultFlex.body.contents && defaultFlex.body.contents[0] && defaultFlex.body.contents[0].contents) {
+              defaultTitle = defaultFlex.body.contents[0].contents[0] ? defaultFlex.body.contents[0].contents[0].text : '';
+              defaultDesc = defaultFlex.body.contents[0].contents[1] ? defaultFlex.body.contents[0].contents[1].text : '';
+          }
+          
+          safeSetValue('ec-title-input', defaultTitle);
+          safeSetValue('ec-desc-input', defaultDesc);
+          
+          let defaultBtns = defaultFlex.footer && defaultFlex.footer.contents ? defaultFlex.footer.contents : [];
+          for(let i=1; i<=4; i++) {
+            const btn = defaultBtns[i-1];
+            safeSetValue(`ec-btn${i}-label`, btn ? btn.action.label : '');
+            safeSetValue(`ec-btn${i}-url`, btn ? btn.action.uri : '');
+            safeSetValue(`ec-btn${i}-color`, btn ? btn.color : '#06C755');
+          }
         }
-    } catch(e) {}
-  
-    let savedConfig = null;
-    if (c['自訂名片設定']) { try { savedConfig = JSON.parse(c['自訂名片設定']); } catch(e){} }
-  
-    const myLiffId = (typeof LIFF_ID !== 'undefined') ? LIFF_ID : '2009367829-DLtYBDUm';
-
-    // 封裝安全賦值函數
-    const safeSetValue = (id, val) => {
-        const el = document.getElementById(id);
-        if (el) el.value = val;
-    };
-
-    if (savedConfig) {
-      if (savedConfig.title) savedConfig.title = savedConfig.title.replace(/Not provided/gi, '').replace(/未提供/g, '').trim();
-      if (savedConfig.desc) savedConfig.desc = savedConfig.desc.replace(/Not provided/gi, '').replace(/未提供/g, '').trim();
-      
-      if (!savedConfig.title) {
-          let cName = c['公司名稱'] && c['公司名稱'] !== 'Not provided' ? c['公司名稱'] : '';
-          let uName = c['姓名'] && c['姓名'] !== 'Not provided' ? c['姓名'] : '';
-          savedConfig.title = [cName, uName].filter(Boolean).join(' - ') || c['Name'] || '商務名片';
-      }
-
-      safeSetValue('ec-card-type', savedConfig.cardType || 'image');
-      safeSetValue('ec-video-url', savedConfig.videoUrl || '');
-      safeSetValue('ec-img-input', savedConfig.imgUrl || '');
-      safeSetValue('ec-img-action-url', savedConfig.imgActionUrl || `https://liff.line.me/${myLiffId}`);
-      safeSetValue('ec-img-size', savedConfig.imgSize || 'mega');
-      safeSetValue('ec-aspect-ratio', savedConfig.ar || 'auto');
-      safeSetValue('ec-title-align', savedConfig.titleAlign || 'center');
-      safeSetValue('ec-title-input', savedConfig.title || '');
-      safeSetValue('ec-desc-input', savedConfig.desc || '');
-  
-      // 防呆保護：若舊資料庫沒有 buttons 屬性，給予空陣列
-      const sBtns = savedConfig.buttons || [];
-      for(let i=1; i<=4; i++) {
-        const btn = sBtns[i-1];
-        safeSetValue(`ec-btn${i}-label`, btn ? btn.l : '');
-        safeSetValue(`ec-btn${i}-url`, btn ? btn.u : '');
-        safeSetValue(`ec-btn${i}-color`, btn && btn.c ? btn.c : '#06C755');
-      }
-    } else {
-      const defaultFlex = window.buildFlexMessageFromCard(c, null);
-      
-      safeSetValue('ec-card-type', 'image');
-      safeSetValue('ec-video-url', '');
-      safeSetValue('ec-img-input', defaultFlex.hero.url || '');
-      safeSetValue('ec-img-action-url', `https://liff.line.me/${myLiffId}`);
-      safeSetValue('ec-img-size', defaultFlex.size);
-      safeSetValue('ec-aspect-ratio', 'auto');
-      safeSetValue('ec-title-align', 'center');
-      
-      let defaultTitle = '';
-      let defaultDesc = '';
-      if (defaultFlex.body && defaultFlex.body.contents && defaultFlex.body.contents[0] && defaultFlex.body.contents[0].contents) {
-          defaultTitle = defaultFlex.body.contents[0].contents[0] ? defaultFlex.body.contents[0].contents[0].text : '';
-          defaultDesc = defaultFlex.body.contents[0].contents[1] ? defaultFlex.body.contents[0].contents[1].text : '';
-      }
-      
-      safeSetValue('ec-title-input', defaultTitle);
-      safeSetValue('ec-desc-input', defaultDesc);
-      
-      let defaultBtns = defaultFlex.footer && defaultFlex.footer.contents ? defaultFlex.footer.contents : [];
-      for(let i=1; i<=4; i++) {
-        const btn = defaultBtns[i-1];
-        safeSetValue(`ec-btn${i}-label`, btn ? btn.action.label : '');
-        safeSetValue(`ec-btn${i}-url`, btn ? btn.action.uri : '');
-        safeSetValue(`ec-btn${i}-color`, btn ? btn.color : '#06C755');
-      }
+        
+        const cardTypeEl = document.getElementById('ec-card-type');
+        window.toggleECardType(cardTypeEl ? cardTypeEl.value : 'image');
+        
+        const previewImg = document.getElementById('preview-ec-img');
+        if (previewImg) previewImg.removeAttribute('data-current-src');
+        
+        const modalEl = document.getElementById('ecard-generator-modal');
+        if (modalEl) modalEl.classList.remove('hidden');
+        
+    } catch (err) {
+        // ⭐ QQ 終極保護：若還是因為某些奇怪的 HTML 結構遺失而報錯，至少讓您能看到警告，不會「沒反應」
+        alert("開啟編輯器時發生系統異常：" + err.message);
+        console.error(err);
     }
-    
-    const cardTypeEl = document.getElementById('ec-card-type');
-    window.toggleECardType(cardTypeEl ? cardTypeEl.value : 'image');
-    
-    const previewImg = document.getElementById('preview-ec-img');
-    if (previewImg) previewImg.removeAttribute('data-current-src');
-    
-    const modalEl = document.getElementById('ecard-generator-modal');
-    if (modalEl) modalEl.classList.remove('hidden');
 }
   
 window.closeECardGenerator = function() { 
@@ -311,6 +293,8 @@ window.updateECardPreview = function() {
             rawUrl = 'https://images.unsplash.com/photo-1616628188550-808682f3926d?w=800&q=80';
         }
     }
+    
+    // ⭐ 防呆保護：若 getDirectImageUrl 不存在，直接使用 rawUrl
     let imgUrl = typeof window.getDirectImageUrl === 'function' ? window.getDirectImageUrl(rawUrl) : rawUrl;
     
     const heroEl = document.getElementById('preview-ec-hero');

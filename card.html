@@ -75,7 +75,7 @@
       <div class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shadow-sm">
         <span class="material-symbols-outlined text-[20px]">contact_mail</span>
       </div>
-      名片管理 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v5.2.2</span>
+      名片管理 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v5.3.0</span>
     </div>
     <div class="flex items-center gap-3">
       <div id="user-profile-badge" class="hidden flex items-center gap-2">
@@ -351,7 +351,7 @@
                 <div class="flex flex-col">
                   <label class="input-label">畫面比例</label>
                   <div class="relative w-full">
-                    <select id="ec-aspect-ratio" class="custom-input appearance-none px-4" onchange="updateECardPreview()"><option value="auto" selected>自動偵測</option><option value="20:13">20:13 (標準)</option><option value="1:1">1:1 (正方)</option><option value="16:9">16:9 (橫向)</option><option value="9:16">9:16 (短影音)</option></select>
+                    <select id="ec-aspect-ratio" class="custom-input appearance-none px-4" onchange="updateECardPreview()"><option value="auto" selected>自動偵測</option><option value="20:13">20:13 (標準)</option><option value="1:1">1:1 (正方)</option><option value="16:9">16:9 (橫向)</option><option value="9:16">9:16 (直向滿版)</option></select>
                     <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">expand_more</span>
                   </div>
                 </div>
@@ -401,18 +401,20 @@
                       </div>
                       <div class="flex flex-col gap-1.5 max-w-[88%] w-full">
                           <div class="bg-white px-3.5 py-2 rounded-2xl rounded-tl-sm text-[13px] text-slate-800 shadow-sm w-fit font-medium">為您準備的數位名片！</div>
-                          <div class="flex-preview-bubble flex flex-col mt-1 shadow-md" id="preview-ec-bubble">
-                              <div class="w-full flex justify-end p-2 bg-white pb-1 border-b border-slate-50"><div class="bg-red-500 text-white text-[10px] font-bold w-[65px] h-[25px] flex items-center justify-center rounded-full shadow-sm tracking-widest">分享</div></div>
+                          
+                          <!-- ⭐ QQ原生滿版預覽泡泡 -->
+                          <div class="flex-preview-bubble flex flex-col mt-1 shadow-md border-0" id="preview-ec-bubble">
                               <div id="preview-ec-hero" class="relative w-full overflow-hidden bg-slate-100 shrink-0 flex items-center justify-center">
                                   <img id="preview-ec-img" src="" class="absolute inset-0 w-full h-full object-cover z-0 hidden">
                                   <video id="preview-ec-video" muted loop playsinline class="absolute inset-0 w-full h-full object-cover z-10 hidden"></video>
                                   <div id="preview-ec-play-icon" class="absolute inset-0 z-20 flex items-center justify-center text-white/80 hidden pointer-events-none"><span class="material-symbols-outlined text-[48px] drop-shadow-md">play_circle</span></div>
                               </div>
-                              <div class="p-4 text-center bg-white relative">
-                                  <h2 id="preview-ec-title" class="text-[18px] font-black text-slate-800 leading-snug mb-1.5"></h2>
+                              <div class="p-5 text-center bg-white relative">
+                                  <div class="absolute top-4 right-4 bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-sm tracking-widest">分享</div>
+                                  <h2 id="preview-ec-title" class="text-[19px] font-black text-slate-800 leading-snug mb-1.5 pr-12"></h2>
                                   <p id="preview-ec-desc" class="text-[13px] text-slate-500 whitespace-pre-wrap leading-relaxed text-left font-medium"></p>
                               </div>
-                              <div id="preview-ec-buttons" class="p-4 pt-0 bg-white space-y-2"></div>
+                              <div id="preview-ec-buttons" class="px-5 pb-5 pt-0 bg-white space-y-2"></div>
                           </div>
                       </div>
                   </div>
@@ -472,8 +474,8 @@
 <div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-bold flex items-center gap-2 w-max max-w-[90vw] bg-slate-800 text-white opacity-0 pointer-events-none"></div>
 
 <!-- 嚴格載入外部拆分的獨立檔案，加上版本號強制破除快取 -->
-<script src="card.js?v=VOOM_Fix2"></script>
-<script src="card-ecard.js?v=VOOM_Fix2"></script>
+<script src="card.js?v=VOOM_FullWidth"></script>
+<script src="card-ecard.js?v=VOOM_FullWidth"></script>
 
 </body>
 </html>

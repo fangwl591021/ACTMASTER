@@ -10,7 +10,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   
-  <script src="liff-share.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
@@ -87,7 +86,7 @@
       <div id="user-profile-badge" class="hidden flex items-center gap-2">
         <img id="user-avatar" src="" class="w-9 h-9 rounded-full object-cover border border-slate-200 shadow-sm">
       </div>
-      <button id="role-switch-btn" onclick="window.location.href='index.html'" class="w-9 h-9 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center active:scale-95 transition-all hover:bg-slate-200">
+      <button id="role-switch-btn" onclick="window.location.href='index.html'" class="hidden w-9 h-9 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center active:scale-95 transition-all hover:bg-slate-200">
         <span class="material-symbols-outlined text-[20px]">swap_horiz</span>
       </button>
     </div>
@@ -204,7 +203,8 @@
     </div>
   </main>
 
-  <nav id="bottom-nav-admin" class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-evenly items-center px-1 py-2 z-40 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.03)] left-1/2 -translate-x-1/2 h-[72px]">
+  <!-- ⭐ QQ 防呆護盾：強制預設為 hidden，非管理員絕對看不到 -->
+  <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-evenly items-center px-1 py-2 z-40 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.03)] left-1/2 -translate-x-1/2 h-[72px]">
     <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">fact_check</span></div><span class="text-[10px] font-bold tracking-wide mt-1">核銷</span></button>
     <button onclick="window.location.href='active.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">add_circle</span></div><span class="text-[10px] font-bold tracking-wide mt-1">建立</span></button>
     <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">groups</span></div><span class="text-[10px] font-bold tracking-wide mt-1">CRM</span></button>
@@ -237,27 +237,25 @@
         <p id="ro-title" class="text-[15px] font-medium text-slate-500">職稱 / 部門</p>
       </div>
       
-      <div class="bg-slate-50 rounded-2xl p-5 space-y-4">
-        <div class="flex items-center gap-4"><span class="material-symbols-outlined text-slate-400 text-[20px]">apartment</span><span id="ro-company" class="text-slate-800 text-[15px] font-medium"></span></div>
-        <div class="flex items-center gap-4"><span class="material-symbols-outlined text-slate-400 text-[20px]">tag</span><span id="ro-taxid" class="text-slate-800 text-[15px] font-medium"></span></div>
-        <div class="flex items-center gap-4"><span class="material-symbols-outlined text-slate-400 text-[20px]">smartphone</span><a href="" id="ro-mobile-link" class="text-blue-600 font-bold text-[15px]"></a></div>
-        <div class="flex items-center gap-4"><span class="material-symbols-outlined text-slate-400 text-[20px]">call</span><span id="ro-tel" class="text-slate-800 text-[15px] font-medium"></span></div>
-        <div class="flex items-center gap-4"><span class="material-symbols-outlined text-slate-400 text-[20px]">email</span><a href="" id="ro-email-link" class="text-blue-600 font-bold text-[15px] truncate"></a></div>
-        <div class="flex items-start gap-4"><span class="material-symbols-outlined text-slate-400 text-[20px] mt-0.5">location_on</span><span id="ro-address" class="text-slate-800 text-[15px] font-medium leading-snug"></span></div>
+      <div class="flex flex-col gap-4 text-slate-700 font-medium">
+        <div class="flex items-center gap-4"><span class="material-symbols-outlined text-slate-400">apartment</span><span id="ro-company"></span></div>
+        <div class="flex items-center gap-4"><span class="material-symbols-outlined text-slate-400">tag</span><span id="ro-taxid"></span></div>
+        <div class="flex items-center gap-4"><span class="material-symbols-outlined text-slate-400">smartphone</span><a href="" id="ro-mobile-link" class="text-blue-600"></a></div>
+        <div class="flex items-center gap-4"><span class="material-symbols-outlined text-slate-400">call</span><span id="ro-tel"></span></div>
+        <div class="flex items-center gap-4"><span class="material-symbols-outlined text-slate-400">email</span><a href="" id="ro-email-link" class="text-blue-600 truncate"></a></div>
+        <div class="flex items-start gap-4"><span class="material-symbols-outlined text-slate-400">location_on</span><span id="ro-address" class="leading-snug"></span></div>
       </div>
-      
-      <div id="ro-fate-tags-container" style="display:none;"></div>
 
       <div id="ro-notes-container">
         <h3 class="text-[14px] font-bold text-slate-400 uppercase tracking-widest mb-3">備註與其他</h3>
-        <p id="ro-notes" class="text-[15px] text-slate-700 leading-relaxed whitespace-pre-wrap break-all font-medium"></p>
+        <p id="ro-notes" class="text-[15px] text-slate-700 whitespace-pre-wrap leading-relaxed"></p>
       </div>
     </div>
   </div>
 
   <div class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-100 p-4 pb-safe flex gap-3 z-[1005] shadow-[0_-10px_30px_rgba(0,0,0,0.05)] shrink-0">
-    <button id="btn-share-claim" onclick="shareClaimLink()" class="flex-1 py-3.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-[16px] shadow-sm active:scale-95 transition-all">邀請認領</button>
-    <button onclick="if(typeof openECardGenerator === 'function') openECardGenerator(); else alert('⚠️ 編輯器模組載入失敗！\n您的瀏覽器可能快取了舊檔案，請在網址列後方加上 ?v=999 強制重新整理。');" class="flex-1 py-3.5 bg-[#06C755] text-white rounded-xl font-bold text-[16px] shadow-md shadow-green-500/30 active:scale-95 transition-all">產生數位名片</button>
+    <button id="btn-share-claim" onclick="shareClaimLink()" class="hidden flex-1 py-3.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-[16px] shadow-sm active:scale-95 transition-all">邀請認領</button>
+    <button onclick="if(typeof openECardGenerator === 'function') openECardGenerator(); else alert('請重新整理頁面');" class="flex-1 py-3.5 bg-[#06C755] text-white rounded-xl font-bold text-[16px] shadow-md shadow-green-500/30 active:scale-95 transition-all">編輯並轉發數位名片</button>
   </div>
 </div>
 
@@ -268,27 +266,12 @@
     <button onclick="closeCardEdit()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-90 transition-transform"><span class="material-symbols-outlined">close</span></button>
   </div>
   <div class="flex-1 overflow-y-auto px-5 py-6 space-y-6 pb-28">
-    <div class="grid grid-cols-2 gap-4">
-      <div class="flex flex-col"><label class="input-label">姓名</label><input type="text" id="edit-c-Name" class="custom-input"></div>
-      <div class="flex flex-col"><label class="input-label">英文名</label><input type="text" id="edit-c-EnglishName" class="custom-input"></div>
-    </div>
-    <div class="grid grid-cols-2 gap-4">
-      <div class="flex flex-col"><label class="input-label">職稱</label><input type="text" id="edit-c-Title" class="custom-input"></div>
-      <div class="flex flex-col"><label class="input-label">部門</label><input type="text" id="edit-c-Department" class="custom-input"></div>
-    </div>
+    <div class="grid grid-cols-2 gap-4"><div class="flex flex-col"><label class="input-label">姓名</label><input type="text" id="edit-c-Name" class="custom-input"></div><div class="flex flex-col"><label class="input-label">英文名</label><input type="text" id="edit-c-EnglishName" class="custom-input"></div></div>
+    <div class="grid grid-cols-2 gap-4"><div class="flex flex-col"><label class="input-label">職稱</label><input type="text" id="edit-c-Title" class="custom-input"></div><div class="flex flex-col"><label class="input-label">部門</label><input type="text" id="edit-c-Department" class="custom-input"></div></div>
     <div class="flex flex-col"><label class="input-label">公司名稱</label><input type="text" id="edit-c-CompanyName" class="custom-input"></div>
-    <div class="grid grid-cols-2 gap-4">
-      <div class="flex flex-col"><label class="input-label">統一編號</label><input type="text" id="edit-c-TaxID" class="custom-input"></div>
-      <div class="flex flex-col"><label class="input-label">手機號碼</label><input type="tel" id="edit-c-Mobile" class="custom-input"></div>
-    </div>
-    <div class="grid grid-cols-2 gap-4">
-      <div class="flex flex-col"><label class="input-label">公司電話</label><input type="text" id="edit-c-Tel" class="custom-input"></div>
-      <div class="flex flex-col"><label class="input-label">分機</label><input type="text" id="edit-c-Ext" class="custom-input"></div>
-    </div>
-    <div class="grid grid-cols-2 gap-4">
-      <div class="flex flex-col"><label class="input-label">電子信箱</label><input type="email" id="edit-c-Email" class="custom-input"></div>
-      <div class="flex flex-col"><label class="input-label">傳真</label><input type="text" id="edit-c-Fax" class="custom-input"></div>
-    </div>
+    <div class="grid grid-cols-2 gap-4"><div class="flex flex-col"><label class="input-label">統一編號</label><input type="text" id="edit-c-TaxID" class="custom-input"></div><div class="flex flex-col"><label class="input-label">手機號碼</label><input type="tel" id="edit-c-Mobile" class="custom-input"></div></div>
+    <div class="grid grid-cols-2 gap-4"><div class="flex flex-col"><label class="input-label">公司電話</label><input type="text" id="edit-c-Tel" class="custom-input"></div><div class="flex flex-col"><label class="input-label">分機</label><input type="text" id="edit-c-Ext" class="custom-input"></div></div>
+    <div class="grid grid-cols-2 gap-4"><div class="flex flex-col"><label class="input-label">電子信箱</label><input type="email" id="edit-c-Email" class="custom-input"></div><div class="flex flex-col"><label class="input-label">傳真</label><input type="text" id="edit-c-Fax" class="custom-input"></div></div>
     
     <div class="grid grid-cols-2 gap-4">
       <div class="flex flex-col"><label class="input-label text-primary">生日 (觸發深度命理)</label><input type="date" id="edit-c-Birthday" class="custom-input !text-[13px] border border-primary/20 bg-blue-50/30"></div>
@@ -305,232 +288,74 @@
   </div>
 </div>
 
-<!-- 數位電子名片產生器 (ECard 原版完整雙欄 UI 復原) -->
-<div id="ecard-generator-modal" class="hidden fixed inset-0 bg-slate-50 flex flex-col animate-in fade-in duration-300 w-full z-[1020] overflow-hidden">
+<!-- 數位電子名片產生器 -->
+<div id="ecard-generator-modal" class="hidden fixed inset-0 bg-slate-50 flex flex-col animate-in fade-in duration-300 w-full z-[1020] overflow-hidden max-w-md mx-auto">
   <div class="bg-white px-5 py-4 border-b border-slate-100 flex justify-between items-center shadow-sm shrink-0 w-full z-20">
     <div class="flex items-center gap-3">
       <button onclick="closeECardGenerator()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-90 transition-transform"><span class="material-symbols-outlined">close</span></button>
       <div class="flex flex-col">
-        <h3 class="text-[17px] font-extrabold text-slate-800 tracking-tight leading-tight">數位名片編輯器</h3>
-        <p class="text-[11px] text-slate-400 font-bold tracking-widest mt-0.5">PREVIEW & PUBLISH</p>
+        <h3 class="text-[17px] font-extrabold text-slate-800 tracking-tight leading-tight">數位名片排版</h3>
       </div>
     </div>
-    <button onclick="saveECardConfig()" id="btn-save-ecard" class="px-4 py-2 bg-blue-50 text-blue-700 text-[13px] font-bold rounded-lg active:scale-95 transition-transform">
-      儲存草稿
-    </button>
+    <button onclick="saveECardConfig()" id="btn-save-ecard" class="px-4 py-2 bg-blue-50 text-blue-700 text-[13px] font-bold rounded-lg active:scale-95 transition-transform">儲存版型</button>
   </div>
 
-  <div class="flex-1 overflow-y-auto w-full bg-slate-50 lg:bg-white">
-    <div class="container mx-auto max-w-6xl h-full">
-      <div class="grid grid-cols-1 lg:grid-cols-5 gap-0 lg:gap-8 h-full">
-        
-        <div class="lg:col-span-3">
-          <div class="bg-white px-5 py-6">
-            
-            <div id="ec-editor-form" class="space-y-6">
-
-              <div class="flex p-1.5 rounded-xl bg-slate-100 mb-6">
-                <button id="ec-tab-image" onclick="toggleECardType('image')" class="flex-1 py-2 rounded-lg text-[14px] font-bold bg-white text-slate-800 shadow-sm transition-all">靜態圖片</button>
-                <button id="ec-tab-video" onclick="toggleECardType('video')" class="flex-1 py-2 rounded-lg text-[14px] font-bold text-slate-400 transition-all hover:text-slate-600 bg-transparent">動態影片</button>
-              </div>
-              <input type="hidden" id="ec-card-type" value="image">
-
-              <div id="ec-video-input-group" class="hidden w-full mb-6 pb-6 border-b border-slate-100">
-                <label class="input-label">影片網址</label>
-                <input type="url" id="ec-video-url" class="custom-input !text-blue-600" placeholder="https://..." oninput="updateECardPreview()">
-                <p class="text-[12px] text-slate-400 mt-2 font-medium">※ 支援 LINE VOOM 連結及 MP4 格式。</p>
-              </div>
-              
-              <div class="w-full">
-                <div class="flex justify-between items-center mb-2">
-                  <label class="input-label !mb-0 flex items-center" id="ec-upload-label">點擊更換封面圖 <span class="ml-2 px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-[10px] font-bold">選填</span></label>
-                  <div class="relative inline-block">
-                    <select id="ec-img-size" class="appearance-none !bg-transparent text-blue-600 font-bold text-[14px] pr-5 outline-none border-none cursor-pointer" onchange="updateECardPreview()">
-                      <option value="mega" selected>Mega 滿版</option>
-                      <option value="giga">Giga 超大版</option>
-                    </select>
-                    <span class="material-symbols-outlined absolute right-0 top-1/2 -translate-y-1/2 text-blue-600 pointer-events-none text-[18px]">expand_more</span>
-                  </div>
-                </div>
-                <p class="text-[12px] text-slate-400 mb-3 font-medium" id="ec-upload-hint">※ 若未上傳，系統將智能代入名片圖檔作為底圖。</p>
-                <div class="w-full relative">
-                    <div id="ec-upload-trigger" onclick="document.getElementById('ec-upload-input').click()" class="w-full h-40 rounded-2xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-colors hover:bg-slate-100 group relative">
-                        <div class="text-center text-slate-400 flex flex-col items-center z-10" id="ec-upload-placeholder">
-                            <span class="material-symbols-outlined text-[32px] mb-2 text-slate-300">add_photo_alternate</span>
-                            <p class="text-[13px] font-bold">點圖更換</p>
-                        </div>
-                        <img id="ec-img-preview-box" class="absolute inset-0 w-full h-full object-cover hidden z-0">
-                        <div id="ec-upload-badge" class="hidden absolute bottom-3 right-3 bg-black/60 text-white text-[11px] px-2.5 py-1 rounded-md backdrop-blur-md z-10 font-bold flex items-center gap-1 shadow-sm">
-                            <span class="material-symbols-outlined text-[14px]">edit</span> 更換
-                        </div>
-                    </div>
-                    <input type="text" id="ec-img-input" class="custom-input mt-3 hidden" placeholder="或貼上圖片網址 https://..." oninput="updateECardPreview()">
-                    <input type="file" id="ec-upload-input" accept="image/*" class="hidden" onchange="handleECardImageUpload(this)">
-                </div>
-              </div>
-              
-              <div class="grid grid-cols-2 gap-4">
-                <div class="flex flex-col">
-                  <label class="input-label">畫面比例</label>
-                  <div class="relative w-full">
-                    <select id="ec-aspect-ratio" class="custom-input appearance-none px-4" onchange="updateECardPreview()">
-                      <option value="auto" selected>自動偵測</option>
-                      <option value="20:13">20:13 (標準)</option>
-                      <option value="1:1">1:1 (正方)</option>
-                      <option value="16:9">16:9 (橫向)</option>
-                      <option value="9:16">9:16 (短影音)</option>
-                    </select>
-                    <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">expand_more</span>
-                  </div>
-                </div>
-                <div class="flex flex-col">
-                  <label class="input-label">標題對齊</label>
-                  <div class="relative w-full">
-                    <select id="ec-title-align" class="custom-input appearance-none px-4" onchange="updateECardPreview()">
-                      <option value="start">靠左</option>
-                      <option value="center" selected>置中</option>
-                      <option value="end">靠右</option>
-                    </select>
-                    <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">expand_more</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="w-full">
-                <label class="input-label">主標題</label>
-                <input type="text" id="ec-title-input" class="custom-input font-bold text-slate-800" placeholder="輸入主標題..." oninput="updateECardPreview()">
-              </div>
-              
-              <div class="w-full">
-                <label class="input-label">內容描述文案</label>
-                <textarea id="ec-desc-input" class="textarea-block h-28" placeholder="輸入描述或介紹..." oninput="updateECardPreview()"></textarea>
-              </div>
-
-              <div class="w-full" id="ec-action-url-group">
-                <label class="input-label">點圖預設連結 <span class="text-slate-400 text-[11px] ml-1 font-normal">(點擊圖片大圖的跳轉網址)</span></label>
-                <input type="text" id="ec-img-action-url" class="custom-input !text-blue-600" value="https://liff.line.me/2009367829-DLtYBDUm" oninput="updateECardPreview()">
-              </div>
-
-              <div class="w-full pt-8 border-t border-slate-200">
-                <label class="input-label mb-4 text-slate-800 flex justify-between items-end">
-                  動作按鈕配置 
-                  <span class="text-slate-400 text-[11px] font-normal">(選填，最多 4 個)</span>
-                </label>
-                
-                <div class="space-y-3">
-                  <div class="flex items-center gap-3 bg-slate-50 p-2.5 rounded-2xl">
-                    <input type="color" id="ec-btn1-color" value="#06C755" class="w-10 h-10 rounded-xl cursor-pointer border-none bg-transparent shrink-0" oninput="updateECardPreview()">
-                    <div class="flex flex-col flex-1 gap-1">
-                      <input type="text" id="ec-btn1-label" class="w-full bg-transparent border-none text-[14px] font-bold outline-none px-2 py-1 placeholder-slate-400 focus:ring-0" placeholder="按鈕文字 (選填)" oninput="updateECardPreview()">
-                      <input type="text" id="ec-btn1-url" class="w-full bg-transparent border-none text-[13px] text-slate-500 font-medium outline-none px-2 py-1 placeholder-slate-400 focus:ring-0" placeholder="連結網址 (例: tel:09...)" oninput="updateECardPreview()">
-                    </div>
-                  </div>
-                  
-                  <div class="flex items-center gap-3 bg-slate-50 p-2.5 rounded-2xl">
-                    <input type="color" id="ec-btn2-color" value="#06C755" class="w-10 h-10 rounded-xl cursor-pointer border-none bg-transparent shrink-0" oninput="updateECardPreview()">
-                    <div class="flex flex-col flex-1 gap-1">
-                      <input type="text" id="ec-btn2-label" class="w-full bg-transparent border-none text-[14px] font-bold outline-none px-2 py-1 placeholder-slate-400 focus:ring-0" placeholder="按鈕文字 (選填)" oninput="updateECardPreview()">
-                      <input type="text" id="ec-btn2-url" class="w-full bg-transparent border-none text-[13px] text-slate-500 font-medium outline-none px-2 py-1 placeholder-slate-400 focus:ring-0" placeholder="連結網址 (例: mailto:...)" oninput="updateECardPreview()">
-                    </div>
-                  </div>
-
-                  <div class="flex items-center gap-3 bg-slate-50 p-2.5 rounded-2xl">
-                    <input type="color" id="ec-btn3-color" value="#06C755" class="w-10 h-10 rounded-xl cursor-pointer border-none bg-transparent shrink-0" oninput="updateECardPreview()">
-                    <div class="flex flex-col flex-1 gap-1">
-                      <input type="text" id="ec-btn3-label" class="w-full bg-transparent border-none text-[14px] font-bold outline-none px-2 py-1 placeholder-slate-400 focus:ring-0" placeholder="按鈕文字 (選填)" oninput="updateECardPreview()">
-                      <input type="text" id="ec-btn3-url" class="w-full bg-transparent border-none text-[13px] text-slate-500 font-medium outline-none px-2 py-1 placeholder-slate-400 focus:ring-0" placeholder="連結網址 (選填)" oninput="updateECardPreview()">
-                    </div>
-                  </div>
-
-                  <div class="flex items-center gap-3 bg-slate-50 p-2.5 rounded-2xl">
-                    <input type="color" id="ec-btn4-color" value="#06C755" class="w-10 h-10 rounded-xl cursor-pointer border-none bg-transparent shrink-0" oninput="updateECardPreview()">
-                    <div class="flex flex-col flex-1 gap-1">
-                      <input type="text" id="ec-btn4-label" class="w-full bg-transparent border-none text-[14px] font-bold outline-none px-2 py-1 placeholder-slate-400 focus:ring-0" placeholder="按鈕文字 (選填)" oninput="updateECardPreview()">
-                      <input type="text" id="ec-btn4-url" class="w-full bg-transparent border-none text-[13px] text-slate-500 font-medium outline-none px-2 py-1 placeholder-slate-400 focus:ring-0" placeholder="連結網址 (選填)" oninput="updateECardPreview()">
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="flex flex-col gap-3 pt-8 pb-10 border-t border-slate-200 mt-8">
-                <button onclick="shareECardToLine()" id="btn-share-line" class="w-full py-4 bg-[#06C755] text-white rounded-xl font-bold text-[16px] shadow-md shadow-green-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
-                  <span class="material-symbols-outlined text-[20px]">send</span> 發送至 LINE
-                </button>
-                <button onclick="checkFormat(true)" id="btn-check-format" class="w-full py-4 bg-slate-100 text-slate-600 rounded-xl font-bold text-[15px] active:scale-95 transition-all flex items-center justify-center gap-1.5">
-                  <span class="material-symbols-outlined text-[20px]">fact_check</span> 格式檢查
-                </button>
-              </div>
-
+  <div class="flex-1 overflow-y-auto w-full bg-slate-50">
+    <div class="p-5 space-y-6">
+      
+      <!-- 預覽區 -->
+      <div class="flex justify-center mb-6">
+        <div class="phone-frame w-full max-w-[300px] aspect-[1/2] flex flex-col shadow-xl scale-[0.85] origin-top">
+          <div class="phone-notch"></div>
+          <div class="bg-[#1e293b] text-white px-4 pt-8 pb-2 flex items-center gap-2 shrink-0 z-10 shadow-sm border-b border-white/10"><span class="material-symbols-outlined text-sm">arrow_back_ios</span><span class="font-bold text-[13px]">預覽</span></div>
+          <div class="flex-1 bg-[#849ebf] overflow-y-auto p-3 flex flex-col gap-3 hide-scrollbar">
+            <div class="flex-preview-bubble flex flex-col mt-1 shadow-md" id="preview-ec-bubble">
+                <div class="w-full flex justify-end p-2 bg-white pb-1 border-b border-slate-50"><div class="bg-red-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm">分享</div></div>
+                <div id="preview-ec-hero" class="relative w-full overflow-hidden bg-slate-100 shrink-0 flex items-center justify-center"><img id="preview-ec-img" src="" class="absolute inset-0 w-full h-full object-cover z-0"></div>
+                <div class="p-3 text-center bg-white relative"><h2 id="preview-ec-title" class="text-[15px] font-black text-slate-800 mb-1"></h2><p id="preview-ec-desc" class="text-[11px] text-slate-500 whitespace-pre-wrap leading-relaxed text-left"></p></div>
+                <div id="preview-ec-buttons" class="p-3 pt-0 bg-white space-y-1.5"></div>
             </div>
           </div>
         </div>
-
-        <div class="lg:col-span-2 hidden lg:block bg-slate-50/50 p-6 border-l border-slate-100 flex justify-center">
-          <div class="sticky top-6 pb-6 w-full flex justify-center">
-            <div class="phone-frame w-full max-w-[340px] h-[680px] flex flex-col shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)]">
-              <div class="phone-notch"></div>
-              
-              <div class="bg-[#1e293b]/95 backdrop-blur-md text-white px-4 pt-10 pb-3 flex items-center gap-3 shrink-0 z-10 shadow-sm border-b border-white/10">
-                  <span class="material-symbols-outlined text-lg opacity-80">arrow_back_ios</span>
-                  <span class="font-bold text-[15px] tracking-wide">預覽呈現</span>
-              </div>
-              
-              <div class="flex-1 bg-[#849ebf] overflow-y-auto p-4 flex flex-col gap-4 hide-scrollbar">
-                  <div class="flex items-start gap-2.5 mt-2">
-                      <div class="w-9 h-9 rounded-full bg-slate-200 shrink-0 flex items-center justify-center text-slate-500 border border-white/50 overflow-hidden shadow-sm">
-                         <img id="preview-user-avatar" src="" class="w-full h-full object-cover hidden">
-                         <span class="material-symbols-outlined text-[20px] avatar-fallback">person</span>
-                      </div>
-                      <div class="flex flex-col gap-1.5 max-w-[88%] w-full">
-                          <div class="bg-white px-3.5 py-2 rounded-2xl rounded-tl-sm text-[13px] text-slate-800 shadow-sm w-fit font-medium">為您準備的數位名片！</div>
-                          
-                          <div class="flex-preview-bubble flex flex-col mt-1 shadow-md" id="preview-ec-bubble">
-                              <div class="w-full flex justify-end p-2 bg-white pb-1 border-b border-slate-50">
-                                  <div class="bg-red-500 text-white text-[10px] font-bold w-[65px] h-[25px] flex items-center justify-center rounded-full shadow-sm tracking-widest">分享</div>
-                              </div>
-                              <div id="preview-ec-hero" class="relative w-full overflow-hidden bg-slate-100 shrink-0 flex items-center justify-center">
-                                  <img id="preview-ec-img" src="" class="absolute inset-0 w-full h-full object-cover z-0 hidden">
-                                  <video id="preview-ec-video" muted loop playsinline class="absolute inset-0 w-full h-full object-cover z-10 hidden"></video>
-                                  <div id="preview-ec-play-icon" class="absolute inset-0 z-20 flex items-center justify-center text-white/80 hidden pointer-events-none">
-                                      <span class="material-symbols-outlined text-[48px] drop-shadow-md">play_circle</span>
-                                  </div>
-                              </div>
-                              <div class="p-4 text-center bg-white relative">
-                                  <h2 id="preview-ec-title" class="text-[18px] font-black text-slate-800 leading-snug mb-1.5"></h2>
-                                  <p id="preview-ec-desc" class="text-[13px] text-slate-500 whitespace-pre-wrap leading-relaxed text-left font-medium"></p>
-                              </div>
-                              <div id="preview-ec-buttons" class="p-4 pt-0 bg-white space-y-2"></div>
-                          </div>
-
-                      </div>
-                  </div>
-                  <div class="h-6"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
       </div>
+
+      <!-- 設定區 -->
+      <div class="-mt-16 bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-5">
+          <div class="w-full">
+            <label class="input-label">主標題</label>
+            <input type="text" id="ec-title-input" class="custom-input font-bold text-slate-800" oninput="updateECardPreview()">
+          </div>
+          <div class="w-full">
+            <label class="input-label">內容文案</label>
+            <textarea id="ec-desc-input" class="textarea-block h-20" oninput="updateECardPreview()"></textarea>
+          </div>
+          <div class="w-full border-t border-slate-100 pt-5">
+            <label class="input-label mb-3">連結按鈕 (最多 4 個)</label>
+            <div class="space-y-3" id="ec-btn-list"></div>
+          </div>
+      </div>
+
+      <button onclick="shareECardToLine()" id="btn-share-line" class="w-full py-4 bg-[#06C755] text-white rounded-xl font-bold text-[16px] shadow-md shadow-green-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+        <span class="material-symbols-outlined text-[20px]">send</span> 傳送至 LINE 聊天室
+      </button>
+
     </div>
   </div>
 </div>
 
-<div id="section-cropper" class="hidden fixed inset-0 bg-slate-900 flex flex-col animate-in fade-in duration-300 w-full max-w-md mx-auto" style="z-index: 1030;">
+<div id="section-cropper" class="hidden fixed inset-0 bg-slate-900 flex flex-col animate-in fade-in duration-300 w-full max-w-md mx-auto z-[1030]">
     <div class="flex justify-between items-center p-4 bg-slate-900 text-white shrink-0 z-10 shadow-sm border-b border-slate-800">
-      <button onclick="cancelCrop()" class="px-3 py-2 font-bold text-slate-400 active:scale-90 transition-transform text-[15px]">取消</button>
-      <span class="font-bold text-[16px] tracking-wider text-white flex items-center gap-1.5"><span class="material-symbols-outlined text-[20px]">crop</span> 自由裁切</span>
-      <button onclick="confirmCrop()" class="px-4 py-1.5 font-bold text-white bg-primary rounded active:scale-95 transition-transform text-[15px] shadow-sm">完成</button>
+      <button onclick="cancelCrop()" class="px-3 py-2 font-bold text-slate-400 active:scale-90 transition-transform">取消</button>
+      <button onclick="confirmCrop()" class="px-4 py-1.5 font-bold text-white bg-primary rounded active:scale-95 transition-transform">完成</button>
     </div>
-    <div class="flex-1 relative bg-black flex items-center justify-center overflow-hidden">
-      <img id="cropper-image" src="" class="max-w-full max-h-full block opacity-0 transition-opacity duration-300">
-    </div>
+    <div class="flex-1 relative bg-black flex items-center justify-center overflow-hidden"><img id="cropper-image" src="" class="max-w-full max-h-full block opacity-0"></div>
 </div>
 
 <div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-bold flex items-center gap-2 w-max max-w-[90vw] bg-slate-800 text-white opacity-0 pointer-events-none"></div>
 
-<!-- 嚴格依循快取破除鐵律，強制載入獨立 JS -->
-<script src="card.js?v=3.0.1"></script>
-<script src="card-ecard.js?v=3.0.1"></script>
+<!-- 嚴格依循快取破除鐵律 -->
+<script src="card.js?v=3.1.2"></script>
+<script src="card-ecard.js?v=3.1.2"></script>
 
 </body>
 </html>

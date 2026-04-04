@@ -1,6 +1,6 @@
 /**
  * card.js 
- * Version: v4.0.0 (QQ 修復版：還原原生排版與圖片 placeholder 邏輯，並保留 rowId 防呆導航)
+ * Version: v5.3.0 (VOOM 圖片解析與強制滿版修復)
  */
 const LIFF_ID = "2009367829-DLtYBDUm"; 
 const WORKER_URL = "https://actmaster.fangwl591021.workers.dev"; 
@@ -55,12 +55,23 @@ window.getDirectImageUrl = function(url) {
   return url;
 };
 
+// ⭐ VOOM 防呆核心：若圖片被 CORS 阻擋載入失敗，且網址來自 VOOM，自動判定為 9:16 (直向短影音)
 window.getTrueAspectRatio = function(url) {
   return new Promise((resolve) => {
     if (!url) return resolve('20:13');
     const img = new Image();
-    img.onload = function() { resolve(`${Math.round(this.width)}:${Math.round(this.height)}`); };
-    img.onerror = function() { resolve('20:13'); };
+    img.onload = function() { 
+        let w = this.width; let h = this.height; 
+        if (w === 0 || h === 0) return resolve('20:13');
+        let ratio = w / h;
+        if (ratio > 3) { w = 300; h = 100; }
+        else if (ratio < 0.334) { w = 100; h = 300; }
+        resolve(`${Math.round(w)}:${Math.round(h)}`); 
+    };
+    img.onerror = function() { 
+        if (url.includes('line-scdn') || url.includes('linevoom')) resolve('9:16');
+        else resolve('20:13'); 
+    };
     img.src = url;
   });
 };
@@ -85,7 +96,7 @@ function setButtonLoading(btnId, isLoading, originalText = '') {
     if (!btn) return false;
     if (isLoading) {
         if (!btn.dataset.oriText) btn.dataset.oriText = btn.innerHTML;
-        btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[18px] align-middle">refresh</span> 處理中...';
+        btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[20px] align-middle">refresh</span>';
         btn.classList.add('opacity-50', 'pointer-events-none');
         return true;
     } else {
@@ -95,7 +106,7 @@ function setButtonLoading(btnId, isLoading, originalText = '') {
     }
 }
 
-// ⭐ DOM防呆：首頁傳過來的 rowId 絕對信任，打破退回首頁的死胡同
+// ⭐ DOM防呆：首頁傳過來的 rowId 絕對信任
 function checkAndOpenMyCard() {
     const params = new URLSearchParams(window.location.search);
     const mode = params.get('mode');
@@ -205,7 +216,7 @@ async function loadCardContacts() {
             filterCardList(); 
         } catch(e) {}
     } else if (container) {
-        container.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>';
+        container.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div></div>';
     }
 
     try {
@@ -250,15 +261,15 @@ function renderCardPage(isReset = false) {
     const pageData = filteredCards.slice((currentPage - 1) * PAGE_LIMIT, currentPage * PAGE_LIMIT);
     let html = pageData.map(c => {
         const isClaimed = !!(c.userId || c['LINE ID'] || c['Line ID'] || c['lineId']);
-        const claimBadge = isClaimed ? '<span class="shrink-0 text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded text-[11px] whitespace-nowrap ml-2 border border-emerald-100">已認領</span>' : '<span class="shrink-0 text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded text-[11px] whitespace-nowrap ml-2 border border-slate-200">未認領</span>';
+        const claimBadge = isClaimed ? '<span class="shrink-0 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md text-[11px] font-bold ml-2">已綁定</span>' : '';
         return `
-        <div onclick="window.openCardDetailByRowId('${c.rowId}')" class="pl-[5px] pr-4 py-4 bg-white flex items-center gap-4 border-b border-slate-200 last:border-b-0 active:bg-slate-50 cursor-pointer transition-colors">
-          <div class="w-[52px] h-[52px] shrink-0 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center border border-slate-200">
-            ${c['名片圖檔'] && c['名片圖檔'] !== '圖片儲存失敗' && c['名片圖檔'] !== '無圖檔' ? `<img src="${window.getDirectImageUrl(c['名片圖檔'])}" class="w-full h-full object-cover">` : `<span class="material-symbols-outlined text-slate-400 text-[24px]">person</span>`}
+        <div onclick="window.openCardDetailByRowId('${c.rowId}')" class="p-5 bg-white flex items-center gap-4 rounded-[2rem] shadow-sm mb-3 cursor-pointer active:scale-[0.98] transition-transform">
+          <div class="w-[56px] h-[56px] shrink-0 rounded-2xl overflow-hidden bg-slate-50 flex items-center justify-center">
+            ${c['名片圖檔'] && c['名片圖檔'] !== '圖片儲存失敗' && c['名片圖檔'] !== '無圖檔' ? `<img src="${window.getDirectImageUrl(c['名片圖檔'])}" class="w-full h-full object-cover">` : `<span class="material-symbols-outlined text-slate-300 text-[28px]">contact_mail</span>`}
           </div>
-          <div class="flex-1 overflow-hidden flex flex-col justify-center gap-1.5">
-            <div class="flex items-center"><h4 class="text-[17px] text-slate-800 truncate leading-none">${c['姓名'] || '未知姓名'}</h4>${isAdmin ? claimBadge : ''}</div>
-            <p class="text-[14px] text-slate-500 truncate leading-none">${c['公司名稱'] || c['職稱'] || '無資訊'}</p>
+          <div class="flex-1 overflow-hidden flex flex-col justify-center gap-1">
+            <div class="flex items-center"><h4 class="text-[17px] font-extrabold text-slate-800 truncate">${c['姓名'] || '未知姓名'}</h4>${isAdmin ? claimBadge : ''}</div>
+            <p class="text-[13px] text-slate-500 font-medium truncate">${c['公司名稱'] || c['職稱'] || '無資訊'}</p>
           </div>
         </div>
     `}).join('');
@@ -267,7 +278,7 @@ function renderCardPage(isReset = false) {
     let loadMoreBtn = document.getElementById(loadMoreBtnId);
 
     if (isReset) {
-        container.innerHTML = `<div class="bg-white border border-slate-200 rounded overflow-hidden" id="card-list-wrapper">${html}</div>`;
+        container.innerHTML = `<div id="card-list-wrapper">${html}</div>`;
     } else {
         if (loadMoreBtn) loadMoreBtn.remove();
         const wrapper = document.getElementById('card-list-wrapper');
@@ -277,14 +288,14 @@ function renderCardPage(isReset = false) {
     if (currentPage * PAGE_LIMIT < filteredCards.length) {
         const wrapper = document.getElementById('card-list-wrapper');
         if (wrapper) {
-            wrapper.insertAdjacentHTML('afterend', `<button id="${loadMoreBtnId}" onclick="loadMoreCards()" class="w-full py-3 mt-3 bg-white text-slate-700 font-bold text-[15px] rounded border border-slate-300 shadow-sm active:bg-slate-50 transition-colors flex justify-center items-center gap-1"><span class="material-symbols-outlined text-[20px]">expand_more</span> 載入更多名片</button>`);
+            wrapper.insertAdjacentHTML('afterend', `<button id="${loadMoreBtnId}" onclick="loadMoreCards()" class="w-full py-4 mt-2 bg-white text-slate-700 font-bold text-[15px] rounded-[2rem] shadow-sm active:scale-95 transition-transform flex justify-center items-center gap-1">顯示更多</button>`);
         }
     }
 }
 
 window.loadMoreCards = function() { currentPage++; renderCardPage(false); }
 
-// ⭐ QQ 終極還原：精確恢復多行備註陣列與圖片 Placeholder 顯示邏輯
+// ⭐ QQ 終極防護：還原 LINE 原生卡片排版與 Bottom Sheet 效果
 window.openCardDetailByRowId = function(rowId) { 
     try {
       const card = globalCardContacts.find(c => String(c.rowId) === String(rowId));
@@ -297,10 +308,10 @@ window.openCardDetailByRowId = function(rowId) {
       if (isAdmin && statusEl) {
           if (card.userId || card['LINE ID'] || card['Line ID'] || card['lineId']) {
               statusEl.innerText = '已認領';
-              statusEl.className = 'px-2 py-0.5 rounded text-[11px] border bg-emerald-50 border-emerald-200 text-emerald-600 font-bold';
+              statusEl.className = 'px-2.5 py-0.5 rounded-md text-[11px] border bg-emerald-50 border-emerald-200 text-emerald-600 font-bold';
           } else {
               statusEl.innerText = '未認領';
-              statusEl.className = 'px-2 py-0.5 rounded text-[11px] border bg-slate-50 border-slate-200 text-slate-400 font-bold';
+              statusEl.className = 'px-2.5 py-0.5 rounded-md text-[11px] border bg-slate-50 border-slate-200 text-slate-400 font-bold';
           }
           statusEl.classList.remove('hidden');
       } else if (statusEl) {
@@ -451,6 +462,20 @@ window.submitCardEdit = async function() {
   
   let payload = { rowId: currentActiveCard.rowId, Name: document.getElementById('edit-c-Name')?.value.trim() || '', EnglishName: document.getElementById('edit-c-EnglishName')?.value.trim() || '', Title: document.getElementById('edit-c-Title')?.value.trim() || '', Department: document.getElementById('edit-c-Department')?.value.trim() || '', CompanyName: document.getElementById('edit-c-CompanyName')?.value.trim() || '', TaxID: document.getElementById('edit-c-TaxID')?.value.trim() || '', Mobile: document.getElementById('edit-c-Mobile')?.value.trim() || '', Tel: document.getElementById('edit-c-Tel')?.value.trim() || '', Ext: document.getElementById('edit-c-Ext')?.value.trim() || '', Fax: document.getElementById('edit-c-Fax')?.value.trim() || '', Address: document.getElementById('edit-c-Address')?.value.trim() || '', Email: document.getElementById('edit-c-Email')?.value.trim() || '', Website: document.getElementById('edit-c-Website')?.value.trim() || '', SocialMedia: document.getElementById('edit-c-SocialMedia')?.value.trim() || '', Slogan: document.getElementById('edit-c-Slogan')?.value.trim() || '', Notes: document.getElementById('edit-c-Notes')?.value.trim() || '', Birthday: document.getElementById('edit-c-Birthday')?.value || '' };
   
+  const oldName = currentActiveCard['姓名'] || currentActiveCard['Name'] || '';
+  const oldPhone = formatPhoneStr(currentActiveCard['手機號碼'] || currentActiveCard['Mobile']) || '';
+  let parsedOldBday = ''; const oldBdayRaw = currentActiveCard['生日'] || '';
+  if (oldBdayRaw) { const d = new Date(oldBdayRaw); if (!isNaN(d.getTime())) parsedOldBday = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+  const tagsMissing = !currentActiveCard['個性'] || currentActiveCard['個性'] === '待分析';
+  
+  if (payload.Name !== oldName || payload.Mobile !== oldPhone || payload.Birthday !== parsedOldBday || tagsMissing) {
+      try { 
+          if (btn) btn.innerText = 'AI 深度分析中...';
+          const newTags = await window.fetchAPI('calculateFateTags', { Name: payload.Name, Mobile: payload.Mobile, Birthday: payload.Birthday }, true); 
+          payload = { ...payload, ...newTags }; 
+      } catch (e) {}
+  }
+
   try {
     await window.fetchAPI('updateCard', payload);
     window.showToast("✅ 資料更新成功");
@@ -517,6 +542,7 @@ window.confirmCrop = async function() {
     window.fetchAPI('recognizeCard', { base64Image: compressedBase64 }).then(data => {
        const fields = ['Name', 'EnglishName', 'Title', 'Department', 'CompanyName', 'TaxID', 'Mobile', 'Tel', 'Ext', 'Fax', 'Address', 'Email', 'Website', 'SocialMedia', 'Slogan'];
        fields.forEach(f => { const el = document.getElementById(`f-${f}`); if(el) { let val = data[f] || ''; if (f === 'Mobile' || f === 'Tel' || f === 'Fax') val = formatPhoneStr(val); if (f === 'Website' && val && !val.startsWith('http') && val.includes('.')) val = 'https://' + val; el.value = val; } });
+       currentFateTags = { Personality: data.Personality || '', Hobbies: data.Hobbies || '', Wealth: data.Wealth || '', Health: data.Health || '', Career: data.Career || '' };
        switchProcessSection('section-form');
        window.showToast("✅ AI 辨識完成");
     }).catch(err => { window.resetUI(); });

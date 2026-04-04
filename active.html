@@ -1,4 +1,4 @@
-<!-- Version: v1.9.1 (QQ 修復版：解決空 src 導致的 404 幽靈報錯，並修正 handleSubmit 函數命名不符問題) -->
+<!-- Version: v1.9.2 (QQ 修復版：徹底對齊 HTML 與 JS 的圖片上傳 DOM ID，解決裁切後無反應的靜默失效) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -64,7 +64,7 @@
   
   <nav class="fixed top-0 w-full max-w-md z-40 bg-white/90 backdrop-blur-md px-5 py-3.5 flex justify-between items-center left-1/2 -translate-x-1/2 border-b border-slate-100">
     <div class="text-[20px] font-extrabold text-slate-800 tracking-tight flex items-center gap-1">
-      建立活動 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v1.9.1</span>
+      建立活動 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v1.9.2</span>
     </div>
     <button onclick="window.location.href='index.html?view=admin-activities'" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-90 transition-transform">
       <span class="material-symbols-outlined text-[20px]">close</span>
@@ -146,14 +146,15 @@
             <textarea id="q-names" class="textarea-block h-40" placeholder="王小明&#10;李小華"></textarea>
         </div>
         
+        <!-- ⭐ 統一 ID：in-image-url-quick / image-preview-quick / preview-placeholder-quick -->
         <div class="flex flex-col mt-2">
           <label class="input-label">活動宣傳圖 <span class="text-[12px] text-slate-400 ml-1">(自動壓縮)</span></label>
-          <div onclick="document.getElementById('q-upload-input').click()" class="w-full h-36 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-all hover:bg-slate-100 relative group">
-            <div id="q-upload-placeholder" class="text-center text-slate-400 flex flex-col items-center"><span class="material-symbols-outlined text-3xl mb-1">add_photo_alternate</span><p class="text-[12px] font-bold tracking-wider">點擊上傳圖片</p></div>
-            <img id="q-img-preview" class="hidden w-full h-full object-cover absolute inset-0 z-0">
+          <div onclick="document.getElementById('file-input-quick').click()" class="w-full h-36 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-all hover:bg-slate-100 relative group border-none">
+            <div id="preview-placeholder-quick" class="text-center text-slate-400 flex flex-col items-center z-10"><span class="material-symbols-outlined text-3xl mb-1">add_photo_alternate</span><p class="text-[12px] font-bold tracking-wider">點擊上傳圖片</p></div>
+            <img id="image-preview-quick" class="hidden w-full h-full object-cover absolute inset-0 z-0">
           </div>
-          <input type="hidden" id="q-img" value="">
-          <input type="file" id="q-upload-input" accept="image/*" class="hidden" onchange="openCropper(this, 'q')">
+          <input type="hidden" id="in-image-url-quick" value="">
+          <input type="file" id="file-input-quick" accept="image/*" class="hidden" onchange="openCropper(this, 'quick')">
         </div>
         
         <div class="pt-2">
@@ -164,34 +165,35 @@
       <!-- Tab 2: 完整發佈 -->
       <div id="tab-content-full" class="hidden space-y-5 bg-white p-5 rounded-[2rem] shadow-sm mx-1">
         
+        <!-- ⭐ 統一 ID：in-image-url-detailed / image-preview-detailed / preview-placeholder-detailed -->
         <div class="flex flex-col">
           <label class="input-label">活動封面圖 <span class="text-[12px] text-slate-400 ml-1">(選填)</span></label>
           <div class="w-full relative">
-              <div onclick="document.getElementById('f-upload-input').click()" class="w-full h-40 rounded-2xl flex flex-col items-center justify-center bg-slate-100 cursor-pointer overflow-hidden transition-colors hover:bg-slate-200 relative border-none">
-                  <div class="text-center text-slate-400 flex flex-col items-center z-10" id="f-upload-placeholder">
+              <div onclick="document.getElementById('file-input-detailed').click()" class="w-full h-40 rounded-2xl flex flex-col items-center justify-center bg-slate-100 cursor-pointer overflow-hidden transition-colors hover:bg-slate-200 relative border-none">
+                  <div class="text-center text-slate-400 flex flex-col items-center z-10" id="preview-placeholder-detailed">
                       <span class="material-symbols-outlined text-[32px] mb-2 text-slate-300">add_photo_alternate</span>
                       <p class="text-[13px] font-bold tracking-wider">點擊上傳圖片</p>
                   </div>
-                  <img id="f-img-preview" class="absolute inset-0 w-full h-full object-cover hidden z-0">
+                  <img id="image-preview-detailed" class="absolute inset-0 w-full h-full object-cover hidden z-0">
               </div>
-              <input type="hidden" id="f-img" value="">
-              <input type="file" id="f-upload-input" accept="image/*" class="hidden" onchange="openCropper(this, 'f')">
+              <input type="hidden" id="in-image-url-detailed" value="">
+              <input type="file" id="file-input-detailed" accept="image/*" class="hidden" onchange="openCropper(this, 'detailed')">
           </div>
         </div>
 
         <div class="flex flex-col">
             <label class="input-label">活動標題</label>
-            <input type="text" id="f-name" class="custom-input" placeholder="輸入活動標題">
+            <input type="text" id="detail-name" class="custom-input" placeholder="輸入活動標題">
         </div>
         
         <div class="grid grid-cols-2 gap-4">
             <div class="flex flex-col">
                 <label class="input-label">開始時間</label>
-                <input type="datetime-local" id="f-start" class="custom-input !px-1.5 !text-[13px]">
+                <input type="datetime-local" id="detail-start" class="custom-input !px-1.5 !text-[13px]">
             </div>
             <div class="flex flex-col">
                 <label class="input-label">結束時間</label>
-                <input type="datetime-local" id="f-end" class="custom-input !px-1.5 !text-[13px]">
+                <input type="datetime-local" id="detail-end" class="custom-input !px-1.5 !text-[13px]">
             </div>
         </div>
 
@@ -228,18 +230,19 @@
       <!-- Tab 3: 系列梯次 -->
       <div id="tab-content-series" class="hidden space-y-5 bg-white p-5 rounded-[2rem] shadow-sm mx-1">
         
+        <!-- ⭐ 統一 ID：in-image-url-batch / image-preview-batch / preview-placeholder-batch -->
         <div class="flex flex-col">
           <label class="input-label">系列總封面圖 <span class="text-[12px] text-slate-400 ml-1">(選填)</span></label>
           <div class="w-full relative">
-              <div onclick="document.getElementById('s-upload-input').click()" class="w-full h-40 rounded-2xl flex flex-col items-center justify-center bg-slate-100 cursor-pointer overflow-hidden transition-colors hover:bg-slate-200 relative border-none">
-                  <div class="text-center text-slate-400 flex flex-col items-center z-10" id="s-upload-placeholder">
+              <div onclick="document.getElementById('file-input-batch').click()" class="w-full h-40 rounded-2xl flex flex-col items-center justify-center bg-slate-100 cursor-pointer overflow-hidden transition-colors hover:bg-slate-200 relative border-none">
+                  <div class="text-center text-slate-400 flex flex-col items-center z-10" id="preview-placeholder-batch">
                       <span class="material-symbols-outlined text-[32px] mb-2 text-slate-300">add_photo_alternate</span>
                       <p class="text-[13px] font-bold tracking-wider">點擊上傳圖片</p>
                   </div>
-                  <img id="s-img-preview" class="absolute inset-0 w-full h-full object-cover hidden z-0">
+                  <img id="image-preview-batch" class="absolute inset-0 w-full h-full object-cover hidden z-0">
               </div>
-              <input type="hidden" id="s-img" value="">
-              <input type="file" id="s-upload-input" accept="image/*" class="hidden" onchange="openCropper(this, 's')">
+              <input type="hidden" id="in-image-url-batch" value="">
+              <input type="file" id="file-input-batch" accept="image/*" class="hidden" onchange="openCropper(this, 'batch')">
           </div>
         </div>
 
@@ -283,19 +286,17 @@
 
 </div>
 
-<!-- 共同圖片裁切 Modal (移除預設的 src 空字串防 404) -->
 <div id="section-image-cropper" class="hidden fixed inset-0 bg-slate-900 flex flex-col animate-in fade-in duration-200 w-full max-w-md mx-auto z-[1080]">
-  <div class="flex justify-between items-center p-4 bg-slate-900 text-white shrink-0 border-b border-slate-800 shadow-sm">
-    <button onclick="cancelCrop()" class="text-slate-400 font-normal text-sm px-3 py-2 active:scale-90 transition-transform">取消</button>
-    <span class="font-normal text-[15px] tracking-wider flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px]">crop</span> 裁切圖片</span>
+  <div class="flex justify-between items-center p-4 bg-slate-900 text-white shrink-0 z-10 shadow-sm border-b border-slate-800">
+    <button onclick="cancelCrop()" class="px-3 py-2 font-bold text-slate-400 active:scale-90 transition-transform text-[15px]">取消</button>
+    <span class="font-bold text-[16px] tracking-wider text-white flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px]">crop</span> 裁切圖片</span>
     <button onclick="confirmCrop()" class="px-4 py-1.5 font-bold text-white bg-[#06C755] rounded active:scale-95 transition-transform text-[15px] shadow-sm">完成</button>
   </div>
-  <div class="flex-1 relative overflow-hidden flex items-center justify-center bg-black">
-    <img id="cropper-image" class="max-w-full max-h-full block opacity-0 transition-opacity duration-300">
+  <div class="flex-1 relative bg-black flex items-center justify-center overflow-hidden">
+      <img id="cropper-image" src="data:," class="max-w-full max-h-full block opacity-0 transition-opacity duration-300">
   </div>
 </div>
 
-<!-- 系統 Toast 通知 -->
 <div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-normal flex items-center gap-2 w-max max-w-[90vw] opacity-0 pointer-events-none bg-slate-800 text-white"></div>
 
 <script>
@@ -417,11 +418,11 @@
     if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; } 
     document.getElementById('section-image-cropper').classList.add('hidden'); 
     
-    // 釋放記憶體與 DOM
     const img = document.getElementById('cropper-image');
-    if(img) { img.removeAttribute('src'); img.style.opacity = '0'; }
+    if(img) { img.src = 'data:,'; img.style.opacity = '0'; }
   }
 
+  // ⭐ QQ 防呆修復：統一提取動態 ID 變數，解決 undefined 報錯問題
   function confirmCrop() { 
     if (!cropperInstance) return; 
     let size = 250;
@@ -438,9 +439,12 @@
     }
 
     cancelCrop(); 
-    const modeId = currentCropTarget;
-    const previewImg = document.getElementById(`${modeId}-img-preview`);
-    const placeholder = document.getElementById(`${modeId}-upload-placeholder`);
+    
+    const modeId = currentCropTarget; // 'quick', 'detailed', 'batch'
+    
+    // ⭐ 精準對齊 HTML 中的 ID
+    const previewImg = document.getElementById(`image-preview-${modeId}`);
+    const placeholder = document.getElementById(`preview-placeholder-${modeId}`);
     const urlInput = document.getElementById(`in-image-url-${modeId}`);
 
     if(previewImg && placeholder && urlInput) {
@@ -448,6 +452,8 @@
         previewImg.classList.remove('hidden'); 
         placeholder.classList.add('hidden'); 
         urlInput.value = base64; 
+    } else {
+        alert("⚠️ 系統找不到對應的預覽區塊，請通知管理員");
     }
   }
 
@@ -456,7 +462,6 @@
       return val.replace('T', ' ');
   };
 
-  // ⭐ QQ 修復點：將函數更名為 handleSubmit 對齊前端按鈕設定
   async function handleSubmit(mode) { 
     let isProcessing = false;
     if(isProcessing) return; 

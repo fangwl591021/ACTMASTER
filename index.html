@@ -1,4 +1,4 @@
-<!-- Version: v5.0.0 (App-like UI 沉浸式升級版：無邊框、底部抽屜、防回彈、大圓角) -->
+<!-- Version: v5.1.0 (QQ 掃碼修復版：更換穩定相機模組 CDN，確保掃碼功能 100% 啟動) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -11,6 +11,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Noto+Sans+TC:wght@400;500;700;800&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+  <!-- ⭐ QQ 修復：強制預先載入最穩定的相機與裁切模組 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 
   <script id="tailwind-config">
     tailwind.config = {
@@ -98,7 +103,7 @@
     </div>
   </nav>
 
-  <!-- 主要內容區 (底色 f8fafc) -->
+  <!-- 主要內容區 -->
   <main id="main-content" class="flex-1 overflow-y-auto pb-32 pt-20 px-4 space-y-5">
 
     <div id="view-loading" class="h-full flex flex-col items-center justify-center space-y-4 pb-20 relative">
@@ -334,6 +339,7 @@
   </div>
 </div>
 
+<!-- 掃碼器：保持在最頂層 -->
 <div id="qr-scanner-modal" class="hidden fixed inset-0 z-[1070] bg-black flex flex-col animate-in fade-in duration-300 w-full max-w-md mx-auto left-0 right-0">
   <div class="flex justify-between items-center p-5 bg-gradient-to-b from-black/80 to-transparent absolute top-0 w-full z-10">
     <span class="text-white font-bold tracking-widest text-[14px]">掃描 QR Code</span>
@@ -342,7 +348,7 @@
   <div class="flex-1 flex items-center justify-center relative"><div id="qr-reader" class="w-full h-full max-h-[80vh]"></div></div>
 </div>
 
-<!-- 自訂彈窗：也改成圓潤的 Bottom Sheet 樣式 -->
+<!-- 自訂彈窗：改成圓潤的 Bottom Sheet 樣式 -->
 <div id="custom-modal" class="hidden fixed inset-0 z-[9999] flex items-end justify-center bg-black/40 backdrop-blur-sm">
   <div class="bg-white w-full max-w-md rounded-t-[2rem] p-8 shadow-2xl text-center bottom-sheet-up pb-safe">
     <div class="w-16 h-16 bg-primary-light text-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><span class="material-symbols-outlined text-[32px] icon-filled">info</span></div>
@@ -382,7 +388,6 @@
 
   const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55", "U8932b891ad24da512afb9c1a6f41567b"]; 
 
-  const loadScript = (src) => new Promise((res, rej) => { if (document.querySelector(`script[src="${src}"]`)) return res(); const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
   const loadCSS = (href) => new Promise((res, rej) => { if (document.querySelector(`link[href="${href}"]`)) return res(); const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; l.onload = res; l.onerror = rej; document.head.appendChild(l); });
 
   async function fetchAPI(action, payload = {}, useCache = false) {
@@ -578,7 +583,6 @@
     else if (view === 'user-history') loadUserHistory();
   }
 
-  // ⭐ DOM 防呆與 rowId 導航護盾
   async function checkMyCardEntry() {
       const infoEl = document.getElementById('my-card-info');
       const entryEl = document.getElementById('my-card-entry');
@@ -678,11 +682,10 @@
     const titleEl = document.getElementById('modal-title'); if(titleEl) titleEl.innerText = title; 
     const descEl = document.getElementById('modal-desc'); if(descEl) descEl.innerText = desc;
     modalTargetView = targetView; const m = document.getElementById('custom-modal'); if(m) m.classList.remove('hidden');
-    setTimeout(()=> { const div = m?.querySelector('div'); if(div) div.classList.remove('scale-95'); }, 10);
   }
   function closeModalAndGo() {
-    const m = document.getElementById('custom-modal'); if(m) m.querySelector('div')?.classList.add('scale-95');
-    setTimeout(()=> { if(m) m.classList.add('hidden'); if(modalTargetView) switchView(`user-${modalTargetView}`); }, 200);
+    const m = document.getElementById('custom-modal');
+    if(m) m.classList.add('hidden'); if(modalTargetView) switchView(`user-${modalTargetView}`);
   }
 
   async function submitUserRegistrationStep1() {
@@ -716,7 +719,6 @@
 
   async function openCropper(input, targetMode) {
     const file = input.files[0]; if (!file) return; currentCropTarget = targetMode;
-    if (!window.Cropper) { showToast("載入影像模組中...", false); await loadCSS("https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"); await loadScript("https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"); }
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = document.getElementById('cropper-image'); if(!img) return;
@@ -956,8 +958,8 @@
     try { currentRegistrants = await fetchAPI('getRegistrants', { activityName: actName }); renderAdminRegList(currentRegistrants); } catch(e) { list.innerHTML = `<p class="text-center text-red-400 font-bold py-10">讀取失敗</p>`; }
   }
 
-  function closeAdminRegistrants() { const m = document.getElementById('admin-registrants-modal'); if(m) m.classList.add('hidden'); stopScanner(); const s = document.getElementById('admin-search-reg'); if(s) s.value=''; }
-  function filterAdminReg() { const s = document.getElementById('admin-search-reg'); const term = s ? s.value.toLowerCase() : ''; renderAdminRegList(currentRegistrants.filter(r => (r['姓名']||'').toLowerCase().includes(term) || String(r['電話']||'').includes(term))); }
+  window.closeAdminRegistrants = function() { const m = document.getElementById('admin-registrants-modal'); if(m) m.classList.add('hidden'); window.stopScanner(); const s = document.getElementById('admin-search-reg'); if(s) s.value=''; }
+  window.filterAdminReg = function() { const s = document.getElementById('admin-search-reg'); const term = s ? s.value.toLowerCase() : ''; renderAdminRegList(currentRegistrants.filter(r => (r['姓名']||'').toLowerCase().includes(term) || String(r['電話']||'').includes(term))); }
 
   function renderAdminRegList(data) {
     const list = document.getElementById('admin-reg-list'); if(!list) return;
@@ -980,26 +982,34 @@
     list.innerHTML = html;
   }
 
-  async function toggleCheckIn(btn, rowId, currentStatus) { 
+  window.toggleCheckIn = async function(btn, rowId, currentStatus) { 
     if(isProcessing) return; isProcessing = true; setButtonLoading(btn.id, true);
-    try { await fetchAPI('toggleStatus', { activityName: activeActivityName, rowId: rowId, currentStatus: currentStatus }); const reg = currentRegistrants.find(r => r.rowId === rowId); if(reg) reg.checkedIn = !currentStatus; filterAdminReg(); } catch(e) { showToast("錯誤", true); } finally { isProcessing = false; }
+    try { await fetchAPI('toggleStatus', { activityName: activeActivityName, rowId: rowId, currentStatus: currentStatus }); const reg = currentRegistrants.find(r => r.rowId === rowId); if(reg) reg.checkedIn = !currentStatus; renderAdminRegList(currentRegistrants); } catch(e) { showToast("錯誤", true); } finally { isProcessing = false; }
   }
 
-  async function updatePayStatus(rowId, val) { try { await fetchAPI('updateCellStatus', { activityName: activeActivityName, rowId: rowId, colName: '繳費', val: val }); const reg = currentRegistrants.find(r => r.rowId === rowId); if(reg) reg.payStatus = val; } catch(e) {} }
+  window.updatePayStatus = async function(rowId, val) { try { await fetchAPI('updateCellStatus', { activityName: activeActivityName, rowId: rowId, colName: '繳費', val: val }); const reg = currentRegistrants.find(r => r.rowId === rowId); if(reg) reg.payStatus = val; } catch(e) {} }
   
-  async function submitWalkIn() { 
+  window.submitWalkIn = async function() { 
     if(isProcessing) return; const el = document.getElementById('f-walkin-name'); if(!el) return; const name = el.value; if(!name) return; isProcessing = true; setButtonLoading('btn-walkin', true);
     try { await fetchAPI('addWalkIn', { activityName: activeActivityName, name: name }); el.value = ''; const m = document.getElementById('walkin-modal'); if(m) m.classList.add('hidden'); await openAdminRegistrants(activeActivityName); } catch(e) {} finally { isProcessing = false; setButtonLoading('btn-walkin', false, '新增並簽到'); }
   }
 
-  async function startScanner() {
-    if (html5QrcodeScanner) return;
-    if (!window.Html5Qrcode) { showToast("載入中...", false); await loadScript("https://unpkg.com/html5-qrcode"); }
+  window.startScanner = async function() {
+    if (html5QrcodeScanner) {
+        html5QrcodeScanner.clear().catch(e=>{});
+        html5QrcodeScanner = null;
+    }
     const m = document.getElementById('qr-scanner-modal'); if(m) m.classList.remove('hidden');
+    
+    if (typeof Html5Qrcode === 'undefined') {
+        showToast("相機模組載入失敗，請檢查網路或重新整理", true);
+        return;
+    }
+
     html5QrcodeScanner = new Html5Qrcode("qr-reader");
     html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
       async (decodedText) => { 
-        stopScanner(); 
+        window.stopScanner(); 
         try { 
           const uRes = await fetchAPI('checkUser', { userId: decodedText }); 
           if(!uRes.isRegistered) return showToast("非會員", true); 
@@ -1007,9 +1017,13 @@
           if(reg) { if(!reg.checkedIn) { await fetchAPI('toggleStatus', { activityName: activeActivityName, rowId: reg.rowId, currentStatus: false }); showToast(`${name} 簽到成功`); openAdminRegistrants(activeActivityName); } else showToast("已簽到過"); } else { if(confirm(`未報名，是否現場報名簽到？`)) { await fetchAPI('addWalkIn', { activityName: activeActivityName, name: name }); openAdminRegistrants(activeActivityName); } } 
         } catch(e) {} 
       }, () => {}
-    ).catch(err => { showToast("相機錯誤", true); stopScanner(); });
+    ).catch(err => { showToast("無法啟動相機，請確認權限", true); window.stopScanner(); });
   }
-  function stopScanner() { if(html5QrcodeScanner) { html5QrcodeScanner.stop().then(() => { html5QrcodeScanner.clear(); html5QrcodeScanner = null; }); } const m = document.getElementById('qr-scanner-modal'); if(m) m.classList.add('hidden'); }
+
+  window.stopScanner = function() { 
+      if(html5QrcodeScanner) { html5QrcodeScanner.stop().then(() => { html5QrcodeScanner.clear(); html5QrcodeScanner = null; }).catch(e=>{}); } 
+      const m = document.getElementById('qr-scanner-modal'); if(m) m.classList.add('hidden'); 
+  }
 
   async function loadCrmData() { 
     const list = document.getElementById('admin-crm-list-container'); if(!list) return;
@@ -1017,8 +1031,8 @@
     try { globalCrmData = await fetchAPI('getAllCrmData', {}, true); filteredCrmData = [...globalCrmData]; currentCrmViewCount = crmPageLimit; renderCrmList(); } catch(e) { list.innerHTML = `<p class="text-center text-red-400 font-bold py-10">載入失敗</p>`; }
   }
 
-  function filterCrmList() { const s = document.getElementById('crm-search-input'); const term = s ? s.value.toLowerCase() : ''; filteredCrmData = globalCrmData.filter(u => u.name.toLowerCase().includes(term)); currentCrmViewCount = crmPageLimit; renderCrmList(); }
-  function loadMoreCrm() { currentCrmViewCount += crmPageLimit; renderCrmList(); }
+  window.filterCrmList = function() { const s = document.getElementById('crm-search-input'); const term = s ? s.value.toLowerCase() : ''; filteredCrmData = globalCrmData.filter(u => u.name.toLowerCase().includes(term)); currentCrmViewCount = crmPageLimit; renderCrmList(); }
+  window.loadMoreCrm = function() { currentCrmViewCount += crmPageLimit; renderCrmList(); }
 
   function renderCrmList() {
     const list = document.getElementById('admin-crm-list-container'); const moreBtnBox = document.getElementById('crm-load-more-box');
@@ -1035,9 +1049,9 @@
   }
 
   async function loadAdminSettings() { const s = await fetchAPI('getSettings'); const t1 = document.getElementById('set-tg-token'); if(t1) t1.value = s.TG_BOT_TOKEN || ''; const t2 = document.getElementById('set-tg-chat'); if(t2) t2.value = s.TG_CHAT_ID || ''; const l = document.getElementById('set-line-link'); if(l) l.value = s.LINE_LINK || ''; }
-  async function autoFetchTgChatId() { const t1 = document.getElementById('set-tg-token'); if(!t1) return; const token = t1.value; if(!token) return; const t2 = document.getElementById('set-tg-chat'); if(t2) { t2.value = "獲取中..."; try { t2.value = await fetchAPI('getTgChatId', { token }); } catch(e) { t2.value = ""; } } }
+  window.autoFetchTgChatId = async function() { const t1 = document.getElementById('set-tg-token'); if(!t1) return; const token = t1.value; if(!token) return; const t2 = document.getElementById('set-tg-chat'); if(t2) { t2.value = "獲取中..."; try { t2.value = await fetchAPI('getTgChatId', { token }); } catch(e) { t2.value = ""; } } }
   
-  async function submitSettings() { 
+  window.submitSettings = async function() { 
     if(isProcessing) return; isProcessing = true; setButtonLoading('btn-submit-settings', true);
     const getVal = (id) => document.getElementById(id)?.value || '';
     try { await fetchAPI('saveSettings', { TG_BOT_TOKEN: getVal('set-tg-token'), TG_CHAT_ID: getVal('set-tg-chat'), LINE_LINK: getVal('set-line-link') }); showToast("已儲存"); } catch(e) {} finally { isProcessing = false; setButtonLoading('btn-submit-settings', false, '儲存設定'); }

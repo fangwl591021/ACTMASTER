@@ -1,6 +1,6 @@
 /**
  * card-ecard.js
- * Version: v4.0.0 (QQ 修復版：還原被閹割的顏色選擇器、雙欄排版邏輯)
+ * Version: v5.2.1 (VOOM 短影音解析轉換器擴充修復版)
  */
 
 window.toggleECardType = function(type) {
@@ -27,7 +27,7 @@ window.toggleECardType = function(type) {
       if (uploadHint) uploadHint.innerText = '※ 若未上傳，系統將智能代入您原先的名片圖檔作為底圖。';
     }
     
-    window.updateECardPreview();
+    if (typeof window.updateECardPreview === 'function') window.updateECardPreview();
 }
 
 window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
@@ -190,7 +190,6 @@ window.openECardGenerator = function() {
             if (el) el.value = val;
         };
 
-        // ⭐ 恢復按鈕顏色選擇器
         const listEl = document.getElementById('ec-btn-list');
         if (listEl) {
             listEl.innerHTML = '';
@@ -199,10 +198,10 @@ window.openECardGenerator = function() {
                 const b = sBtns[i-1] || {l:'', u:'', c:'#06C755'};
                 listEl.innerHTML += `
                 <div class="flex items-center gap-3 bg-slate-50 p-2.5 rounded-2xl">
-                  <input type="color" id="ec-btn${i}-color" value="${b.c || '#06C755'}" class="w-10 h-10 rounded-xl cursor-pointer border-none bg-transparent shrink-0" oninput="updateECardPreview()">
+                  <input type="color" id="ec-btn${i}-color" value="${b.c || '#06C755'}" class="w-10 h-10 rounded-xl cursor-pointer border-none bg-transparent shrink-0" oninput="if (typeof window.updateECardPreview === 'function') window.updateECardPreview()">
                   <div class="flex flex-col flex-1 gap-1">
-                    <input type="text" id="ec-btn${i}-label" class="w-full bg-transparent border-none text-[14px] font-bold outline-none px-2 py-1 placeholder-slate-400 focus:ring-0" placeholder="按鈕文字 (選填)" value="${b.l}" oninput="updateECardPreview()">
-                    <input type="text" id="ec-btn${i}-url" class="w-full bg-transparent border-none text-[13px] text-slate-500 font-medium outline-none px-2 py-1 placeholder-slate-400 focus:ring-0" placeholder="連結網址 (選填)" value="${b.u}" oninput="updateECardPreview()">
+                    <input type="text" id="ec-btn${i}-label" class="w-full bg-transparent border-none text-[14px] font-bold outline-none px-2 py-1 placeholder-slate-400 focus:ring-0" placeholder="按鈕文字 (選填)" value="${b.l}" oninput="if (typeof window.updateECardPreview === 'function') window.updateECardPreview()">
+                    <input type="text" id="ec-btn${i}-url" class="w-full bg-transparent border-none text-[13px] text-slate-500 font-medium outline-none px-2 py-1 placeholder-slate-400 focus:ring-0" placeholder="連結網址 (選填)" value="${b.u}" oninput="if (typeof window.updateECardPreview === 'function') window.updateECardPreview()">
                   </div>
                 </div>`;
             }
@@ -232,9 +231,9 @@ window.openECardGenerator = function() {
           
           safeSetValue('ec-card-type', 'image');
           safeSetValue('ec-video-url', '');
-          safeSetValue('ec-img-input', defaultFlex.hero.url || '');
+          safeSetValue('ec-img-input', defaultFlex.hero ? defaultFlex.hero.url : '');
           safeSetValue('ec-img-action-url', `https://liff.line.me/${myLiffId}`);
-          safeSetValue('ec-img-size', defaultFlex.size);
+          safeSetValue('ec-img-size', defaultFlex.size || 'mega');
           safeSetValue('ec-aspect-ratio', 'auto');
           safeSetValue('ec-title-align', 'center');
           
@@ -250,7 +249,7 @@ window.openECardGenerator = function() {
         }
         
         const cardTypeEl = document.getElementById('ec-card-type');
-        window.toggleECardType(cardTypeEl ? cardTypeEl.value : 'image');
+        if (typeof window.toggleECardType === 'function') window.toggleECardType(cardTypeEl ? cardTypeEl.value : 'image');
         
         const previewImg = document.getElementById('preview-ec-img');
         if (previewImg) previewImg.removeAttribute('data-current-src');
@@ -258,7 +257,7 @@ window.openECardGenerator = function() {
         const modalEl = document.getElementById('ecard-generator-modal');
         if (modalEl) modalEl.classList.remove('hidden');
         
-        updateECardPreview();
+        if (typeof window.updateECardPreview === 'function') window.updateECardPreview();
         
     } catch (err) {
         alert("開啟編輯器時發生系統異常：" + err.message);
@@ -533,7 +532,7 @@ window.saveECardConfig = async function(isSilent = false) {
 }
   
 window.shareECardToLine = async function() {
-    if (!window.checkFormat(true)) return;
+    if (typeof window.checkFormat === 'function' && !window.checkFormat(true)) return;
   
     const btnShare = document.getElementById('btn-share-line');
     let oriHtml = '';
@@ -547,14 +546,22 @@ window.shareECardToLine = async function() {
       const imgInput = document.getElementById('ec-img-input');
       let rawUrl = imgInput ? imgInput.value : '';
       if (!rawUrl) {
-          rawUrl = currentActiveCard['名片圖檔'] ? currentActiveCard['名片圖檔'] : 'https://images.unsplash.com/photo-1616628188550-808682f3926d?w=800&q=80';
+          rawUrl = (typeof currentActiveCard !== 'undefined' && currentActiveCard && currentActiveCard['名片圖檔']) ? currentActiveCard['名片圖檔'] : 'https://images.unsplash.com/photo-1616628188550-808682f3926d?w=800&q=80';
       }
       const currentImgUrl = typeof window.getDirectImageUrl === 'function' ? window.getDirectImageUrl(rawUrl) : rawUrl;
       const detectedAr = (typeof window.getTrueAspectRatio === 'function') ? await window.getTrueAspectRatio(currentImgUrl) : "20:13";
   
-      const config = await window.saveECardConfig(true); 
-      const flexMessageObj = window.buildFlexMessageFromCard(currentActiveCard, config, detectedAr);
-      const altText = `您收到一張數位名片：${config && config.title ? config.title : currentActiveCard['姓名'] || currentActiveCard['Name'] || '商務名片'}`;
+      let config = null;
+      if (typeof window.saveECardConfig === 'function') {
+          config = await window.saveECardConfig(true); 
+      }
+      
+      if (!config) throw new Error("無法取得名片設定檔");
+
+      const flexMessageObj = typeof window.buildFlexMessageFromCard === 'function' ? window.buildFlexMessageFromCard(currentActiveCard, config, detectedAr) : null;
+      if (!flexMessageObj) throw new Error("無法產生名片訊息");
+
+      const altText = `您收到一張數位名片：${config && config.title ? config.title : (currentActiveCard ? (currentActiveCard['姓名'] || currentActiveCard['Name']) : '商務名片')}`;
       
       const myLiffId = (typeof LIFF_ID !== 'undefined') ? LIFF_ID : '2009367829-DLtYBDUm';
       const shareUrl = `https://liff.line.me/${myLiffId}/card.html?shareCardId=${currentActiveCard.rowId}`;
@@ -589,3 +596,91 @@ window.handleECardImageUpload = function(input) {
         window.openCropper(input, 'ecard');
     }
 }
+
+// ⭐ LINE VOOM 轉換器核心邏輯
+window.openVoomModal = function() {
+    const m = document.getElementById('voom-modal');
+    if (m) m.classList.remove('hidden');
+};
+
+window.closeVoomModal = function() {
+    const m = document.getElementById('voom-modal');
+    if (m) m.classList.add('hidden');
+    const res = document.getElementById('voom-result-container');
+    if (res) res.classList.add('hidden');
+    const err = document.getElementById('voom-error-msg');
+    if (err) err.classList.add('hidden');
+    const input = document.getElementById('voom-url-input');
+    if (input) input.value = '';
+    const player = document.getElementById('voom-video-player');
+    if (player) { player.pause(); player.src = ''; }
+};
+
+window.fetchVoomData = async function() {
+    const urlInput = document.getElementById('voom-url-input');
+    if (!urlInput) return;
+    const url = urlInput.value.trim();
+    
+    const errEl = document.getElementById('voom-error-msg');
+    const resEl = document.getElementById('voom-result-container');
+    if (errEl) errEl.classList.add('hidden');
+    if (resEl) resEl.classList.add('hidden');
+
+    if (!url) {
+        if (errEl) { errEl.textContent = '請貼上有效的 VOOM 網址'; errEl.classList.remove('hidden'); }
+        return;
+    }
+
+    const btn = document.getElementById('btn-fetch-voom');
+    const originalText = btn ? btn.innerHTML : '解析貼文';
+    if (btn) {
+        btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[18px] align-middle">refresh</span> 解析中...';
+        btn.classList.add('pointer-events-none', 'opacity-70');
+    }
+
+    try {
+        if (typeof window.fetchAPI !== 'function') throw new Error("連線模組未載入");
+        const data = await window.fetchAPI('getLineVoomMedia', { url: url }, false);
+        
+        if (data && data.type === 'VIDEO' && data.video && data.video.videoUrl) {
+            const player = document.getElementById('voom-video-player');
+            if (player) player.src = data.video.videoUrl;
+            
+            const applyBtn = document.getElementById('btn-apply-voom');
+            if (applyBtn) {
+                applyBtn.dataset.videoUrl = data.video.videoUrl;
+                applyBtn.dataset.thumbUrl = data.video.thumbnailUrl || '';
+            }
+            if (resEl) resEl.classList.remove('hidden');
+        } else {
+            throw new Error("此貼文中找不到公開的影片，請確認網址正確或貼文為公開狀態。");
+        }
+    } catch (err) {
+        if (errEl) {
+            errEl.textContent = '❌ 解析失敗: ' + err.message;
+            errEl.classList.remove('hidden');
+        }
+    } finally {
+        if (btn) {
+            btn.innerHTML = originalText;
+            btn.classList.remove('pointer-events-none', 'opacity-70');
+        }
+    }
+};
+
+window.applyVoomVideo = function() {
+    const applyBtn = document.getElementById('btn-apply-voom');
+    if (!applyBtn) return;
+    const vUrl = applyBtn.dataset.videoUrl;
+    const tUrl = applyBtn.dataset.thumbUrl;
+
+    const vInput = document.getElementById('ec-video-url');
+    if (vInput) vInput.value = vUrl;
+    
+    const iInput = document.getElementById('ec-img-input');
+    if (iInput && tUrl && tUrl !== '無縮圖') iInput.value = tUrl;
+    
+    window.closeVoomModal();
+    if (typeof window.updateECardPreview === 'function') window.updateECardPreview();
+    if (typeof window.showToast === 'function') window.showToast('✅ 影片已成功帶入');
+};

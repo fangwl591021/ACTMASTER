@@ -1,3 +1,4 @@
+<!-- Version: v7.4.0 (QQ 鐵律修復版：強制補回被閹割的「系列梯次」功能與原生 UI) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -80,7 +81,7 @@
 
     <div id="form-content" class="hidden animate-in fade-in duration-300">
       
-      <!-- ⭐ 藍色分頁切換器 (符合截圖設計) -->
+      <!-- ⭐ 藍色分頁切換器 -->
       <div class="flex p-1.5 rounded-[1rem] bg-blue-50/60 border border-blue-100/50 mb-6 mx-1">
         <button id="tab-btn-quick" onclick="switchTab('quick')" class="flex-1 py-2.5 rounded-xl text-[14px] font-bold bg-white text-blue-600 shadow-sm transition-all">快速匯入</button>
         <button id="tab-btn-full" onclick="switchTab('full')" class="flex-1 py-2.5 rounded-xl text-[14px] font-bold text-slate-500 transition-all hover:text-slate-700 bg-transparent">完整發佈</button>
@@ -105,7 +106,6 @@
             </div>
         </div>
 
-        <!-- 快速匯入：收費選項 -->
         <div class="flex flex-col">
             <label class="input-label">收費方式</label>
             <div class="flex items-center gap-6 p-4 bg-slate-50 rounded-2xl">
@@ -154,7 +154,6 @@
             </div>
         </div>
 
-        <!-- 完整發佈：收費選項 -->
         <div class="flex flex-col">
             <label class="input-label">收費方式</label>
             <div class="flex items-center gap-6 p-4 bg-slate-50 rounded-2xl">
@@ -190,11 +189,40 @@
         </div>
       </div>
 
-      <!-- Tab 3: 系列梯次 (Placeholder) -->
-      <div id="tab-content-series" class="hidden space-y-5 bg-white p-8 rounded-[2rem] shadow-sm mx-1 text-center">
-         <span class="material-symbols-outlined text-[48px] text-slate-300 mb-3">construction</span>
-         <h3 class="text-lg font-black text-slate-800">系列梯次模組</h3>
-         <p class="text-sm text-slate-500 font-medium">多梯次、多票種模組建置中，敬請期待。</p>
+      <!-- ⭐ Tab 3: 系列梯次 (完美回歸，原生無框設計) -->
+      <div id="tab-content-series" class="hidden space-y-5 bg-white p-5 rounded-[2rem] shadow-sm mx-1">
+        <div class="flex flex-col">
+            <label class="input-label">活動總標題</label>
+            <input type="text" id="s-name" class="custom-input" placeholder="例如：2026 商務進階系列課程">
+        </div>
+
+        <div class="flex flex-col">
+            <label class="input-label">封面圖片網址</label>
+            <input type="url" id="s-img" class="custom-input" placeholder="https://...">
+        </div>
+        
+        <div class="flex flex-col">
+            <label class="input-label">活動總說明</label>
+            <textarea id="s-desc" class="textarea-block h-32" placeholder="輸入此系列活動的總體說明..."></textarea>
+        </div>
+
+        <!-- 梯次管理區塊 -->
+        <div class="pt-4 border-t border-slate-100">
+            <div class="flex justify-between items-center mb-3">
+                <label class="input-label !mb-0 text-blue-600">梯次與票種設定</label>
+                <button onclick="addBatchRow()" class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-xl text-[13px] font-bold active:scale-95 transition-all flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[16px]">add</span> 新增一場
+                </button>
+            </div>
+            
+            <div id="batch-container" class="space-y-4">
+                <!-- Javascript 動態注入梯次卡片 -->
+            </div>
+        </div>
+        
+        <div class="pt-2">
+            <button onclick="handleSubmit('series')" id="btn-submit-series" class="btn-primary">確認建立系列活動</button>
+        </div>
       </div>
 
     </div>
@@ -216,6 +244,8 @@
   const WORKER_URL = "https://actmaster.fangwl591021.workers.dev";
   const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55", "U8932b891ad24da512afb9c1a6f41567b"];
   
+  let batchCount = 0;
+
   document.addEventListener("DOMContentLoaded", async () => {
     try {
       await liff.init({ liffId: LIFF_ID });
@@ -226,6 +256,10 @@
           window.location.href = 'index.html'; 
           return; 
       }
+      
+      // 預設新增一個梯次表單
+      addBatchRow();
+      
       document.getElementById('view-loading').classList.add('hidden');
       document.getElementById('form-content').classList.remove('hidden');
     } catch(e) { 
@@ -255,6 +289,33 @@
           priceBox.classList.add('hidden');
           document.getElementById(`${prefix}-price`).value = '';
       }
+  }
+
+  // ⭐ 新增梯次按鈕邏輯 (原生無框設計)
+  function addBatchRow() {
+      batchCount++;
+      const container = document.getElementById('batch-container');
+      const rowId = `batch-${batchCount}`;
+      const html = `
+      <div id="${rowId}" class="bg-slate-50 p-4 rounded-2xl relative border-none animate-in slide-in-from-top-2">
+          ${batchCount > 1 ? `<button onclick="document.getElementById('${rowId}').remove()" class="absolute top-4 right-4 w-7 h-7 bg-white text-slate-400 hover:text-red-500 rounded-full flex items-center justify-center shadow-sm transition-colors"><span class="material-symbols-outlined text-[16px]">close</span></button>` : ''}
+          
+          <div class="flex flex-col mb-3 pr-10">
+              <input type="text" id="${rowId}-name" class="custom-input !h-[44px] !bg-white shadow-sm" placeholder="梯次名稱 (例如: 台北平日班)">
+          </div>
+          
+          <div class="grid grid-cols-2 gap-3 mb-3">
+              <input type="datetime-local" id="${rowId}-start" class="custom-input !h-[44px] !bg-white shadow-sm !text-[13px] !px-3 text-slate-600">
+              <input type="datetime-local" id="${rowId}-end" class="custom-input !h-[44px] !bg-white shadow-sm !text-[13px] !px-3 text-slate-600">
+          </div>
+          
+          <div class="flex items-center gap-2">
+              <span class="text-[13px] font-bold text-slate-500 shrink-0 ml-1">收費 NT$</span>
+              <input type="number" id="${rowId}-price" class="custom-input !h-[44px] !bg-white shadow-sm" placeholder="免費請留空或填 0">
+          </div>
+      </div>
+      `;
+      container.insertAdjacentHTML('beforeend', html);
   }
 
   // 統一的 API 發送邏輯
@@ -305,6 +366,57 @@
               endTime: end,
               description: desc,
               imageUrl: img
+          };
+          
+      } else if (mode === 'series') {
+          // ⭐ 處理系列梯次的表單邏輯
+          const name = document.getElementById('s-name').value.trim();
+          const desc = document.getElementById('s-desc').value.trim();
+          const img = document.getElementById('s-img').value.trim();
+          
+          if(!name) return alert('⚠️ 請輸入活動總標題');
+
+          const batchNodes = document.querySelectorAll('#batch-container > div');
+          if (batchNodes.length === 0) return alert('⚠️ 請至少建立一個梯次');
+
+          const batches = [];
+          let hasError = false;
+          
+          batchNodes.forEach(node => {
+              const id = node.id;
+              const bName = document.getElementById(`${id}-name`).value.trim();
+              const bStart = document.getElementById(`${id}-start`).value;
+              const bEnd = document.getElementById(`${id}-end`).value;
+              let bPrice = document.getElementById(`${id}-price`).value;
+              bPrice = bPrice ? parseInt(bPrice) : 0;
+
+              if (!bName) hasError = true;
+              
+              batches.push({
+                  name: bName,
+                  startTime: bStart,
+                  endTime: bEnd,
+                  price: bPrice
+              });
+          });
+
+          if (hasError) return alert('⚠️ 每個梯次的名稱都必須填寫');
+
+          // 只要有任何一個梯次有設定金額，總類型就標示為「收費」
+          const isPaid = batches.some(b => b.price > 0);
+
+          payload = {
+              activityName: name,
+              activityType: '一般',
+              defaultIdentity: '會員',
+              feeType: isPaid ? '收費' : '免費',
+              price: isPaid ? '多票種' : 0,
+              names: [],
+              startTime: batches[0].startTime, // 抓第一場的時間當作列表顯示的預設時間
+              endTime: batches[batches.length-1].endTime,
+              description: desc,
+              imageUrl: img,
+              batches: batches // 將梯次陣列帶入 payload 傳給後端
           };
       }
 

@@ -1,4 +1,4 @@
-<!-- Version: v1.9.2 (QQ 修復版：徹底對齊 HTML 與 JS 的圖片上傳 DOM ID，解決裁切後無反應的靜默失效) -->
+<!-- Version: v2.0.0 (QQ 終極版：全域 DOM ID 變數大一統，徹底消滅參數錯置與無反應地雷) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -64,7 +64,7 @@
   
   <nav class="fixed top-0 w-full max-w-md z-40 bg-white/90 backdrop-blur-md px-5 py-3.5 flex justify-between items-center left-1/2 -translate-x-1/2 border-b border-slate-100">
     <div class="text-[20px] font-extrabold text-slate-800 tracking-tight flex items-center gap-1">
-      建立活動 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v1.9.2</span>
+      建立活動 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v2.0</span>
     </div>
     <button onclick="window.location.href='index.html?view=admin-activities'" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-90 transition-transform">
       <span class="material-symbols-outlined text-[20px]">close</span>
@@ -87,7 +87,7 @@
         <button id="tab-btn-series" onclick="switchTab('series')" class="flex-1 py-2.5 rounded-xl text-[14px] font-bold text-slate-500 transition-all hover:text-slate-700 bg-transparent">系列梯次</button>
       </div>
 
-      <!-- Tab 1: 快速匯入 -->
+      <!-- ================= Tab 1: 快速匯入 (ID前綴: q-) ================= -->
       <div id="tab-content-quick" class="space-y-5 bg-white p-5 rounded-[2rem] shadow-sm mx-1">
         <div class="flex flex-col">
             <label class="input-label">活動名稱</label>
@@ -108,11 +108,11 @@
         <div class="grid grid-cols-2 gap-4">
             <div class="flex flex-col">
                 <label class="input-label">活動類型</label>
-                <input type="text" id="q-type" class="custom-input" placeholder="例會" value="例會">
+                <select id="q-type" class="custom-input cursor-pointer"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option></select>
             </div>
             <div class="flex flex-col">
                 <label class="input-label">預設身份</label>
-                <input type="text" id="q-identity" class="custom-input" placeholder="會員" value="會員">
+                <select id="q-identity" class="custom-input cursor-pointer"><option>會員</option><option>來賓</option></select>
             </div>
         </div>
 
@@ -146,7 +146,6 @@
             <textarea id="q-names" class="textarea-block h-40" placeholder="王小明&#10;李小華"></textarea>
         </div>
         
-        <!-- ⭐ 統一 ID：in-image-url-quick / image-preview-quick / preview-placeholder-quick -->
         <div class="flex flex-col mt-2">
           <label class="input-label">活動宣傳圖 <span class="text-[12px] text-slate-400 ml-1">(自動壓縮)</span></label>
           <div onclick="document.getElementById('file-input-quick').click()" class="w-full h-36 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-all hover:bg-slate-100 relative group border-none">
@@ -162,38 +161,49 @@
         </div>
       </div>
 
-      <!-- Tab 2: 完整發佈 -->
+      <!-- ================= Tab 2: 完整發佈 (ID前綴: f-) ================= -->
       <div id="tab-content-full" class="hidden space-y-5 bg-white p-5 rounded-[2rem] shadow-sm mx-1">
         
-        <!-- ⭐ 統一 ID：in-image-url-detailed / image-preview-detailed / preview-placeholder-detailed -->
         <div class="flex flex-col">
           <label class="input-label">活動封面圖 <span class="text-[12px] text-slate-400 ml-1">(選填)</span></label>
           <div class="w-full relative">
-              <div onclick="document.getElementById('file-input-detailed').click()" class="w-full h-40 rounded-2xl flex flex-col items-center justify-center bg-slate-100 cursor-pointer overflow-hidden transition-colors hover:bg-slate-200 relative border-none">
-                  <div class="text-center text-slate-400 flex flex-col items-center z-10" id="preview-placeholder-detailed">
+              <div onclick="document.getElementById('file-input-full').click()" class="w-full h-40 rounded-2xl flex flex-col items-center justify-center bg-slate-100 cursor-pointer overflow-hidden transition-colors hover:bg-slate-200 relative border-none">
+                  <div class="text-center text-slate-400 flex flex-col items-center z-10" id="preview-placeholder-full">
                       <span class="material-symbols-outlined text-[32px] mb-2 text-slate-300">add_photo_alternate</span>
                       <p class="text-[13px] font-bold tracking-wider">點擊上傳圖片</p>
                   </div>
-                  <img id="image-preview-detailed" class="absolute inset-0 w-full h-full object-cover hidden z-0">
+                  <img id="image-preview-full" class="absolute inset-0 w-full h-full object-cover hidden z-0">
               </div>
-              <input type="hidden" id="in-image-url-detailed" value="">
-              <input type="file" id="file-input-detailed" accept="image/*" class="hidden" onchange="openCropper(this, 'detailed')">
+              <input type="hidden" id="in-image-url-full" value="">
+              <input type="file" id="file-input-full" accept="image/*" class="hidden" onchange="openCropper(this, 'full')">
           </div>
         </div>
 
         <div class="flex flex-col">
             <label class="input-label">活動標題</label>
-            <input type="text" id="detail-name" class="custom-input" placeholder="輸入活動標題">
+            <input type="text" id="f-name" class="custom-input" placeholder="輸入活動標題">
         </div>
         
         <div class="grid grid-cols-2 gap-4">
             <div class="flex flex-col">
                 <label class="input-label">開始時間</label>
-                <input type="datetime-local" id="detail-start" class="custom-input !px-1.5 !text-[13px]">
+                <input type="datetime-local" id="f-start" class="custom-input !px-1.5 !text-[13px]">
             </div>
             <div class="flex flex-col">
                 <label class="input-label">結束時間</label>
-                <input type="datetime-local" id="detail-end" class="custom-input !px-1.5 !text-[13px]">
+                <input type="datetime-local" id="f-end" class="custom-input !px-1.5 !text-[13px]">
+            </div>
+        </div>
+
+        <!-- ⭐ 補齊完整發佈遺失的下拉選單 -->
+        <div class="grid grid-cols-2 gap-4">
+            <div class="flex flex-col">
+                <label class="input-label">活動類型</label>
+                <select id="f-type" class="custom-input cursor-pointer"><option>例會</option><option>課程</option><option>教學</option><option>聯誼</option><option>參訪</option><option>講座</option><option>其他</option></select>
+            </div>
+            <div class="flex flex-col">
+                <label class="input-label">預設身份</label>
+                <select id="f-identity" class="custom-input cursor-pointer"><option>會員</option><option>來賓</option></select>
             </div>
         </div>
 
@@ -201,25 +211,25 @@
             <label class="input-label">收費方式</label>
             <div class="flex items-center gap-6 p-4 bg-slate-50 rounded-2xl border border-slate-200">
                 <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="detailed-fee-type" value="免費" checked onchange="toggleFeeInput('detailed')" class="w-5 h-5 text-blue-600 border-slate-300 focus:ring-blue-500 focus:ring-offset-0 bg-white">
+                    <input type="radio" name="f-fee-type" value="免費" checked onchange="toggleFeeInput('f')" class="w-5 h-5 text-blue-600 border-slate-300 focus:ring-blue-500 focus:ring-offset-0 bg-white">
                     <span class="text-[15px] font-bold text-slate-700">免費</span>
                 </label>
                 <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="detailed-fee-type" value="收費" onchange="toggleFeeInput('detailed')" class="w-5 h-5 text-blue-600 border-slate-300 focus:ring-blue-500 focus:ring-offset-0 bg-white">
+                    <input type="radio" name="f-fee-type" value="收費" onchange="toggleFeeInput('f')" class="w-5 h-5 text-blue-600 border-slate-300 focus:ring-blue-500 focus:ring-offset-0 bg-white">
                     <span class="text-[15px] font-bold text-slate-700">收費</span>
                 </label>
             </div>
-            <div id="detailed-price-box" class="hidden mt-3 animate-in slide-in-from-top-2">
+            <div id="f-price-box" class="hidden mt-3 animate-in slide-in-from-top-2">
                 <div class="relative">
                   <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400">NT$</span>
-                  <input type="number" id="detail-price" class="custom-input !pl-12" placeholder="請輸入金額">
+                  <input type="number" id="f-price" class="custom-input !pl-12" placeholder="請輸入金額">
                 </div>
             </div>
         </div>
 
         <div class="flex flex-col">
             <label class="input-label">活動說明</label>
-            <textarea id="detail-desc" class="textarea-block h-32" placeholder="輸入活動詳細說明..."></textarea>
+            <textarea id="f-desc" class="textarea-block h-32" placeholder="輸入活動詳細說明..."></textarea>
         </div>
         
         <div class="pt-2">
@@ -227,22 +237,21 @@
         </div>
       </div>
 
-      <!-- Tab 3: 系列梯次 -->
+      <!-- ================= Tab 3: 系列梯次 (ID前綴: s-) ================= -->
       <div id="tab-content-series" class="hidden space-y-5 bg-white p-5 rounded-[2rem] shadow-sm mx-1">
         
-        <!-- ⭐ 統一 ID：in-image-url-batch / image-preview-batch / preview-placeholder-batch -->
         <div class="flex flex-col">
           <label class="input-label">系列總封面圖 <span class="text-[12px] text-slate-400 ml-1">(選填)</span></label>
           <div class="w-full relative">
-              <div onclick="document.getElementById('file-input-batch').click()" class="w-full h-40 rounded-2xl flex flex-col items-center justify-center bg-slate-100 cursor-pointer overflow-hidden transition-colors hover:bg-slate-200 relative border-none">
-                  <div class="text-center text-slate-400 flex flex-col items-center z-10" id="preview-placeholder-batch">
+              <div onclick="document.getElementById('file-input-series').click()" class="w-full h-40 rounded-2xl flex flex-col items-center justify-center bg-slate-100 cursor-pointer overflow-hidden transition-colors hover:bg-slate-200 relative border-none">
+                  <div class="text-center text-slate-400 flex flex-col items-center z-10" id="preview-placeholder-series">
                       <span class="material-symbols-outlined text-[32px] mb-2 text-slate-300">add_photo_alternate</span>
                       <p class="text-[13px] font-bold tracking-wider">點擊上傳圖片</p>
                   </div>
-                  <img id="image-preview-batch" class="absolute inset-0 w-full h-full object-cover hidden z-0">
+                  <img id="image-preview-series" class="absolute inset-0 w-full h-full object-cover hidden z-0">
               </div>
-              <input type="hidden" id="in-image-url-batch" value="">
-              <input type="file" id="file-input-batch" accept="image/*" class="hidden" onchange="openCropper(this, 'batch')">
+              <input type="hidden" id="in-image-url-series" value="">
+              <input type="file" id="file-input-series" accept="image/*" class="hidden" onchange="openCropper(this, 'series')">
           </div>
         </div>
 
@@ -251,6 +260,11 @@
             <input type="text" id="s-name" class="custom-input" placeholder="例如：2026 商務進階系列課程">
         </div>
         
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="input-label">活動類型</label><select id="s-type" class="custom-input cursor-pointer"><option>課程</option><option>教學</option><option>講座</option><option>例會</option><option>聯誼</option><option>參訪</option><option>其他</option></select></div>
+          <div><label class="input-label">預設身份</label><select id="s-identity" class="custom-input cursor-pointer"><option>會員</option><option>來賓</option></select></div>
+        </div>
+
         <div class="flex flex-col">
             <label class="input-label">活動總說明</label>
             <textarea id="s-desc" class="textarea-block h-32" placeholder="輸入此系列活動的總體說明..."></textarea>
@@ -293,7 +307,7 @@
     <button onclick="confirmCrop()" class="px-4 py-1.5 font-bold text-white bg-[#06C755] rounded active:scale-95 transition-transform text-[15px] shadow-sm">完成</button>
   </div>
   <div class="flex-1 relative bg-black flex items-center justify-center overflow-hidden">
-      <img id="cropper-image" src="data:," class="max-w-full max-h-full block opacity-0 transition-opacity duration-300">
+      <img id="cropper-image" class="max-w-full max-h-full block opacity-0 transition-opacity duration-300">
   </div>
 </div>
 
@@ -337,14 +351,18 @@
       document.getElementById(`tab-btn-${tabId}`).className = 'flex-1 py-2.5 rounded-xl text-[14px] font-bold bg-white text-blue-600 shadow-sm transition-all';
   }
 
-  function togglePrice(prefix) {
-      const feeType = document.querySelector(`input[name="${prefix}-fee-type"]:checked`).value;
+  // ⭐ 統一的切換收費欄位邏輯 (傳入 q, f, s 前綴)
+  function toggleFeeInput(prefix) {
+      const feeRadio = document.querySelector(`input[name="${prefix}-fee-type"]:checked`);
+      if(!feeRadio) return;
+      const feeType = feeRadio.value;
       const priceBox = document.getElementById(`${prefix}-price-box`);
       if (feeType === '收費') {
-          priceBox.classList.remove('hidden');
+          if(priceBox) priceBox.classList.remove('hidden');
       } else {
-          priceBox.classList.add('hidden');
-          document.getElementById(`${prefix}-price`).value = '';
+          if(priceBox) priceBox.classList.add('hidden');
+          const priceInput = document.getElementById(`${prefix}-price`);
+          if(priceInput) priceInput.value = '';
       }
   }
 
@@ -359,15 +377,16 @@
               ${batchCount > 1 || insertAfterId ? `<button onclick="document.getElementById('${rowId}').remove()" class="w-8 h-8 bg-white text-slate-400 hover:text-red-500 rounded-full flex items-center justify-center shadow-sm transition-colors" title="刪除此梯次"><span class="material-symbols-outlined text-[18px]">close</span></button>` : ''}
           </div>
           <div class="flex flex-col mb-3 pr-20">
-              <input type="text" id="${rowId}-name" class="custom-input !h-[44px] !bg-white shadow-sm" placeholder="梯次名稱 (例如: 台北平日班)" value="${defaultValues ? defaultValues.name : ''}">
+              <input type="text" id="${rowId}-name" class="custom-input !h-[44px] !bg-white shadow-sm batch-name-input" placeholder="梯次名稱 (例如: 台北平日班)" value="${defaultValues ? defaultValues.name : ''}">
           </div>
           <div class="grid grid-cols-2 gap-3 mb-3">
-              <input type="datetime-local" id="${rowId}-start" class="custom-input !h-[44px] !bg-white shadow-sm !text-[13px] !px-3 text-slate-600" value="${defaultValues ? defaultValues.start : ''}">
-              <input type="datetime-local" id="${rowId}-end" class="custom-input !h-[44px] !bg-white shadow-sm !text-[13px] !px-3 text-slate-600" value="${defaultValues ? defaultValues.end : ''}">
+              <input type="datetime-local" id="${rowId}-start" class="custom-input !h-[44px] !bg-white shadow-sm !text-[13px] !px-3 text-slate-600 batch-start-input" value="${defaultValues ? defaultValues.start : ''}">
+              <input type="datetime-local" id="${rowId}-end" class="custom-input !h-[44px] !bg-white shadow-sm !text-[13px] !px-3 text-slate-600 batch-end-input" value="${defaultValues ? defaultValues.end : ''}">
           </div>
           <div class="flex items-center gap-2">
               <span class="text-[13px] font-bold text-slate-500 shrink-0 ml-1">收費 NT$</span>
-              <input type="number" id="${rowId}-price" class="custom-input !h-[44px] !bg-white shadow-sm" placeholder="免費請留空或填 0" value="${defaultValues ? defaultValues.price : ''}">
+              <input type="number" id="${rowId}-price" class="custom-input !h-[44px] !bg-white shadow-sm batch-price-input" placeholder="免費請留空或填 0" value="${defaultValues ? defaultValues.price : ''}">
+              <input type="hidden" class="batch-limit-input" value="${defaultValues ? defaultValues.limit : ''}">
           </div>
       </div>
       `;
@@ -380,12 +399,12 @@
       const srcStart = document.getElementById(`${sourceId}-start`).value;
       const srcEnd = document.getElementById(`${sourceId}-end`).value;
       const srcPrice = document.getElementById(`${sourceId}-price`).value;
-      addBatchRow({ name: srcName ? srcName + ' (複製)' : '', start: srcStart, end: srcEnd, price: srcPrice }, sourceId);
+      addBatchRow({ name: srcName ? srcName + ' (複製)' : '', start: srcStart, end: srcEnd, price: srcPrice, limit: '' }, sourceId);
   }
 
   function openCropper(input, targetMode) {
     const file = input.files[0]; if (!file) return;
-    currentCropTarget = targetMode;
+    currentCropTarget = targetMode; // 'quick', 'full', 'series'
 
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -419,10 +438,9 @@
     document.getElementById('section-image-cropper').classList.add('hidden'); 
     
     const img = document.getElementById('cropper-image');
-    if(img) { img.src = 'data:,'; img.style.opacity = '0'; }
+    if(img) { img.removeAttribute('src'); img.style.opacity = '0'; }
   }
 
-  // ⭐ QQ 防呆修復：統一提取動態 ID 變數，解決 undefined 報錯問題
   function confirmCrop() { 
     if (!cropperInstance) return; 
     let size = 250;
@@ -440,9 +458,7 @@
 
     cancelCrop(); 
     
-    const modeId = currentCropTarget; // 'quick', 'detailed', 'batch'
-    
-    // ⭐ 精準對齊 HTML 中的 ID
+    const modeId = currentCropTarget; // 'quick', 'full', 'series'
     const previewImg = document.getElementById(`image-preview-${modeId}`);
     const placeholder = document.getElementById(`preview-placeholder-${modeId}`);
     const urlInput = document.getElementById(`in-image-url-${modeId}`);
@@ -453,7 +469,7 @@
         placeholder.classList.add('hidden'); 
         urlInput.value = base64; 
     } else {
-        alert("⚠️ 系統找不到對應的預覽區塊，請通知管理員");
+        alert(`⚠️ 系統找不到對應的預覽區塊 (${modeId})，請重新整理`);
     }
   }
 
@@ -462,13 +478,17 @@
       return val.replace('T', ' ');
   };
 
+  // ⭐ 統一的防呆 API 送出函數
   async function handleSubmit(mode) { 
     let isProcessing = false;
     if(isProcessing) return; 
     
-    const nameInput = document.getElementById(mode === 'batch' ? 'batch-name' : (mode === 'quick' ? 'q-name' : 'detail-name'));
+    // 定義動態前綴: quick -> q, full -> f, series -> s
+    const pfx = mode === 'quick' ? 'q' : (mode === 'full' ? 'f' : 's');
+    
+    const nameInput = document.getElementById(`${pfx}-name`);
     const name = nameInput ? nameInput.value.trim() : '';
-    if(!name) { alert('⚠️ 請填寫活動名稱'); return nameInput?.focus(); }
+    if(!name) { alert('⚠️ 請填寫活動名稱/標題'); return nameInput?.focus(); }
 
     const btnId = `btn-submit-${mode}`;
     const btn = document.getElementById(btnId);
@@ -483,53 +503,34 @@
 
     let p = { 
       activityName: name,
-      activityType: '例會', 
+      activityType: document.getElementById(`${pfx}-type`) ? document.getElementById(`${pfx}-type`).value : '例會', 
       feeType: '免費',
-      price: '',
-      startTime: '',
-      endTime: '',
-      description: '',
-      imageUrl: '',
+      price: 0,
+      startTime: formatDT(document.getElementById(`${pfx}-start`) ? document.getElementById(`${pfx}-start`).value : ''),
+      endTime: formatDT(document.getElementById(`${pfx}-end`) ? document.getElementById(`${pfx}-end`).value : ''),
+      description: document.getElementById(`${pfx}-desc`) ? document.getElementById(`${pfx}-desc`).value.trim() : '',
+      imageUrl: document.getElementById(`in-image-url-${mode}`) ? document.getElementById(`in-image-url-${mode}`).value : '',
       names: [],
-      defaultIdentity: '來賓',
-      isBatch: (mode === 'batch'),
+      defaultIdentity: document.getElementById(`${pfx}-identity`) ? document.getElementById(`${pfx}-identity`).value : '來賓',
+      isBatch: (mode === 'series'),
       userId: userProfile.userId
     }; 
     
-    if(mode==='quick') {
-      const feeRadioQ = document.querySelector('input[name="quick-fee-type"]:checked');
-      p.feeType = feeRadioQ ? feeRadioQ.value : '免費';
-      p.price = document.getElementById('quick-price') ? document.getElementById('quick-price').value : '';
+    if(mode === 'quick' || mode === 'full') {
+      const feeRadio = document.querySelector(`input[name="${pfx}-fee-type"]:checked`);
+      p.feeType = feeRadio ? feeRadio.value : '免費';
+      p.price = document.getElementById(`${pfx}-price`) ? document.getElementById(`${pfx}-price`).value : '';
+      
       if(p.feeType === '收費' && (!p.price || p.price <= 0)) {
           isProcessing=false; if(btn){btn.innerHTML = oriText; btn.disabled = false; btn.classList.remove('opacity-70');} return alert("⚠️ 請輸入正確的收費金額");
       }
-      p.names = document.getElementById('quick-names').value.split('\n').filter(n=>n.trim()); 
-      p.activityType = document.getElementById('quick-type').value;
-      p.defaultIdentity = document.getElementById('quick-identity').value;
-      p.startTime = formatDT(document.getElementById('quick-start') ? document.getElementById('quick-start').value : '');
-      p.endTime = formatDT(document.getElementById('quick-end') ? document.getElementById('quick-end').value : '');
-      p.description = document.getElementById('quick-desc') ? document.getElementById('quick-desc').value.trim() : '';
-      p.imageUrl = document.getElementById('in-image-url-quick') ? document.getElementById('in-image-url-quick').value : '';
       
-    } else if(mode==='detailed') {
-      p.activityType = document.getElementById('detail-type') ? document.getElementById('detail-type').value : '例會';
-      p.defaultIdentity = document.getElementById('detail-identity') ? document.getElementById('detail-identity').value : '來賓';
-      const feeRadioD = document.querySelector('input[name="detailed-fee-type"]:checked');
-      p.feeType = feeRadioD ? feeRadioD.value : '免費'; 
-      p.price = document.getElementById('detail-price') ? document.getElementById('detail-price').value : ''; 
-      if(p.feeType === '收費' && (!p.price || p.price <= 0)) {
-          isProcessing=false; if(btn){btn.innerHTML = oriText; btn.disabled = false; btn.classList.remove('opacity-70');} return alert("⚠️ 請輸入正確的收費金額");
+      if (mode === 'quick') {
+          const namesStr = document.getElementById('q-names') ? document.getElementById('q-names').value : '';
+          p.names = namesStr.split('\n').filter(n=>n.trim()); 
       }
-      p.startTime = formatDT(document.getElementById('detail-start').value); 
-      p.endTime = formatDT(document.getElementById('detail-end').value); 
-      p.description = document.getElementById('detail-desc').value;
-      p.imageUrl = document.getElementById('in-image-url-detailed') ? document.getElementById('in-image-url-detailed').value : '';
       
-    } else if(mode==='batch') {
-      p.activityType = document.getElementById('batch-type').value;
-      p.defaultIdentity = document.getElementById('batch-identity').value;
-      p.description = document.getElementById('batch-desc').value;
-      p.imageUrl = document.getElementById('in-image-url-batch') ? document.getElementById('in-image-url-batch').value : '';
+    } else if(mode === 'series') {
       const cards = document.querySelectorAll('[id^="batch-item-"]');
       p.batches = Array.from(cards).map(card => ({
         name: card.querySelector('.batch-name-input').value.trim(),
@@ -538,8 +539,10 @@
         price: card.querySelector('.batch-price-input').value,
         limit: card.querySelector('.batch-limit-input').value
       }));
+      
       if(p.batches.length === 0) { isProcessing=false; if(btn){btn.innerHTML = oriText; btn.disabled = false; btn.classList.remove('opacity-70');} return alert("⚠️ 至少需新增一個梯次"); }
       for(let b of p.batches) { if(!b.name) { isProcessing=false; if(btn){btn.innerHTML = oriText; btn.disabled = false; btn.classList.remove('opacity-70');} return alert("⚠️ 梯次名稱必填"); } }
+      
       if(p.batches.length > 0) {
            p.startTime = p.batches[0].startTime;
            p.endTime = p.batches[p.batches.length - 1].endTime;

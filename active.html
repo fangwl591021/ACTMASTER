@@ -1,4 +1,4 @@
-<!-- Version: v1.7.0 (QQ 修復版：解放裁切器自由拉取限制，並補回快速匯入的時間欄位) -->
+<!-- Version: v1.8.0 (QQ 修復版：快速匯入補回活動說明欄位) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -44,6 +44,7 @@
     .input-label { @apply block text-[15px] text-[#64748b] mb-1.5 font-normal tracking-wide; }
     select.custom-input { -webkit-appearance: none !important; appearance: none !important; background-image: none !important; }
     .custom-input { @apply w-full py-3 px-3 bg-white border border-slate-300 rounded-lg outline-none focus:border-primary transition-all text-text-main text-[15px]; }
+    .textarea-block { @apply w-full p-4 bg-white border border-slate-300 rounded-lg outline-none focus:border-primary transition-all text-[15px] text-slate-800 resize-none leading-relaxed placeholder-slate-400; }
     .custom-input::placeholder { @apply text-slate-400 font-normal; }
     
     input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
@@ -80,7 +81,7 @@
         <span class="material-symbols-outlined text-[20px]">add_circle</span>
       </div>
       建立新活動
-      <span class="bg-slate-800 text-white text-[9px] px-2 py-0.5 rounded uppercase font-bold ml-1">v1.7</span>
+      <span class="bg-slate-800 text-white text-[9px] px-2 py-0.5 rounded uppercase font-bold ml-1">v1.8</span>
     </div>
     <div class="flex items-center gap-3">
       <img id="user-avatar" src="" class="w-8 h-8 rounded-full object-cover border border-slate-200 shadow-sm hidden">
@@ -109,7 +110,6 @@
       <div id="form-quick" class="space-y-5 animate-in fade-in">
         <div class="flex flex-col"><label class="input-label">活動名稱</label><input type="text" id="quick-name" class="custom-input" placeholder="例如：2026 商務交流會"></div>
         
-        <!-- ⭐ 補回：快速匯入的時間欄位 -->
         <div class="grid grid-cols-2 gap-4">
           <div><label class="input-label">開始時間</label><input type="datetime-local" id="quick-start" class="custom-input !px-1.5 !text-[13px]"></div>
           <div><label class="input-label">結束時間</label><input type="datetime-local" id="quick-end" class="custom-input !px-1.5 !text-[13px]"></div>
@@ -140,7 +140,13 @@
             </div>
         </div>
 
-        <div class="flex flex-col"><label class="input-label">名單內容 (每行一位)</label><textarea id="quick-names" class="custom-input h-36 resize-none" placeholder="王小明&#10;李小華"></textarea></div>
+        <!-- ⭐ 補回：快速匯入的活動說明欄位 -->
+        <div class="flex flex-col">
+            <label class="input-label">活動說明</label>
+            <textarea id="quick-desc" class="textarea-block h-32" placeholder="輸入活動詳細說明..."></textarea>
+        </div>
+
+        <div class="flex flex-col"><label class="input-label">名單內容 (每行一位)</label><textarea id="quick-names" class="textarea-block h-36 resize-none" placeholder="王小明&#10;李小華"></textarea></div>
         
         <div class="flex flex-col mt-2">
           <label class="input-label">活動宣傳圖 <span class="text-[12px] text-slate-400 ml-1">(自動壓縮)</span></label>
@@ -184,7 +190,7 @@
              </div>
          </div>
 
-         <div class="flex flex-col"><label class="input-label">活動說明</label><textarea id="detail-desc" class="custom-input h-32 resize-none" placeholder="詳細內容..."></textarea></div>
+         <div class="flex flex-col"><label class="input-label">活動說明</label><textarea id="detail-desc" class="textarea-block h-32 resize-none" placeholder="詳細內容..."></textarea></div>
 
          <div class="flex flex-col mt-2">
            <label class="input-label">宣傳大圖 <span class="text-[12px] text-slate-400 ml-1">(自動壓縮)</span></label>
@@ -207,7 +213,7 @@
           <div><label class="input-label">活動類型</label><select id="batch-type" class="custom-input cursor-pointer"><option>課程</option><option>教學</option><option>講座</option><option>例會</option><option>聯誼</option><option>參訪</option><option>其他</option></select></div>
           <div><label class="input-label">預設身份</label><select id="batch-identity" class="custom-input cursor-pointer"><option>會員</option><option>來賓</option></select></div>
         </div>
-        <div class="flex flex-col"><label class="input-label">系列共同說明</label><textarea id="batch-desc" class="custom-input h-24 resize-none" placeholder="輸入此系列活動的統整說明..."></textarea></div>
+        <div class="flex flex-col"><label class="input-label">系列共同說明</label><textarea id="batch-desc" class="textarea-block h-24 resize-none" placeholder="輸入此系列活動的統整說明..."></textarea></div>
 
         <div class="flex flex-col mt-2">
           <label class="input-label">宣傳大圖 <span class="text-[12px] text-slate-400 ml-1">(系列共用, 自動壓縮)</span></label>
@@ -325,7 +331,6 @@
       }
   }
 
-  // ⭐ UI 切換邏輯更新為 Blue Tabs
   function toggleCreateMode(m) { 
     ['quick', 'detailed', 'batch'].forEach(t => {
       const btn = document.getElementById('tab-' + t);
@@ -343,7 +348,6 @@
     }
   }
 
-  // ⭐ 收費按鈕連動邏輯
   function toggleFeeInput(prefix) { 
       const feeType = document.querySelector(`input[name="${prefix}-fee-type"]:checked`).value;
       const priceBox = document.getElementById(`${prefix}-price-box`);
@@ -356,7 +360,6 @@
       }
   }
 
-  // ⭐ 新增、複製、刪除梯次項目
   function addBatchItem(data = null) {
     const container = document.getElementById('batch-list-container');
     const id = Date.now() + Math.floor(Math.random() * 100);
@@ -405,8 +408,6 @@
     });
   }
 
-  // ⭐ 嚴格遵守手冊雷區 4：徹底繞過 Drive，實作 Base64 直寫儲存格機制
-  // ⭐ QQ修復點：解開 aspectRatio 的比例限制，改為 dragMode: 'crop' 允許自由拉取！
   function openCropper(input, targetMode) {
     const file = input.files[0]; if (!file) return;
     currentCropTarget = targetMode;
@@ -424,7 +425,7 @@
           cropperInstance = new Cropper(img, { 
             aspectRatio: NaN, // 允許自由比例拉取
             viewMode: 1, 
-            dragMode: 'crop', // 允許使用者自己畫框或拖拉角落
+            dragMode: 'crop', // 解放拖曳，允許自由框選
             autoCropArea: 0.9, 
             guides: true, 
             center: true, 
@@ -449,12 +450,10 @@
   function confirmCrop() { 
     if (!cropperInstance) return; 
     
-    // 依循手冊雷區 4 規範：將圖片最大尺寸設為 250px，品質 0.6
     let size = 250;
     let quality = 0.6;
     let base64 = cropperInstance.getCroppedCanvas({ maxWidth: size, maxHeight: size }).toDataURL('image/jpeg', quality); 
     
-    // 防呆：確保字串長度絕對小於 Google Sheets 儲存格上限的 48,000 字元
     while (base64.length > 48000 && quality > 0.1) {
        quality -= 0.1;
        base64 = cropperInstance.getCroppedCanvas({ maxWidth: size, maxHeight: size }).toDataURL('image/jpeg', quality);
@@ -473,18 +472,15 @@
     const urlInput = document.getElementById(`in-image-url-${modeId}`);
 
     if(previewImg && placeholder && urlInput) {
-        // Optimistic UI：即時更新畫面預覽
         previewImg.src = base64; 
         previewImg.classList.remove('hidden'); 
         placeholder.classList.add('hidden'); 
         
-        // ⭐ 不再呼叫 fetch('uploadImage')，直接將壓縮好的 Base64 填入隱藏欄位！
         urlInput.value = base64; 
         showToast("✅ 圖片預覽設定成功");
     }
   }
 
-  // ⭐ API 發送邏輯：送出時連同 Base64 一併傳給後端直寫儲存格
   async function handleCreateActivity(mode) { 
     if(isProcessing) return; 
     
@@ -501,7 +497,6 @@
     const oriText = btn ? btn.innerHTML : '建立';
     isProcessing = true;
     
-    // ⭐ 防空轉機制：嚴格遵守手冊，設定為 disabled 並顯示處理中
     setButtonLoading(btnId, true);
 
     let p = { 
@@ -533,11 +528,10 @@
       p.activityType = document.getElementById('quick-type').value;
       p.defaultIdentity = document.getElementById('quick-identity').value;
       
-      // ⭐ 補回快速匯入的時間讀取
+      // ⭐ 讀取快速匯入的時間與活動說明
       p.startTime = document.getElementById('quick-start') ? document.getElementById('quick-start').value : '';
       p.endTime = document.getElementById('quick-end') ? document.getElementById('quick-end').value : '';
-      
-      // 這裡取到的 imageUrl 就是經過壓縮的 Base64 字串
+      p.description = document.getElementById('quick-desc') ? document.getElementById('quick-desc').value.trim() : '';
       p.imageUrl = document.getElementById('in-image-url-quick') ? document.getElementById('in-image-url-quick').value : '';
       
     } else if(mode==='detailed') {
@@ -606,7 +600,6 @@
     } catch(e) { 
       showToast('⚠️ 建立失敗：' + e.message, true);
     } finally {
-      // ⭐ 防空轉機制：無論成功或失敗，都恢復按鈕原狀
       setButtonLoading(btnId, false, oriText);
       isProcessing = false;
     }

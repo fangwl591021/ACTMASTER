@@ -1,6 +1,6 @@
 /**
  * card-ecard.js
- * Version: v3.1.2 (確保不外流任何個資按鈕)
+ * Version: v4.0.0 (QQ 修復版：還原被閹割的顏色選擇器、雙欄排版邏輯)
  */
 
 window.toggleECardType = function(type) {
@@ -14,14 +14,14 @@ window.toggleECardType = function(type) {
     const uploadHint = document.getElementById('ec-upload-hint');
     
     if (type === 'video') {
-      if (tabImg) tabImg.className = 'flex-1 py-2 rounded-xl text-[14px] font-bold text-slate-500 transition-all hover:text-slate-700 bg-transparent';
-      if (tabVid) tabVid.className = 'flex-1 py-2 rounded-xl text-[14px] font-bold bg-white text-primary shadow-sm transition-all';
+      if (tabImg) tabImg.className = 'flex-1 py-2 rounded-lg text-[14px] font-bold text-slate-500 transition-all hover:text-slate-700 bg-transparent';
+      if (tabVid) tabVid.className = 'flex-1 py-2 rounded-lg text-[14px] font-bold bg-white text-primary shadow-sm transition-all';
       if (vidGroup) vidGroup.classList.remove('hidden');
       if (uploadLabel) uploadLabel.innerHTML = '點擊上傳封面圖縮圖 <span class="ml-1.5 px-2 py-0.5 bg-blue-50 text-blue-600 rounded-md text-[11px] font-bold tracking-wider">選填</span>';
       if (uploadHint) uploadHint.innerText = '※ 影片必須有封面縮圖，若未上傳系統將自動代入名片圖或預設底圖。';
     } else {
-      if (tabImg) tabImg.className = 'flex-1 py-2 rounded-xl text-[14px] font-bold bg-white text-primary shadow-sm transition-all';
-      if (tabVid) tabVid.className = 'flex-1 py-2 rounded-xl text-[14px] font-bold text-slate-500 transition-all hover:text-slate-700 bg-transparent';
+      if (tabImg) tabImg.className = 'flex-1 py-2 rounded-lg text-[14px] font-bold bg-white text-primary shadow-sm transition-all';
+      if (tabVid) tabVid.className = 'flex-1 py-2 rounded-lg text-[14px] font-bold text-slate-500 transition-all hover:text-slate-700 bg-transparent';
       if (vidGroup) vidGroup.classList.add('hidden');
       if (uploadLabel) uploadLabel.innerHTML = '點擊圖片變更 <span class="ml-1.5 px-2 py-0.5 bg-blue-50 text-blue-600 rounded-md text-[11px] font-bold tracking-wider">選填</span>';
       if (uploadHint) uploadHint.innerText = '※ 若未上傳，系統將智能代入您原先的名片圖檔作為底圖。';
@@ -190,6 +190,24 @@ window.openECardGenerator = function() {
             if (el) el.value = val;
         };
 
+        // ⭐ 恢復按鈕顏色選擇器
+        const listEl = document.getElementById('ec-btn-list');
+        if (listEl) {
+            listEl.innerHTML = '';
+            const sBtns = savedConfig ? savedConfig.buttons : [];
+            for(let i=1; i<=4; i++) {
+                const b = sBtns[i-1] || {l:'', u:'', c:'#06C755'};
+                listEl.innerHTML += `
+                <div class="flex items-center gap-3 bg-slate-50 p-2.5 rounded-2xl">
+                  <input type="color" id="ec-btn${i}-color" value="${b.c || '#06C755'}" class="w-10 h-10 rounded-xl cursor-pointer border-none bg-transparent shrink-0" oninput="updateECardPreview()">
+                  <div class="flex flex-col flex-1 gap-1">
+                    <input type="text" id="ec-btn${i}-label" class="w-full bg-transparent border-none text-[14px] font-bold outline-none px-2 py-1 placeholder-slate-400 focus:ring-0" placeholder="按鈕文字 (選填)" value="${b.l}" oninput="updateECardPreview()">
+                    <input type="text" id="ec-btn${i}-url" class="w-full bg-transparent border-none text-[13px] text-slate-500 font-medium outline-none px-2 py-1 placeholder-slate-400 focus:ring-0" placeholder="連結網址 (選填)" value="${b.u}" oninput="updateECardPreview()">
+                  </div>
+                </div>`;
+            }
+        }
+
         if (savedConfig) {
           if (savedConfig.title) savedConfig.title = savedConfig.title.replace(/Not provided/gi, '').replace(/未提供/g, '').trim();
           if (savedConfig.desc) savedConfig.desc = savedConfig.desc.replace(/Not provided/gi, '').replace(/未提供/g, '').trim();
@@ -209,14 +227,6 @@ window.openECardGenerator = function() {
           safeSetValue('ec-title-align', savedConfig.titleAlign || 'center');
           safeSetValue('ec-title-input', savedConfig.title || '');
           safeSetValue('ec-desc-input', savedConfig.desc || '');
-      
-          const sBtns = savedConfig.buttons || [];
-          for(let i=1; i<=4; i++) {
-            const btn = sBtns[i-1];
-            safeSetValue(`ec-btn${i}-label`, btn ? btn.l : '');
-            safeSetValue(`ec-btn${i}-url`, btn ? btn.u : '');
-            safeSetValue(`ec-btn${i}-color`, btn && btn.c ? btn.c : '#06C755');
-          }
         } else {
           const defaultFlex = window.buildFlexMessageFromCard(c, null);
           
@@ -237,14 +247,6 @@ window.openECardGenerator = function() {
           
           safeSetValue('ec-title-input', defaultTitle);
           safeSetValue('ec-desc-input', defaultDesc);
-          
-          let defaultBtns = defaultFlex.footer && defaultFlex.footer.contents ? defaultFlex.footer.contents : [];
-          for(let i=1; i<=4; i++) {
-            const btn = defaultBtns[i-1];
-            safeSetValue(`ec-btn${i}-label`, btn ? btn.action.label : '');
-            safeSetValue(`ec-btn${i}-url`, btn ? btn.action.uri : '');
-            safeSetValue(`ec-btn${i}-color`, btn ? btn.color : '#06C755');
-          }
         }
         
         const cardTypeEl = document.getElementById('ec-card-type');
@@ -255,6 +257,8 @@ window.openECardGenerator = function() {
         
         const modalEl = document.getElementById('ecard-generator-modal');
         if (modalEl) modalEl.classList.remove('hidden');
+        
+        updateECardPreview();
         
     } catch (err) {
         alert("開啟編輯器時發生系統異常：" + err.message);

@@ -1,4 +1,4 @@
-<!-- Version: v1.2.5 (QQ 修復版：強化名片多重比對演算法，解決 Google Sheet 數字掉零與暱稱模糊比對問題) -->
+<!-- Version: v1.2.6 (QQ 修復版：解決認領名片非同步時差未更新 UI 的 Bug，並強化鋼鐵級模糊比對) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -199,7 +199,7 @@
           <div class="absolute -right-4 -top-4 opacity-10"><span class="material-symbols-outlined text-[100px]">contact_mail</span></div>
           <div class="relative z-10" id="my-card-info">
               <div class="flex items-center gap-1.5 mb-1.5">
-                <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                <span class="w-2 h-2 rounded-full bg-slate-400 animate-pulse"></span>
                 <span class="text-[11px] font-bold text-slate-300 tracking-wider">檢查狀態中...</span>
               </div>
               <h3 class="text-[18px] font-black mb-1">數位電子名片</h3>
@@ -552,6 +552,12 @@
 
               await fetchAPI('updateCard', updatePayload);
               showToast("✅ 名片已成功認領並綁定至您的帳號");
+
+              // ⭐ QQ 終極修復：背景綁定成功後，強制更新全域變數並立刻刷新 UI
+              globalCardContacts = await fetchAPI('getCardContacts', {}, false);
+              if (!document.getElementById('view-user-profile').classList.contains('hidden')) {
+                  checkMyCardEntry();
+              }
           }
       } catch(e) {
           console.error("Claim failed", e);
@@ -589,7 +595,7 @@
     else if (view === 'user-history') loadUserHistory();
   }
 
-  // ⭐ QQ修復：導入最高級智慧多重比對演算法 (解決 Google Sheet 數字掉零、與 LINE 暱稱干擾問題)
+  // ⭐ QQ修復：強化名片多重比對演算法，解決 Google Sheet 數字掉零與暱稱模糊比對問題
   async function checkMyCardEntry() {
       const entryEl = document.getElementById('my-card-entry');
       const infoEl = document.getElementById('my-card-info');
@@ -608,41 +614,47 @@
           if (myPhone) {
               myPhone = String(myPhone).replace(/[^\d]/g, '');
               if (myPhone.startsWith('886')) myPhone = '0' + myPhone.substring(3);
-              // 補回被 Google Sheet 吃掉的開頭 0
               if (myPhone.length === 9 && myPhone.startsWith('9')) myPhone = '0' + myPhone;
           }
 
-          // 核心智慧比對函數
           const isMatch = (c) => {
               if (!c) return false;
               
               // 1. 第一關：絕對比對 LINE ID 
-              const cUid = String(c['LINE ID'] || c.userId || '').trim();
+              const cUid = String(c['LINE ID'] || c.userId || c['Line ID'] || c.lineId || '').trim();
               if (cUid && cUid === uid) return true;
+
+              // 將該筆名片所有資料壓平成字串，確保不漏看任何欄位
+              const allValuesStr = Object.values(c).join('|||');
               
-              // 2. 第二關：比對「手機號碼」
-              if (myPhone && (c['手機號碼'] || c['Mobile'])) {
-                  let cPhone = String(c['手機號碼'] || c['Mobile']).replace(/[^\d]/g, '');
-                  if (cPhone.startsWith('886')) cPhone = '0' + cPhone.substring(3);
-                  // 解決 Google Sheet 開頭 0 被吃掉變成純數字的問題 (例如 953740237 -> 0953740237)
-                  if (cPhone.length === 9 && cPhone.startsWith('9')) cPhone = '0' + cPhone;
+              // 2. 第二關：超強力手機號碼比對
+              if (myPhone) {
+                  // 檢查特定欄位
+                  const p1 = String(c['手機號碼'] || c['Mobile'] || '').replace(/[^\d]/g, '');
+                  const p2 = String(c['公司電話'] || c['Tel'] || '').replace(/[^\d]/g, '');
+                  const checkPhone = (p) => {
+                      if (!p) return false;
+                      if (p.startsWith('886')) p = '0' + p.substring(3);
+                      if (p.length === 9 && p.startsWith('9')) p = '0' + p;
+                      return p === myPhone;
+                  };
+                  if (checkPhone(p1) || checkPhone(p2)) return true;
                   
-                  if (cPhone === myPhone) return true;
+                  // 退防：直接在所有文字中尋找這組數字
+                  if (allValuesStr.includes(myPhone)) return true;
               }
               
-              // 3. 第三關：比對「真實姓名」(包含高智慧模糊比對)
-              if (myName && (c['姓名'] || c['Name'])) {
-                  let cName = String(c['姓名'] || c['Name']).trim();
+              // 3. 第三關：真實姓名高智慧模糊比對
+              if (myName) {
+                  let cName = String(c['姓名'] || c['Name'] || '').trim();
                   let mName = myName.trim();
                   
-                  if (cName === mName) return true;
-                  
-                  // 模糊比對 A：如果 LINE 暱稱帶有一堆綴詞 (例如 王子齊 bit.ly/遊戲達人)，我們只取前半段真實姓名來比
-                  let mNameFirstPart = mName.split(/[\s\/_+-]/)[0];
-                  if (mNameFirstPart && mNameFirstPart.length >= 2 && cName.includes(mNameFirstPart)) return true;
-                  
-                  // 模糊比對 B：資料庫的姓名剛好被包含在 LINE 暱稱中
+                  if (cName && cName === mName) return true;
                   if (cName && mName.includes(cName)) return true;
+                  
+                  // 擷取 LINE 暱稱中的第一段純中文姓名 (排除 bit.ly 等綴詞)
+                  let mNameFirstPart = mName.split(/[\s\/_+-]/)[0];
+                  if (mNameFirstPart && mNameFirstPart.length >= 2 && allValuesStr.includes(mNameFirstPart)) return true;
               }
               
               return false;
@@ -654,7 +666,6 @@
               myCard = globalCardContacts.find(isMatch);
           }
           
-          // 若快取找不到，強制不使用快取，直接去伺服器要最新鮮的資料！
           if (!myCard) {
               infoEl.querySelector('p').innerText = '同步最新資料庫中...';
               const data = await fetchAPI('getCardContacts', {}, false); 
@@ -666,7 +677,6 @@
           }
 
           if (myCard) {
-              // ⭐ 背景默默認領：如果這張卡是靠姓名或電話「模糊比對」認出來的，但資料庫裡還沒有他的 LINE ID，立刻幫他補上！
               if (!myCard['LINE ID'] || String(myCard['LINE ID']).trim() !== uid) {
                   myCard['LINE ID'] = uid;
                   myCard.userId = uid;
@@ -903,7 +913,6 @@
       showToast("🎉 專屬名片建檔成功！"); 
       
       sessionStorage.removeItem('getCardContacts{}');
-      // 不依賴快取，強制重抓以確保按鈕會出來
       globalCardContacts = await fetchAPI('getCardContacts', {}, false);
       checkMyCardEntry();
       
@@ -1249,7 +1258,6 @@
     try {
       await fetchAPI('updateUser', p); registeredInfo = p; showToast("儲存成功"); 
       
-      // 更新完個人資料後，重新觸發一次名片比對
       checkMyCardEntry();
       
     } catch(e) {

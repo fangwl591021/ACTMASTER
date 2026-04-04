@@ -1,4 +1,4 @@
-<!-- Version: v1.2.6 (QQ 修復版：解決認領名片非同步時差未更新 UI 的 Bug，並強化鋼鐵級模糊比對) -->
+<!-- Version: v1.3.0 (QQ 終極抗快取版：重寫錯誤捕捉機制，徹底解決「名片抓不到」與「舊文字殘留」之謎) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -182,7 +182,7 @@
       <div class="flex flex-col"><label class="input-label">姓名</label><input type="text" id="edit-name" class="custom-input"></div>
       <div class="grid grid-cols-2 gap-3">
         <div class="flex flex-col"><label class="input-label">業種</label><input type="text" id="edit-industry" class="custom-input"></div>
-        <div class="flex flex-col"><label class="input-label">性別</label><select id="edit-gender" class="custom-input cursor-pointer"><option value="男">男</option><option value="女">女</option></select></div>
+        <div class="flex flex-col"><label class="input-label">性別</label><select id="edit-gender" class="custom-input cursor-pointer"><option value="" disabled selected>選擇性別</option><option value="男">男</option><option value="女">女</option></select></div>
       </div>
       <div class="grid grid-cols-2 gap-3">
         <div class="flex flex-col"><label class="input-label">手機</label><input type="tel" id="edit-phone" class="custom-input"></div>
@@ -553,7 +553,6 @@
               await fetchAPI('updateCard', updatePayload);
               showToast("✅ 名片已成功認領並綁定至您的帳號");
 
-              // ⭐ QQ 終極修復：背景綁定成功後，強制更新全域變數並立刻刷新 UI
               globalCardContacts = await fetchAPI('getCardContacts', {}, false);
               if (!document.getElementById('view-user-profile').classList.contains('hidden')) {
                   checkMyCardEntry();
@@ -595,7 +594,7 @@
     else if (view === 'user-history') loadUserHistory();
   }
 
-  // ⭐ QQ修復：強化名片多重比對演算法，解決 Google Sheet 數字掉零與暱稱模糊比對問題
+  // ⭐ QQ修復：徹底優化名片多重比對演算法，並加入強制刷新按鈕
   async function checkMyCardEntry() {
       const entryEl = document.getElementById('my-card-entry');
       const infoEl = document.getElementById('my-card-info');
@@ -603,6 +602,17 @@
       entryEl.classList.remove('hidden');
       
       if (!userProfile) return;
+
+      // 在紅框中加入「手動重試」按鈕的模板
+      const errorTemplate = (msg) => `
+        <div class="flex items-center gap-1.5 mb-1.5">
+          <span class="w-2 h-2 rounded-full bg-red-400"></span>
+          <span class="text-[11px] font-bold text-red-300 tracking-wider">連線異常</span>
+        </div>
+        <h3 class="text-[18px] font-black mb-1">無法讀取狀態</h3>
+        <p class="text-[12px] text-slate-300 font-medium line-clamp-2">${msg}</p>
+        <button onclick="event.stopPropagation(); checkMyCardEntry()" class="mt-2 px-3 py-1 bg-white/20 text-white rounded text-[11px] font-bold active:scale-95 transition-all">重新整理</button>
+      `;
 
       try {
           const uid = userProfile.userId;
@@ -629,19 +639,16 @@
               
               // 2. 第二關：超強力手機號碼比對
               if (myPhone) {
-                  // 檢查特定欄位
-                  const p1 = String(c['手機號碼'] || c['Mobile'] || '').replace(/[^\d]/g, '');
-                  const p2 = String(c['公司電話'] || c['Tel'] || '').replace(/[^\d]/g, '');
                   const checkPhone = (p) => {
                       if (!p) return false;
-                      if (p.startsWith('886')) p = '0' + p.substring(3);
-                      if (p.length === 9 && p.startsWith('9')) p = '0' + p;
-                      return p === myPhone;
+                      let pureP = String(p).replace(/[^\d]/g, '');
+                      if (pureP.startsWith('886')) pureP = '0' + pureP.substring(3);
+                      if (pureP.length === 9 && pureP.startsWith('9')) pureP = '0' + pureP;
+                      return pureP === myPhone;
                   };
-                  if (checkPhone(p1) || checkPhone(p2)) return true;
-                  
-                  // 退防：直接在所有文字中尋找這組數字
-                  if (allValuesStr.includes(myPhone)) return true;
+                  if (checkPhone(c['手機號碼']) || checkPhone(c['Mobile']) || checkPhone(c['公司電話']) || checkPhone(c['Tel'])) {
+                      return true;
+                  }
               }
               
               // 3. 第三關：真實姓名高智慧模糊比對
@@ -652,7 +659,6 @@
                   if (cName && cName === mName) return true;
                   if (cName && mName.includes(cName)) return true;
                   
-                  // 擷取 LINE 暱稱中的第一段純中文姓名 (排除 bit.ly 等綴詞)
                   let mNameFirstPart = mName.split(/[\s\/_+-]/)[0];
                   if (mNameFirstPart && mNameFirstPart.length >= 2 && allValuesStr.includes(mNameFirstPart)) return true;
               }
@@ -666,6 +672,7 @@
               myCard = globalCardContacts.find(isMatch);
           }
           
+          // 若快取找不到，強制不使用快取，直接去伺服器要最新鮮的資料！
           if (!myCard) {
               infoEl.querySelector('p').innerText = '同步最新資料庫中...';
               const data = await fetchAPI('getCardContacts', {}, false); 
@@ -705,14 +712,7 @@
           }
       } catch(e) {
           console.error("判斷名片權限時發生錯誤：", e);
-          infoEl.innerHTML = `
-            <div class="flex items-center gap-1.5 mb-1.5">
-              <span class="w-2 h-2 rounded-full bg-red-400"></span>
-              <span class="text-[11px] font-bold text-red-300 tracking-wider">連線異常</span>
-            </div>
-            <h3 class="text-[18px] font-black mb-1">無法讀取狀態</h3>
-            <p class="text-[12px] text-slate-300 font-medium line-clamp-2">${e.message || '未知錯誤'}</p>
-          `;
+          infoEl.innerHTML = errorTemplate(e.message || '未知錯誤');
           entryEl.onclick = null;
       }
   }

@@ -419,16 +419,30 @@
 
   async function fetchAPI(action, payload = {}, useCache = false) {
     const cacheKey = action + JSON.stringify(payload);
-    if (useCache && sessionStorage.getItem(cacheKey)) {
-      fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, payload }) })
-        .then(r => r.json()).then(res => { if (res.success) sessionStorage.setItem(cacheKey, JSON.stringify(res.data)); })
-        .catch(e => console.log('Cache update failed', e));
-      return JSON.parse(sessionStorage.getItem(cacheKey));
+    if (useCache) {
+      const cachedStr = sessionStorage.getItem(cacheKey);
+      if (cachedStr) {
+        try {
+          const cachedData = JSON.parse(cachedStr);
+          fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, payload }) })
+            .then(r => r.text())
+            .then(resText => {
+                try {
+                    const res = JSON.parse(resText);
+                    if (res.success) sessionStorage.setItem(cacheKey, JSON.stringify(res.data));
+                } catch(e) {}
+            })
+            .catch(e => console.log('Cache update failed', e));
+          return cachedData;
+        } catch(e) {
+          sessionStorage.removeItem(cacheKey); // 發現損壞的快取，強制清除
+        }
+      }
     }
     
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      const timeoutId = setTimeout(() => controller.abort(), 20000); // 放寬至 20 秒
 
       const response = await fetch(WORKER_URL, { 
           method: 'POST', 
@@ -443,7 +457,7 @@
       try { 
         result = JSON.parse(resText); 
       } catch(e) { 
-        throw new Error(`伺服器回傳非預期格式 (可能是 GAS 發生錯誤):\n\n${resText.substring(0, 150)}...`); 
+        throw new Error(`伺服器回應異常:\n${resText.substring(0, 100)}`); 
       }
       
       if (!result.success) throw new Error(result.error);
@@ -451,7 +465,7 @@
       if (useCache) sessionStorage.setItem(cacheKey, JSON.stringify(result.data));
       return result.data;
     } catch (err) { 
-      if (err.name === 'AbortError') err.message = '連線已經超時 (15秒)，請檢查網路或伺服器狀態。';
+      if (err.name === 'AbortError') err.message = '連線已經超時 (20秒)，請檢查網路或伺服器狀態。';
       throw err; 
     }
   }
@@ -665,19 +679,18 @@
       const entryEl = document.getElementById('my-card-entry');
       const infoEl = document.getElementById('my-card-info');
       
-      // 無論如何，一進來就讓入口區塊顯示
       entryEl.classList.remove('hidden');
 
       try {
           let myCard = null;
           
-          if (globalCardContacts && globalCardContacts.length > 0) {
+          if (globalCardContacts && Array.isArray(globalCardContacts) && globalCardContacts.length > 0) {
               myCard = globalCardContacts.find(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId || c['Line ID'] === userProfile.userId || c['lineId'] === userProfile.userId);
           }
           
           if (!myCard) {
               const data = await fetchAPI('getCardContacts', {}, true);
-              if (data && data.length > 0) {
+              if (data && Array.isArray(data)) {
                   globalCardContacts = data;
                   myCard = globalCardContacts.find(c => c.userId === userProfile.userId || c['LINE ID'] === userProfile.userId || c['Line ID'] === userProfile.userId || c['lineId'] === userProfile.userId);
               }
@@ -702,7 +715,6 @@
                 <h3 class="text-[18px] font-black mb-1">建立專屬名片</h3>
                 <p class="text-[12px] text-slate-300 font-medium">點擊上傳實體名片，由 AI 自動建檔</p>
               `;
-              // 若無名片，點擊則觸發獨立的上傳按鈕
               entryEl.onclick = () => document.getElementById('profile-card-upload').click();
           }
       } catch(e) {
@@ -713,8 +725,9 @@
               <span class="text-[11px] font-bold text-red-300 tracking-wider">連線異常</span>
             </div>
             <h3 class="text-[18px] font-black mb-1">無法讀取狀態</h3>
-            <p class="text-[12px] text-slate-300 font-medium">請重新整理頁面後再試</p>
+            <p class="text-[12px] text-slate-300 font-medium line-clamp-2">${e.message || '未知錯誤'}</p>
           `;
+          entryEl.onclick = null;
       }
   }
 

@@ -1,4 +1,4 @@
-<!-- Version: v5.1.1 (QQ 修復版：還原活動列表為一排2個雙欄排版，並保留 App-like 視覺) -->
+<!-- Version: v7.3.0 (QQ 修復版：補回遺失的 toggleActivityStatus 上下架功能) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -332,7 +332,6 @@
   </div>
 </div>
 
-<!-- 掃碼器：保持在最頂層 -->
 <div id="qr-scanner-modal" class="hidden fixed inset-0 z-[1070] bg-black flex flex-col animate-in fade-in duration-300 w-full max-w-md mx-auto left-0 right-0">
   <div class="flex justify-between items-center p-5 bg-gradient-to-b from-black/80 to-transparent absolute top-0 w-full z-10">
     <span class="text-white font-bold tracking-widest text-[14px]">掃描 QR Code</span>
@@ -381,6 +380,7 @@
 
   const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55", "U8932b891ad24da512afb9c1a6f41567b"]; 
 
+  const loadScript = (src) => new Promise((res, rej) => { if (document.querySelector(`script[src="${src}"]`)) return res(); const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
   const loadCSS = (href) => new Promise((res, rej) => { if (document.querySelector(`link[href="${href}"]`)) return res(); const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; l.onload = res; l.onerror = rej; document.head.appendChild(l); });
 
   async function fetchAPI(action, payload = {}, useCache = false) {
@@ -420,6 +420,31 @@
     }
   }
 
+  // ⭐ QQ 終極修復：補回被遺忘的 toggleActivityStatus 腳本，解決「上架/下架」按鈕失效報錯的問題
+  window.toggleActivityStatus = async function(actName) {
+    if (isProcessing) return;
+    if (!confirm(`確定要變更「${actName}」的上架狀態嗎？`)) return;
+    isProcessing = true;
+    try {
+      const newStatus = await fetchAPI('toggleActivityStatus', { activityName: actName });
+      if (typeof window.showToast === 'function') {
+          window.showToast(`✅ 活動已切換為：${newStatus}`);
+      } else {
+          alert(`活動已切換為：${newStatus}`);
+      }
+      sessionStorage.removeItem('getActivityDashboard{}'); // 清除活動列表快取
+      await loadAdminActivities(); // 重新載入最新狀態的列表
+    } catch(e) {
+      if (typeof window.showToast === 'function') {
+          window.showToast("狀態切換失敗", true);
+      } else {
+          alert("狀態切換失敗: " + e.message);
+      }
+    } finally {
+      isProcessing = false;
+    }
+  };
+
   window.runUltimateDebug = async function() {
       try {
           alert('🚀 正在強制連線抓取...');
@@ -433,6 +458,14 @@
   }
 
   window.onload = async () => {
+    // 隱形轉轍器：攔截從 LINE 分享點擊進來的 404 問題
+    const params = new URLSearchParams(window.location.search);
+    const shareCardId = params.get('shareCardId');
+    if (shareCardId) {
+        window.location.replace(`card.html?shareCardId=${shareCardId}`);
+        return;
+    }
+
     try {
       await liff.init({ liffId: LIFF_ID });
       if (!liff.isLoggedIn()) { liff.login(); return; }
@@ -445,7 +478,6 @@
       const res = await fetchAPI('checkUser', { userId: userProfile.userId });
       isRegistered = res.isRegistered; registeredInfo = res.info;
       
-      const params = new URLSearchParams(window.location.search);
       const targetView = params.get('view');
       const claimCardId = params.get('claimCardId');
       
@@ -540,7 +572,7 @@
               }
 
               await fetchAPI('updateCard', updatePayload);
-              showToast("✅ 名片已成功認領並綁定至您的帳號");
+              if (typeof window.showToast === 'function') window.showToast("✅ 名片已成功認領並綁定至您的帳號");
 
               globalCardContacts = await fetchAPI('getCardContacts', {}, false);
               if (!document.getElementById('view-user-profile').classList.contains('hidden')) checkMyCardEntry();
@@ -706,7 +738,7 @@
 
       const s1 = document.getElementById('reg-step-1'); if(s1) s1.classList.add('hidden'); 
       const s2 = document.getElementById('reg-step-2'); if(s2) s2.classList.remove('opacity-30', 'pointer-events-none'); 
-      showToast("基礎資料已建立"); 
+      if (typeof window.showToast === 'function') window.showToast("基礎資料已建立"); 
     } catch(e) {} finally { isProcessing = false; setButtonLoading('btn-reg-step1', false, '儲存並繼續'); }
   }
 
@@ -716,42 +748,52 @@
     reader.onload = (e) => {
       const img = document.getElementById('cropper-image'); if(!img) return;
       img.src = e.target.result; img.style.opacity = '0';
-      const m = document.getElementById('section-image-cropper'); if(m) m.classList.remove('hidden');
-      if (cropperInstance) cropperInstance.destroy();
-      setTimeout(() => { img.style.opacity = '1'; cropperInstance = new Cropper(img, { aspectRatio: currentCropTarget === 'reg' ? NaN : 4 / 3, viewMode: 1, dragMode: 'move', autoCropArea: 0.9, guides: true, center: true, highlight: false }); }, 100);
+      
+      img.onload = () => {
+          const m = document.getElementById('section-image-cropper'); if(m) m.classList.remove('hidden');
+          if (cropperInstance) cropperInstance.destroy();
+          img.style.opacity = '1'; 
+          cropperInstance = new Cropper(img, { aspectRatio: currentCropTarget === 'reg' ? NaN : 4 / 3, viewMode: 1, dragMode: 'move', autoCropArea: 0.9, guides: true, center: true, highlight: false }); 
+      };
+      input.value = "";
     }; 
-    reader.readAsDataURL(file); input.value = ""; 
+    reader.readAsDataURL(file);
   }
 
   function cancelCrop() { if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; } const m = document.getElementById('section-image-cropper'); if(m) m.classList.add('hidden'); }
 
   function confirmCrop() { 
     if (!cropperInstance) return; 
-    let quality = 0.8; let base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1000, maxHeight: 1000 }).toDataURL('image/webp', quality); 
-    while (base64.length > 40000 && quality > 0.1) { quality -= 0.1; base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1000, maxHeight: 1000 }).toDataURL('image/webp', quality); }
+    let quality = 0.8; let base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1000, maxHeight: 1000 }).toDataURL('image/jpeg', quality); 
+    while (base64.length > 40000 && quality > 0.1) { quality -= 0.1; base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1000, maxHeight: 1000 }).toDataURL('image/jpeg', quality); }
     cancelCrop(); 
     if (currentCropTarget === 'reg') { regCompressedBase64 = base64; recognizeAndSaveRegCard(); } else if (currentCropTarget === 'profile') { regCompressedBase64 = base64; recognizeAndSaveProfileCard(); }
   }
 
   async function recognizeAndSaveRegCard() {
-    showToast("AI 辨識中...", false); const s2 = document.getElementById('reg-step-2'); if(s2) s2.classList.add('pointer-events-none', 'opacity-50');
+    if (typeof window.showToast === 'function') window.showToast("AI 辨識中...", false); 
+    const s2 = document.getElementById('reg-step-2'); if(s2) s2.classList.add('pointer-events-none', 'opacity-50');
     try {
       const data = await fetchAPI('recognizeCard', { base64Image: regCompressedBase64, Birthday: regStep1Data.birthday });
       const payload = { base64Image: regCompressedBase64, userId: userProfile.userId, 'LINE ID': userProfile.userId, Name: regStep1Data.name, EnglishName: data.EnglishName || '', Title: data.Title || '', Department: data.Department || '', CompanyName: data.CompanyName || '', TaxID: data.TaxID || '', Mobile: regStep1Data.phone, Tel: data.Tel || '', Ext: data.Ext || '', Fax: data.Fax || '', Address: data.Address || regStep1Data.address || '', Email: data.Email || '', Website: data.Website || '', SocialMedia: data.SocialMedia || '', Slogan: data.Slogan || '', Notes: '註冊自動建檔', Birthday: regStep1Data.birthday || '', Personality: data.Personality || '', Hobbies: data.Hobbies || '', Wealth: data.Wealth || '', Health: data.Health || '', Career: data.Career || '' };
-      await fetchAPI('saveCard', payload); showToast("名片建檔成功！"); finishRegistration();
+      await fetchAPI('saveCard', payload); 
+      if (typeof window.showToast === 'function') window.showToast("名片建檔成功！"); 
+      finishRegistration();
     } catch(err) { finishRegistration(); }
   }
 
   async function recognizeAndSaveProfileCard() {
-    showToast("AI 正在辨識您的名片...", false); 
+    if (typeof window.showToast === 'function') window.showToast("AI 正在辨識您的名片...", false); 
     try {
       const bday = document.getElementById('edit-birthday')?.value || '';
       const data = await fetchAPI('recognizeCard', { base64Image: regCompressedBase64, Birthday: bday });
       const payload = { rowId: Date.now(), base64Image: regCompressedBase64, userId: userProfile.userId, 'LINE ID': userProfile.userId, Name: document.getElementById('edit-name')?.value || userProfile.displayName, EnglishName: data.EnglishName || '', Title: data.Title || '', Department: data.Department || '', CompanyName: data.CompanyName || '', TaxID: data.TaxID || '', Mobile: document.getElementById('edit-phone')?.value || '', Tel: data.Tel || '', Ext: data.Ext || '', Fax: data.Fax || '', Address: data.Address || document.getElementById('edit-address')?.value || '', Email: data.Email || '', Website: data.Website || '', SocialMedia: data.SocialMedia || '', Slogan: data.Slogan || '', Notes: '使用者自行上傳', Birthday: bday, Personality: data.Personality || '', Hobbies: data.Hobbies || '', Wealth: data.Wealth || '', Health: data.Health || '', Career: data.Career || '' };
       await fetchAPI('saveCard', payload); 
-      showToast("🎉 專屬名片建檔成功！"); 
+      if (typeof window.showToast === 'function') window.showToast("🎉 專屬名片建檔成功！"); 
       globalCardContacts = await fetchAPI('getCardContacts', {}, false); checkMyCardEntry();
-    } catch(err) { showToast("辨識發生異常：" + err.message, true); }
+    } catch(err) { 
+        if (typeof window.showToast === 'function') window.showToast("辨識發生異常：" + err.message, true); 
+    }
   }
 
   function finishRegistration() { isRegistered = true; registeredInfo = regStep1Data; const nav = document.getElementById('bottom-nav-user'); if(nav) nav.classList.remove('hidden'); switchView('user-activities'); }
@@ -766,7 +808,6 @@
 
   async function loadUserActivities() {
     const container = document.getElementById('user-activities-container'); if(!container) return;
-    // ⭐ QQ 復原：雙欄排版 grid-cols-2
     container.className = 'grid grid-cols-2 gap-3 px-1';
     if (!globalPublicActivities.length) renderActivitiesSkeleton();
     try {
@@ -795,7 +836,6 @@
       const safeName = a.name.replace(/'/g, "\\'");
       if (mode === 'user') {
         const bgImg = a.imageUrl || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80';
-        // ⭐ QQ 復原：為雙欄最佳化的 2-col App-like UI 
         html += `
         <div onclick="openActivityDetailByName('${safeName}')" class="bg-white rounded-[1.2rem] overflow-hidden shadow-[0_4px_15px_-3px_rgba(0,0,0,0.05)] flex flex-col h-full cursor-pointer active:scale-[0.98] transition-transform" style="animation-delay: ${i*50}ms">
           <div class="relative w-full aspect-[4/3] shrink-0 bg-slate-100">
@@ -817,7 +857,7 @@
         <div class="bg-white rounded-[2rem] shadow-sm p-6 mx-1">
           <div class="flex justify-between items-start mb-5"><div><span class="text-[11px] font-bold text-primary bg-primary-light px-2.5 py-0.5 rounded-md uppercase tracking-widest mb-2 inline-block">${a.type}</span><h3 class="font-extrabold text-[18px] text-slate-800 leading-tight">${a.name}</h3></div><div class="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl"><span class="material-symbols-outlined text-[16px] text-slate-400">group</span><span class="font-bold text-[15px] text-slate-700">${a.total}</span></div></div>
           <div class="grid grid-cols-3 gap-3 bg-slate-50 rounded-2xl p-4 mb-5"><div class="text-center"><p class="text-[11px] text-slate-500 font-bold mb-0.5">狀態</p><p class="font-bold text-[13px] ${a.status==='上架'?'text-emerald-500':'text-slate-500'}">${a.status}</p></div><div class="text-center border-l border-slate-200"><p class="text-[11px] text-slate-500 font-bold mb-0.5">已到</p><p class="font-bold text-[13px] text-primary">${a.attended}</p></div><div class="text-center border-l border-slate-200"><p class="text-[11px] text-slate-500 font-bold mb-0.5">取消</p><p class="font-bold text-[13px] text-error">${a.cancelled}</p></div></div>
-          <div class="flex gap-3"><button onclick="toggleActivityStatus('${safeName}')" class="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl font-bold text-[14px] active:scale-95 transition-all">${a.status==='上架'?'下架':'上架'}</button><button onclick="openAdminRegistrants('${safeName}')" class="flex-1 py-3 bg-slate-800 text-white rounded-xl font-bold text-[14px] shadow-sm active:scale-95 transition-all">名單核銷</button></div>
+          <div class="flex gap-3"><button onclick="if(typeof window.toggleActivityStatus === 'function') window.toggleActivityStatus('${safeName}')" class="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl font-bold text-[14px] active:scale-95 transition-all">${a.status==='上架'?'下架':'上架'}</button><button onclick="openAdminRegistrants('${safeName}')" class="flex-1 py-3 bg-slate-800 text-white rounded-xl font-bold text-[14px] shadow-sm active:scale-95 transition-all">名單核銷</button></div>
         </div>`;
       }
     });
@@ -1004,7 +1044,7 @@
     const m = document.getElementById('qr-scanner-modal'); if(m) m.classList.remove('hidden');
     
     if (typeof Html5Qrcode === 'undefined') {
-        showToast("相機模組載入失敗，請檢查網路或重新整理", true);
+        if (typeof window.showToast === 'function') window.showToast("相機模組載入失敗，請檢查網路或重新整理", true);
         return;
     }
 
@@ -1019,7 +1059,7 @@
           if(reg) { if(!reg.checkedIn) { await fetchAPI('toggleStatus', { activityName: activeActivityName, rowId: reg.rowId, currentStatus: false }); showToast(`${name} 簽到成功`); openAdminRegistrants(activeActivityName); } else showToast("已簽到過"); } else { if(confirm(`未報名，是否現場報名簽到？`)) { await fetchAPI('addWalkIn', { activityName: activeActivityName, name: name }); openAdminRegistrants(activeActivityName); } } 
         } catch(e) {} 
       }, () => {}
-    ).catch(err => { showToast("無法啟動相機，請確認權限", true); window.stopScanner(); });
+    ).catch(err => { if(typeof window.showToast === 'function') window.showToast("無法啟動相機，請確認權限", true); window.stopScanner(); });
   }
 
   window.stopScanner = function() { 
@@ -1058,6 +1098,31 @@
     const getVal = (id) => document.getElementById(id)?.value || '';
     try { await fetchAPI('saveSettings', { TG_BOT_TOKEN: getVal('set-tg-token'), TG_CHAT_ID: getVal('set-tg-chat'), LINE_LINK: getVal('set-line-link') }); showToast("已儲存"); } catch(e) {} finally { isProcessing = false; setButtonLoading('btn-submit-settings', false, '儲存設定'); }
   }
+
+  // ⭐ QQ 終極修復：補回被遺漏的上架下架控制按鈕功能
+  window.toggleActivityStatus = async function(actName) {
+    if (isProcessing) return;
+    if (!confirm(`確定要變更「${actName}」的上架狀態嗎？`)) return;
+    isProcessing = true;
+    try {
+      const newStatus = await fetchAPI('toggleActivityStatus', { activityName: actName });
+      if (typeof window.showToast === 'function') {
+          window.showToast(`✅ 活動已切換為：${newStatus}`);
+      } else {
+          alert(`活動已切換為：${newStatus}`);
+      }
+      sessionStorage.removeItem('getActivityDashboard{}'); // 清除活動列表快取
+      await loadAdminActivities(); // 重新載入最新狀態的列表
+    } catch(e) {
+      if (typeof window.showToast === 'function') {
+          window.showToast("狀態切換失敗", true);
+      } else {
+          alert("狀態切換失敗: " + e.message);
+      }
+    } finally {
+      isProcessing = false;
+    }
+  };
 </script>
 </body>
 </html>

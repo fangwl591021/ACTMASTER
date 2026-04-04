@@ -75,7 +75,7 @@
       <div class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shadow-sm">
         <span class="material-symbols-outlined text-[20px]">contact_mail</span>
       </div>
-      名片管理 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v5.3.0</span>
+      名片管理 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v6.0</span>
     </div>
     <div class="flex items-center gap-3">
       <div id="user-profile-badge" class="hidden flex items-center gap-2">
@@ -208,50 +208,52 @@
   </nav>
 </div>
 
-<!-- 名片詳情 Modal -->
-<div id="readonly-card-modal" class="hidden fixed inset-0 bg-[#f4f5f7] flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl overflow-hidden" style="z-index: 1000;">
+<!-- ⭐ QQ 終極修復：名片詳情 Modal (去除白框、還原邊界、原生資訊流) -->
+<div id="readonly-card-modal" class="hidden fixed inset-0 bg-white flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl overflow-hidden" style="z-index: 1000;">
   
   <div class="absolute top-4 right-4 z-50 flex gap-3">
-    <button onclick="openCardEdit()" class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-blue-600 shadow-sm"><span class="material-symbols-outlined text-[20px]">edit</span></button>
-    <button onclick="closeReadOnlyCard()" class="w-10 h-10 bg-black/50 rounded-full flex items-center justify-center text-white shadow-sm"><span class="material-symbols-outlined text-[20px]">close</span></button>
+    <button onclick="openCardEdit()" class="w-10 h-10 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-blue-600 shadow-sm"><span class="material-symbols-outlined text-[20px]">edit</span></button>
+    <button onclick="closeReadOnlyCard()" class="w-10 h-10 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center text-white shadow-sm"><span class="material-symbols-outlined text-[20px]">close</span></button>
   </div>
 
-  <div class="flex-1 overflow-y-auto pb-24">
-    <div class="w-full h-[240px] bg-[#eef2f6] relative flex items-center justify-center shrink-0">
+  <div class="flex-1 overflow-y-auto pb-28">
+    <!-- 原生滿版圖片 -->
+    <div class="w-full aspect-[20/13] bg-slate-100 relative flex items-center justify-center shrink-0">
       <img id="ro-image" src="" class="w-full h-full object-cover hidden">
       <div id="ro-no-image" class="absolute inset-0 flex items-center justify-center">
-        <span class="material-symbols-outlined text-7xl text-[#cbd5e1]">contact_mail</span>
+        <span class="material-symbols-outlined text-7xl text-slate-300">contact_mail</span>
       </div>
     </div>
     
-    <div class="px-6 pt-6 pb-6 space-y-5">
+    <!-- 原生無框文字區塊 -->
+    <div class="px-5 pt-6 pb-8">
       <div>
-        <div class="flex items-center gap-2 mb-1">
-          <h2 id="ro-name" class="text-[26px] font-black text-slate-800 tracking-tight"></h2>
-          <span id="ro-claim-status" class="hidden px-2.5 py-0.5 rounded-md text-[11px] font-bold"></span>
+        <div class="flex items-center gap-2 mb-1.5">
+          <h2 id="ro-name" class="text-[26px] font-extrabold text-slate-800 tracking-tight"></h2>
+          <span id="ro-claim-status" class="hidden px-2 py-0.5 rounded text-[11px] font-bold"></span>
         </div>
-        <p id="ro-title" class="text-[15px] font-medium text-slate-500"></p>
+        <p id="ro-title" class="text-[15px] font-medium text-slate-500 mb-6"></p>
       </div>
       
-      <div class="bg-white rounded-[20px] p-5 space-y-4 shadow-sm">
-        <div class="flex items-center gap-4"><span class="material-symbols-outlined text-slate-400 text-[22px]">apartment</span><span id="ro-company" class="text-slate-800 text-[15px] font-medium"></span></div>
-        <div class="flex items-center gap-4"><span class="material-symbols-outlined text-slate-400 text-[22px]">tag</span><span id="ro-taxid" class="text-slate-800 text-[15px] font-medium"></span></div>
-        <div class="flex items-center gap-4"><span class="material-symbols-outlined text-slate-400 text-[22px]">smartphone</span><a href="" id="ro-mobile-link" class="text-blue-600 font-bold text-[15px]"></a></div>
-        <div class="flex items-center gap-4"><span class="material-symbols-outlined text-slate-400 text-[22px]">call</span><span id="ro-tel" class="text-slate-800 text-[15px] font-medium"></span></div>
-        <div class="flex items-center gap-4"><span class="material-symbols-outlined text-slate-400 text-[22px]">email</span><a href="" id="ro-email-link" class="text-blue-600 font-bold text-[15px] truncate"></a></div>
-        <div class="flex items-start gap-4"><span class="material-symbols-outlined text-slate-400 text-[22px] mt-0.5">location_on</span><span id="ro-address" class="text-slate-800 text-[15px] font-medium leading-snug whitespace-pre-wrap"></span></div>
+      <!-- 無框列表分隔線排列 -->
+      <div class="flex flex-col gap-0 border-y border-slate-100">
+        <div class="flex items-center gap-4 py-4 border-b border-slate-100 last:border-0"><span class="material-symbols-outlined text-slate-400 text-[22px]">apartment</span><span id="ro-company" class="text-slate-800 text-[15px] font-medium"></span></div>
+        <div class="flex items-center gap-4 py-4 border-b border-slate-100 last:border-0"><span class="material-symbols-outlined text-slate-400 text-[22px]">tag</span><span id="ro-taxid" class="text-slate-800 text-[15px] font-medium"></span></div>
+        <div class="flex items-center gap-4 py-4 border-b border-slate-100 last:border-0"><span class="material-symbols-outlined text-slate-400 text-[22px]">smartphone</span><a href="" id="ro-mobile-link" class="text-blue-600 font-bold text-[15px]"></a></div>
+        <div class="flex items-center gap-4 py-4 border-b border-slate-100 last:border-0"><span class="material-symbols-outlined text-slate-400 text-[22px]">call</span><span id="ro-tel" class="text-slate-800 text-[15px] font-medium"></span></div>
+        <div class="flex items-center gap-4 py-4 border-b border-slate-100 last:border-0"><span class="material-symbols-outlined text-slate-400 text-[22px]">email</span><a href="" id="ro-email-link" class="text-blue-600 font-bold text-[15px] truncate"></a></div>
+        <div class="flex items-start gap-4 py-4 border-b border-slate-100 last:border-0"><span class="material-symbols-outlined text-slate-400 text-[22px] mt-0.5">location_on</span><span id="ro-address" class="text-slate-800 text-[15px] font-medium leading-snug whitespace-pre-wrap"></span></div>
       </div>
 
-      <div id="ro-notes-container">
-        <h3 class="text-[14px] font-bold text-slate-400 mb-3 tracking-widest">備註與其他</h3>
+      <div id="ro-notes-container" class="mt-8">
         <p id="ro-notes" class="text-[15px] text-slate-700 whitespace-pre-wrap leading-relaxed font-medium"></p>
       </div>
     </div>
   </div>
 
-  <div class="fixed bottom-0 w-full max-w-md bg-white p-4 pb-safe flex gap-3 z-[1005] shadow-[0_-4px_20px_rgba(0,0,0,0.05)] shrink-0 border-t border-slate-100">
-    <button id="btn-share-claim" onclick="shareClaimLink()" class="hidden flex-1 py-3.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-[16px] shadow-sm active:scale-95 transition-all">邀請認領</button>
-    <button onclick="if(typeof openECardGenerator === 'function') openECardGenerator(); else alert('編輯器尚未載入，請重新整理頁面');" class="flex-1 py-3.5 bg-[#06C755] text-white rounded-xl font-bold text-[16px] shadow-sm active:scale-95 transition-all">產生數位名片</button>
+  <div class="fixed bottom-0 w-full max-w-md bg-white p-4 pb-safe flex gap-3 z-[1005] border-t border-slate-100 shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
+    <button id="btn-share-claim" onclick="shareClaimLink()" class="hidden flex-1 py-3.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-[16px] active:scale-95 transition-all">邀請認領</button>
+    <button onclick="if(typeof openECardGenerator === 'function') openECardGenerator(); else alert('編輯器尚未載入，請重新整理頁面');" class="flex-1 py-3.5 bg-[#06C755] text-white rounded-xl font-bold text-[16px] active:scale-95 transition-all shadow-sm">產生數位名片</button>
   </div>
 </div>
 
@@ -351,7 +353,7 @@
                 <div class="flex flex-col">
                   <label class="input-label">畫面比例</label>
                   <div class="relative w-full">
-                    <select id="ec-aspect-ratio" class="custom-input appearance-none px-4" onchange="updateECardPreview()"><option value="auto" selected>自動偵測</option><option value="20:13">20:13 (標準)</option><option value="1:1">1:1 (正方)</option><option value="16:9">16:9 (橫向)</option><option value="9:16">9:16 (直向滿版)</option></select>
+                    <select id="ec-aspect-ratio" class="custom-input appearance-none px-4" onchange="updateECardPreview()"><option value="auto" selected>自動偵測</option><option value="20:13">20:13 (標準)</option><option value="1:1">1:1 (正方)</option><option value="16:9">16:9 (橫向)</option><option value="9:16">9:16 (短影音)</option></select>
                     <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">expand_more</span>
                   </div>
                 </div>
@@ -401,17 +403,15 @@
                       </div>
                       <div class="flex flex-col gap-1.5 max-w-[88%] w-full">
                           <div class="bg-white px-3.5 py-2 rounded-2xl rounded-tl-sm text-[13px] text-slate-800 shadow-sm w-fit font-medium">為您準備的數位名片！</div>
-                          
-                          <!-- ⭐ QQ原生滿版預覽泡泡 -->
                           <div class="flex-preview-bubble flex flex-col mt-1 shadow-md border-0" id="preview-ec-bubble">
+                              <div class="preview-header w-full flex justify-end p-2 bg-white pb-1"><div class="preview-share-btn bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-sm tracking-widest">分享</div></div>
                               <div id="preview-ec-hero" class="relative w-full overflow-hidden bg-slate-100 shrink-0 flex items-center justify-center">
                                   <img id="preview-ec-img" src="" class="absolute inset-0 w-full h-full object-cover z-0 hidden">
                                   <video id="preview-ec-video" muted loop playsinline class="absolute inset-0 w-full h-full object-cover z-10 hidden"></video>
                                   <div id="preview-ec-play-icon" class="absolute inset-0 z-20 flex items-center justify-center text-white/80 hidden pointer-events-none"><span class="material-symbols-outlined text-[48px] drop-shadow-md">play_circle</span></div>
                               </div>
                               <div class="p-5 text-center bg-white relative">
-                                  <div class="absolute top-4 right-4 bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-sm tracking-widest">分享</div>
-                                  <h2 id="preview-ec-title" class="text-[19px] font-black text-slate-800 leading-snug mb-1.5 pr-12"></h2>
+                                  <h2 id="preview-ec-title" class="text-[19px] font-black text-slate-800 leading-snug mb-1.5"></h2>
                                   <p id="preview-ec-desc" class="text-[13px] text-slate-500 whitespace-pre-wrap leading-relaxed text-left font-medium"></p>
                               </div>
                               <div id="preview-ec-buttons" class="px-5 pb-5 pt-0 bg-white space-y-2"></div>
@@ -474,8 +474,8 @@
 <div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-bold flex items-center gap-2 w-max max-w-[90vw] bg-slate-800 text-white opacity-0 pointer-events-none"></div>
 
 <!-- 嚴格載入外部拆分的獨立檔案，加上版本號強制破除快取 -->
-<script src="card.js?v=VOOM_FullWidth"></script>
-<script src="card-ecard.js?v=VOOM_FullWidth"></script>
+<script src="card.js?v=6.0.0"></script>
+<script src="card-ecard.js?v=6.0.0"></script>
 
 </body>
 </html>

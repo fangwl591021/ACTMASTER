@@ -1,6 +1,6 @@
 /**
  * card.js 
- * Version: v3.1.2 (QQ 修復版：優雅處理初始化錯誤、防護載入圈圈卡死)
+ * Version: v4.0.0 (QQ 修復版：還原原生排版與圖片 placeholder 邏輯，並保留 rowId 防呆導航)
  */
 const LIFF_ID = "2009367829-DLtYBDUm"; 
 const WORKER_URL = "https://actmaster.fangwl591021.workers.dev"; 
@@ -39,7 +39,7 @@ window.fetchAPI = async function(action, payload = {}, silent = false) {
     clearTimeout(timeoutId);
     const resText = await response.text();
     let result;
-    try { result = JSON.parse(resText); } catch(e) { throw new Error(`伺服器回應異常`); }
+    try { result = JSON.parse(resText); } catch(e) { throw new Error(`系統連線失敗`); }
     if (!result.success) throw new Error(result.error);
     return result.data;
   } catch (err) {
@@ -95,7 +95,7 @@ function setButtonLoading(btnId, isLoading, originalText = '') {
     }
 }
 
-// ⭐ DOM防呆：首頁傳過來的 rowId 絕對信任
+// ⭐ DOM防呆：首頁傳過來的 rowId 絕對信任，打破退回首頁的死胡同
 function checkAndOpenMyCard() {
     const params = new URLSearchParams(window.location.search);
     const mode = params.get('mode');
@@ -146,11 +146,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const userProfileBadge = document.getElementById('user-profile-badge');
     if (userProfileBadge) userProfileBadge.classList.remove('hidden');
     
-    // ⭐ DOM防呆護盾：確認身分後再解鎖管理員介面
     if (isAdmin) {
         const roleBtn = document.getElementById('role-switch-btn');
         if (roleBtn) roleBtn.classList.remove('hidden');
-        
         const adminNav = document.getElementById('bottom-nav-admin');
         if (adminNav) adminNav.classList.remove('hidden');
     } else { 
@@ -168,7 +166,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     loadCardContacts();
   } catch (err) {
     window.showToast("初始化失敗", true);
-    // ⭐ 終極防護：若初始化失敗，停止轉圈圈，並顯示錯誤文字
     const loadText = document.getElementById('loading-text');
     if (loadText) loadText.innerText = "初始化失敗，請確認網路連線";
     const spinner = document.querySelector('#view-loading .animate-spin');
@@ -190,7 +187,6 @@ window.resetUI = function() {
   const cCam = document.getElementById('card-camera'); if (cCam) cCam.value = "";
   const cUp = document.getElementById('card-upload'); if (cUp) cUp.value = "";
   compressedBase64 = "";
-  currentFateTags = null;
   
   const params = new URLSearchParams(window.location.search);
   if (params.get('mode') === 'mycard') window.location.href = 'index.html?view=user-profile';
@@ -288,6 +284,7 @@ function renderCardPage(isReset = false) {
 
 window.loadMoreCards = function() { currentPage++; renderCardPage(false); }
 
+// ⭐ QQ 終極還原：精確恢復多行備註陣列與圖片 Placeholder 顯示邏輯
 window.openCardDetailByRowId = function(rowId) { 
     try {
       const card = globalCardContacts.find(c => String(c.rowId) === String(rowId));
@@ -331,6 +328,7 @@ window.openCardDetailByRowId = function(rowId) {
       const tagsContainer = document.getElementById('ro-fate-tags-container');
       if (tagsContainer) { tagsContainer.innerHTML = ''; tagsContainer.style.display = 'none'; }
 
+      // 完美還原多行陣列組合
       const notesArr = [];
       const slogan = card['服務項目/品牌標語']||card['Slogan'];
       if(slogan) notesArr.push(`【品牌與服務】\n${slogan}`);
@@ -347,9 +345,10 @@ window.openCardDetailByRowId = function(rowId) {
       const notesEl = document.getElementById('ro-notes');
       if (notesEl) notesEl.innerText = finalNotes || '無其他資訊';
 
+      // 完美還原圖片缺圖 Placeholder 邏輯
       const imgEl = document.getElementById('ro-image');
       const noImgEl = document.getElementById('ro-no-image');
-      if (card['名片圖檔'] && card['名片圖檔'] !== '圖片儲存失敗' && card['名片圖檔'] !== '無圖檔') {
+      if (card['名片圖檔'] && card['名片圖檔'] !== '圖片儲存失敗' && card['名片圖檔'] !== '無圖檔' && card['名片圖檔'].startsWith('http')) {
         if (imgEl) { imgEl.src = window.getDirectImageUrl(card['名片圖檔']); imgEl.classList.remove('hidden'); }
         if (noImgEl) noImgEl.classList.add('hidden');
       } else {
@@ -382,15 +381,47 @@ window.shareClaimLink = async function() {
   if (!currentActiveCard || isProcessing) return;
   isProcessing = true;
   setButtonLoading('btn-share-claim', true);
+
   try {
       const card = currentActiveCard;
       const url = `https://liff.line.me/${LIFF_ID}/?view=user-profile&claimCardId=${card.rowId}&referrer=${userProfile.userId}`;
-      const flexMessage = { type: "bubble", size: "mega", body: { type: "box", layout: "vertical", paddingAll: "20px", contents: [ { type: "text", text: "專屬名片認領", weight: "bold", color: "#2563eb", size: "sm" }, { type: "text", text: `您好，${card['姓名'] || card['Name'] || ''}！`, weight: "bold", size: "xl", margin: "md" }, { type: "text", text: "我已為您建立了數位商務名片。點擊下方按鈕即可認領名片、自由編輯內容，並啟用數位轉發功能！", size: "sm", color: "#64748b", wrap: true, margin: "md" } ] }, footer: { type: "box", layout: "vertical", spacing: "sm", paddingAll: "20px", contents: [ { type: "button", style: "primary", color: "#2563eb", height: "sm", action: { type: "uri", label: "認領並編輯名片", uri: url } } ] } };
+
+      const flexMessage = {
+          type: "bubble", size: "mega",
+          body: {
+              type: "box", layout: "vertical", paddingAll: "20px",
+              contents: [
+                  { type: "text", text: "專屬名片認領", weight: "bold", color: "#2563eb", size: "sm" },
+                  { type: "text", text: `您好，${card['姓名'] || card['Name'] || ''}！`, weight: "bold", size: "xl", margin: "md" },
+                  { type: "text", text: "我已為您建立了數位商務名片。點擊下方按鈕即可認領名片、自由編輯內容，並啟用數位轉發功能！", size: "sm", color: "#64748b", wrap: true, margin: "md" }
+              ]
+          },
+          footer: {
+              type: "box", layout: "vertical", spacing: "sm", paddingAll: "20px",
+              contents: [ { type: "button", style: "primary", color: "#2563eb", height: "sm", action: { type: "uri", label: "認領並編輯名片", uri: url } } ]
+          }
+      };
+
+      if (!liff.isLoggedIn()) { liff.login(); return; }
+      
       const altText = "您的專屬數位名片認領邀請";
+
       if (liff.isApiAvailable('shareTargetPicker')) {
-          try { const res = await liff.shareTargetPicker([{ type: "flex", altText: altText, contents: flexMessage }]); if (res) window.showToast('✅ 認領連結已發送！'); } catch (err) { window.fallbackShare(url, altText); }
-      } else { window.fallbackShare(url, altText); }
-  } catch (error) { console.error(error); } finally { setButtonLoading('btn-share-claim', false, '邀請認領'); isProcessing = false; }
+          try {
+              const res = await liff.shareTargetPicker([{ type: "flex", altText: altText, contents: flexMessage }]);
+              if (res) window.showToast('✅ 認領連結已發送！');
+          } catch (err) {
+              window.fallbackShare(url, altText);
+          }
+      } else {
+          window.fallbackShare(url, altText);
+      }
+  } catch (error) {
+      console.error(error);
+  } finally {
+      setButtonLoading('btn-share-claim', false, '邀請認領');
+      isProcessing = false;
+  }
 }
 
 window.openCardEdit = function() { 
@@ -415,26 +446,22 @@ window.closeCardEdit = function() {
 window.submitCardEdit = async function() {
   if (isProcessing || !currentActiveCard) return;
   isProcessing = true;
-  setButtonLoading('btn-save-card-edit', true);
+  const btn = document.getElementById('btn-save-card-edit');
+  if (btn) btn.innerText = '儲存中...';
   
   let payload = { rowId: currentActiveCard.rowId, Name: document.getElementById('edit-c-Name')?.value.trim() || '', EnglishName: document.getElementById('edit-c-EnglishName')?.value.trim() || '', Title: document.getElementById('edit-c-Title')?.value.trim() || '', Department: document.getElementById('edit-c-Department')?.value.trim() || '', CompanyName: document.getElementById('edit-c-CompanyName')?.value.trim() || '', TaxID: document.getElementById('edit-c-TaxID')?.value.trim() || '', Mobile: document.getElementById('edit-c-Mobile')?.value.trim() || '', Tel: document.getElementById('edit-c-Tel')?.value.trim() || '', Ext: document.getElementById('edit-c-Ext')?.value.trim() || '', Fax: document.getElementById('edit-c-Fax')?.value.trim() || '', Address: document.getElementById('edit-c-Address')?.value.trim() || '', Email: document.getElementById('edit-c-Email')?.value.trim() || '', Website: document.getElementById('edit-c-Website')?.value.trim() || '', SocialMedia: document.getElementById('edit-c-SocialMedia')?.value.trim() || '', Slogan: document.getElementById('edit-c-Slogan')?.value.trim() || '', Notes: document.getElementById('edit-c-Notes')?.value.trim() || '', Birthday: document.getElementById('edit-c-Birthday')?.value || '' };
-  const oldName = currentActiveCard['姓名'] || currentActiveCard['Name'] || '';
-  const oldPhone = formatPhoneStr(currentActiveCard['手機號碼'] || currentActiveCard['Mobile']) || '';
-  let parsedOldBday = ''; const oldBdayRaw = currentActiveCard['生日'] || '';
-  if (oldBdayRaw) { const d = new Date(oldBdayRaw); if (!isNaN(d.getTime())) parsedOldBday = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-  const tagsMissing = !currentActiveCard['個性'] || currentActiveCard['個性'] === '待分析';
   
-  if (payload.Name !== oldName || payload.Mobile !== oldPhone || payload.Birthday !== parsedOldBday || tagsMissing) {
-      try { setButtonLoading('btn-save-card-edit', true, 'AI 深度分析中...'); const newTags = await window.fetchAPI('calculateFateTags', { Name: payload.Name, Mobile: payload.Mobile, Birthday: payload.Birthday }, true); payload = { ...payload, ...newTags }; } catch (e) {}
-  }
-
   try {
     await window.fetchAPI('updateCard', payload);
     window.showToast("✅ 資料更新成功");
     window.closeCardEdit();
     loadCardContacts();
-  } catch(err) { window.showToast("更新失敗", true); }
-  finally { setButtonLoading('btn-save-card-edit', false, '儲存變更'); isProcessing = false; }
+  } catch(err) { 
+      window.showToast("更新失敗", true); 
+  } finally { 
+      if (btn) btn.innerText = '儲存變更'; 
+      isProcessing = false; 
+  }
 }
 
 window.openCropper = async function(input, targetMode) {
@@ -466,9 +493,8 @@ window.confirmCrop = async function() {
     
     if (currentCropTarget === 'ecard') {
       const btn = document.getElementById('btn-check-format'); 
-      const originalHtml = btn.innerHTML;
-      btn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin">refresh</span> 上傳中';
-      btn.classList.add('pointer-events-none');
+      const originalHtml = btn ? btn.innerHTML : '';
+      if(btn) { btn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin">refresh</span> 上傳中'; btn.classList.add('pointer-events-none'); }
       try {
           window.showToast("圖片上傳中...", false);
           const url = await window.fetchAPI('uploadImage', { base64Image: base64 });
@@ -477,7 +503,7 @@ window.confirmCrop = async function() {
           if (typeof window.updateECardPreview === 'function') window.updateECardPreview();
           window.showToast("✅ 圖片上傳成功");
       } catch (err) { window.showToast("⚠️ 上傳失敗：" + err.message, true); } 
-      finally { btn.innerHTML = originalHtml; btn.classList.remove('pointer-events-none'); }
+      finally { if(btn) { btn.innerHTML = originalHtml; btn.classList.remove('pointer-events-none'); } }
       return;
     }
 
@@ -491,7 +517,6 @@ window.confirmCrop = async function() {
     window.fetchAPI('recognizeCard', { base64Image: compressedBase64 }).then(data => {
        const fields = ['Name', 'EnglishName', 'Title', 'Department', 'CompanyName', 'TaxID', 'Mobile', 'Tel', 'Ext', 'Fax', 'Address', 'Email', 'Website', 'SocialMedia', 'Slogan'];
        fields.forEach(f => { const el = document.getElementById(`f-${f}`); if(el) { let val = data[f] || ''; if (f === 'Mobile' || f === 'Tel' || f === 'Fax') val = formatPhoneStr(val); if (f === 'Website' && val && !val.startsWith('http') && val.includes('.')) val = 'https://' + val; el.value = val; } });
-       currentFateTags = { Personality: data.Personality || '', Hobbies: data.Hobbies || '', Wealth: data.Wealth || '', Health: data.Health || '', Career: data.Career || '' };
        switchProcessSection('section-form');
        window.showToast("✅ AI 辨識完成");
     }).catch(err => { window.resetUI(); });
@@ -499,14 +524,11 @@ window.confirmCrop = async function() {
 
 window.saveToCloud = async function() {
   if (isProcessing) return; isProcessing = true; setButtonLoading('btn-save', true);
-  const payload = { base64Image: compressedBase64, Notes: document.getElementById('f-Notes')?.value || '', userId: '', ...(currentFateTags || {}) };
+  const payload = { base64Image: compressedBase64, Notes: document.getElementById('f-Notes')?.value || '', userId: '' };
   const fields = ['Name', 'EnglishName', 'Title', 'Department', 'CompanyName', 'TaxID', 'Mobile', 'Tel', 'Ext', 'Fax', 'Address', 'Email', 'Website', 'SocialMedia', 'Slogan'];
   fields.forEach(f => { payload[f] = document.getElementById(`f-${f}`)?.value || ''; });
   if (!payload.Name && !payload.CompanyName) { setButtonLoading('btn-save', false, '存入雲端'); isProcessing = false; return window.showToast("⚠️ 請輸入姓名或公司", true); }
-  if (!currentFateTags || !currentFateTags.Personality || currentFateTags.Personality === '待分析' || currentFateTags.Personality === '') {
-      try { setButtonLoading('btn-save', true, 'AI 命理建檔中...'); const tags = await window.fetchAPI('calculateFateTags', { Name: payload.Name, Mobile: payload.Mobile, Birthday: '' }, true); currentFateTags = { Personality: tags.Personality || '', Hobbies: tags.Hobbies || '', Wealth: tags.Wealth || '', Health: tags.Health || '', Career: tags.Career || '' }; } catch(e) {}
-  }
-  Object.assign(payload, currentFateTags);
+  
   try {
     await window.fetchAPI('saveCard', payload); window.showToast("🎉 建立成功！");
     setTimeout(() => { window.resetUI(); }, 1000);
@@ -548,5 +570,5 @@ window.batchRegenerateECards = async function() {
             c['自訂名片設定'] = JSON.stringify(config); updatedCount++;
         }
         window.showToast(`✅ 重新讀取寫入完成！共更新了 ${updatedCount} 張。`); loadCardContacts();
-    } catch (err) { window.showToast("更新錯誤", true); } finally { if (btn) { btn.innerHTML = '<span class="material-symbols-outlined text-[15px]">sync</span> 批次重新讀取寫入'; btn.classList.remove('pointer-events-none', 'opacity-50'); } }
+    } catch (err) { window.showToast("更新錯誤", true); } finally { if (btn) { btn.innerHTML = '<span class="material-symbols-outlined text-[15px]">sync</span> 批次重新讀取寫入所有名片按鈕'; btn.classList.remove('pointer-events-none', 'opacity-50'); } }
 }

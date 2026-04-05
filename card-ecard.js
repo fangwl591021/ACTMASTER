@@ -1,6 +1,6 @@
 /**
  * card-ecard.js
- * Version: v20260405_1400 (QQ 擴充版：處理位於編輯器畫面最上方的隱私互惠開關狀態)
+ * Version: v20260405_1500 (QQ 擴充版：加入撥動開關即刻自動存檔功能 togglePrivacyAutoSave)
  */
 
 window.toggleECardType = function(type) {
@@ -253,7 +253,6 @@ window.openECardGenerator = function() {
           safeSetValue('ec-desc-input', savedConfig.desc || '');
           safeSetValue('ec-alt-text-input', savedConfig.altText || '這是我的電子名片，請多指教');
           
-          // ⭐ QQ 擴充：將隱私開關預設帶入 (UI 在數位名片編輯器內)
           const isPublicEl = document.getElementById('ec-isPublic-input');
           if (isPublicEl) {
               if (savedConfig.hasOwnProperty('isPrivate')) {
@@ -284,7 +283,6 @@ window.openECardGenerator = function() {
           safeSetValue('ec-desc-input', defaultDesc);
           safeSetValue('ec-alt-text-input', '這是我的電子名片，請多指教');
           
-          // ⭐ QQ 預設：全新設定預設為開放
           const isPublicEl = document.getElementById('ec-isPublic-input');
           if (isPublicEl) isPublicEl.checked = true;
         }
@@ -572,7 +570,6 @@ window.saveECardConfig = async function(isSilent = false) {
       title: getVal('ec-title-input', ''),
       desc: getVal('ec-desc-input', ''),
       altText: getVal('ec-alt-text-input', '這是我的電子名片，請多指教').trim() || '這是我的電子名片，請多指教',
-      // ⭐ QQ 儲存隱私開關狀態
       isPrivate: isPublicEl ? !isPublicEl.checked : false,
       buttons: []
     };
@@ -601,6 +598,21 @@ window.saveECardConfig = async function(isSilent = false) {
     }
     return config;
 }
+
+// ⭐ QQ 擴充：隱私開關撥動即時觸發無聲存檔
+window.togglePrivacyAutoSave = async function() {
+    const isPublicEl = document.getElementById('ec-isPublic-input');
+    const state = isPublicEl ? isPublicEl.checked : true;
+    
+    if (typeof window.showToast === 'function') {
+        window.showToast(state ? "✅ 已開放 AI 媒合與搜尋" : "🔒 隱私模式已啟動 (不參與配對)");
+    }
+    
+    if (typeof window.saveECardConfig === 'function') {
+        // 傳入 true 啟動背景無聲存檔 (isSilent = true)
+        await window.saveECardConfig(true); 
+    }
+};
   
 window.shareECardToLine = async function() {
     if (typeof window.checkFormat === 'function' && !window.checkFormat(true)) return;

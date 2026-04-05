@@ -1,4 +1,4 @@
-<!-- Version: v1.2.4 (QQ 終極修復版：完全同步數位名片編輯器的渲染引擎，讀取 JSON 設定檔，落實 100% 所見即所得) -->
+<!-- Version: v1.3.0 (QQ 擴充版：加入隱私互惠機制與防禦搜尋) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -60,6 +60,7 @@
 
     <div id="view-main" class="hidden animate-in fade-in pt-2">
       
+      <!-- 管理員專屬：狀態追蹤 -->
       <div id="admin-tools-container" class="bg-white rounded-[2rem] shadow-sm p-5 mb-4 border border-slate-100 flex justify-between items-center hidden">
         <div>
            <h3 class="text-sm font-black text-slate-800">資料庫標籤狀態</h3>
@@ -77,10 +78,21 @@
         </div>
       </div>
 
-      <div class="bg-white rounded-[2rem] shadow-sm p-6 mb-6">
+      <!-- ⭐ QQ 新增：隱私模式互惠鎖定畫面 -->
+      <div id="privacy-lock-container" class="hidden bg-white rounded-[2rem] shadow-sm p-8 mb-6 text-center border border-slate-100">
+        <div class="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4">
+          <span class="material-symbols-outlined text-[32px]">lock</span>
+        </div>
+        <h2 class="text-[18px] font-black text-slate-800 mb-2">隱私模式已開啟</h2>
+        <p class="text-[13px] text-slate-500 leading-relaxed mb-6 font-medium">為了維護社群的互惠與公平性，若要使用 AI 智慧配對尋找夥伴，請先前往「設定區」將您的名片開放搜尋。<br><br><span class="text-[11px] text-slate-400">（註：管理員不受此限）</span></p>
+        <button onclick="window.location.href='index.html?view=user-profile'" class="w-full py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[15px] active:scale-95 transition-transform shadow-sm flex justify-center items-center gap-2">前往公開我的名片 <span class="material-symbols-outlined text-[18px]">arrow_forward</span></button>
+      </div>
+
+      <div id="matchmaker-ui" class="bg-white rounded-[2rem] shadow-sm p-6 mb-6">
         <h2 class="text-xl font-black mb-2 text-slate-800">尋找完美合作夥伴</h2>
         <p class="text-sm text-slate-500 mb-4 font-medium">輸入您的業務需求，AI 將結合您的性格與 CRM 資料庫的命理標籤，尋找最互補的人選。</p>
         
+        <!-- 一般會員專屬：每日配對額度顯示 -->
         <div id="quota-display" class="hidden bg-pink-50/50 border border-pink-100 rounded-2xl p-4 mb-4 flex items-center justify-between">
           <div class="flex items-center gap-2 text-pink-700">
              <span class="material-symbols-outlined text-[20px]">bolt</span>
@@ -104,13 +116,15 @@
 
   </main>
 
+  <!-- 會員底部導航 -->
   <nav id="bottom-nav-user" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl flex justify-evenly items-center px-1 py-2 z-40 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.03)] left-1/2 -translate-x-1/2 h-[76px] rounded-t-3xl border-t border-slate-100">
     <button onclick="window.location.href='index.html?view=user-activities'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">explore</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">探索</span></button>
-    <button onclick="window.location.href='fate.html'" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">psychology</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">配對</span></button>
+    <button onclick="window.location.href='fate.html'" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">psychology</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">配配</span></button>
     <button onclick="window.location.href='index.html?view=user-history'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">receipt_long</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">紀錄</span></button>
     <button onclick="window.location.href='index.html?view=user-profile'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">person</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">設定</span></button>
   </nav>
 
+  <!-- 管理員底部導航 -->
   <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl flex justify-evenly items-center px-1 py-2 z-40 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.03)] left-1/2 -translate-x-1/2 h-[76px] rounded-t-3xl border-t border-slate-100">
     <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">fact_check</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">核銷</span></button>
     <button onclick="window.location.href='active.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">add_circle</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">建立</span></button>
@@ -194,6 +208,28 @@
       document.getElementById('view-loading').classList.add('hidden');
       document.getElementById('view-main').classList.remove('hidden');
       
+      // ⭐ QQ 隱私判斷機制：解析使用者自己的 JSON，看是否設定為不公開
+      let isMyCardPrivate = false;
+      const myCard = globalCardContacts.find(c => String(c['LINE ID']).trim() === profile.userId || String(c.userId).trim() === profile.userId);
+      if (myCard && myCard['自訂名片設定']) {
+          try {
+              const conf = JSON.parse(myCard['自訂名片設定']);
+              isMyCardPrivate = conf.isPrivate === true;
+          } catch(e) {}
+      }
+
+      const matchmakerUi = document.getElementById('matchmaker-ui');
+      const privacyLock = document.getElementById('privacy-lock-container');
+
+      // ⭐ 管理員不受互惠原則限制，可直接進入配對
+      if (isMyCardPrivate && !isAdminMode) {
+          if (matchmakerUi) matchmakerUi.classList.add('hidden');
+          if (privacyLock) privacyLock.classList.remove('hidden');
+      } else {
+          if (matchmakerUi) matchmakerUi.classList.remove('hidden');
+          if (privacyLock) privacyLock.classList.add('hidden');
+      }
+
       if (isAdminMode) {
           document.getElementById('bottom-nav-admin').classList.remove('hidden');
           document.getElementById('admin-tools-container').classList.remove('hidden');
@@ -396,7 +432,22 @@
           if (quotaRemainingEl) quotaRemainingEl.innerText = quotaRes.remaining;
       }
 
-      const slimContacts = globalCardContacts.map(c => ({
+      // ⭐ QQ 隱私過濾：確保所有送給 OpenAI 匹配的名單，都不包含設為 isPrivate 的名片
+      const publicContacts = globalCardContacts.filter(c => {
+          try {
+              if (c['自訂名片設定']) {
+                  const conf = JSON.parse(c['自訂名片設定']);
+                  if (conf.isPrivate === true) return false;
+              }
+          } catch(e){}
+          return true;
+      });
+
+      if (publicContacts.length === 0) {
+          throw new Error("目前配對池中沒有任何公開的名片可以進行搜尋。");
+      }
+
+      const slimContacts = publicContacts.map(c => ({
           rowId: c.rowId,
           Name: c['姓名'],
           Company: c['公司名稱'],
@@ -506,7 +557,6 @@
       return url;
   }
 
-  // ⭐ QQ 修復：補回真實比例偵測，讓 fate.html 擁有與編輯器一樣的判斷能力
   function getTrueAspectRatio(url) {
       return new Promise((resolve) => {
           if (!url) return resolve('20:13');
@@ -574,7 +624,6 @@
       document.getElementById('readonly-card-modal').classList.add('hidden');
   }
 
-  // ⭐ QQ 終極修復：100% 對齊名片編輯器的 Flex 產生邏輯 (包含讀取 JSON、比例判斷、預設按鈕生成)
   function buildFlexMessageFromCard(card, config, dynamicAr = null) {
     let imgUrl, imgActionUrl, imgSize, aspectMode, ar, title, desc, buttons = [];
     let cardType = config?.cardType || 'image';
@@ -739,7 +788,6 @@
            let config = null;
            if (currentActiveCard['自訂名片設定']) { try { config = JSON.parse(currentActiveCard['自訂名片設定']); } catch(e){} }
            
-           // ⭐ QQ 終極修復：先取得圖片真實比例 (針對未編輯過的名片)，再交由統一的引擎去判斷
            let rawImg = config?.imgUrl || currentActiveCard['名片圖檔'] || '';
            if (!rawImg || !rawImg.startsWith('http')) {
                rawImg = 'https://images.unsplash.com/photo-1616628188550-808682f3926d?w=800&q=80';

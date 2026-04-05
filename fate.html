@@ -1,4 +1,4 @@
-<!-- Version: v1.1.7 (QQ 修復版：解決 AI 型別錯亂導致的隱性 Bug，並加強報錯視覺化) -->
+<!-- Version: v1.2.0 (QQ 擴充版：加入一般會員配對視圖與 5 次防盜刷提示) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -60,7 +60,8 @@
 
     <div id="view-main" class="hidden animate-in fade-in pt-2">
       
-      <div class="bg-white rounded-[2rem] shadow-sm p-5 mb-4 border border-slate-100 flex justify-between items-center">
+      <!-- 管理員專屬：狀態追蹤 -->
+      <div id="admin-tools-container" class="bg-white rounded-[2rem] shadow-sm p-5 mb-4 border border-slate-100 flex justify-between items-center hidden">
         <div>
            <h3 class="text-sm font-black text-slate-800">資料庫標籤狀態</h3>
            <p id="sync-status" class="text-[11px] text-slate-500 font-medium mt-1 leading-snug">
@@ -81,6 +82,17 @@
         <h2 class="text-xl font-black mb-2 text-slate-800">尋找完美合作夥伴</h2>
         <p class="text-sm text-slate-500 mb-4 font-medium">輸入您的業務需求，AI 將結合您的性格與 CRM 資料庫的命理標籤，尋找最互補的人選。</p>
         
+        <!-- ⭐ 一般會員專屬：每日配對額度顯示 -->
+        <div id="quota-display" class="hidden bg-pink-50/50 border border-pink-100 rounded-2xl p-4 mb-4 flex items-center justify-between">
+          <div class="flex items-center gap-2 text-pink-700">
+             <span class="material-symbols-outlined text-[20px]">bolt</span>
+             <span class="font-bold text-[14px]">每日 AI 媒合額度</span>
+          </div>
+          <div class="bg-white px-3 py-1 rounded-lg shadow-sm text-[13px] font-black text-pink-600">
+             剩餘 <span id="quota-remaining" class="text-[16px]">5</span> 次
+          </div>
+        </div>
+
         <textarea id="search-query" class="custom-input h-28 resize-none mb-4" placeholder="例如：我想找有電商通路資源的夥伴，且做事穩重細心..."></textarea>
         
         <button id="btn-match" onclick="startMatchmaking()" class="w-full py-4 bg-primary text-white rounded-2xl font-bold text-[16px] shadow-lg shadow-pink-500/30 active:scale-95 transition-all flex items-center justify-center gap-2">
@@ -94,25 +106,22 @@
 
   </main>
 
-  <nav id="bottom-nav-admin" class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-200 flex justify-evenly items-center px-2 py-2 z-[80] pb-safe shadow-[0_-4px_15px_rgba(0,0,0,0.03)] left-1/2 -translate-x-1/2">
-    <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn" id="nav-admin-activities">
-      <div class="icon-box"><span class="material-symbols-outlined text-[24px]">fact_check</span></div><span class="text-[10px] mt-1 font-bold whitespace-nowrap">核銷</span>
-    </button>
-    <button onclick="window.location.href='index.html?view=admin-create'" class="nav-btn" id="nav-admin-create">
-      <div class="icon-box"><span class="material-symbols-outlined text-[24px]">add_circle</span></div><span class="text-[10px] mt-1 font-bold whitespace-nowrap">建立</span>
-    </button>
-    <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn" id="nav-admin-crm">
-      <div class="icon-box"><span class="material-symbols-outlined text-[24px]">groups</span></div><span class="text-[10px] mt-1 font-bold whitespace-nowrap">CRM</span>
-    </button>
-    <button onclick="window.location.href='fate.html'" class="nav-btn nav-active" id="nav-admin-fate">
-      <div class="icon-box"><span class="material-symbols-outlined text-[24px]">psychology</span></div><span class="text-[10px] mt-1 font-bold whitespace-nowrap">配對</span>
-    </button>
-    <button onclick="window.location.href='card.html'" class="nav-btn" id="nav-admin-cards">
-      <div class="icon-box"><span class="material-symbols-outlined text-[24px]">recent_patient</span></div><span class="text-[10px] mt-1 font-bold whitespace-nowrap">名片</span>
-    </button>
-    <button onclick="window.location.href='index.html?view=admin-settings'" class="nav-btn" id="nav-admin-settings">
-      <div class="icon-box"><span class="material-symbols-outlined text-[24px]">settings</span></div><span class="text-[10px] mt-1 font-bold whitespace-nowrap">參數</span>
-    </button>
+  <!-- 會員底部導航 -->
+  <nav id="bottom-nav-user" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl flex justify-evenly items-center px-1 py-2 z-40 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.03)] left-1/2 -translate-x-1/2 h-[76px] rounded-t-3xl border-t border-slate-100">
+    <button onclick="window.location.href='index.html?view=user-activities'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">explore</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">探索</span></button>
+    <button onclick="window.location.href='fate.html'" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">psychology</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">配對</span></button>
+    <button onclick="window.location.href='index.html?view=user-history'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">receipt_long</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">紀錄</span></button>
+    <button onclick="window.location.href='index.html?view=user-profile'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">person</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">設定</span></button>
+  </nav>
+
+  <!-- 管理員底部導航 -->
+  <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl flex justify-evenly items-center px-1 py-2 z-40 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.03)] left-1/2 -translate-x-1/2 h-[76px] rounded-t-3xl border-t border-slate-100">
+    <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">fact_check</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">核銷</span></button>
+    <button onclick="window.location.href='active.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">add_circle</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">建立</span></button>
+    <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">groups</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">CRM</span></button>
+    <button onclick="window.location.href='fate.html'" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">psychology</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">配對</span></button>
+    <button onclick="window.location.href='card.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">recent_patient</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">名片</span></button>
+    <button onclick="window.location.href='index.html?view=admin-settings'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">settings</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">參數</span></button>
   </nav>
 </div>
 
@@ -141,13 +150,26 @@
   </div>
 </div>
 
+<div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-bold flex items-center gap-2 w-max max-w-[90vw] opacity-0 pointer-events-none border border-slate-700"></div>
+
 <script>
   const LIFF_ID = "2009367829-DLtYBDUm"; 
   const WORKER_URL = "https://actmaster.fangwl591021.workers.dev"; 
+  const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55", "U8932b891ad24da512afb9c1a6f41567b"];
   
   let globalCardContacts = [];
   let currentUserProfile = null;
   let currentActiveCard = null; 
+  let isAdminMode = false;
+
+  window.showToast = function(msg, isError = false) {
+    const t = document.getElementById('toast');
+    if (!t) return;
+    t.innerHTML = `<span class="material-symbols-outlined icon-filled">${isError ? 'error' : 'info'}</span> ${msg}`;
+    t.className = `fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all font-bold flex items-center gap-2 w-max max-w-[90vw] ${isError ? 'bg-red-500 text-white border-red-600' : 'bg-slate-800 text-white border-slate-700'} opacity-100 z-[10000]`;
+    t.classList.remove('hidden');
+    setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -1rem)'; setTimeout(() => t.classList.add('hidden'), 300); }, 3000); 
+  };
 
   window.onload = async () => {
     try {
@@ -155,23 +177,40 @@
       if (!liff.isLoggedIn()) { liff.login(); return; }
       
       const profile = await liff.getProfile();
-      
+      currentUserProfile = profile;
+      isAdminMode = ADMIN_IDS.includes(profile.userId);
+
       const [userRes, contacts] = await Promise.all([
           fetchAPI('checkUser', { userId: profile.userId }),
           fetchAPI('getCardContacts')
       ]);
 
-      currentUserProfile = {
-        name: userRes.isRegistered ? (userRes.info['姓名'] || userRes.info.name) : profile.displayName,
-        industry: userRes.isRegistered ? (userRes.info['業種'] || userRes.info.industry) : '未知'
-      };
+      if (!isAdminMode && !userRes.isRegistered) {
+          window.location.href = 'index.html';
+          return;
+      }
+
+      currentUserProfile.name = userRes.isRegistered ? (userRes.info['姓名'] || userRes.info.name) : profile.displayName;
+      currentUserProfile.industry = userRes.isRegistered ? (userRes.info['業種'] || userRes.info.industry) : '未知';
 
       globalCardContacts = contacts || [];
       
       document.getElementById('view-loading').classList.add('hidden');
       document.getElementById('view-main').classList.remove('hidden');
       
-      checkDatabaseStatus();
+      if (isAdminMode) {
+          document.getElementById('bottom-nav-admin').classList.remove('hidden');
+          document.getElementById('admin-tools-container').classList.remove('hidden');
+          checkDatabaseStatus();
+      } else {
+          document.getElementById('bottom-nav-user').classList.remove('hidden');
+          const quotaDisplay = document.getElementById('quota-display');
+          if (quotaDisplay) quotaDisplay.classList.remove('hidden');
+          const quotaRemainingEl = document.getElementById('quota-remaining');
+          if (quotaRemainingEl && userRes.remainingFate !== undefined) {
+              quotaRemainingEl.innerText = userRes.remainingFate;
+          }
+      }
       
     } catch (err) {
       alert("初始化發生異常：" + err.message);
@@ -196,7 +235,7 @@
         try { 
             result = JSON.parse(resText); 
         } catch(e) { 
-            throw new Error(`伺服器回傳異常 (可能發生逾時或內部錯誤)：${resText.substring(0, 50)}`); 
+            throw new Error(`伺服器回傳非預期格式:\n\n${resText.substring(0, 150)}`); 
         }
 
         if (!result.success) throw new Error(result.error);
@@ -336,7 +375,7 @@
 
   async function startMatchmaking() {
     const query = document.getElementById('search-query').value.trim();
-    if (!query) return alert('請輸入您的業務需求！');
+    if (!query) return showToast('請輸入您的業務需求！', true);
 
     const container = document.getElementById('results-container');
 
@@ -344,7 +383,7 @@
         return container.innerHTML = `<div class="bg-amber-50 border border-amber-200 rounded-2xl p-5 mt-4 text-center">
             <span class="material-symbols-outlined text-amber-500 text-4xl mb-2">warning</span>
             <h3 class="text-amber-700 font-bold text-[15px]">目前名片通訊錄為空</h3>
-            <p class="text-amber-600 text-[13px]">請先至「名片」分頁建檔或同步資料。</p>
+            <p class="text-amber-600 text-[13px]">請先由管理員建檔同步資料。</p>
         </div>`;
     }
 
@@ -355,6 +394,13 @@
     container.innerHTML = '';
 
     try {
+      // ⭐ QQ 新增：攔截一般會員，發送配對前先扣除後端額度
+      if (!isAdminMode) {
+          const quotaRes = await fetchAPI('consumeFateQuota', { userId: currentUserProfile.userId });
+          const quotaRemainingEl = document.getElementById('quota-remaining');
+          if (quotaRemainingEl) quotaRemainingEl.innerText = quotaRes.remaining;
+      }
+
       const slimContacts = globalCardContacts.map(c => ({
           rowId: c.rowId,
           Name: c['姓名'],
@@ -374,6 +420,8 @@
           contacts: slimContacts
       });
 
+      console.log("✅ AI 成功回傳配對結果:", matches);
+
       if (!matches || matches.length === 0) {
           container.innerHTML = '<p class="text-center text-slate-400 mt-10 font-bold">目前資料庫沒有找到高度吻合的對象。</p>';
       } else {
@@ -382,13 +430,22 @@
 
     } catch (err) {
       console.error("Matchmaking Error:", err);
-      container.innerHTML = `
-      <div class="bg-red-50 border border-red-200 rounded-2xl p-5 mt-4 text-center animate-in zoom-in-95">
-          <span class="material-symbols-outlined text-red-500 text-4xl mb-2">error</span>
-          <h3 class="text-red-700 font-bold text-lg mb-1">配對連線中斷</h3>
-          <p class="text-red-600 text-[13px] break-all max-w-[90%] mx-auto">${err.message}</p>
-          <div class="text-[11px] text-red-400 mt-3 border-t border-red-100 pt-2">若為 API 額度用盡或伺服器忙碌，請稍後重試。</div>
-      </div>`;
+      // ⭐ 如果是額度用盡的錯誤，使用 Toast 提示，不顯示複雜的除錯框
+      if (err.message && err.message.includes('額度已用盡')) {
+          showToast(err.message, true);
+          container.innerHTML = `<p class="text-center text-pink-500 mt-10 font-bold">${err.message}</p>`;
+      } else {
+          container.innerHTML = `
+          <div class="bg-red-50 border border-red-200 rounded-2xl p-5 mt-4 text-left animate-in zoom-in-95">
+              <div class="flex items-center gap-2 mb-2 text-red-700">
+                 <span class="material-symbols-outlined text-3xl">error</span>
+                 <h3 class="font-bold text-lg">系統發生錯誤</h3>
+              </div>
+              <div class="bg-white p-3 rounded border border-red-100 text-red-600 text-[12px] font-mono break-all max-h-[150px] overflow-y-auto mb-3">
+                  ${err.message}
+              </div>
+          </div>`;
+      }
     } finally {
       btn.innerHTML = '<span class="material-symbols-outlined">magic_button</span> 重新啟動媒合';
       btn.classList.remove('pointer-events-none', 'opacity-70');
@@ -399,13 +456,12 @@
     const container = document.getElementById('results-container');
     
     let htmlOutput = matches.map((match, idx) => {
-      // ⭐ QQ 終極修復：強制轉成字串比對，防止 AI 回傳字串 "2" 但本地是數字 2，導致程式找不到人而變成空白！
-      const targetId = String(match.rowId).replace(/\D/g, ''); // 雙重防護：過濾非數字字元
+      const targetId = String(match.rowId).replace(/\D/g, ''); 
       const contact = globalCardContacts.find(c => String(c.rowId) === String(match.rowId) || String(c.rowId) === targetId);
       
       if (!contact) {
           console.warn("無法匹配 rowId:", match.rowId);
-          return ''; // 如果真的找不到，會回傳空字串
+          return ''; 
       }
 
       let phoneStr = contact['手機號碼'] ? String(contact['手機號碼']).replace(/[^\d+]/g,'') : '';
@@ -435,7 +491,6 @@
       `;
     }).join('');
 
-    // ⭐ 防呆：如果配對成功，但所有人都找不到而導致 HTML 空白，跳出警告而不是裝死
     if (!htmlOutput || htmlOutput.trim() === '') {
         container.innerHTML = `
         <div class="bg-red-50 border border-red-200 rounded-2xl p-5 mt-4 text-center">

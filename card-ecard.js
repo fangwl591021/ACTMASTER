@@ -1,6 +1,6 @@
 /**
  * card-ecard.js
- * Version: v2.1.0 (QQ 修復版：還原原生滿版 Flex 邊距，解決文字擠在中間的問題)
+ * Version: v2.1.1 (QQ 擴充版：支援自訂 LINE 顯示文字 / altText)
  */
 
 window.toggleECardType = function(type) {
@@ -88,7 +88,6 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
   
     const badgeUrl = `https://liff.line.me/${myLiffId}?shareCardId=${card.rowId}`;
   
-    // ⭐ 將分享按鈕的 Padding 縮減至 8px，確保不浪費空間
     const headerBlock = {
         "type": "box",
         "layout": "horizontal",
@@ -148,7 +147,6 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
         };
     }
   
-    // ⭐ 將內文區塊 paddingAll 從 20px 大幅縮減至 10px，徹底解放兩側空間，還原原生滿版感
     const flexContents = {
         "type": "bubble", 
         "size": imgSize,
@@ -168,7 +166,6 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
         }
     };
     
-    // ⭐ 按鈕區塊同步縮減邊界至 10px
     if (btnContents.length > 0) {
         flexContents.footer = { "type": "box", "layout": "vertical", "spacing": "sm", "paddingAll": "10px", "paddingTop": "0px", "backgroundColor": "#FFFFFF", "contents": btnContents };
     }
@@ -238,6 +235,8 @@ window.openECardGenerator = function() {
           safeSetValue('ec-title-align', savedConfig.titleAlign || 'center');
           safeSetValue('ec-title-input', savedConfig.title || '');
           safeSetValue('ec-desc-input', savedConfig.desc || '');
+          // ⭐ 帶入儲存的 altText
+          safeSetValue('ec-alt-text-input', savedConfig.altText || '這是我的電子名片，請多指教');
         } else {
           const defaultFlex = window.buildFlexMessageFromCard(c, null);
           
@@ -258,6 +257,8 @@ window.openECardGenerator = function() {
           
           safeSetValue('ec-title-input', defaultTitle);
           safeSetValue('ec-desc-input', defaultDesc);
+          // ⭐ 預設 altText
+          safeSetValue('ec-alt-text-input', '這是我的電子名片，請多指教');
         }
         
         const cardTypeEl = document.getElementById('ec-card-type');
@@ -428,7 +429,6 @@ window.updateECardPreview = function(forceBase64 = null) {
         }
     }
     
-    // ⭐ 同步網頁版的泡泡預覽，縮減左右邊距 (px-5 改為 px-3.5)，使按鈕寬度跟隨放寬
     if (bubbleEl) {
         let existingHeader = bubbleEl.querySelector('.preview-header');
         if (!existingHeader) {
@@ -438,10 +438,10 @@ window.updateECardPreview = function(forceBase64 = null) {
         
         const titleDescContainer = previewTitleEl?.parentElement;
         if (titleDescContainer) {
-            titleDescContainer.className = "px-3.5 py-3 text-center bg-white relative";
+            titleDescContainer.className = "px-3.5 py-4 text-center bg-white relative";
         }
         if (btnContainer) {
-            btnContainer.className = "px-3.5 pb-3.5 pt-0 bg-white space-y-2";
+            btnContainer.className = "px-3.5 pb-4 pt-0 bg-white space-y-2";
         }
 
         const absoluteShare = bubbleEl.querySelector('.absolute.top-4.right-4.bg-red-500');
@@ -542,6 +542,8 @@ window.saveECardConfig = async function(isSilent = false) {
       titleAlign: getVal('ec-title-align', 'center'),
       title: getVal('ec-title-input', ''),
       desc: getVal('ec-desc-input', ''),
+      // ⭐ 儲存自訂的 altText
+      altText: getVal('ec-alt-text-input', '這是我的電子名片，請多指教').trim() || '這是我的電子名片，請多指教',
       buttons: []
     };
     
@@ -600,7 +602,8 @@ window.shareECardToLine = async function() {
       const flexMessageObj = typeof window.buildFlexMessageFromCard === 'function' ? window.buildFlexMessageFromCard(currentActiveCard, config, detectedAr) : null;
       if (!flexMessageObj) throw new Error("無法產生名片訊息");
 
-      const altText = `您收到一張數位名片：${config && config.title ? config.title : (currentActiveCard ? (currentActiveCard['姓名'] || currentActiveCard['Name']) : '商務名片')}`;
+      // ⭐ 直接從 config 中提取剛剛儲存的 altText 作為 LINE 聊天室的提示文字
+      const altText = (config && config.altText) ? config.altText : '這是我的電子名片，請多指教';
       
       const myLiffId = (typeof LIFF_ID !== 'undefined') ? LIFF_ID : '2009367829-DLtYBDUm';
       const shareUrl = `https://liff.line.me/${myLiffId}?shareCardId=${currentActiveCard.rowId}`;

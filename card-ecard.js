@@ -1,6 +1,6 @@
 /**
  * card-ecard.js
- * Version: v2.1.1 (QQ 擴充版：支援自訂 LINE 顯示文字 / altText)
+ * Version: v2.1.2 (QQ 擴充版：加入自動萃取名片資料，自動生成預設通訊按鈕防空值)
  */
 
 window.toggleECardType = function(type) {
@@ -68,7 +68,19 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
         if (defaultDesc === 'Not provided' || defaultDesc === '未提供') defaultDesc = '';
         desc = defaultDesc || '歡迎點擊下方按鈕與我聯繫';
   
+        // ⭐ QQ 修復：就算沒有自訂設定，產生 Flex 轉發時也要自動萃取按鈕！
         buttons = [];
+        let p1 = card['手機號碼'] || card['Mobile'];
+        if (p1) { let phone = String(p1).split(',')[0].replace(/[^\d+]/g, ''); if (phone.startsWith('886')) phone = '0' + phone.substring(3); if (phone) buttons.push({ l: '撥打手機', u: `tel:${phone}`, c: '#06C755' }); }
+        let p2 = card['公司電話'] || card['Tel'];
+        if (p2) { let tel = String(p2).split(',')[0].replace(/[^\d+]/g, ''); if (tel.startsWith('886')) tel = '0' + tel.substring(3); if (tel) buttons.push({ l: '撥打電話', u: `tel:${tel}`, c: '#06C755' }); }
+        let p3 = card['電子郵件'] || card['Email'];
+        if (p3) { let email = String(p3).split(/[\s,]+/)[0]; if (email.includes('@')) buttons.push({ l: '發送信箱', u: `mailto:${email}`, c: '#06C755' }); }
+        let p4 = card['公司地址'] || card['Address'];
+        if (p4) buttons.push({ l: 'Google 導航', u: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p4.split(',')[0])}`, c: '#06C755' });
+        let p5 = card['公司網址'] || card['Website'];
+        if (p5 && buttons.length < 4) { let wUrl = String(p5).trim(); if (wUrl && !wUrl.startsWith('http')) wUrl = 'https://' + wUrl; if (wUrl) buttons.push({ l: '公司網站', u: wUrl, c: '#06C755' }); }
+        buttons = buttons.slice(0, 4);
     }
   
     const validSizes = ['nano', 'micro', 'kilo', 'mega', 'giga'];
@@ -202,7 +214,25 @@ window.openECardGenerator = function() {
         const listEl = document.getElementById('ec-btn-list');
         if (listEl) {
             listEl.innerHTML = '';
-            const sBtns = savedConfig ? savedConfig.buttons : [];
+            
+            // ⭐ QQ 修復：AI 自動從聯絡資料萃取預設按鈕 (手機、電話、信箱、導航、網站) 防空值
+            let sBtns = [];
+            if (savedConfig && savedConfig.buttons && savedConfig.buttons.length > 0) {
+                sBtns = savedConfig.buttons;
+            } else {
+                let p1 = c['手機號碼'] || c['Mobile'];
+                if (p1) { let phone = String(p1).split(',')[0].replace(/[^\d+]/g, ''); if (phone.startsWith('886')) phone = '0' + phone.substring(3); if (phone) sBtns.push({ l: '撥打手機', u: `tel:${phone}`, c: '#06C755' }); }
+                let p2 = c['公司電話'] || c['Tel'];
+                if (p2) { let tel = String(p2).split(',')[0].replace(/[^\d+]/g, ''); if (tel.startsWith('886')) tel = '0' + tel.substring(3); if (tel) sBtns.push({ l: '撥打電話', u: `tel:${tel}`, c: '#06C755' }); }
+                let p3 = c['電子郵件'] || c['Email'];
+                if (p3) { let email = String(p3).split(/[\s,]+/)[0]; if (email.includes('@')) sBtns.push({ l: '發送信箱', u: `mailto:${email}`, c: '#06C755' }); }
+                let p4 = c['公司地址'] || c['Address'];
+                if (p4) sBtns.push({ l: 'Google 導航', u: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p4.split(',')[0])}`, c: '#06C755' });
+                let p5 = c['公司網址'] || c['Website'];
+                if (p5 && sBtns.length < 4) { let wUrl = String(p5).trim(); if (wUrl && !wUrl.startsWith('http')) wUrl = 'https://' + wUrl; if (wUrl) sBtns.push({ l: '公司網站', u: wUrl, c: '#06C755' }); }
+                sBtns = sBtns.slice(0, 4);
+            }
+
             for(let i=1; i<=4; i++) {
                 const b = sBtns[i-1] || {l:'', u:'', c:'#06C755'};
                 listEl.innerHTML += `
@@ -235,7 +265,6 @@ window.openECardGenerator = function() {
           safeSetValue('ec-title-align', savedConfig.titleAlign || 'center');
           safeSetValue('ec-title-input', savedConfig.title || '');
           safeSetValue('ec-desc-input', savedConfig.desc || '');
-          // ⭐ 帶入儲存的 altText
           safeSetValue('ec-alt-text-input', savedConfig.altText || '這是我的電子名片，請多指教');
         } else {
           const defaultFlex = window.buildFlexMessageFromCard(c, null);
@@ -257,7 +286,6 @@ window.openECardGenerator = function() {
           
           safeSetValue('ec-title-input', defaultTitle);
           safeSetValue('ec-desc-input', defaultDesc);
-          // ⭐ 預設 altText
           safeSetValue('ec-alt-text-input', '這是我的電子名片，請多指教');
         }
         
@@ -542,7 +570,6 @@ window.saveECardConfig = async function(isSilent = false) {
       titleAlign: getVal('ec-title-align', 'center'),
       title: getVal('ec-title-input', ''),
       desc: getVal('ec-desc-input', ''),
-      // ⭐ 儲存自訂的 altText
       altText: getVal('ec-alt-text-input', '這是我的電子名片，請多指教').trim() || '這是我的電子名片，請多指教',
       buttons: []
     };
@@ -602,7 +629,6 @@ window.shareECardToLine = async function() {
       const flexMessageObj = typeof window.buildFlexMessageFromCard === 'function' ? window.buildFlexMessageFromCard(currentActiveCard, config, detectedAr) : null;
       if (!flexMessageObj) throw new Error("無法產生名片訊息");
 
-      // ⭐ 直接從 config 中提取剛剛儲存的 altText 作為 LINE 聊天室的提示文字
       const altText = (config && config.altText) ? config.altText : '這是我的電子名片，請多指教';
       
       const myLiffId = (typeof LIFF_ID !== 'undefined') ? LIFF_ID : '2009367829-DLtYBDUm';

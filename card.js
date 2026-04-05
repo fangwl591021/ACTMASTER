@@ -1,6 +1,6 @@
 /**
  * card.js 
- * Version: v20260404_2000 (QQ 終極修復：FileReader 手機端中斷防呆、本地端高清預覽)
+ * Version: v20260405_1300 (QQ 擴充版：加入隱私互惠機制 JSON 讀寫)
  */
 const LIFF_ID = "2009367829-DLtYBDUm"; 
 const WORKER_URL = "https://actmaster.fangwl591021.workers.dev"; 
@@ -477,6 +477,12 @@ window.openCardEdit = function() {
     const fields = { 'edit-c-Name': c['姓名'] || c['Name'] || '', 'edit-c-EnglishName': c['英文名/別名'] || c['EnglishName'] || '', 'edit-c-Title': c['職稱'] || c['Title'] || '', 'edit-c-Department': c['部門'] || c['Department'] || '', 'edit-c-CompanyName': c['公司名稱'] || c['CompanyName'] || '', 'edit-c-TaxID': c['統一編號'] || c['TaxID'] || '', 'edit-c-Mobile': formatPhoneStr(c['手機號碼'] || c['Mobile']) || '', 'edit-c-Tel': formatPhoneStr(c['公司電話'] || c['Tel']) || '', 'edit-c-Ext': c['分機'] || c['Ext'] || '', 'edit-c-Fax': formatPhoneStr(c['傳真'] || c['Fax']) || '', 'edit-c-Address': c['公司地址'] || c['Address'] || '', 'edit-c-Email': c['電子郵件'] || c['Email'] || '', 'edit-c-Website': webStr, 'edit-c-SocialMedia': c['社群帳號'] || c['SocialMedia'] || '', 'edit-c-Slogan': c['服務項目/品牌標語'] || c['Slogan'] || '', 'edit-c-Notes': c['建檔人/備註'] || c['Notes'] || '', 'edit-c-Birthday': bdayVal };
     for (const [id, val] of Object.entries(fields)) { const el = document.getElementById(id); if (el) el.value = val; }
     
+    // ⭐ QQ 擴充：讀取 JSON 決定隱私開關狀態 (預設開放)
+    let config = {};
+    if (c['自訂名片設定']) { try { config = JSON.parse(c['自訂名片設定']); } catch(e){} }
+    const isPublicEl = document.getElementById('edit-c-isPublic');
+    if (isPublicEl) isPublicEl.checked = !(config.isPrivate === true);
+    
     const modal = document.getElementById('card-edit-modal');
     if (modal) modal.classList.remove('hidden');
 }
@@ -508,8 +514,20 @@ window.submitCardEdit = async function() {
       } catch (e) {}
   }
 
+  // ⭐ QQ 擴充：儲存隱私開關至 JSON
+  const isPublicEl = document.getElementById('edit-c-isPublic');
+  const isPrivate = isPublicEl ? !isPublicEl.checked : false;
+  let config = {};
+  if (currentActiveCard['自訂名片設定']) { try { config = JSON.parse(currentActiveCard['自訂名片設定']); } catch(e){} }
+  config.isPrivate = isPrivate;
+
   try {
-    await window.fetchAPI('updateCard', payload);
+    if (btn) btn.innerText = '寫入資料庫...';
+    await Promise.all([
+        window.fetchAPI('updateCard', payload),
+        window.fetchAPI('updateECardConfig', { rowId: currentActiveCard.rowId, config: config }, true)
+    ]);
+    currentActiveCard['自訂名片設定'] = JSON.stringify(config);
     window.showToast("✅ 資料更新成功");
     window.closeCardEdit();
     loadCardContacts();
@@ -533,7 +551,6 @@ window.openCropper = async function(input, targetMode) {
       const img = document.getElementById('cropper-image'); 
       if (!img) return;
       
-      // ⭐ 確保 Base64 完全注入畫面後，才啟動 Cropper，絕不靜默死亡
       img.onload = () => {
           const modal = document.getElementById('section-image-cropper');
           if (modal) modal.classList.remove('hidden');
@@ -553,7 +570,6 @@ window.openCropper = async function(input, targetMode) {
       };
       img.src = e.target.result;
       
-      // ⭐ 絕對必須在 onload 內部清空，否則 iOS Safari 會直接 abort 讀取程序！
       input.value = ""; 
     }; 
     
@@ -569,7 +585,6 @@ window.cancelCrop = function() {
     const modal = document.getElementById('section-image-cropper');
     if (modal) modal.classList.add('hidden'); 
     
-    // 釋放記憶體
     const img = document.getElementById('cropper-image');
     if (img) { img.src = ''; img.style.opacity = '0'; }
 }
@@ -578,7 +593,6 @@ window.cancelCrop = function() {
 window.confirmCrop = async function() { 
     if (!cropperInstance) return; 
     let quality = 0.8; 
-    // 轉為 JPEG 大幅縮小檔案，提升上傳穩定度
     let base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1200, maxHeight: 1200 }).toDataURL('image/jpeg', quality); 
     while (base64.length > 400000 && quality > 0.1) { 
         quality -= 0.1; 
@@ -591,7 +605,6 @@ window.confirmCrop = async function() {
       const originalHtml = btn ? btn.innerHTML : '';
       if(btn) { btn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin">refresh</span> 上傳中'; btn.classList.add('pointer-events-none'); }
       
-      // ⭐ 先把本地的高清 base64 存起來，強制更新預覽畫面，不等 Google 伺服器！
       window.optimisticBase64 = base64;
       if (typeof window.updateECardPreview === 'function') window.updateECardPreview(base64);
 
@@ -603,7 +616,7 @@ window.confirmCrop = async function() {
 
           const imgInput = document.getElementById('ec-img-input');
           if(imgInput) imgInput.value = url;
-          window.optimisticImageUrl = url; // 記錄真實網址供後續比對
+          window.optimisticImageUrl = url; 
           
           window.showToast("✅ 圖片上傳成功");
       } catch (err) { 

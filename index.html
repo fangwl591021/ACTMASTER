@@ -1,4 +1,4 @@
-<!-- Version: v2.1.0 (QQ 擴充版：會員端底部導航補齊「AI配對」按鈕，保持 4 鍵等距排版) -->
+<!-- Version: v2.2.0 (QQ 擴充版：整合「營運統計」儀表板於核銷頁面中，無縫切換不擠壓底部導航) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -62,7 +62,6 @@
     input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     input[type=number] { -moz-appearance: textfield; }
 
-    /* 暴力渲染避免 Tailwind JIT 遺失 */
     .btn-secondary { @apply w-full py-4 bg-slate-200 text-slate-700 rounded-2xl font-bold text-[16px] active:scale-[0.98] transition-transform flex items-center justify-center gap-2; }
     
     .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-slate-400 h-full; min-width: 48px;}
@@ -200,8 +199,25 @@
 
     <!-- 後台：管理核銷 -->
     <div id="view-admin-activities" class="hidden space-y-4 animate-in fade-in pt-2">
-      <h2 class="text-[24px] font-extrabold text-slate-800 tracking-tight pl-1">管理核銷</h2>
+      <!-- ⭐ QQ 擴充：在原本的核銷頁面標題旁，加入「營運統計」入口按鈕 -->
+      <div class="flex justify-between items-center pl-1 mb-2">
+        <h2 class="text-[24px] font-extrabold text-slate-800 tracking-tight">管理核銷</h2>
+        <button onclick="switchView('admin-stats')" class="bg-slate-800 text-white px-4 py-2 rounded-full text-[13px] font-bold flex items-center gap-1.5 active:scale-95 transition-all shadow-sm">
+          <span class="material-symbols-outlined text-[18px]">bar_chart</span> 營運統計
+        </button>
+      </div>
       <div id="admin-activity-list-container" class="space-y-4"></div>
+    </div>
+
+    <!-- ⭐ QQ 擴充：新增營運統計專屬視圖 (依附在管理核銷的層級之下) -->
+    <div id="view-admin-stats" class="hidden space-y-4 animate-in slide-in-from-right-8 pt-2">
+      <div class="flex items-center gap-3 pl-1 mb-4">
+        <button onclick="switchView('admin-activities')" class="w-9 h-9 bg-white rounded-full flex items-center justify-center text-slate-600 shadow-sm active:scale-90 transition-all"><span class="material-symbols-outlined text-[20px]">arrow_back</span></button>
+        <h2 class="text-[24px] font-extrabold text-slate-800 tracking-tight">營運統計</h2>
+      </div>
+      <div id="admin-stats-container" class="space-y-5">
+        <!-- 數據渲染區 -->
+      </div>
     </div>
 
     <!-- 後台：CRM -->
@@ -231,7 +247,6 @@
 
   </main>
 
-  <!-- ⭐ QQ更新：為一般會員加入第四顆「配對」導航按鈕，並維持等距排版 -->
   <nav id="bottom-nav-user" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl flex justify-evenly items-center px-1 py-2 z-40 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.03)] left-1/2 -translate-x-1/2 h-[76px] rounded-t-3xl border-t border-slate-100">
     <button onclick="switchView('user-activities')" id="nav-user-activities" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">explore</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">探索</span></button>
     <button onclick="window.location.href='fate.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">psychology</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">配對</span></button>
@@ -579,20 +594,23 @@
   }
 
   function switchView(view) {
-    ['view-loading', 'view-user-register', 'view-user-activities', 'view-user-profile', 'view-user-history', 'view-admin-activities', 'view-admin-crm', 'view-admin-settings'].forEach(v => { const el = document.getElementById(v); if(el) el.classList.add('hidden'); });
+    ['view-loading', 'view-user-register', 'view-user-activities', 'view-user-profile', 'view-user-history', 'view-admin-activities', 'view-admin-stats', 'view-admin-crm', 'view-admin-settings'].forEach(v => { const el = document.getElementById(v); if(el) el.classList.add('hidden'); });
     const activeEl = document.getElementById(`view-${view}`); if (activeEl) activeEl.classList.remove('hidden');
     const navAdmin = document.getElementById('bottom-nav-admin'); const navUser = document.getElementById('bottom-nav-user');
     if(navAdmin) navAdmin.classList.add('hidden'); if(navUser) navUser.classList.add('hidden');
     
     if (isAdmin && isViewModeAdmin && view.startsWith('admin')) {
       if(navAdmin) navAdmin.classList.remove('hidden');
-      ['activities', 'create', 'crm', 'fate', 'cards', 'settings'].forEach(k => { const btn = document.getElementById('nav-admin-'+k); if(btn) btn.className = `nav-btn ${view===('admin-'+k) ? 'nav-active' : ''}`; });
+      // 將 admin-stats 也視為活動頁面的延伸，保持 nav-admin-activities 高亮
+      let highlightView = view === 'admin-stats' ? 'admin-activities' : view;
+      ['activities', 'create', 'crm', 'fate', 'cards', 'settings'].forEach(k => { const btn = document.getElementById('nav-admin-'+k); if(btn) btn.className = `nav-btn ${highlightView===('admin-'+k) ? 'nav-active' : ''}`; });
     } else if (isRegistered && (!isAdmin || !isViewModeAdmin) && view.startsWith('user')) {
       if(navUser) navUser.classList.remove('hidden');
       ['activities', 'history', 'profile'].forEach(k => { const btn = document.getElementById('nav-user-'+k); if(btn) btn.className = `nav-btn ${view===('user-'+k) ? 'nav-active' : ''}`; });
     }
     
     if (view === 'admin-activities') loadAdminActivities();
+    else if (view === 'admin-stats') loadAdminStats();
     else if (view === 'admin-settings') loadAdminSettings();
     else if (view === 'admin-crm') loadCrmData();
     else if (view === 'user-activities') loadUserActivities();
@@ -1050,6 +1068,103 @@
   window.stopScanner = function() { 
       if(html5QrcodeScanner) { html5QrcodeScanner.stop().then(() => { html5QrcodeScanner.clear(); html5QrcodeScanner = null; }).catch(e=>{}); } 
       const m = document.getElementById('qr-scanner-modal'); if(m) m.classList.add('hidden'); 
+  }
+
+  // ⭐ QQ 擴充：計算並渲染營運統計資料 (整合至單一頁面內)
+  async function loadAdminStats() {
+      const container = document.getElementById('admin-stats-container');
+      if(!container) return;
+      
+      container.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>';
+      
+      try {
+          if (!currentActivities || currentActivities.length === 0) {
+             currentActivities = await fetchAPI('getActivityDashboard', {}, true);
+          }
+          
+          let totalRevenue = 0;
+          let totalAttendees = 0;
+          let activeEventCount = 0;
+          
+          let performanceData = [];
+
+          currentActivities.forEach(act => {
+             if (act.status === '上架') activeEventCount++;
+             const attended = act.attended || 0;
+             totalAttendees += attended;
+             
+             let rev = 0;
+             if (act.feeType === '收費') {
+                 let price = parseInt(String(act.price).replace(/\D/g, '')) || 0;
+                 rev = price * attended;
+                 totalRevenue += rev;
+             }
+             
+             performanceData.push({
+                 name: act.name,
+                 revenue: rev,
+                 attended: attended,
+                 type: act.type
+             });
+          });
+          
+          // 依營收、人次排序
+          performanceData.sort((a, b) => b.revenue - a.revenue || b.attended - a.attended);
+          const topEvents = performanceData.slice(0, 5);
+
+          const formatCurrency = (num) => new Intl.NumberFormat('en-US').format(num);
+
+          let html = `
+            <!-- 總覽數據卡片 -->
+            <div class="grid grid-cols-2 gap-3 mx-1">
+                <div class="bg-white rounded-[1.5rem] p-5 shadow-sm border border-slate-100 flex flex-col justify-center">
+                    <div class="flex items-center gap-1.5 mb-2 text-primary">
+                        <span class="material-symbols-outlined text-[18px]">payments</span>
+                        <span class="text-[12px] font-bold">總營收</span>
+                    </div>
+                    <div class="text-[24px] font-black text-slate-800 tracking-tight">NT$ ${formatCurrency(totalRevenue)}</div>
+                </div>
+                <div class="bg-white rounded-[1.5rem] p-5 shadow-sm border border-slate-100 flex flex-col justify-center">
+                    <div class="flex items-center gap-1.5 mb-2 text-blue-500">
+                        <span class="material-symbols-outlined text-[18px]">how_to_reg</span>
+                        <span class="text-[12px] font-bold">總簽到人次</span>
+                    </div>
+                    <div class="text-[24px] font-black text-slate-800 tracking-tight">${formatCurrency(totalAttendees)} <span class="text-[12px] text-slate-400 font-bold ml-1">人</span></div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-[1.5rem] p-5 shadow-sm border border-slate-100 mx-1 flex justify-between items-center">
+                <span class="text-[14px] font-bold text-slate-600 flex items-center gap-2"><span class="material-symbols-outlined text-[18px] text-slate-400">inventory_2</span> 目前上架活動</span>
+                <span class="text-[18px] font-black text-slate-800">${activeEventCount} <span class="text-[12px] text-slate-400 font-bold">檔</span></span>
+            </div>
+
+            <!-- 熱門活動排行 -->
+            <div class="mt-4 mx-1">
+                <h3 class="text-[15px] font-extrabold text-slate-800 mb-3 pl-1 flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px] text-amber-500 icon-filled">local_fire_department</span> 營收 / 人氣排行</h3>
+                <div class="bg-white rounded-[2rem] shadow-sm overflow-hidden border border-slate-100">
+                    ${topEvents.length > 0 ? topEvents.map((evt, idx) => `
+                        <div class="p-4 border-b border-slate-50 last:border-0 flex items-center gap-3">
+                            <div class="w-6 h-6 rounded-full ${idx === 0 ? 'bg-amber-100 text-amber-600' : (idx === 1 ? 'bg-slate-200 text-slate-500' : (idx === 2 ? 'bg-orange-100 text-orange-500' : 'bg-slate-50 text-slate-400'))} flex items-center justify-center font-bold text-[12px] shrink-0">
+                                ${idx + 1}
+                            </div>
+                            <div class="flex-1 overflow-hidden">
+                                <h4 class="text-[14px] font-bold text-slate-800 truncate mb-0.5">${evt.name}</h4>
+                                <span class="text-[10px] text-slate-400 font-bold bg-slate-50 px-2 py-0.5 rounded">${evt.type}</span>
+                            </div>
+                            <div class="flex flex-col items-end shrink-0">
+                                <span class="text-[14px] font-black text-primary">NT$ ${formatCurrency(evt.revenue)}</span>
+                                <span class="text-[11px] text-slate-500 font-bold mt-0.5">${evt.attended} 人參與</span>
+                            </div>
+                        </div>
+                    `).join('') : '<div class="p-8 text-center text-slate-400 font-bold text-[13px]">目前尚無成效資料</div>'}
+                </div>
+            </div>
+          `;
+          
+          container.innerHTML = html;
+      } catch(e) {
+          container.innerHTML = '<p class="text-center text-red-400 font-bold py-10">統計資料載入失敗</p>';
+      }
   }
 
   async function loadCrmData() { 

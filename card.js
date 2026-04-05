@@ -1,6 +1,6 @@
 /**
  * card.js 
- * Version: v20260405_1300 (QQ 擴充版：加入隱私互惠機制 JSON 讀寫)
+ * Version: v20260405_1400 (QQ 修復版：移除舊有 Modal 開關，交由編輯器處理隱私參數)
  */
 const LIFF_ID = "2009367829-DLtYBDUm"; 
 const WORKER_URL = "https://actmaster.fangwl591021.workers.dev"; 
@@ -477,12 +477,6 @@ window.openCardEdit = function() {
     const fields = { 'edit-c-Name': c['姓名'] || c['Name'] || '', 'edit-c-EnglishName': c['英文名/別名'] || c['EnglishName'] || '', 'edit-c-Title': c['職稱'] || c['Title'] || '', 'edit-c-Department': c['部門'] || c['Department'] || '', 'edit-c-CompanyName': c['公司名稱'] || c['CompanyName'] || '', 'edit-c-TaxID': c['統一編號'] || c['TaxID'] || '', 'edit-c-Mobile': formatPhoneStr(c['手機號碼'] || c['Mobile']) || '', 'edit-c-Tel': formatPhoneStr(c['公司電話'] || c['Tel']) || '', 'edit-c-Ext': c['分機'] || c['Ext'] || '', 'edit-c-Fax': formatPhoneStr(c['傳真'] || c['Fax']) || '', 'edit-c-Address': c['公司地址'] || c['Address'] || '', 'edit-c-Email': c['電子郵件'] || c['Email'] || '', 'edit-c-Website': webStr, 'edit-c-SocialMedia': c['社群帳號'] || c['SocialMedia'] || '', 'edit-c-Slogan': c['服務項目/品牌標語'] || c['Slogan'] || '', 'edit-c-Notes': c['建檔人/備註'] || c['Notes'] || '', 'edit-c-Birthday': bdayVal };
     for (const [id, val] of Object.entries(fields)) { const el = document.getElementById(id); if (el) el.value = val; }
     
-    // ⭐ QQ 擴充：讀取 JSON 決定隱私開關狀態 (預設開放)
-    let config = {};
-    if (c['自訂名片設定']) { try { config = JSON.parse(c['自訂名片設定']); } catch(e){} }
-    const isPublicEl = document.getElementById('edit-c-isPublic');
-    if (isPublicEl) isPublicEl.checked = !(config.isPrivate === true);
-    
     const modal = document.getElementById('card-edit-modal');
     if (modal) modal.classList.remove('hidden');
 }
@@ -514,20 +508,9 @@ window.submitCardEdit = async function() {
       } catch (e) {}
   }
 
-  // ⭐ QQ 擴充：儲存隱私開關至 JSON
-  const isPublicEl = document.getElementById('edit-c-isPublic');
-  const isPrivate = isPublicEl ? !isPublicEl.checked : false;
-  let config = {};
-  if (currentActiveCard['自訂名片設定']) { try { config = JSON.parse(currentActiveCard['自訂名片設定']); } catch(e){} }
-  config.isPrivate = isPrivate;
-
   try {
     if (btn) btn.innerText = '寫入資料庫...';
-    await Promise.all([
-        window.fetchAPI('updateCard', payload),
-        window.fetchAPI('updateECardConfig', { rowId: currentActiveCard.rowId, config: config }, true)
-    ]);
-    currentActiveCard['自訂名片設定'] = JSON.stringify(config);
+    await window.fetchAPI('updateCard', payload);
     window.showToast("✅ 資料更新成功");
     window.closeCardEdit();
     loadCardContacts();

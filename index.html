@@ -1,4 +1,4 @@
-<!-- Version: v2.0.0 (QQ 鐵律修復版：鎖定現有功能，僅完美補回遺失的底部導航列文字標籤) -->
+<!-- Version: v2.1.0 (QQ 擴充版：會員端底部導航補齊「AI配對」按鈕，保持 4 鍵等距排版) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -231,14 +231,14 @@
 
   </main>
 
-  <!-- ⭐ QQ修復：補回前端會員的導航文字標籤 -->
-  <nav id="bottom-nav-user" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl flex justify-around items-center px-2 py-2 z-40 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.03)] left-1/2 -translate-x-1/2 h-[76px] rounded-t-3xl border-t border-slate-100">
+  <!-- ⭐ QQ更新：為一般會員加入第四顆「配對」導航按鈕，並維持等距排版 -->
+  <nav id="bottom-nav-user" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl flex justify-evenly items-center px-1 py-2 z-40 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.03)] left-1/2 -translate-x-1/2 h-[76px] rounded-t-3xl border-t border-slate-100">
     <button onclick="switchView('user-activities')" id="nav-user-activities" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">explore</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">探索</span></button>
+    <button onclick="window.location.href='fate.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">psychology</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">配對</span></button>
     <button onclick="switchView('user-history')" id="nav-user-history" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">receipt_long</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">紀錄</span></button>
     <button onclick="switchView('user-profile')" id="nav-user-profile" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">person</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">設定</span></button>
   </nav>
 
-  <!-- ⭐ QQ修復：補回後台管理的導航文字標籤 -->
   <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl flex justify-evenly items-center px-1 py-2 z-40 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.03)] left-1/2 -translate-x-1/2 h-[76px] rounded-t-3xl border-t border-slate-100">
     <button onclick="switchView('admin-activities')" class="nav-btn" id="nav-admin-activities"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">fact_check</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">核銷</span></button>
     <button onclick="window.location.href='active.html'" class="nav-btn" id="nav-admin-create"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">add_circle</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">建立</span></button>
@@ -368,6 +368,15 @@
   let globalCrmData = [], filteredCrmData = [], globalCardContacts = [], crmPageLimit = 10, currentCrmViewCount = 10, isProcessing = false;
   let regStep1Data = {}, regCompressedBase64 = "", cropperInstance = null, currentCropTarget = '', html5QrcodeScanner = null;
 
+  function showToast(msg, isError = false) {
+      const t = document.getElementById('toast');
+      if (!t) return;
+      t.innerHTML = `<span class="material-symbols-outlined icon-filled">${isError ? 'error' : 'info'}</span> ${msg}`;
+      t.className = `fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all font-bold flex items-center gap-2 w-max max-w-[90vw] ${isError ? 'bg-red-500 text-white border-red-600' : 'bg-slate-800 text-white border-slate-700'} opacity-100 z-[10000]`;
+      t.classList.remove('hidden');
+      setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -1rem)'; setTimeout(() => t.classList.add('hidden'), 300); }, 3000); 
+  }
+
   function setButtonLoading(btnId, isLoading, originalText = '') {
       const btn = document.getElementById(btnId); if (!btn) return false;
       if (isLoading) {
@@ -430,19 +439,11 @@
     isProcessing = true;
     try {
       const newStatus = await fetchAPI('toggleActivityStatus', { activityName: actName });
-      if (typeof window.showToast === 'function') {
-          window.showToast(`✅ 活動已切換為：${newStatus}`);
-      } else {
-          alert(`活動已切換為：${newStatus}`);
-      }
+      showToast(`✅ 活動已切換為：${newStatus}`);
       sessionStorage.removeItem('getActivityDashboard{}'); 
       await loadAdminActivities(); 
     } catch(e) {
-      if (typeof window.showToast === 'function') {
-          window.showToast("狀態切換失敗", true);
-      } else {
-          alert("狀態切換失敗: " + e.message);
-      }
+      showToast("狀態切換失敗: " + e.message, true);
     } finally {
       isProcessing = false;
     }
@@ -729,7 +730,7 @@
 
       const s1 = document.getElementById('reg-step-1'); if(s1) s1.classList.add('hidden'); 
       const s2 = document.getElementById('reg-step-2'); if(s2) s2.classList.remove('opacity-30', 'pointer-events-none'); 
-    } catch(e) {} finally { isProcessing = false; setButtonLoading('btn-reg-step1', false, '儲存並繼續'); }
+    } catch(e) { showToast("註冊失敗", true); } finally { isProcessing = false; setButtonLoading('btn-reg-step1', false, '儲存並繼續'); }
   }
 
   async function openCropper(input, targetMode) {
@@ -911,7 +912,7 @@
       await fetchAPI('joinActivity', { userId: userProfile.userId, activityName: name, batchName: batchName, price: price });
       if (feeType === '收費' || parseInt(price) > 0) showModal("報名成功", `請完成匯款 NT$ ${price} 後，至「報名紀錄」填寫後五碼。`, "history");
       else showModal("報名成功", `期待活動現場見到您！`, "activities");
-    } catch(e) {} finally { isProcessing = false; setButtonLoading('detail-modal-join-btn', false, '我要報名'); }
+    } catch(e) { showToast(e.message, true); } finally { isProcessing = false; setButtonLoading('detail-modal-join-btn', false, '我要報名'); }
   }
 
   async function loadUserHistory() {
@@ -947,12 +948,12 @@
   async function submitLast5(btn, actName, inputId) { 
     if(isProcessing) return; const el = document.getElementById(`pay-${inputId}`); if(!el) return; const val = el.value; if(!val || val.length < 4) return; 
     isProcessing = true; setButtonLoading(btn.id, true);
-    try { await fetchAPI('updateLast5Digits', { userId: userProfile.userId, activityName: actName, last5Digits: val }); sessionStorage.removeItem('getUserHistory{"userId":"' + userProfile.userId + '"}'); await loadUserHistory(); } catch(e) {} finally { isProcessing = false; setButtonLoading(btn.id, false, '回報'); }
+    try { await fetchAPI('updateLast5Digits', { userId: userProfile.userId, activityName: actName, last5Digits: val }); sessionStorage.removeItem('getUserHistory{"userId":"' + userProfile.userId + '"}'); await loadUserHistory(); } catch(e) { showToast("錯誤", true); } finally { isProcessing = false; setButtonLoading(btn.id, false, '回報'); }
   }
 
   async function userCancelRegistration(btn, actName) { 
     if(isProcessing) return; if(!confirm(`確定要取消？`)) return; isProcessing = true; setButtonLoading(btn.id, true);
-    try { await fetchAPI('cancelRegistration', { userId: userProfile.userId, activityName: actName }); sessionStorage.removeItem('getUserHistory{"userId":"' + userProfile.userId + '"}'); await loadUserHistory(); } catch(e) {} finally { isProcessing = false; setButtonLoading(btn.id, false, '取消'); }
+    try { await fetchAPI('cancelRegistration', { userId: userProfile.userId, activityName: actName }); sessionStorage.removeItem('getUserHistory{"userId":"' + userProfile.userId + '"}'); await loadUserHistory(); } catch(e) { showToast("取消失敗", true); } finally { isProcessing = false; setButtonLoading(btn.id, false, '取消'); }
   }
 
   function populateUserProfile() { 
@@ -968,7 +969,7 @@
     if(isProcessing) return; isProcessing = true; setButtonLoading('btn-save-profile', true);
     const getVal = (id) => document.getElementById(id)?.value.trim() || '';
     const p = { userId: userProfile.userId, name: getVal('edit-name') || userProfile.displayName, gender: getVal('edit-gender'), phone: getVal('edit-phone'), industry: getVal('edit-industry'), birthday: getVal('edit-birthday'), region: getVal('edit-region'), address: getVal('edit-address') }; 
-    try { await fetchAPI('updateUser', p); registeredInfo = p; checkMyCardEntry(); } catch(e) {} finally { isProcessing = false; setButtonLoading('btn-save-profile', false, '儲存設定'); }
+    try { await fetchAPI('updateUser', p); registeredInfo = p; checkMyCardEntry(); showToast("儲存成功"); } catch(e) { showToast("更新失敗", true); } finally { isProcessing = false; setButtonLoading('btn-save-profile', false, '儲存設定'); }
   }
 
   async function loadAdminActivities() { 
@@ -1040,7 +1041,7 @@
           const uRes = await fetchAPI('checkUser', { userId: decodedText }); 
           if(!uRes.isRegistered) return; 
           const name = uRes.info.name; const reg = currentRegistrants.find(r => r['姓名'] === name); 
-          if(reg) { if(!reg.checkedIn) { await fetchAPI('toggleStatus', { activityName: activeActivityName, rowId: reg.rowId, currentStatus: false }); openAdminRegistrants(activeActivityName); } } else { if(confirm(`未報名，是否現場報名簽到？`)) { await fetchAPI('addWalkIn', { activityName: activeActivityName, name: name }); openAdminRegistrants(activeActivityName); } } 
+          if(reg) { if(!reg.checkedIn) { await fetchAPI('toggleStatus', { activityName: activeActivityName, rowId: reg.rowId, currentStatus: false }); openAdminRegistrants(activeActivityName); showToast('簽到成功'); } } else { if(confirm(`未報名，是否現場報名簽到？`)) { await fetchAPI('addWalkIn', { activityName: activeActivityName, name: name }); openAdminRegistrants(activeActivityName); } } 
         } catch(e) {} 
       }, () => {}
     ).catch(err => { window.stopScanner(); });
@@ -1080,7 +1081,7 @@
   window.submitSettings = async function() { 
     if(isProcessing) return; isProcessing = true; setButtonLoading('btn-submit-settings', true);
     const getVal = (id) => document.getElementById(id)?.value || '';
-    try { await fetchAPI('saveSettings', { TG_BOT_TOKEN: getVal('set-tg-token'), TG_CHAT_ID: getVal('set-tg-chat'), LINE_LINK: getVal('set-line-link') }); } catch(e) {} finally { isProcessing = false; setButtonLoading('btn-submit-settings', false, '儲存設定'); }
+    try { await fetchAPI('saveSettings', { TG_BOT_TOKEN: getVal('set-tg-token'), TG_CHAT_ID: getVal('set-tg-chat'), LINE_LINK: getVal('set-line-link') }); showToast('已儲存'); } catch(e) { showToast("儲存失敗", true); } finally { isProcessing = false; setButtonLoading('btn-submit-settings', false, '儲存設定'); }
   }
 </script>
 </body>

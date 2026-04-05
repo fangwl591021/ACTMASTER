@@ -1,4 +1,4 @@
-<!-- Version: v1.9.0 (QQ 修復版：暴力渲染我要報名按鈕，徹底解決 Tailwind JIT 破圖問題) -->
+<!-- Version: v2.0.0 (QQ 鐵律修復版：鎖定現有功能，僅完美補回遺失的底部導航列文字標籤) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -62,7 +62,7 @@
     input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     input[type=number] { -moz-appearance: textfield; }
 
-    /* ⭐ 降低對 @apply 的依賴，避免 JIT 在隱藏元件上失效 */
+    /* 暴力渲染避免 Tailwind JIT 遺失 */
     .btn-secondary { @apply w-full py-4 bg-slate-200 text-slate-700 rounded-2xl font-bold text-[16px] active:scale-[0.98] transition-transform flex items-center justify-center gap-2; }
     
     .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-slate-400 h-full; min-width: 48px;}
@@ -125,7 +125,6 @@
           <div class="flex flex-col"><label class="input-label">居住地區</label><input id="reg-region" class="custom-input" placeholder="例如：台北市" type="text"/></div>
           <div class="flex flex-col"><label class="input-label">完整地址</label><input id="reg-address" class="custom-input" placeholder="選填" type="text"/></div>
         </div>
-        <!-- ⭐ 暴力渲染按鈕 -->
         <button id="btn-reg-step1" onclick="submitUserRegistrationStep1()" class="w-full py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[16px] shadow-sm active:scale-[0.98] transition-transform mt-6">儲存並繼續</button>
       </div>
 
@@ -184,7 +183,6 @@
             <div class="flex flex-col"><label class="input-label">居住地區</label><input type="text" id="edit-region" class="custom-input"></div>
             <div class="flex flex-col"><label class="input-label">完整地址</label><input type="text" id="edit-address" class="custom-input"></div>
           </div>
-          <!-- ⭐ 暴力渲染按鈕 -->
           <button id="btn-save-profile" onclick="submitProfileUpdate()" class="w-full py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[16px] shadow-sm active:scale-[0.98] transition-transform mt-2">儲存設定</button>
       </div>
 
@@ -227,26 +225,27 @@
           <div class="flex flex-col"><label class="input-label">Telegram Bot Token</label><div class="flex gap-2"><input type="text" id="set-tg-token" class="custom-input flex-1"><button onclick="autoFetchTgChatId()" id="btn-fetch-tg" class="bg-slate-100 text-slate-600 px-4 rounded-xl font-bold active:scale-95 transition-all">轉換</button></div></div>
           <div class="flex flex-col"><label class="input-label">Telegram Chat ID</label><input type="text" id="set-tg-chat" class="custom-input !bg-slate-50 text-slate-500" readonly placeholder="由上方轉換取得"></div>
           <div class="flex flex-col"><label class="input-label">官方 LINE 連結</label><input type="text" id="set-line-link" class="custom-input" placeholder="https://lin.ee/..."></div>
-          <!-- ⭐ 暴力渲染按鈕 -->
           <button id="btn-submit-settings" onclick="submitSettings()" class="w-full py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[16px] shadow-sm active:scale-[0.98] transition-transform mt-2">儲存設定</button>
       </div>
     </div>
 
   </main>
 
+  <!-- ⭐ QQ修復：補回前端會員的導航文字標籤 -->
   <nav id="bottom-nav-user" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl flex justify-around items-center px-2 py-2 z-40 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.03)] left-1/2 -translate-x-1/2 h-[76px] rounded-t-3xl border-t border-slate-100">
-    <button onclick="switchView('user-activities')" id="nav-user-activities" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">explore</span></div></button>
-    <button onclick="switchView('user-history')" id="nav-user-history" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">receipt_long</span></div></button>
-    <button onclick="switchView('user-profile')" id="nav-user-profile" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[26px]">person</span></div></button>
+    <button onclick="switchView('user-activities')" id="nav-user-activities" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">explore</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">探索</span></button>
+    <button onclick="switchView('user-history')" id="nav-user-history" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">receipt_long</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">紀錄</span></button>
+    <button onclick="switchView('user-profile')" id="nav-user-profile" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">person</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">設定</span></button>
   </nav>
 
+  <!-- ⭐ QQ修復：補回後台管理的導航文字標籤 -->
   <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl flex justify-evenly items-center px-1 py-2 z-40 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.03)] left-1/2 -translate-x-1/2 h-[76px] rounded-t-3xl border-t border-slate-100">
-    <button onclick="switchView('admin-activities')" class="nav-btn" id="nav-admin-activities"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">fact_check</span></div></button>
-    <button onclick="window.location.href='active.html'" class="nav-btn" id="nav-admin-create"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">add_circle</span></div></button>
-    <button onclick="switchView('admin-crm')" class="nav-btn" id="nav-admin-crm"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">groups</span></div></button>
-    <button onclick="window.location.href='fate.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">psychology</span></div></button>
-    <button onclick="window.location.href='card.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">recent_patient</span></div></button>
-    <button onclick="switchView('admin-settings')" class="nav-btn" id="nav-admin-settings"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">settings</span></div></button>
+    <button onclick="switchView('admin-activities')" class="nav-btn" id="nav-admin-activities"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">fact_check</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">核銷</span></button>
+    <button onclick="window.location.href='active.html'" class="nav-btn" id="nav-admin-create"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">add_circle</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">建立</span></button>
+    <button onclick="switchView('admin-crm')" class="nav-btn" id="nav-admin-crm"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">groups</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">CRM</span></button>
+    <button onclick="window.location.href='fate.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">psychology</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">配對</span></button>
+    <button onclick="window.location.href='card.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">recent_patient</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">名片</span></button>
+    <button onclick="switchView('admin-settings')" class="nav-btn" id="nav-admin-settings"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">settings</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">參數</span></button>
   </nav>
 </div>
 
@@ -297,7 +296,6 @@
           </div>
         </div>
       </div>
-      <!-- ⭐ 暴力渲染「我要報名」按鈕 -->
       <div class="bg-white p-4 pb-safe border-t border-slate-100 shrink-0">
           <button id="detail-modal-join-btn" class="w-full py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[16px] shadow-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2">我要報名</button>
       </div>
@@ -334,7 +332,6 @@
       <button onclick="document.getElementById('walkin-modal').classList.add('hidden')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center active:scale-90 transition-all"><span class="material-symbols-outlined text-[20px]">close</span></button>
     </div>
     <div class="flex flex-col mb-6"><label class="input-label">來賓姓名</label><input type="text" id="f-walkin-name" class="custom-input" placeholder="請輸入姓名"></div>
-    <!-- ⭐ 暴力渲染按鈕 -->
     <button id="btn-walkin" onclick="submitWalkIn()" class="w-full py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[16px] shadow-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2">新增並簽到</button>
   </div>
 </div>
@@ -353,7 +350,6 @@
     <div class="w-16 h-16 bg-primary-light text-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><span class="material-symbols-outlined text-[32px] icon-filled">info</span></div>
     <h3 id="modal-title" class="text-[22px] font-extrabold mb-2 text-slate-800 tracking-tight">系統通知</h3>
     <p id="modal-desc" class="text-slate-500 font-medium mb-8 leading-relaxed text-[15px]"></p>
-    <!-- ⭐ 暴力渲染按鈕 -->
     <button onclick="closeModalAndGo()" class="w-full py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[16px] shadow-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2">我知道了</button>
   </div>
 </div>
@@ -523,7 +519,6 @@
     }
   };
 
-  // ⭐ QQ 修復點 1：增強時間防空值解析，避免前端顯示 NaN
   function formatTime(isoString) {
     if(!isoString || String(isoString).trim() === '') return '時間未定'; 
     const d = new Date(isoString);
@@ -590,10 +585,10 @@
     
     if (isAdmin && isViewModeAdmin && view.startsWith('admin')) {
       if(navAdmin) navAdmin.classList.remove('hidden');
-      ['activities', 'crm', 'settings'].forEach(k => { const btn = document.getElementById('nav-admin-'+k); if(btn) btn.className = `nav-btn ${view==='admin-'+k ? 'nav-active' : ''}`; });
+      ['activities', 'create', 'crm', 'fate', 'cards', 'settings'].forEach(k => { const btn = document.getElementById('nav-admin-'+k); if(btn) btn.className = `nav-btn ${view===('admin-'+k) ? 'nav-active' : ''}`; });
     } else if (isRegistered && (!isAdmin || !isViewModeAdmin) && view.startsWith('user')) {
       if(navUser) navUser.classList.remove('hidden');
-      ['activities', 'history', 'profile'].forEach(k => { const btn = document.getElementById('nav-user-'+k); if(btn) btn.className = `nav-btn ${view==='user-'+k ? 'nav-active' : ''}`; });
+      ['activities', 'history', 'profile'].forEach(k => { const btn = document.getElementById('nav-user-'+k); if(btn) btn.className = `nav-btn ${view===('user-'+k) ? 'nav-active' : ''}`; });
     }
     
     if (view === 'admin-activities') loadAdminActivities();

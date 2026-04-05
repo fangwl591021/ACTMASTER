@@ -1,6 +1,6 @@
 /**
  * card-ecard.js
- * Version: v2.1.2 (QQ 擴充版：加入自動萃取名片資料，自動生成預設通訊按鈕防空值)
+ * Version: v20260405_1400 (QQ 擴充版：處理位於編輯器畫面最上方的隱私互惠開關狀態)
  */
 
 window.toggleECardType = function(type) {
@@ -23,7 +23,7 @@ window.toggleECardType = function(type) {
       if (tabImg) tabImg.className = 'flex-1 py-2 rounded-lg text-[14px] font-bold bg-white text-primary shadow-sm transition-all';
       if (tabVid) tabVid.className = 'flex-1 py-2 rounded-lg text-[14px] font-bold text-slate-500 transition-all hover:text-slate-700 bg-transparent';
       if (vidGroup) vidGroup.classList.add('hidden');
-      if (uploadLabel) uploadLabel.innerHTML = '點擊圖片變更 <span class="ml-1.5 px-2 py-0.5 bg-blue-50 text-blue-600 rounded-md text-[11px] font-bold tracking-wider">選填</span>';
+      if (uploadLabel) uploadLabel.innerHTML = '點圖更換封面 <span class="ml-1.5 px-2 py-0.5 bg-blue-50 text-blue-600 rounded-md text-[11px] font-bold tracking-wider">選填</span>';
       if (uploadHint) uploadHint.innerText = '※ 若未上傳，系統將智能代入您原先的名片圖檔作為底圖。';
     }
     
@@ -68,19 +68,7 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
         if (defaultDesc === 'Not provided' || defaultDesc === '未提供') defaultDesc = '';
         desc = defaultDesc || '歡迎點擊下方按鈕與我聯繫';
   
-        // ⭐ QQ 修復：就算沒有自訂設定，產生 Flex 轉發時也要自動萃取按鈕！
         buttons = [];
-        let p1 = card['手機號碼'] || card['Mobile'];
-        if (p1) { let phone = String(p1).split(',')[0].replace(/[^\d+]/g, ''); if (phone.startsWith('886')) phone = '0' + phone.substring(3); if (phone) buttons.push({ l: '撥打手機', u: `tel:${phone}`, c: '#06C755' }); }
-        let p2 = card['公司電話'] || card['Tel'];
-        if (p2) { let tel = String(p2).split(',')[0].replace(/[^\d+]/g, ''); if (tel.startsWith('886')) tel = '0' + tel.substring(3); if (tel) buttons.push({ l: '撥打電話', u: `tel:${tel}`, c: '#06C755' }); }
-        let p3 = card['電子郵件'] || card['Email'];
-        if (p3) { let email = String(p3).split(/[\s,]+/)[0]; if (email.includes('@')) buttons.push({ l: '發送信箱', u: `mailto:${email}`, c: '#06C755' }); }
-        let p4 = card['公司地址'] || card['Address'];
-        if (p4) buttons.push({ l: 'Google 導航', u: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p4.split(',')[0])}`, c: '#06C755' });
-        let p5 = card['公司網址'] || card['Website'];
-        if (p5 && buttons.length < 4) { let wUrl = String(p5).trim(); if (wUrl && !wUrl.startsWith('http')) wUrl = 'https://' + wUrl; if (wUrl) buttons.push({ l: '公司網站', u: wUrl, c: '#06C755' }); }
-        buttons = buttons.slice(0, 4);
     }
   
     const validSizes = ['nano', 'micro', 'kilo', 'mega', 'giga'];
@@ -214,8 +202,6 @@ window.openECardGenerator = function() {
         const listEl = document.getElementById('ec-btn-list');
         if (listEl) {
             listEl.innerHTML = '';
-            
-            // ⭐ QQ 修復：AI 自動從聯絡資料萃取預設按鈕 (手機、電話、信箱、導航、網站) 防空值
             let sBtns = [];
             if (savedConfig && savedConfig.buttons && savedConfig.buttons.length > 0) {
                 sBtns = savedConfig.buttons;
@@ -266,6 +252,16 @@ window.openECardGenerator = function() {
           safeSetValue('ec-title-input', savedConfig.title || '');
           safeSetValue('ec-desc-input', savedConfig.desc || '');
           safeSetValue('ec-alt-text-input', savedConfig.altText || '這是我的電子名片，請多指教');
+          
+          // ⭐ QQ 擴充：將隱私開關預設帶入 (UI 在數位名片編輯器內)
+          const isPublicEl = document.getElementById('ec-isPublic-input');
+          if (isPublicEl) {
+              if (savedConfig.hasOwnProperty('isPrivate')) {
+                  isPublicEl.checked = !(savedConfig.isPrivate === true);
+              } else {
+                  isPublicEl.checked = true;
+              }
+          }
         } else {
           const defaultFlex = window.buildFlexMessageFromCard(c, null);
           
@@ -287,6 +283,10 @@ window.openECardGenerator = function() {
           safeSetValue('ec-title-input', defaultTitle);
           safeSetValue('ec-desc-input', defaultDesc);
           safeSetValue('ec-alt-text-input', '這是我的電子名片，請多指教');
+          
+          // ⭐ QQ 預設：全新設定預設為開放
+          const isPublicEl = document.getElementById('ec-isPublic-input');
+          if (isPublicEl) isPublicEl.checked = true;
         }
         
         const cardTypeEl = document.getElementById('ec-card-type');
@@ -558,6 +558,7 @@ window.saveECardConfig = async function(isSilent = false) {
     }
   
     const getVal = (id, def) => { const el = document.getElementById(id); return el ? el.value : def; };
+    const isPublicEl = document.getElementById('ec-isPublic-input');
 
     const config = {
       cardType: getVal('ec-card-type', 'image'),
@@ -571,6 +572,8 @@ window.saveECardConfig = async function(isSilent = false) {
       title: getVal('ec-title-input', ''),
       desc: getVal('ec-desc-input', ''),
       altText: getVal('ec-alt-text-input', '這是我的電子名片，請多指教').trim() || '這是我的電子名片，請多指教',
+      // ⭐ QQ 儲存隱私開關狀態
+      isPrivate: isPublicEl ? !isPublicEl.checked : false,
       buttons: []
     };
     

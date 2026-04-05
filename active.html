@@ -1,4 +1,4 @@
-<!-- Version: v2.0.0 (QQ 終極版：全域 DOM ID 變數大一統，徹底消滅參數錯置與無反應地雷) -->
+<!-- Version: v2.0.1 (QQ 修復版：補齊全域變數宣告，徹底解決建立活動時 ReferenceError 導致的按鈕空轉問題) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -64,7 +64,7 @@
   
   <nav class="fixed top-0 w-full max-w-md z-40 bg-white/90 backdrop-blur-md px-5 py-3.5 flex justify-between items-center left-1/2 -translate-x-1/2 border-b border-slate-100">
     <div class="text-[20px] font-extrabold text-slate-800 tracking-tight flex items-center gap-1">
-      建立活動 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v2.0</span>
+      建立活動 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v2.0.1</span>
     </div>
     <button onclick="window.location.href='index.html?view=admin-activities'" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-90 transition-transform">
       <span class="material-symbols-outlined text-[20px]">close</span>
@@ -195,7 +195,6 @@
             </div>
         </div>
 
-        <!-- ⭐ 補齊完整發佈遺失的下拉選單 -->
         <div class="grid grid-cols-2 gap-4">
             <div class="flex flex-col">
                 <label class="input-label">活動類型</label>
@@ -318,16 +317,22 @@
   const WORKER_URL = "https://actmaster.fangwl591021.workers.dev";
   const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55", "U8932b891ad24da512afb9c1a6f41567b"];
   
+  // ⭐ QQ 修復：補齊所有全域變數的宣告
   let batchCount = 0;
   let currentCropTarget = '';
   let cropperInstance = null;
+  let userProfile = null;
+  let isProcessing = false;
 
   document.addEventListener("DOMContentLoaded", async () => {
     try {
       await liff.init({ liffId: LIFF_ID });
       if (!liff.isLoggedIn()) { liff.login({ redirectUri: window.location.href }); return; }
-      const profile = await liff.getProfile();
-      if (!ADMIN_IDS.includes(profile.userId)) { 
+      
+      // ⭐ QQ 修復：將取得的 profile 賦值給全域變數 userProfile
+      userProfile = await liff.getProfile();
+      
+      if (!ADMIN_IDS.includes(userProfile.userId)) { 
           alert("無權限存取此頁面");
           window.location.href = 'index.html'; 
           return; 
@@ -351,7 +356,6 @@
       document.getElementById(`tab-btn-${tabId}`).className = 'flex-1 py-2.5 rounded-xl text-[14px] font-bold bg-white text-blue-600 shadow-sm transition-all';
   }
 
-  // ⭐ 統一的切換收費欄位邏輯 (傳入 q, f, s 前綴)
   function toggleFeeInput(prefix) {
       const feeRadio = document.querySelector(`input[name="${prefix}-fee-type"]:checked`);
       if(!feeRadio) return;
@@ -404,7 +408,7 @@
 
   function openCropper(input, targetMode) {
     const file = input.files[0]; if (!file) return;
-    currentCropTarget = targetMode; // 'quick', 'full', 'series'
+    currentCropTarget = targetMode; 
 
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -458,7 +462,7 @@
 
     cancelCrop(); 
     
-    const modeId = currentCropTarget; // 'quick', 'full', 'series'
+    const modeId = currentCropTarget;
     const previewImg = document.getElementById(`image-preview-${modeId}`);
     const placeholder = document.getElementById(`preview-placeholder-${modeId}`);
     const urlInput = document.getElementById(`in-image-url-${modeId}`);
@@ -478,12 +482,10 @@
       return val.replace('T', ' ');
   };
 
-  // ⭐ 統一的防呆 API 送出函數
+  // ⭐ QQ 修復：使用全域的 isProcessing 進行連點防護
   async function handleSubmit(mode) { 
-    let isProcessing = false;
     if(isProcessing) return; 
     
-    // 定義動態前綴: quick -> q, full -> f, series -> s
     const pfx = mode === 'quick' ? 'q' : (mode === 'full' ? 'f' : 's');
     
     const nameInput = document.getElementById(`${pfx}-name`);
@@ -513,7 +515,7 @@
       names: [],
       defaultIdentity: document.getElementById(`${pfx}-identity`) ? document.getElementById(`${pfx}-identity`).value : '來賓',
       isBatch: (mode === 'series'),
-      userId: userProfile.userId
+      userId: userProfile.userId // ⭐ QQ 修復：此處不再引發 ReferenceError
     }; 
     
     if(mode === 'quick' || mode === 'full') {

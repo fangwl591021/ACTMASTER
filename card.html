@@ -1,4 +1,4 @@
-<!-- Version: v7.4.1 (QQ 擴充版：加入自訂 LINE 顯示文字 (altText) 欄位) -->
+<!-- Version: v7.5.0 (QQ 擴充版：加入名片隱私互惠開關，無框滿版風格) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -36,7 +36,6 @@
     };
   </script>
   
-  <!-- ⭐ QQ 修復：強制加入 type="text/tailwindcss" 確保 @apply 絕對生效 -->
   <style type="text/tailwindcss">
     .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400; vertical-align: middle; }
     .icon-filled { font-variation-settings: 'FILL' 1, 'wght' 400; }
@@ -78,7 +77,7 @@
       <div class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shadow-sm">
         <span class="material-symbols-outlined text-[20px]">contact_mail</span>
       </div>
-      名片管理 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v7.4.1</span>
+      名片管理 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v7.5.0</span>
     </div>
     <div class="flex items-center gap-3">
       <div id="user-profile-badge" class="hidden flex items-center gap-2">
@@ -263,7 +262,7 @@
     <h3 class="text-[18px] font-extrabold text-slate-800">編輯名片資料</h3>
     <button onclick="if(typeof window.closeCardEdit === 'function') window.closeCardEdit()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-90 transition-transform"><span class="material-symbols-outlined">close</span></button>
   </div>
-  <div class="flex-1 overflow-y-auto px-5 py-6 space-y-6 pb-28">
+  <div class="flex-1 overflow-y-auto px-5 py-6 pb-32 space-y-6">
     <div class="grid grid-cols-2 gap-4"><div class="flex flex-col w-full"><label class="input-label">姓名</label><input type="text" id="edit-c-Name" class="custom-input"></div><div class="flex flex-col w-full"><label class="input-label">英文名</label><input type="text" id="edit-c-EnglishName" class="custom-input"></div></div>
     <div class="grid grid-cols-2 gap-4"><div class="flex flex-col w-full"><label class="input-label">職稱</label><input type="text" id="edit-c-Title" class="custom-input"></div><div class="flex flex-col w-full"><label class="input-label">部門</label><input type="text" id="edit-c-Department" class="custom-input"></div></div>
     <div class="flex flex-col w-full"><label class="input-label">公司名稱</label><input type="text" id="edit-c-CompanyName" class="custom-input"></div>
@@ -280,12 +279,25 @@
     <div class="flex flex-col w-full"><label class="input-label">公司網址</label><input type="url" id="edit-c-Website" class="custom-input"></div>
     <div class="flex flex-col w-full"><label class="input-label">品牌標語 / 服務項目</label><textarea id="edit-c-Slogan" class="textarea-block h-24"></textarea></div>
     <div class="flex flex-col w-full pt-4 border-t border-slate-200 mt-4"><label class="input-label text-primary">內部建檔備註</label><textarea id="edit-c-Notes" class="textarea-block h-24"></textarea></div>
+    
+    <!-- ⭐ QQ 新增：隱私互惠開關 (儲存於 JSON) -->
+    <div class="flex flex-col w-full pt-4 border-t border-slate-200 mt-4">
+      <div class="flex justify-between items-center mb-2">
+        <label class="text-[15px] font-extrabold text-slate-800 tracking-tight">開放 AI 媒合與搜尋</label>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" id="edit-c-isPublic" class="sr-only peer" checked>
+          <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#06C755]"></div>
+        </label>
+      </div>
+      <p class="text-[12px] text-slate-500 font-medium leading-relaxed">若關閉，他人將無法在配對池中找到您；為維護互惠原則，您也將暫停使用 AI 媒合功能（管理員除外）。</p>
+    </div>
   </div>
   <div class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-100 p-4 pb-safe z-[1015]">
     <button id="btn-save-card-edit" onclick="if(typeof window.submitCardEdit === 'function') window.submitCardEdit()" class="btn-primary">儲存變更</button>
   </div>
 </div>
 
+<!-- ... 下方其餘Modal略過不變 ... -->
 <!-- 數位電子名片產生器 -->
 <div id="ecard-generator-modal" class="hidden fixed inset-0 bg-slate-50 flex flex-col animate-in fade-in duration-300 w-full z-[1020] overflow-hidden">
   <div class="bg-white px-5 py-4 border-b border-slate-100 flex justify-between items-center shadow-sm shrink-0 w-full z-20">
@@ -302,7 +314,6 @@
   <div class="flex-1 overflow-y-auto w-full bg-slate-50 lg:bg-white">
     <div class="container mx-auto max-w-6xl h-full">
       <div class="grid grid-cols-1 lg:grid-cols-5 gap-0 lg:gap-8 h-full">
-        
         <!-- 左側設定區 -->
         <div class="lg:col-span-3">
           <div class="bg-white px-5 py-6">
@@ -380,7 +391,6 @@
                   <input type="text" id="ec-img-action-url" class="custom-input !text-blue-600 w-full" value="https://liff.line.me/2009367829-DLtYBDUm" oninput="if(typeof window.updateECardPreview === 'function') window.updateECardPreview()">
               </div>
 
-              <!-- ⭐ QQ 修復：新增自訂 LINE 顯示文字 -->
               <div class="flex flex-col mb-5 w-full">
                   <label class="input-label w-full">自訂 LINE 顯示文字 <span class="text-slate-400 text-[11px] ml-1 font-normal">(聊天室預覽文字)</span></label>
                   <input type="text" id="ec-alt-text-input" class="custom-input font-medium text-slate-800 w-full" placeholder="這是我的電子名片，請多指教" value="這是我的電子名片，請多指教">
@@ -491,8 +501,8 @@
 <div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-bold flex items-center gap-2 w-max max-w-[90vw] opacity-0 pointer-events-none border border-slate-700"></div>
 
 <!-- 強制破除快取 -->
-<script src="card.js?v=20260405_1010"></script>
-<script src="card-ecard.js?v=20260405_1010"></script>
+<script src="card.js?v=20260405_1300"></script>
+<script src="card-ecard.js?v=20260405_1300"></script>
 
 </body>
 </html>

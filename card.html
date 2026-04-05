@@ -1,3 +1,4 @@
+<!-- Version: v7.4.0 (QQ 修復版：強制啟動 Tailwind JIT 編譯，並以 flex-col 暴力排版確保表單上下分離且絕對滿版) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -34,7 +35,9 @@
       },
     };
   </script>
-  <style>
+  
+  <!-- ⭐ QQ 修復：強制加入 type="text/tailwindcss" 確保 @apply 絕對生效 -->
+  <style type="text/tailwindcss">
     .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400; vertical-align: middle; }
     .icon-filled { font-variation-settings: 'FILL' 1, 'wght' 400; }
     body { background-color: #ffffff; -webkit-tap-highlight-color: transparent; }
@@ -42,11 +45,11 @@
     
     .input-label { @apply block text-[13px] font-bold text-slate-500 mb-2 uppercase tracking-wider; }
     select.custom-input { -webkit-appearance: none !important; -moz-appearance: none !important; appearance: none !important; background-image: none !important; }
-    .custom-input { @apply w-full h-[48px] px-4 bg-slate-50 border border-transparent rounded-xl outline-none focus:bg-white focus:border-primary/30 focus:ring-4 focus:ring-primary/10 transition-all font-medium text-slate-800 text-[15px] shadow-sm placeholder-slate-400; }
+    .custom-input { @apply w-full h-[50px] px-4 bg-slate-50 border border-transparent rounded-xl outline-none focus:bg-white focus:border-primary/30 focus:ring-4 focus:ring-primary/10 transition-all font-medium text-slate-800 text-[15px] shadow-sm placeholder-slate-400; }
     .textarea-block { @apply w-full p-4 bg-slate-50 border border-transparent rounded-xl outline-none focus:bg-white focus:border-primary/30 focus:ring-4 focus:ring-primary/10 transition-all text-[15px] text-slate-800 resize-none leading-relaxed shadow-sm placeholder-slate-400; }
     
-    .btn-primary { @apply w-full py-3 bg-primary text-white rounded-xl font-bold text-[16px] shadow-md shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 hover:bg-blue-700; }
-    .btn-secondary { @apply w-full py-3 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold text-[16px] hover:bg-slate-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-sm; }
+    .btn-primary { @apply w-full py-4 bg-primary text-white rounded-xl font-bold text-[16px] shadow-md shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 hover:bg-blue-700; }
+    .btn-secondary { @apply w-full py-4 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold text-[16px] hover:bg-slate-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-sm; }
     
     .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-slate-400 h-full; min-width: 48px; }
     .nav-active-btn { @apply text-text-main font-bold; }
@@ -75,7 +78,7 @@
       <div class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shadow-sm">
         <span class="material-symbols-outlined text-[20px]">contact_mail</span>
       </div>
-      名片管理 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v7.3.0</span>
+      名片管理 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v7.4.0</span>
     </div>
     <div class="flex items-center gap-3">
       <div id="user-profile-badge" class="hidden flex items-center gap-2">
@@ -128,7 +131,7 @@
         <div class="px-5 mb-3">
           <div class="relative flex flex-col">
             <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
-            <input type="text" id="card-search-input" onkeyup="if(typeof window.filterCardList === 'function') window.filterCardList()" class="w-full h-[48px] pl-11 pr-4 bg-white border border-transparent rounded-xl text-[15px] outline-none focus:ring-4 focus:ring-primary/10 transition-all shadow-sm font-medium" placeholder="搜尋姓名或公司...">
+            <input type="text" id="card-search-input" onkeyup="if(typeof window.filterCardList === 'function') window.filterCardList()" class="w-full h-[50px] pl-11 pr-4 bg-white border border-transparent rounded-xl text-[15px] outline-none focus:ring-4 focus:ring-primary/10 transition-all shadow-sm font-medium" placeholder="搜尋姓名或公司...">
           </div>
         </div>
         <div id="admin-card-list-container" class="flex flex-col mt-2"></div>
@@ -159,38 +162,38 @@
             <img id="process-preview-image" src="" class="w-full h-auto object-contain max-h-[200px]">
           </div>
 
-          <div class="space-y-4">
+          <div class="space-y-5">
             <div class="grid grid-cols-2 gap-4">
-              <div class="flex flex-col"><label class="input-label">姓名</label><input type="text" id="f-Name" class="custom-input"></div>
-              <div class="flex flex-col"><label class="input-label">英文名</label><input type="text" id="f-EnglishName" class="custom-input"></div>
+              <div class="flex flex-col w-full"><label class="input-label">姓名</label><input type="text" id="f-Name" class="custom-input"></div>
+              <div class="flex flex-col w-full"><label class="input-label">英文名</label><input type="text" id="f-EnglishName" class="custom-input"></div>
             </div>
             <div class="grid grid-cols-2 gap-4">
-              <div class="flex flex-col"><label class="input-label">職稱</label><input type="text" id="f-Title" class="custom-input"></div>
-              <div class="flex flex-col"><label class="input-label">部門</label><input type="text" id="f-Department" class="custom-input"></div>
+              <div class="flex flex-col w-full"><label class="input-label">職稱</label><input type="text" id="f-Title" class="custom-input"></div>
+              <div class="flex flex-col w-full"><label class="input-label">部門</label><input type="text" id="f-Department" class="custom-input"></div>
             </div>
-            <div class="flex flex-col"><label class="input-label">公司名稱</label><input type="text" id="f-CompanyName" class="custom-input"></div>
+            <div class="flex flex-col w-full"><label class="input-label">公司名稱</label><input type="text" id="f-CompanyName" class="custom-input"></div>
             <div class="grid grid-cols-2 gap-4">
-              <div class="flex flex-col"><label class="input-label">統一編號</label><input type="text" id="f-TaxID" class="custom-input"></div>
-              <div class="flex flex-col"><label class="input-label">手機號碼</label><input type="tel" id="f-Mobile" class="custom-input"></div>
+              <div class="flex flex-col w-full"><label class="input-label">統一編號</label><input type="text" id="f-TaxID" class="custom-input"></div>
+              <div class="flex flex-col w-full"><label class="input-label">手機號碼</label><input type="tel" id="f-Mobile" class="custom-input"></div>
             </div>
             <div class="grid grid-cols-2 gap-4">
-              <div class="flex flex-col"><label class="input-label">公司電話</label><input type="text" id="f-Tel" class="custom-input"></div>
-              <div class="flex flex-col"><label class="input-label">分機</label><input type="text" id="f-Ext" class="custom-input"></div>
+              <div class="flex flex-col w-full"><label class="input-label">公司電話</label><input type="text" id="f-Tel" class="custom-input"></div>
+              <div class="flex flex-col w-full"><label class="input-label">分機</label><input type="text" id="f-Ext" class="custom-input"></div>
             </div>
-            <div class="flex flex-col"><label class="input-label">傳真</label><input type="text" id="f-Fax" class="custom-input"></div>
-            <div class="flex flex-col"><label class="input-label">公司地址</label><input type="text" id="f-Address" class="custom-input"></div>
-            <div class="flex flex-col"><label class="input-label">電子信箱</label><input type="email" id="f-Email" class="custom-input"></div>
-            <div class="flex flex-col"><label class="input-label">公司網址</label><input type="url" id="f-Website" class="custom-input"></div>
-            <div class="flex flex-col"><label class="input-label">社群帳號 / ID</label><input type="text" id="f-SocialMedia" class="custom-input"></div>
-            <div class="flex flex-col"><label class="input-label flex items-center gap-1">品牌標語 <span class="bg-blue-100 text-blue-600 text-[10px] px-2 py-0.5 rounded">AI 擴寫</span></label><textarea id="f-Slogan" class="textarea-block h-28"></textarea></div>
-            <div class="flex flex-col pt-4 border-t border-slate-100 mt-4">
+            <div class="flex flex-col w-full"><label class="input-label">傳真</label><input type="text" id="f-Fax" class="custom-input"></div>
+            <div class="flex flex-col w-full"><label class="input-label">公司地址</label><input type="text" id="f-Address" class="custom-input"></div>
+            <div class="flex flex-col w-full"><label class="input-label">電子信箱</label><input type="email" id="f-Email" class="custom-input"></div>
+            <div class="flex flex-col w-full"><label class="input-label">公司網址</label><input type="url" id="f-Website" class="custom-input"></div>
+            <div class="flex flex-col w-full"><label class="input-label">社群帳號 / ID</label><input type="text" id="f-SocialMedia" class="custom-input"></div>
+            <div class="flex flex-col w-full"><label class="input-label flex items-center gap-1">品牌標語 <span class="bg-blue-100 text-blue-600 text-[10px] px-2 py-0.5 rounded">AI 擴寫</span></label><textarea id="f-Slogan" class="textarea-block h-32"></textarea></div>
+            <div class="flex flex-col w-full pt-4 border-t border-slate-100 mt-4">
               <label class="input-label text-primary">內部建檔備註 (手動輸入)</label>
-              <textarea id="f-Notes" class="textarea-block h-20" placeholder="例如：展覽認識、Wilson 介紹"></textarea>
+              <textarea id="f-Notes" class="textarea-block h-24" placeholder="例如：展覽認識、Wilson 介紹"></textarea>
             </div>
           </div>
 
           <div class="flex gap-3 mt-8">
-            <button onclick="if(typeof window.resetUI === 'function') window.resetUI()" class="w-1/3 py-3.5 bg-slate-100 text-slate-600 rounded-xl font-bold text-[15px] active:scale-95 transition-all">取消</button>
+            <button onclick="if(typeof window.resetUI === 'function') window.resetUI()" class="w-1/3 py-4 bg-slate-100 text-slate-600 rounded-xl font-bold text-[15px] active:scale-95 transition-all">取消</button>
             <button id="btn-save" onclick="if(typeof window.saveToCloud === 'function') window.saveToCloud()" class="flex-1 btn-primary">存入雲端 <span class="material-symbols-outlined text-[18px]">cloud_upload</span></button>
           </div>
         </div>
@@ -224,7 +227,6 @@
       </div>
     </div>
     
-    <!-- ⭐ QQ 修復：大幅縮減內距，從 px-5 縮小為 px-3.5，讓內容更往兩側展開 -->
     <div class="px-3.5 pt-5 pb-8">
       <div>
         <div class="flex items-center gap-2 mb-1.5">
@@ -250,8 +252,8 @@
   </div>
 
   <div class="fixed bottom-0 w-full max-w-md bg-white p-4 pb-safe flex gap-3 z-[1005] border-t border-slate-100 shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
-    <button id="btn-share-claim" onclick="if(typeof window.shareClaimLink === 'function') window.shareClaimLink()" class="hidden flex-1 py-3.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-[16px] active:scale-95 transition-all">邀請認領</button>
-    <button onclick="if(typeof window.openECardGenerator === 'function') window.openECardGenerator(); else alert('編輯器尚未載入，請重新整理頁面');" class="flex-1 py-3.5 bg-[#06C755] text-white rounded-xl font-bold text-[16px] active:scale-95 transition-all shadow-sm">產生數位名片</button>
+    <button id="btn-share-claim" onclick="if(typeof window.shareClaimLink === 'function') window.shareClaimLink()" class="hidden flex-1 py-4 bg-slate-100 text-slate-700 rounded-2xl font-bold text-[16px] active:scale-95 transition-all">邀請認領</button>
+    <button onclick="if(typeof window.openECardGenerator === 'function') window.openECardGenerator(); else alert('編輯器尚未載入，請重新整理頁面');" class="flex-1 py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[16px] active:scale-95 transition-all shadow-sm">產生數位名片</button>
   </div>
 </div>
 
@@ -262,22 +264,22 @@
     <button onclick="if(typeof window.closeCardEdit === 'function') window.closeCardEdit()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-90 transition-transform"><span class="material-symbols-outlined">close</span></button>
   </div>
   <div class="flex-1 overflow-y-auto px-5 py-6 space-y-6 pb-28">
-    <div class="grid grid-cols-2 gap-4"><div class="flex flex-col"><label class="input-label">姓名</label><input type="text" id="edit-c-Name" class="custom-input"></div><div class="flex flex-col"><label class="input-label">英文名</label><input type="text" id="edit-c-EnglishName" class="custom-input"></div></div>
-    <div class="grid grid-cols-2 gap-4"><div class="flex flex-col"><label class="input-label">職稱</label><input type="text" id="edit-c-Title" class="custom-input"></div><div class="flex flex-col"><label class="input-label">部門</label><input type="text" id="edit-c-Department" class="custom-input"></div></div>
-    <div class="flex flex-col"><label class="input-label">公司名稱</label><input type="text" id="edit-c-CompanyName" class="custom-input"></div>
-    <div class="grid grid-cols-2 gap-4"><div class="flex flex-col"><label class="input-label">統一編號</label><input type="text" id="edit-c-TaxID" class="custom-input"></div><div class="flex flex-col"><label class="input-label">手機號碼</label><input type="tel" id="edit-c-Mobile" class="custom-input"></div></div>
-    <div class="grid grid-cols-2 gap-4"><div class="flex flex-col"><label class="input-label">公司電話</label><input type="text" id="edit-c-Tel" class="custom-input"></div><div class="flex flex-col"><label class="input-label">分機</label><input type="text" id="edit-c-Ext" class="custom-input"></div></div>
-    <div class="grid grid-cols-2 gap-4"><div class="flex flex-col"><label class="input-label">電子信箱</label><input type="email" id="edit-c-Email" class="custom-input"></div><div class="flex flex-col"><label class="input-label">傳真</label><input type="text" id="edit-c-Fax" class="custom-input"></div></div>
+    <div class="grid grid-cols-2 gap-4"><div class="flex flex-col w-full"><label class="input-label">姓名</label><input type="text" id="edit-c-Name" class="custom-input"></div><div class="flex flex-col w-full"><label class="input-label">英文名</label><input type="text" id="edit-c-EnglishName" class="custom-input"></div></div>
+    <div class="grid grid-cols-2 gap-4"><div class="flex flex-col w-full"><label class="input-label">職稱</label><input type="text" id="edit-c-Title" class="custom-input"></div><div class="flex flex-col w-full"><label class="input-label">部門</label><input type="text" id="edit-c-Department" class="custom-input"></div></div>
+    <div class="flex flex-col w-full"><label class="input-label">公司名稱</label><input type="text" id="edit-c-CompanyName" class="custom-input"></div>
+    <div class="grid grid-cols-2 gap-4"><div class="flex flex-col w-full"><label class="input-label">統一編號</label><input type="text" id="edit-c-TaxID" class="custom-input"></div><div class="flex flex-col w-full"><label class="input-label">手機號碼</label><input type="tel" id="edit-c-Mobile" class="custom-input"></div></div>
+    <div class="grid grid-cols-2 gap-4"><div class="flex flex-col w-full"><label class="input-label">公司電話</label><input type="text" id="edit-c-Tel" class="custom-input"></div><div class="flex flex-col w-full"><label class="input-label">分機</label><input type="text" id="edit-c-Ext" class="custom-input"></div></div>
+    <div class="grid grid-cols-2 gap-4"><div class="flex flex-col w-full"><label class="input-label">電子信箱</label><input type="email" id="edit-c-Email" class="custom-input"></div><div class="flex flex-col w-full"><label class="input-label">傳真</label><input type="text" id="edit-c-Fax" class="custom-input"></div></div>
     
     <div class="grid grid-cols-2 gap-4">
-      <div class="flex flex-col"><label class="input-label text-primary">生日 (觸發命理)</label><input type="date" id="edit-c-Birthday" class="custom-input !text-[13px] border border-primary/20 bg-blue-50/30"></div>
-      <div class="flex flex-col"><label class="input-label">社群帳號</label><input type="text" id="edit-c-SocialMedia" class="custom-input"></div>
+      <div class="flex flex-col w-full"><label class="input-label text-primary">生日 (觸發命理)</label><input type="date" id="edit-c-Birthday" class="custom-input !text-[13px] border border-primary/20 bg-blue-50/30"></div>
+      <div class="flex flex-col w-full"><label class="input-label">社群帳號</label><input type="text" id="edit-c-SocialMedia" class="custom-input"></div>
     </div>
 
-    <div class="flex flex-col"><label class="input-label">公司地址</label><input type="text" id="edit-c-Address" class="custom-input"></div>
-    <div class="flex flex-col"><label class="input-label">公司網址</label><input type="url" id="edit-c-Website" class="custom-input"></div>
-    <div class="flex flex-col"><label class="input-label">品牌標語 / 服務項目</label><textarea id="edit-c-Slogan" class="textarea-block h-24"></textarea></div>
-    <div class="flex flex-col pt-4 border-t border-slate-200 mt-4"><label class="input-label text-primary">內部建檔備註</label><textarea id="edit-c-Notes" class="textarea-block h-24"></textarea></div>
+    <div class="flex flex-col w-full"><label class="input-label">公司地址</label><input type="text" id="edit-c-Address" class="custom-input"></div>
+    <div class="flex flex-col w-full"><label class="input-label">公司網址</label><input type="url" id="edit-c-Website" class="custom-input"></div>
+    <div class="flex flex-col w-full"><label class="input-label">品牌標語 / 服務項目</label><textarea id="edit-c-Slogan" class="textarea-block h-24"></textarea></div>
+    <div class="flex flex-col w-full pt-4 border-t border-slate-200 mt-4"><label class="input-label text-primary">內部建檔備註</label><textarea id="edit-c-Notes" class="textarea-block h-24"></textarea></div>
   </div>
   <div class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl border-t border-slate-100 p-4 pb-safe z-[1015]">
     <button id="btn-save-card-edit" onclick="if(typeof window.submitCardEdit === 'function') window.submitCardEdit()" class="btn-primary">儲存變更</button>
@@ -304,15 +306,15 @@
         <!-- 左側設定區 -->
         <div class="lg:col-span-3">
           <div class="bg-white px-5 py-6">
-            <div id="ec-editor-form" class="space-y-6">
+            <div id="ec-editor-form" class="space-y-6 w-full">
               <div class="flex p-1.5 rounded-xl bg-slate-100 mb-6">
                 <button id="ec-tab-image" onclick="if(typeof window.toggleECardType === 'function') window.toggleECardType('image')" class="flex-1 py-2 rounded-lg text-[14px] font-bold bg-white text-slate-800 shadow-sm transition-all">靜態圖片</button>
                 <button id="ec-tab-video" onclick="if(typeof window.toggleECardType === 'function') window.toggleECardType('video')" class="flex-1 py-2 rounded-lg text-[14px] font-bold text-slate-400 transition-all hover:text-slate-600 bg-transparent">動態影片</button>
               </div>
               <input type="hidden" id="ec-card-type" value="image">
 
-              <div id="ec-video-input-group" class="hidden w-full mb-6 pb-6 border-b border-slate-100">
-                <div class="flex justify-between items-center mb-1.5">
+              <div id="ec-video-input-group" class="hidden w-full flex flex-col mb-6 pb-6 border-b border-slate-100">
+                <div class="flex justify-between items-center mb-1.5 w-full">
                   <label class="input-label !mb-0">影片網址</label>
                   <button onclick="if(typeof window.openVoomModal === 'function') window.openVoomModal();" class="text-[12px] bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg font-bold active:scale-95 transition-transform flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">smart_toy</span> LINE VOOM 轉換器</button>
                 </div>
@@ -320,8 +322,8 @@
                 <p class="text-[12px] text-slate-400 mt-2 font-medium">※ 支援 MP4 格式及 LINE 影片連結。若無網址請使用上方轉換器。</p>
               </div>
               
-              <div class="w-full">
-                <div class="flex justify-between items-center mb-2">
+              <div class="w-full flex flex-col mb-5">
+                <div class="flex justify-between items-center mb-2 w-full">
                   <label class="input-label !mb-0 flex items-center" id="ec-upload-label">點擊更換封面圖 <span class="ml-2 px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-[10px] font-bold">選填</span></label>
                   <div class="relative inline-block">
                     <select id="ec-img-size" class="appearance-none !bg-transparent text-blue-600 font-bold text-[14px] pr-5 outline-none border-none cursor-pointer" onchange="if(typeof window.updateECardPreview === 'function') window.updateECardPreview()">
@@ -333,50 +335,63 @@
                 </div>
                 <p class="text-[12px] text-slate-400 mb-3 font-medium" id="ec-upload-hint">※ 若未上傳，系統將智能代入名片圖檔作為底圖。</p>
                 <div class="w-full relative">
-                    <div id="ec-upload-trigger" onclick="document.getElementById('ec-upload-input').click()" class="w-full h-40 rounded-2xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-colors hover:bg-slate-100 group relative">
+                    <div id="ec-upload-trigger" onclick="document.getElementById('ec-upload-input').click()" class="w-full h-40 rounded-2xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer overflow-hidden transition-colors hover:bg-slate-100 group relative border-none">
                         <div class="text-center text-slate-400 flex flex-col items-center z-10" id="ec-upload-placeholder">
                             <span class="material-symbols-outlined text-[32px] mb-2 text-slate-300">add_photo_alternate</span>
-                            <p class="text-[13px] font-bold">點擊圖更換</p>
+                            <p class="text-[13px] font-bold">點圖更換</p>
                         </div>
                         <img id="ec-img-preview-box" class="absolute inset-0 w-full h-full object-cover hidden z-0">
                         <div id="ec-upload-badge" class="hidden absolute bottom-3 right-3 bg-black/60 text-white text-[11px] px-2.5 py-1 rounded-md backdrop-blur-md z-10 font-bold flex items-center gap-1 shadow-sm"><span class="material-symbols-outlined text-[14px]">edit</span> 更換</div>
                     </div>
-                    <input type="text" id="ec-img-input" class="custom-input mt-3 hidden" placeholder="或貼上圖片網址 https://..." oninput="if(typeof window.updateECardPreview === 'function') window.updateECardPreview()">
+                    <input type="text" id="ec-img-input" class="custom-input mt-3 hidden w-full" placeholder="或貼上圖片網址 https://..." oninput="if(typeof window.updateECardPreview === 'function') window.updateECardPreview()">
                     <input type="file" id="ec-upload-input" accept="image/*" class="hidden" onchange="if(typeof window.handleECardImageUpload === 'function') window.handleECardImageUpload(this)">
                 </div>
               </div>
               
-              <div class="grid grid-cols-2 gap-4">
-                <div class="flex flex-col">
-                  <label class="input-label">畫面比例</label>
+              <!-- ⭐ QQ 修復：暴力加上 flex flex-col w-full 確保排版絕對上下分離且滿版 -->
+              <div class="grid grid-cols-2 gap-4 mb-5 w-full">
+                <div class="flex flex-col w-full">
+                  <label class="input-label w-full">畫面比例</label>
                   <div class="relative w-full">
-                    <select id="ec-aspect-ratio" class="custom-input appearance-none px-4" onchange="if(typeof window.updateECardPreview === 'function') window.updateECardPreview()"><option value="auto" selected>自動偵測</option><option value="20:13">20:13 (標準)</option><option value="1:1">1:1 (正方)</option><option value="16:9">16:9 (橫向)</option><option value="9:16">9:16 (直向滿版)</option></select>
+                    <select id="ec-aspect-ratio" class="custom-input appearance-none px-4 w-full" onchange="if(typeof window.updateECardPreview === 'function') window.updateECardPreview()"><option value="auto" selected>自動偵測</option><option value="20:13">20:13 (標準)</option><option value="1:1">1:1 (正方)</option><option value="16:9">16:9 (橫向)</option><option value="9:16">9:16 (直向滿版)</option></select>
                     <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">expand_more</span>
                   </div>
                 </div>
-                <div class="flex flex-col">
-                  <label class="input-label">標題對齊</label>
+                <div class="flex flex-col w-full">
+                  <label class="input-label w-full">標題對齊</label>
                   <div class="relative w-full">
-                    <select id="ec-title-align" class="custom-input appearance-none px-4" onchange="if(typeof window.updateECardPreview === 'function') window.updateECardPreview()"><option value="start">靠左</option><option value="center" selected>置中</option><option value="end">靠右</option></select>
+                    <select id="ec-title-align" class="custom-input appearance-none px-4 w-full" onchange="if(typeof window.updateECardPreview === 'function') window.updateECardPreview()"><option value="start">靠左</option><option value="center" selected>置中</option><option value="end">靠右</option></select>
                     <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">expand_more</span>
                   </div>
                 </div>
               </div>
 
-              <div class="w-full"><label class="input-label">主標題</label><input type="text" id="ec-title-input" class="custom-input font-bold text-slate-800" placeholder="輸入主標題..." oninput="if(typeof window.updateECardPreview === 'function') window.updateECardPreview()"></div>
-              <div class="w-full"><label class="input-label">內容描述文案</label><textarea id="ec-desc-input" class="textarea-block h-28" placeholder="輸入描述或介紹..." oninput="if(typeof window.updateECardPreview === 'function') window.updateECardPreview()"></textarea></div>
-              <div class="w-full" id="ec-action-url-group"><label class="input-label">點圖預設連結 <span class="text-slate-400 text-[11px] ml-1 font-normal">(大圖跳轉網址)</span></label><input type="text" id="ec-img-action-url" class="custom-input !text-blue-600" value="https://liff.line.me/2009367829-DLtYBDUm" oninput="if(typeof window.updateECardPreview === 'function') window.updateECardPreview()"></div>
-
-              <div class="w-full pt-8 border-t border-slate-200">
-                <label class="input-label mb-4 text-slate-800 flex justify-between items-end">動作按鈕配置 <span class="text-slate-400 text-[11px] font-normal">(選填，最多 4 個)</span></label>
-                <div class="space-y-3" id="ec-btn-list"></div>
+              <!-- ⭐ QQ 修復：確保標題與輸入框分離，且 textarea 高度放大 -->
+              <div class="flex flex-col mb-5 w-full">
+                  <label class="input-label w-full">主標題</label>
+                  <input type="text" id="ec-title-input" class="custom-input font-bold text-slate-800 w-full" placeholder="輸入主標題..." oninput="if(typeof window.updateECardPreview === 'function') window.updateECardPreview()">
+              </div>
+              
+              <div class="flex flex-col mb-5 w-full">
+                  <label class="input-label w-full">內容描述文案</label>
+                  <textarea id="ec-desc-input" class="textarea-block h-36 w-full" placeholder="輸入描述或介紹..." oninput="if(typeof window.updateECardPreview === 'function') window.updateECardPreview()"></textarea>
+              </div>
+              
+              <div class="flex flex-col mb-5 w-full" id="ec-action-url-group">
+                  <label class="input-label w-full">點圖預設連結 <span class="text-slate-400 text-[11px] ml-1 font-normal">(大圖跳轉網址)</span></label>
+                  <input type="text" id="ec-img-action-url" class="custom-input !text-blue-600 w-full" value="https://liff.line.me/2009367829-DLtYBDUm" oninput="if(typeof window.updateECardPreview === 'function') window.updateECardPreview()">
               </div>
 
-              <div class="flex flex-col gap-3 pt-8 pb-10 border-t border-slate-200 mt-8">
-                <button onclick="if(typeof window.shareECardToLine === 'function') window.shareECardToLine()" id="btn-share-line" class="w-full py-4 bg-[#06C755] text-white rounded-xl font-bold text-[16px] shadow-md shadow-green-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+              <div class="w-full flex flex-col pt-8 border-t border-slate-200">
+                <label class="input-label mb-4 text-slate-800 flex justify-between items-end w-full">動作按鈕配置 <span class="text-slate-400 text-[11px] font-normal">(選填，最多 4 個)</span></label>
+                <div class="space-y-3 w-full" id="ec-btn-list"></div>
+              </div>
+
+              <div class="flex flex-col gap-3 pt-8 pb-10 border-t border-slate-200 mt-8 w-full">
+                <button onclick="if(typeof window.shareECardToLine === 'function') window.shareECardToLine()" id="btn-share-line" class="w-full py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[16px] shadow-md shadow-green-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
                   <span class="material-symbols-outlined text-[20px]">send</span> 發送至 LINE
                 </button>
-                <button onclick="if(typeof window.checkFormat === 'function') window.checkFormat(true)" id="btn-check-format" class="w-full py-4 bg-slate-100 text-slate-600 rounded-xl font-bold text-[15px] active:scale-95 transition-all flex items-center justify-center gap-1.5">
+                <button onclick="if(typeof window.checkFormat === 'function') window.checkFormat(true)" id="btn-check-format" class="w-full py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold text-[15px] active:scale-95 transition-all flex items-center justify-center gap-1.5">
                   <span class="material-symbols-outlined text-[20px]">fact_check</span> 格式檢查
                 </button>
               </div>
@@ -407,8 +422,6 @@
                                   <video id="preview-ec-video" muted loop playsinline class="absolute inset-0 w-full h-full object-cover z-10 hidden"></video>
                                   <div id="preview-ec-play-icon" class="absolute inset-0 z-20 flex items-center justify-center text-white/80 hidden pointer-events-none"><span class="material-symbols-outlined text-[48px] drop-shadow-md">play_circle</span></div>
                               </div>
-                              
-                              <!-- ⭐ QQ 修復：縮減預覽氣泡的左右邊界為 px-3.5，讓按鈕滿版展開 -->
                               <div class="px-3.5 py-4 text-center bg-white relative">
                                   <h2 id="preview-ec-title" class="text-[19px] font-black text-slate-800 leading-snug mb-1.5"></h2>
                                   <p id="preview-ec-desc" class="text-[13px] text-slate-500 whitespace-pre-wrap leading-relaxed text-left font-medium"></p>
@@ -474,8 +487,8 @@
 <div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-bold flex items-center gap-2 w-max max-w-[90vw] opacity-0 pointer-events-none border border-slate-700"></div>
 
 <!-- 強制破除快取 -->
-<script src="card.js?v=20260404_2215"></script>
-<script src="card-ecard.js?v=20260404_2215"></script>
+<script src="card.js?v=20260405_0945"></script>
+<script src="card-ecard.js?v=20260405_0945"></script>
 
 </body>
 </html>

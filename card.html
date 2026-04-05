@@ -1,4 +1,4 @@
-<!-- Version: v7.4.0 (QQ 修復版：強制啟動 Tailwind JIT 編譯，並以 flex-col 暴力排版確保表單上下分離且絕對滿版) -->
+<!-- Version: v7.4.1 (QQ 擴充版：加入自訂 LINE 顯示文字 (altText) 欄位) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -78,7 +78,7 @@
       <div class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shadow-sm">
         <span class="material-symbols-outlined text-[20px]">contact_mail</span>
       </div>
-      名片管理 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v7.4.0</span>
+      名片管理 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v7.4.1</span>
     </div>
     <div class="flex items-center gap-3">
       <div id="user-profile-badge" class="hidden flex items-center gap-2">
@@ -348,7 +348,6 @@
                 </div>
               </div>
               
-              <!-- ⭐ QQ 修復：暴力加上 flex flex-col w-full 確保排版絕對上下分離且滿版 -->
               <div class="grid grid-cols-2 gap-4 mb-5 w-full">
                 <div class="flex flex-col w-full">
                   <label class="input-label w-full">畫面比例</label>
@@ -366,7 +365,6 @@
                 </div>
               </div>
 
-              <!-- ⭐ QQ 修復：確保標題與輸入框分離，且 textarea 高度放大 -->
               <div class="flex flex-col mb-5 w-full">
                   <label class="input-label w-full">主標題</label>
                   <input type="text" id="ec-title-input" class="custom-input font-bold text-slate-800 w-full" placeholder="輸入主標題..." oninput="if(typeof window.updateECardPreview === 'function') window.updateECardPreview()">
@@ -380,6 +378,12 @@
               <div class="flex flex-col mb-5 w-full" id="ec-action-url-group">
                   <label class="input-label w-full">點圖預設連結 <span class="text-slate-400 text-[11px] ml-1 font-normal">(大圖跳轉網址)</span></label>
                   <input type="text" id="ec-img-action-url" class="custom-input !text-blue-600 w-full" value="https://liff.line.me/2009367829-DLtYBDUm" oninput="if(typeof window.updateECardPreview === 'function') window.updateECardPreview()">
+              </div>
+
+              <!-- ⭐ QQ 修復：新增自訂 LINE 顯示文字 -->
+              <div class="flex flex-col mb-5 w-full">
+                  <label class="input-label w-full">自訂 LINE 顯示文字 <span class="text-slate-400 text-[11px] ml-1 font-normal">(聊天室預覽文字)</span></label>
+                  <input type="text" id="ec-alt-text-input" class="custom-input font-medium text-slate-800 w-full" placeholder="這是我的電子名片，請多指教" value="這是我的電子名片，請多指教">
               </div>
 
               <div class="w-full flex flex-col pt-8 border-t border-slate-200">
@@ -474,7 +478,7 @@
   </div>
 </div>
 
-<!-- 裁切器 Modal (確保 z-index 在最上層) -->
+<!-- 裁切器 Modal -->
 <div id="section-image-cropper" class="hidden fixed inset-0 bg-slate-900 flex flex-col animate-in fade-in duration-300 w-full max-w-md mx-auto z-[1080]">
     <div class="flex justify-between items-center p-4 bg-slate-900 text-white shrink-0 z-10 shadow-sm border-b border-slate-800">
       <button onclick="if(typeof window.cancelCrop === 'function') window.cancelCrop()" class="px-3 py-2 font-bold text-slate-400 active:scale-90 transition-transform text-[15px]">取消</button>
@@ -487,8 +491,8 @@
 <div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-bold flex items-center gap-2 w-max max-w-[90vw] opacity-0 pointer-events-none border border-slate-700"></div>
 
 <!-- 強制破除快取 -->
-<script src="card.js?v=20260405_0945"></script>
-<script src="card-ecard.js?v=20260405_0945"></script>
+<script src="card.js?v=20260405_1010"></script>
+<script src="card-ecard.js?v=20260405_1010"></script>
 
 </body>
 </html>

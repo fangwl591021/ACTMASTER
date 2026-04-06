@@ -1,6 +1,6 @@
 /**
  * card.js 
- * Version: v20260406_0945 (QQ 終極修復版：徹底解決非管理員闖入與資料載入時的無限空轉 Bug)
+ * Version: v20260405_1400 (QQ 修復版：移除舊有 Modal 開關，交由編輯器處理隱私參數)
  */
 const LIFF_ID = "2009367829-DLtYBDUm"; 
 const WORKER_URL = "https://actmaster.fangwl591021.workers.dev"; 
@@ -124,7 +124,6 @@ function checkAndOpenMyCard() {
         myCardOpened = true;
         if(typeof window.openCardDetailByRowId === 'function') window.openCardDetailByRowId(targetCard.rowId);
     } else {
-        window.switchView('list'); // ⭐ QQ 防呆：若找不到名片，立刻解除空轉遮罩
         window.showToast("找不到對應的名片紀錄", true);
         setTimeout(() => window.location.href = 'index.html?view=user-profile', 2000);
     }
@@ -193,12 +192,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const userProfileBadge = document.getElementById('user-profile-badge');
     if (userProfileBadge) userProfileBadge.classList.remove('hidden');
     
-    // ⭐ QQ 防呆：徹底阻擋非管理員擅闖名片管理主頁 (預防無限空轉)
-    if (!isAdmin && params.get('mode') !== 'mycard') {
-        window.location.replace('index.html');
-        return;
-    }
-
     if (isAdmin) {
         const roleBtn = document.getElementById('role-switch-btn');
         if (roleBtn) roleBtn.classList.remove('hidden');
@@ -210,7 +203,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById('bottom-nav-admin')?.remove(); 
     }
 
-    if (params.get('mode') === 'mycard') {
+    if (new URLSearchParams(window.location.search).get('mode') === 'mycard') {
         loadCardContacts();
         return; 
     }
@@ -254,8 +247,8 @@ async function loadCardContacts() {
         try {
             globalCardContacts = JSON.parse(cachedDataString);
             globalCardContacts = applyUserFilter(globalCardContacts);
-            window.filterCardList(); // 立即渲染快取，消滅空轉
             checkAndOpenMyCard();
+            window.filterCardList(); 
         } catch(e) {}
     } else if (container) {
         container.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div></div>';
@@ -275,11 +268,8 @@ async function loadCardContacts() {
             globalCardContacts = applyUserFilter(newContacts);
             window.filterCardList(); 
             if (!myCardOpened) checkAndOpenMyCard();
-        } else if (!cachedDataString) {
-            // ⭐ QQ 防呆：如果快取是空的，新資料也是空的，強制執行渲染來消除轉圈圈
-            globalCardContacts = applyUserFilter(newContacts);
-            window.filterCardList();
-            if (!myCardOpened) checkAndOpenMyCard();
+        } else if (!cachedDataString && !myCardOpened) {
+            checkAndOpenMyCard();
         }
     } catch(e) {
         if (!cachedDataString && container) container.innerHTML = `<div class="text-center py-10 text-error font-bold">連線異常</div>`;
@@ -287,40 +277,11 @@ async function loadCardContacts() {
         if (loadText) loadText.innerText = "資料讀取失敗，請重新載入";
         const spinner = document.querySelector('#view-loading .animate-spin');
         if (spinner) spinner.classList.add('hidden');
-    } finally {
-        // ⭐ QQ 終極防護：確保無論如何，全域讀取遮罩一定會被關閉
-        const globalLoading = document.getElementById('view-loading');
-        if (globalLoading && !globalLoading.classList.contains('hidden') && new URLSearchParams(window.location.search).get('mode') !== 'mycard') {
-            window.switchView('list');
-        }
-    }
-}
-
-window.reloadCardContacts = async function() {
-    if (isProcessing) return;
-    isProcessing = true;
-    const btn = document.getElementById('btn-refresh-cards');
-    if (btn) {
-        btn.classList.add('pointer-events-none', 'opacity-50');
-        btn.querySelector('span')?.classList.add('animate-spin');
-    }
-    localStorage.removeItem(CACHE_KEY_CONTACTS); 
-    try {
-        await loadCardContacts();
-        window.showToast("✅ 名單已更新");
-    } catch(e) {
-        window.showToast("更新失敗，請重試", true);
-    } finally {
-        isProcessing = false;
-        if (btn) {
-            btn.classList.remove('pointer-events-none', 'opacity-50');
-            btn.querySelector('span')?.classList.remove('animate-spin');
-        }
     }
 }
 
 window.filterCardList = function() { 
-    // ⭐ QQ 防呆：已拔除 `if (!isAdmin) return;` 避免非管理員觸發無限空轉
+    if (!isAdmin) return;
     const term = document.getElementById('card-search-input')?.value.toLowerCase() || '';
     filteredCards = globalCardContacts.filter(c => (c['姓名'] || '').toLowerCase().includes(term) || (c['公司名稱'] || '').toLowerCase().includes(term));
     currentPage = 1;
@@ -372,18 +333,9 @@ window.loadMoreCards = function() { currentPage++; window.renderCardPage(false);
 window.openCardDetailByRowId = function(rowId) { 
     try {
       const card = globalCardContacts.find(c => String(c.rowId) === String(rowId));
-      if(!card) {
-          window.showToast("找不到對應的名片", true);
-          window.switchView('list'); // ⭐ QQ 防呆：即使發生錯誤，也要確保解開空轉遮罩
-          return;
-      }
+      if(!card) return;
       currentActiveCard = card; 
       
-      // ⭐ QQ 防呆：資料只要一到手，第一時間關閉空轉遮罩
-      window.switchView('list');
-      const modal = document.getElementById('readonly-card-modal');
-      if (modal) modal.classList.remove('hidden');
-
       const setName = document.getElementById('ro-name'); if (setName) setName.innerText = card['姓名'] || card['Name'] || '未知姓名';
       
       const statusEl = document.getElementById('ro-claim-status');
@@ -439,11 +391,8 @@ window.openCardDetailByRowId = function(rowId) {
 
       const imgEl = document.getElementById('ro-image');
       const noImgEl = document.getElementById('ro-no-image');
-      
-      // ⭐ QQ 防呆：確保名片圖檔存在且是字串才呼叫 startsWith
-      let rawImg = card['名片圖檔'];
-      if (rawImg && typeof rawImg === 'string' && rawImg !== '圖片儲存失敗' && rawImg !== '無圖檔' && rawImg.startsWith('http')) {
-        if (imgEl) { imgEl.src = window.getDirectImageUrl(rawImg); imgEl.classList.remove('hidden'); }
+      if (card['名片圖檔'] && card['名片圖檔'] !== '圖片儲存失敗' && card['名片圖檔'] !== '無圖檔' && card['名片圖檔'].startsWith('http')) {
+        if (imgEl) { imgEl.src = window.getDirectImageUrl(card['名片圖檔']); imgEl.classList.remove('hidden'); }
         if (noImgEl) noImgEl.classList.add('hidden');
       } else {
         if (imgEl) { imgEl.src = ''; imgEl.classList.add('hidden'); }
@@ -456,10 +405,10 @@ window.openCardDetailByRowId = function(rowId) {
           else shareBtn.classList.remove('hidden');
       }
 
-    } catch(e) { 
-        console.error("開啟錯誤:", e.message); 
-        window.switchView('list'); // 發生未知錯誤也必須解除空轉
-    }
+      const modal = document.getElementById('readonly-card-modal');
+      if (modal) modal.classList.remove('hidden');
+      window.switchView('list');
+    } catch(e) { console.error("開啟錯誤:", e.message); }
 }
 
 window.closeReadOnlyCard = function() { 
@@ -528,11 +477,6 @@ window.openCardEdit = function() {
     const fields = { 'edit-c-Name': c['姓名'] || c['Name'] || '', 'edit-c-EnglishName': c['英文名/別名'] || c['EnglishName'] || '', 'edit-c-Title': c['職稱'] || c['Title'] || '', 'edit-c-Department': c['部門'] || c['Department'] || '', 'edit-c-CompanyName': c['公司名稱'] || c['CompanyName'] || '', 'edit-c-TaxID': c['統一編號'] || c['TaxID'] || '', 'edit-c-Mobile': formatPhoneStr(c['手機號碼'] || c['Mobile']) || '', 'edit-c-Tel': formatPhoneStr(c['公司電話'] || c['Tel']) || '', 'edit-c-Ext': c['分機'] || c['Ext'] || '', 'edit-c-Fax': formatPhoneStr(c['傳真'] || c['Fax']) || '', 'edit-c-Address': c['公司地址'] || c['Address'] || '', 'edit-c-Email': c['電子郵件'] || c['Email'] || '', 'edit-c-Website': webStr, 'edit-c-SocialMedia': c['社群帳號'] || c['SocialMedia'] || '', 'edit-c-Slogan': c['服務項目/品牌標語'] || c['Slogan'] || '', 'edit-c-Notes': c['建檔人/備註'] || c['Notes'] || '', 'edit-c-Birthday': bdayVal };
     for (const [id, val] of Object.entries(fields)) { const el = document.getElementById(id); if (el) el.value = val; }
     
-    let config = {};
-    if (c['自訂名片設定']) { try { config = JSON.parse(c['自訂名片設定']); } catch(e){} }
-    const isPublicEl = document.getElementById('edit-c-isPublic');
-    if (isPublicEl) isPublicEl.checked = !(config.isPrivate === true);
-    
     const modal = document.getElementById('card-edit-modal');
     if (modal) modal.classList.remove('hidden');
 }
@@ -564,22 +508,10 @@ window.submitCardEdit = async function() {
       } catch (e) {}
   }
 
-  const isPublicEl = document.getElementById('edit-c-isPublic');
-  const isPrivate = isPublicEl ? !isPublicEl.checked : false;
-  let config = {};
-  if (currentActiveCard['自訂名片設定']) { try { config = JSON.parse(currentActiveCard['自訂名片設定']); } catch(e){} }
-  config.isPrivate = isPrivate;
-
   try {
     if (btn) btn.innerText = '寫入資料庫...';
-    await Promise.all([
-        window.fetchAPI('updateCard', payload),
-        window.fetchAPI('updateECardConfig', { rowId: currentActiveCard.rowId, config: config }, true)
-    ]);
-    currentActiveCard['自訂名片設定'] = JSON.stringify(config);
+    await window.fetchAPI('updateCard', payload);
     window.showToast("✅ 資料更新成功");
-    
-    localStorage.removeItem(CACHE_KEY_CONTACTS);
     window.closeCardEdit();
     loadCardContacts();
   } catch(err) { 
@@ -590,6 +522,7 @@ window.submitCardEdit = async function() {
   }
 }
 
+// ⭐ QQ 終極防呆：保證 `input.value = ""` 絕不干擾手機端 `FileReader` 非同步讀取
 window.openCropper = async function(input, targetMode) {
     const file = input.files[0]; 
     if (!file) return;
@@ -639,6 +572,7 @@ window.cancelCrop = function() {
     if (img) { img.src = ''; img.style.opacity = '0'; }
 }
 
+// ⭐ QQ 本地即時渲染防破圖 (Optimistic UI)
 window.confirmCrop = async function() { 
     if (!cropperInstance) return; 
     let quality = 0.8; 
@@ -701,12 +635,7 @@ window.saveToCloud = async function() {
   
   try {
     await window.fetchAPI('saveCard', payload); window.showToast("🎉 建立成功！");
-    
-    localStorage.removeItem(CACHE_KEY_CONTACTS);
-    setTimeout(() => { 
-        window.resetUI(); 
-        loadCardContacts();
-    }, 1000);
+    setTimeout(() => { window.resetUI(); }, 1000);
   } catch(err) { console.error(err); } finally { setButtonLoading('btn-save', false, '存入雲端'); isProcessing = false; }
 }
 
@@ -744,10 +673,7 @@ window.batchRegenerateECards = async function() {
             await window.fetchAPI('updateECardConfig', { rowId: c.rowId, config: config }, true);
             c['自訂名片設定'] = JSON.stringify(config); updatedCount++;
         }
-        window.showToast(`✅ 重新讀取寫入完成！共更新了 ${updatedCount} 張。`); 
-        
-        localStorage.removeItem(CACHE_KEY_CONTACTS);
-        loadCardContacts();
+        window.showToast(`✅ 重新讀取寫入完成！共更新了 ${updatedCount} 張。`); loadCardContacts();
     } catch (err) { window.showToast("更新錯誤", true); } finally { if (btn) { btn.innerHTML = '<span class="material-symbols-outlined text-[15px]">sync</span> 批次重新讀取寫入所有名片按鈕'; btn.classList.remove('pointer-events-none', 'opacity-50'); } }
 }
 

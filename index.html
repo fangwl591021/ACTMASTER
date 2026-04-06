@@ -1,4 +1,4 @@
-<!-- Version: v2.5.0 (QQ 修復版：解決導航死機 Bug，實作個人設定檔的動態社群表單) -->
+<!-- Version: v2.5.1 (QQ 懲戒版：撤除多餘的深色導航設計，嚴格回歸 LINE 原生白底無框視覺) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -56,19 +56,12 @@
 
     .btn-secondary { @apply w-full py-4 bg-slate-200 text-slate-700 rounded-2xl font-bold text-[16px] active:scale-[0.98] transition-transform flex items-center justify-center gap-2; }
     
-    /* User 導航樣式 */
+    /* 統一乾淨的導航樣式 (Admin/User 共用) */
     .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-slate-400 h-full; min-width: 48px;}
     .nav-btn .icon-box { @apply px-4 py-1.5 rounded-2xl transition-all flex items-center justify-center mb-0.5; }
     .nav-active { @apply text-slate-800 font-bold; }
     .nav-active .icon-box { @apply bg-slate-100 text-slate-800; }
     .nav-active .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
-
-    /* ⭐ QQ 修復：Admin 深色導航樣式對齊 card.html */
-    .admin-nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-slate-500 h-full; min-width: 48px; }
-    .admin-nav-btn .icon-box { @apply px-4 py-1.5 rounded-2xl transition-all flex items-center justify-center mb-0.5 bg-transparent; }
-    .admin-nav-active { @apply text-white font-bold; }
-    .admin-nav-active .icon-box { @apply bg-slate-800 text-[#06C755]; }
-    .admin-nav-active .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
 
     .refresh-spin { animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -182,7 +175,7 @@
             <div class="flex flex-col"><label class="input-label">完整地址</label><input type="text" id="edit-address" class="custom-input"></div>
           </div>
           
-          <!-- ⭐ QQ 修復：動態社群網址輸入區塊 -->
+          <!-- 動態社群網址輸入區塊 -->
           <div class="flex flex-col pt-4 border-t border-slate-100 mt-2">
               <div class="flex justify-between items-center mb-3">
                  <label class="input-label !mb-0">社群帳號 / 網址</label>
@@ -253,7 +246,7 @@
 
   </main>
 
-  <!-- ⭐ QQ 修復：確保所有按鈕都擁有唯一的 ID，避免 switchView 執行時產生 TypeError -->
+  <!-- User 導航 -->
   <nav id="bottom-nav-user" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl flex justify-evenly items-center px-1 py-2 z-40 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.03)] left-1/2 -translate-x-1/2 h-[76px] rounded-t-3xl border-t border-slate-100">
     <button onclick="switchView('user-activities')" id="nav-user-activities" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">explore</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">探索</span></button>
     <button onclick="window.location.href='fate.html'" id="nav-user-fate" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">psychology</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">配對</span></button>
@@ -261,13 +254,14 @@
     <button onclick="switchView('user-profile')" id="nav-user-profile" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">person</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">設定</span></button>
   </nav>
 
-  <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-slate-900/95 backdrop-blur-xl flex justify-evenly items-center px-1 py-2 z-40 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.2)] left-1/2 -translate-x-1/2 h-[76px] rounded-t-3xl border-t border-slate-800">
-    <button onclick="switchView('admin-activities')" id="nav-admin-activities" class="admin-nav-btn admin-nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">fact_check</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">核銷</span></button>
-    <button onclick="window.location.href='active.html'" id="nav-admin-create" class="admin-nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">add_circle</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">建立</span></button>
-    <button onclick="switchView('admin-crm')" id="nav-admin-crm" class="admin-nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">groups</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">CRM</span></button>
-    <button onclick="window.location.href='fate.html'" id="nav-admin-fate" class="admin-nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">psychology</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">配對</span></button>
-    <button onclick="window.location.href='card.html'" id="nav-admin-cards" class="admin-nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">recent_patient</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">名片</span></button>
-    <button onclick="switchView('admin-settings')" id="nav-admin-settings" class="admin-nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">settings</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">參數</span></button>
+  <!-- Admin 導航 (回歸白底無框原生風格) -->
+  <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl flex justify-evenly items-center px-1 py-2 z-40 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.03)] left-1/2 -translate-x-1/2 h-[76px] rounded-t-3xl border-t border-slate-100">
+    <button onclick="switchView('admin-activities')" id="nav-admin-activities" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">fact_check</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">核銷</span></button>
+    <button onclick="window.location.href='active.html'" id="nav-admin-create" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">add_circle</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">建立</span></button>
+    <button onclick="switchView('admin-crm')" id="nav-admin-crm" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">groups</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">CRM</span></button>
+    <button onclick="window.location.href='fate.html'" id="nav-admin-fate" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">psychology</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">配對</span></button>
+    <button onclick="window.location.href='card.html'" id="nav-admin-cards" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">recent_patient</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">名片</span></button>
+    <button onclick="switchView('admin-settings')" id="nav-admin-settings" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">settings</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">參數</span></button>
   </nav>
 </div>
 
@@ -390,7 +384,6 @@
   let globalCrmData = [], filteredCrmData = [], globalCardContacts = [], crmPageLimit = 10, currentCrmViewCount = 10, isProcessing = false;
   let regStep1Data = {}, regCompressedBase64 = "", cropperInstance = null, currentCropTarget = '', html5QrcodeScanner = null;
 
-  // ⭐ QQ 新增：存放動態社群網址陣列
   let profileSocials = [];
 
   function showToast(msg, isError = false) {
@@ -616,7 +609,7 @@
     if (isViewModeAdmin) switchView('admin-activities'); else switchView(isRegistered ? 'user-activities' : 'user-register');
   }
 
-  // ⭐ QQ 修復版：確保所有迴圈按鈕有唯一的防呆判定與正確的 CSS class
+  // ⭐ 回歸統一清爽的白底導航樣式
   window.switchView = function(view) {
     ['view-loading', 'view-user-register', 'view-user-activities', 'view-user-profile', 'view-user-history', 'view-admin-activities', 'view-admin-stats', 'view-admin-crm', 'view-admin-settings'].forEach(v => { const el = document.getElementById(v); if(el) el.classList.add('hidden'); });
     const activeEl = document.getElementById(`view-${view}`); if (activeEl) activeEl.classList.remove('hidden');
@@ -628,7 +621,8 @@
       let highlightView = view === 'admin-stats' ? 'admin-activities' : view;
       ['activities', 'create', 'crm', 'fate', 'cards', 'settings'].forEach(k => { 
           const btn = document.getElementById('nav-admin-'+k); 
-          if(btn) btn.className = `admin-nav-btn ${highlightView===('admin-'+k) ? 'admin-nav-active' : ''}`; 
+          // 使用乾淨的 nav-btn 與 nav-active 樣式
+          if(btn) btn.className = `nav-btn ${highlightView===('admin-'+k) ? 'nav-active' : ''}`; 
       });
     } else if (isRegistered && (!isAdmin || !isViewModeAdmin) && view.startsWith('user')) {
       if(navUser) navUser.classList.remove('hidden');
@@ -1051,7 +1045,6 @@
     } catch(e) { showToast("取消失敗", true); } finally { isProcessing = false; setButtonLoading(btn.id, false, '取消'); }
   }
 
-  // ⭐ QQ 修復：動態渲染設定檔中的社群列表
   window.renderProfileSocials = function() {
       const list = document.getElementById('profile-social-list');
       if(!list) return;
@@ -1092,7 +1085,6 @@
     if(isProcessing) return; isProcessing = true; setButtonLoading('btn-save-profile', true);
     const getVal = (id) => document.getElementById(id)?.value.trim() || '';
     
-    // ⭐ 將動態社群列表合併為逗號字串送出
     const validSocials = profileSocials.map(s => s.trim()).filter(Boolean).join(',');
 
     const p = { 

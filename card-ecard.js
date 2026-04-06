@@ -314,19 +314,75 @@ window.openECardGenerator = function() {
             if (el) el.value = val;
         };
 
-        // ⭐ QQ 優化：提前萃取預設聯絡資訊 (V1 / V2 共用)
+        // ⭐ QQ 優化：提前萃取預設聯絡資訊與社群 (V1 / V2 共用)
         let autoExtractedBtns = [];
+        let autoExtractedSocials = [];
+
+        // 電話 -> 導購按鈕 (打電話) + 社群圖示 (TEL)
         let p1 = c['手機號碼'] || c['Mobile'];
-        if (p1) { let phone = String(p1).split(',')[0].replace(/[^\d+]/g, ''); if (phone.startsWith('886')) phone = '0' + phone.substring(3); if (phone) autoExtractedBtns.push({ l: '撥打手機', u: `tel:${phone}`, c: '#06C755' }); }
+        if (p1) { 
+            let phone = String(p1).split(',')[0].replace(/[^\d+]/g, ''); 
+            if (phone.startsWith('886')) phone = '0' + phone.substring(3); 
+            if (phone) {
+                autoExtractedBtns.push({ l: '撥打手機', u: `tel:${phone}`, c: '#06C755' }); 
+                autoExtractedSocials.push({ type: 'TEL', u: `tel:${phone}` });
+            }
+        }
         let p2 = c['公司電話'] || c['Tel'];
-        if (p2) { let tel = String(p2).split(',')[0].replace(/[^\d+]/g, ''); if (tel.startsWith('886')) tel = '0' + tel.substring(3); if (tel) autoExtractedBtns.push({ l: '撥打電話', u: `tel:${tel}`, c: '#06C755' }); }
+        if (p2) { 
+            let tel = String(p2).split(',')[0].replace(/[^\d+]/g, ''); 
+            if (tel.startsWith('886')) tel = '0' + tel.substring(3); 
+            if (tel) autoExtractedBtns.push({ l: '撥打電話', u: `tel:${tel}`, c: '#06C755' }); 
+        }
+        
+        // 信箱 -> 導購按鈕
         let p3 = c['電子郵件'] || c['Email'];
-        if (p3) { let email = String(p3).split(/[\s,]+/)[0]; if (email.includes('@')) autoExtractedBtns.push({ l: '發送信箱', u: `mailto:${email}`, c: '#06C755' }); }
+        if (p3) { 
+            let email = String(p3).split(/[\s,]+/)[0]; 
+            if (email.includes('@')) autoExtractedBtns.push({ l: '發送信箱', u: `mailto:${email}`, c: '#06C755' }); 
+        }
+        
+        // 地址 -> 導購按鈕
         let p4 = c['公司地址'] || c['Address'];
         if (p4) autoExtractedBtns.push({ l: 'Google 導航', u: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p4.split(',')[0])}`, c: '#06C755' });
+        
+        // 網址 -> 導購按鈕 + 社群圖示
         let p5 = c['公司網址'] || c['Website'];
-        if (p5 && autoExtractedBtns.length < 4) { let wUrl = String(p5).trim(); if (wUrl && !wUrl.startsWith('http')) wUrl = 'https://' + wUrl; if (wUrl) autoExtractedBtns.push({ l: '公司網站', u: wUrl, c: '#06C755' }); }
-        autoExtractedBtns = autoExtractedBtns.slice(0, 4);
+        if (p5) { 
+            let wUrl = String(p5).trim(); 
+            if (wUrl && !wUrl.startsWith('http')) wUrl = 'https://' + wUrl; 
+            if (wUrl) {
+                if (autoExtractedBtns.length < 4) autoExtractedBtns.push({ l: '公司網站', u: wUrl, c: '#06C755' }); 
+                
+                // 智慧判斷網址屬性
+                if (wUrl.includes('facebook.com') || wUrl.includes('fb.')) autoExtractedSocials.push({ type: 'FB', u: wUrl });
+                else if (wUrl.includes('instagram.com') || wUrl.includes('instagr.am')) autoExtractedSocials.push({ type: 'IG', u: wUrl });
+                else if (wUrl.includes('youtube.com') || wUrl.includes('youtu.be')) autoExtractedSocials.push({ type: 'YT', u: wUrl });
+                else autoExtractedSocials.push({ type: 'WEB', u: wUrl });
+            }
+        }
+        
+        // 社群專屬欄位 -> 社群圖示
+        let p6 = c['社群帳號'] || c['SocialMedia'];
+        if (p6) {
+            let sUrls = String(p6).split(/[\s,\n]+/);
+            sUrls.forEach(u => {
+                let su = u.trim();
+                if (!su) return;
+                if (!su.startsWith('http') && su.includes('.')) su = 'https://' + su;
+                
+                if (su.includes('line.me') || su.includes('line://')) autoExtractedSocials.push({ type: 'LINE', u: su });
+                else if (su.includes('facebook.com') || su.includes('fb.')) autoExtractedSocials.push({ type: 'FB', u: su });
+                else if (su.includes('instagram.com') || su.includes('instagr.am') || su.includes('ig.')) autoExtractedSocials.push({ type: 'IG', u: su });
+                else if (su.includes('youtube.com') || su.includes('youtu.be')) autoExtractedSocials.push({ type: 'YT', u: su });
+                else if (su.startsWith('http')) autoExtractedSocials.push({ type: 'WEB', u: su });
+            });
+        }
+
+        // 去除重複的社群圖示
+        autoExtractedSocials = autoExtractedSocials.filter((social, index, self) => 
+            index === self.findIndex((t) => t.type === social.type)
+        );
 
         // 載入 V1 按鈕設定
         const listEl = document.getElementById('ec-btn-list');
@@ -347,13 +403,16 @@ window.openECardGenerator = function() {
             }
         }
 
-        // 載入 V2 設定
-        v2Socials = (savedConfig && savedConfig.v2Socials && savedConfig.v2Socials.length > 0) ? savedConfig.v2Socials : [{type:'LINE', u:'https://line.me'}];
+        // ⭐ 智慧載入 V2 設定：如果有設定檔就照舊，如果完全沒設定，就帶入自動萃取的陣列（若無資料則為空陣列不顯示）
+        if (savedConfig && savedConfig.hasOwnProperty('v2Socials')) {
+            v2Socials = savedConfig.v2Socials;
+        } else {
+            v2Socials = autoExtractedSocials;
+        }
         
         if (savedConfig && savedConfig.v2Bars && savedConfig.v2Bars.length > 0) {
             v2Bars = savedConfig.v2Bars;
         } else {
-            // ⭐ V2 也能無縫套用萃取出的聯絡資訊
             v2Bars = autoExtractedBtns.length > 0 
                 ? autoExtractedBtns.map(b => ({ t: b.l, u: b.u })) 
                 : [{t:"查看更多", u:"https://line.me"}];

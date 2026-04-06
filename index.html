@@ -1,11 +1,11 @@
-<!-- Version: v2.6.1 (QQ 修復版：解除名片上傳裁切器比例限制，同步最新 iOS 防呆機制) -->
+<!-- Version: v2.6.2 (QQ 品牌更新版：品牌名稱全面升級為 LINE商機引擎) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
   <link rel="icon" href="data:,">
-  <title>報名大師</title>
+  <title>LINE商機引擎</title>
   
   <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Noto+Sans+TC:wght@400;500;700;800&display=swap" rel="stylesheet"/>
@@ -74,7 +74,7 @@
   
   <nav id="top-nav" class="fixed top-0 w-full max-w-md z-40 bg-white/90 backdrop-blur-md px-5 py-3.5 flex justify-between items-center left-1/2 -translate-x-1/2 shadow-[0_4px_20px_-2px_rgba(0,0,0,0.02)]">
     <div class="text-[20px] font-extrabold text-slate-800 tracking-tight flex items-center gap-1">
-      報名大師
+      LINE商機引擎
       <span id="header-admin-badge" class="hidden bg-slate-800 text-white text-[9px] px-2 py-0.5 rounded-md uppercase tracking-wider font-bold ml-1">Admin</span>
     </div>
     <div class="flex items-center gap-3">
@@ -798,7 +798,6 @@
     } catch(e) { showToast("註冊失敗", true); } finally { isProcessing = false; setButtonLoading('btn-reg-step1', false, '儲存並繼續'); }
   }
 
-  // ⭐ QQ 修復版：解除名片裁切器比例限制 (設為 NaN) 且加入 onload 防呆
   window.openCropper = async function(input, targetMode) {
     const file = input.files[0]; if (!file) return; currentCropTarget = targetMode;
     const reader = new FileReader();
@@ -809,7 +808,6 @@
           if (cropperInstance) cropperInstance.destroy();
           img.style.opacity = '1';
           
-          // 強制設定 aspectRatio: NaN 讓名片裁切可以自由拉伸
           cropperInstance = new Cropper(img, { 
               aspectRatio: NaN, 
               viewMode: 1, 
@@ -1182,7 +1180,7 @@
         ${isCanceled ? '<div class="absolute top-0 right-0 bg-slate-500 text-white text-[10px] px-3 py-1 rounded-bl-xl font-bold">已取消</div>' : ''}
         <div class="flex justify-between items-start mb-4">
           <div class="flex flex-col"><h4 class="font-bold text-[16px] text-slate-800 flex items-center gap-1">${r['姓名']} ${cIn ? '<span class="material-symbols-outlined text-[16px] text-emerald-500 icon-filled">check_circle</span>' : ''}</h4><p class="text-[12px] text-slate-500 font-medium mt-1">${r['電話'] || '無電話'}</p></div>
-          <button id="btn-chk-${r.rowId}" ${isCanceled ? 'disabled' : ''} onclick="window.toggleCheckIn(this, ${r.rowId}, ${cIn})" class="px-4 py-2 rounded-xl flex items-center justify-center gap-1 transition-all font-bold text-[13px] ${cIn ? 'bg-emerald-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600 active:scale-95 hover:bg-slate-200'}">${cIn ? '已簽到' : '手動簽到'}</button>
+          <button id="btn-chk-${r.rowId}" ${isCanceled ? 'disabled' : ''} onclick="window.toggleCheckIn(this, ${r.rowId}, ${cIn})" class="px-4 py-2 rounded-xl flex items-center justify-center gap-1 transition-all font-bold text-[13px] ${cIn ? 'bg-emerald-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600 active:scale-95 hover:bg-slate-200'}">${cIn ? '已簽到' : '手手動簽到'}</button>
         </div>
         <div class="flex items-center gap-2 pt-4 border-t border-slate-100">
            <select onchange="window.updatePayStatus(${r.rowId}, this.value)" class="text-[13px] font-bold bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer ${r.payStatus==='已繳費'?'text-emerald-600':(r.payStatus==='匯款審核中'?'text-amber-500':'text-red-500')}" ${isCanceled ? 'disabled' : ''}><option value="未繳費" ${r.payStatus==='未繳費'?'selected':''}>未繳費</option><option value="匯款審核中" ${r.payStatus==='匯款審核中'?'selected':''}>審核中</option><option value="已完款" ${r.payStatus==='已完款'?'selected':''}>已完款</option></select>

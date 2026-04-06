@@ -1,6 +1,6 @@
 /**
  * card.js 
- * Version: v20260405_1400 (QQ 修復版：移除舊有 Modal 開關，交由編輯器處理隱私參數)
+ * Version: v20260406_0845 (QQ 擴充版：加入上傳後自動更新與手動刷新名片庫機制)
  */
 const LIFF_ID = "2009367829-DLtYBDUm"; 
 const WORKER_URL = "https://actmaster.fangwl591021.workers.dev"; 
@@ -280,6 +280,30 @@ async function loadCardContacts() {
     }
 }
 
+// ⭐ QQ 擴充：手動刷新名單機制
+window.reloadCardContacts = async function() {
+    if (isProcessing) return;
+    isProcessing = true;
+    const btn = document.getElementById('btn-refresh-cards');
+    if (btn) {
+        btn.classList.add('pointer-events-none', 'opacity-50');
+        btn.querySelector('span')?.classList.add('animate-spin');
+    }
+    localStorage.removeItem(CACHE_KEY_CONTACTS); // 強制清除本地快取
+    try {
+        await loadCardContacts();
+        window.showToast("✅ 名單已更新");
+    } catch(e) {
+        window.showToast("更新失敗，請重試", true);
+    } finally {
+        isProcessing = false;
+        if (btn) {
+            btn.classList.remove('pointer-events-none', 'opacity-50');
+            btn.querySelector('span')?.classList.remove('animate-spin');
+        }
+    }
+}
+
 window.filterCardList = function() { 
     if (!isAdmin) return;
     const term = document.getElementById('card-search-input')?.value.toLowerCase() || '';
@@ -477,6 +501,11 @@ window.openCardEdit = function() {
     const fields = { 'edit-c-Name': c['姓名'] || c['Name'] || '', 'edit-c-EnglishName': c['英文名/別名'] || c['EnglishName'] || '', 'edit-c-Title': c['職稱'] || c['Title'] || '', 'edit-c-Department': c['部門'] || c['Department'] || '', 'edit-c-CompanyName': c['公司名稱'] || c['CompanyName'] || '', 'edit-c-TaxID': c['統一編號'] || c['TaxID'] || '', 'edit-c-Mobile': formatPhoneStr(c['手機號碼'] || c['Mobile']) || '', 'edit-c-Tel': formatPhoneStr(c['公司電話'] || c['Tel']) || '', 'edit-c-Ext': c['分機'] || c['Ext'] || '', 'edit-c-Fax': formatPhoneStr(c['傳真'] || c['Fax']) || '', 'edit-c-Address': c['公司地址'] || c['Address'] || '', 'edit-c-Email': c['電子郵件'] || c['Email'] || '', 'edit-c-Website': webStr, 'edit-c-SocialMedia': c['社群帳號'] || c['SocialMedia'] || '', 'edit-c-Slogan': c['服務項目/品牌標語'] || c['Slogan'] || '', 'edit-c-Notes': c['建檔人/備註'] || c['Notes'] || '', 'edit-c-Birthday': bdayVal };
     for (const [id, val] of Object.entries(fields)) { const el = document.getElementById(id); if (el) el.value = val; }
     
+    let config = {};
+    if (c['自訂名片設定']) { try { config = JSON.parse(c['自訂名片設定']); } catch(e){} }
+    const isPublicEl = document.getElementById('edit-c-isPublic');
+    if (isPublicEl) isPublicEl.checked = !(config.isPrivate === true);
+    
     const modal = document.getElementById('card-edit-modal');
     if (modal) modal.classList.remove('hidden');
 }
@@ -508,10 +537,23 @@ window.submitCardEdit = async function() {
       } catch (e) {}
   }
 
+  const isPublicEl = document.getElementById('edit-c-isPublic');
+  const isPrivate = isPublicEl ? !isPublicEl.checked : false;
+  let config = {};
+  if (currentActiveCard['自訂名片設定']) { try { config = JSON.parse(currentActiveCard['自訂名片設定']); } catch(e){} }
+  config.isPrivate = isPrivate;
+
   try {
     if (btn) btn.innerText = '寫入資料庫...';
-    await window.fetchAPI('updateCard', payload);
+    await Promise.all([
+        window.fetchAPI('updateCard', payload),
+        window.fetchAPI('updateECardConfig', { rowId: currentActiveCard.rowId, config: config }, true)
+    ]);
+    currentActiveCard['自訂名片設定'] = JSON.stringify(config);
     window.showToast("✅ 資料更新成功");
+    
+    // ⭐ QQ 自動更新：清除快取並重讀
+    localStorage.removeItem(CACHE_KEY_CONTACTS);
     window.closeCardEdit();
     loadCardContacts();
   } catch(err) { 
@@ -522,7 +564,6 @@ window.submitCardEdit = async function() {
   }
 }
 
-// ⭐ QQ 終極防呆：保證 `input.value = ""` 絕不干擾手機端 `FileReader` 非同步讀取
 window.openCropper = async function(input, targetMode) {
     const file = input.files[0]; 
     if (!file) return;
@@ -572,7 +613,6 @@ window.cancelCrop = function() {
     if (img) { img.src = ''; img.style.opacity = '0'; }
 }
 
-// ⭐ QQ 本地即時渲染防破圖 (Optimistic UI)
 window.confirmCrop = async function() { 
     if (!cropperInstance) return; 
     let quality = 0.8; 
@@ -635,7 +675,13 @@ window.saveToCloud = async function() {
   
   try {
     await window.fetchAPI('saveCard', payload); window.showToast("🎉 建立成功！");
-    setTimeout(() => { window.resetUI(); }, 1000);
+    
+    // ⭐ QQ 自動更新：清除快取，並在 UI 重置後自動拉取最新名單
+    localStorage.removeItem(CACHE_KEY_CONTACTS);
+    setTimeout(() => { 
+        window.resetUI(); 
+        loadCardContacts();
+    }, 1000);
   } catch(err) { console.error(err); } finally { setButtonLoading('btn-save', false, '存入雲端'); isProcessing = false; }
 }
 
@@ -673,7 +719,11 @@ window.batchRegenerateECards = async function() {
             await window.fetchAPI('updateECardConfig', { rowId: c.rowId, config: config }, true);
             c['自訂名片設定'] = JSON.stringify(config); updatedCount++;
         }
-        window.showToast(`✅ 重新讀取寫入完成！共更新了 ${updatedCount} 張。`); loadCardContacts();
+        window.showToast(`✅ 重新讀取寫入完成！共更新了 ${updatedCount} 張。`); 
+        
+        // ⭐ QQ 自動更新：清除快取並重讀
+        localStorage.removeItem(CACHE_KEY_CONTACTS);
+        loadCardContacts();
     } catch (err) { window.showToast("更新錯誤", true); } finally { if (btn) { btn.innerHTML = '<span class="material-symbols-outlined text-[15px]">sync</span> 批次重新讀取寫入所有名片按鈕'; btn.classList.remove('pointer-events-none', 'opacity-50'); } }
 }
 

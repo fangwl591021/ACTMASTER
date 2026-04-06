@@ -182,6 +182,8 @@
             <div class="flex flex-col"><label class="input-label">居住地區</label><input type="text" id="edit-region" class="custom-input"></div>
             <div class="flex flex-col"><label class="input-label">完整地址</label><input type="text" id="edit-address" class="custom-input"></div>
           </div>
+          <!-- ⭐ QQ 新增：個人設定頁面社群對應欄位 -->
+          <div class="flex flex-col"><label class="input-label">社群帳號 / 網址</label><input type="text" id="edit-social" class="custom-input" placeholder="例如：https://line.me/..."></div>
           <button id="btn-save-profile" onclick="submitProfileUpdate()" class="w-full py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[16px] shadow-sm active:scale-[0.98] transition-transform mt-2">儲存設定</button>
       </div>
 
@@ -1038,7 +1040,8 @@
 
   function populateUserProfile() { 
       if(registeredInfo) { 
-          ['name','gender','phone','industry','birthday','region','address'].forEach(k => { 
+          // ⭐ 同步將 social 加入遍歷陣列中以回填資料
+          ['name','gender','phone','industry','birthday','region','address','social'].forEach(k => { 
               const el = document.getElementById('edit-'+k); 
               if(el) el.value=registeredInfo[k]||''; 
           }); 
@@ -1048,13 +1051,12 @@
   async function submitProfileUpdate() { 
     if(isProcessing) return; isProcessing = true; setButtonLoading('btn-save-profile', true);
     const getVal = (id) => document.getElementById(id)?.value.trim() || '';
-    const p = { userId: userProfile.userId, name: getVal('edit-name') || userProfile.displayName, gender: getVal('edit-gender'), phone: getVal('edit-phone'), industry: getVal('edit-industry'), birthday: getVal('edit-birthday'), region: getVal('edit-region'), address: getVal('edit-address') }; 
+    // ⭐ 夾帶 social 參數送出至後端
+    const p = { userId: userProfile.userId, name: getVal('edit-name') || userProfile.displayName, gender: getVal('edit-gender'), phone: getVal('edit-phone'), industry: getVal('edit-industry'), birthday: getVal('edit-birthday'), region: getVal('edit-region'), address: getVal('edit-address'), social: getVal('edit-social') }; 
     try { await fetchAPI('updateUser', p); registeredInfo = p; checkMyCardEntry(); showToast("儲存成功"); } catch(e) { showToast("更新失敗", true); } finally { isProcessing = false; setButtonLoading('btn-save-profile', false, '儲存設定'); }
   }
 
-  async function openAdminRegistrants(actName) {
-    activeActivityName = actName; const tEl = document.getElementById('admin-reg-title'); if(tEl) tEl.innerText = actName; 
-    const list = document.getElementById('admin-reg-list'); if(!list) return;
+  async function loadAdminActivities() { 
     list.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>'; 
     const m = document.getElementById('admin-registrants-modal'); if(m) m.classList.remove('hidden');
     try { currentRegistrants = await fetchAPI('getRegistrants', { activityName: actName }); renderAdminRegList(currentRegistrants); } catch(e) { list.innerHTML = `<p class="text-center text-red-400 font-bold py-10">讀取失敗</p>`; }

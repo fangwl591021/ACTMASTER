@@ -1,6 +1,6 @@
 /**
  * card-ecard.js
- * Version: v20260406_1130 (QQ 擴充版：整合 V2 質感多連結版型、動態切換表單與模擬器)
+ * Version: v20260406_1200 (QQ 完美體驗版：修復 V2 版型開啟時未自動帶入聯絡資訊按鈕的 Bug)
  */
 
 // ⭐ V2 預設常數庫
@@ -295,7 +295,10 @@ window.openECardGenerator = function() {
         try {
             if (typeof userProfile !== 'undefined' && userProfile && userProfile.pictureUrl) {
                 const avatarImg = document.getElementById('preview-user-avatar');
-                if (avatarImg) { avatarImg.src = userProfile.pictureUrl; avatarImg.classList.remove('hidden'); }
+                if (avatarImg) {
+                    avatarImg.src = userProfile.pictureUrl;
+                    avatarImg.classList.remove('hidden');
+                }
                 const fallback = document.querySelector('.avatar-fallback');
                 if (fallback) fallback.classList.add('hidden');
             }
@@ -306,28 +309,30 @@ window.openECardGenerator = function() {
       
         const myLiffId = (typeof LIFF_ID !== 'undefined') ? LIFF_ID : '2009367829-DLtYBDUm';
 
-        const safeSetValue = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+        const safeSetValue = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.value = val;
+        };
+
+        // ⭐ QQ 優化：提前萃取預設聯絡資訊 (V1 / V2 共用)
+        let autoExtractedBtns = [];
+        let p1 = c['手機號碼'] || c['Mobile'];
+        if (p1) { let phone = String(p1).split(',')[0].replace(/[^\d+]/g, ''); if (phone.startsWith('886')) phone = '0' + phone.substring(3); if (phone) autoExtractedBtns.push({ l: '撥打手機', u: `tel:${phone}`, c: '#06C755' }); }
+        let p2 = c['公司電話'] || c['Tel'];
+        if (p2) { let tel = String(p2).split(',')[0].replace(/[^\d+]/g, ''); if (tel.startsWith('886')) tel = '0' + tel.substring(3); if (tel) autoExtractedBtns.push({ l: '撥打電話', u: `tel:${tel}`, c: '#06C755' }); }
+        let p3 = c['電子郵件'] || c['Email'];
+        if (p3) { let email = String(p3).split(/[\s,]+/)[0]; if (email.includes('@')) autoExtractedBtns.push({ l: '發送信箱', u: `mailto:${email}`, c: '#06C755' }); }
+        let p4 = c['公司地址'] || c['Address'];
+        if (p4) autoExtractedBtns.push({ l: 'Google 導航', u: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p4.split(',')[0])}`, c: '#06C755' });
+        let p5 = c['公司網址'] || c['Website'];
+        if (p5 && autoExtractedBtns.length < 4) { let wUrl = String(p5).trim(); if (wUrl && !wUrl.startsWith('http')) wUrl = 'https://' + wUrl; if (wUrl) autoExtractedBtns.push({ l: '公司網站', u: wUrl, c: '#06C755' }); }
+        autoExtractedBtns = autoExtractedBtns.slice(0, 4);
 
         // 載入 V1 按鈕設定
         const listEl = document.getElementById('ec-btn-list');
         if (listEl) {
             listEl.innerHTML = '';
-            let sBtns = [];
-            if (savedConfig && savedConfig.buttons && savedConfig.buttons.length > 0) {
-                sBtns = savedConfig.buttons;
-            } else {
-                let p1 = c['手機號碼'] || c['Mobile'];
-                if (p1) { let phone = String(p1).split(',')[0].replace(/[^\d+]/g, ''); if (phone.startsWith('886')) phone = '0' + phone.substring(3); if (phone) sBtns.push({ l: '撥打手機', u: `tel:${phone}`, c: '#06C755' }); }
-                let p2 = c['公司電話'] || c['Tel'];
-                if (p2) { let tel = String(p2).split(',')[0].replace(/[^\d+]/g, ''); if (tel.startsWith('886')) tel = '0' + tel.substring(3); if (tel) sBtns.push({ l: '撥打電話', u: `tel:${tel}`, c: '#06C755' }); }
-                let p3 = c['電子郵件'] || c['Email'];
-                if (p3) { let email = String(p3).split(/[\s,]+/)[0]; if (email.includes('@')) sBtns.push({ l: '發送信箱', u: `mailto:${email}`, c: '#06C755' }); }
-                let p4 = c['公司地址'] || c['Address'];
-                if (p4) sBtns.push({ l: 'Google 導航', u: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p4.split(',')[0])}`, c: '#06C755' });
-                let p5 = c['公司網址'] || c['Website'];
-                if (p5 && sBtns.length < 4) { let wUrl = String(p5).trim(); if (wUrl && !wUrl.startsWith('http')) wUrl = 'https://' + wUrl; if (wUrl) sBtns.push({ l: '公司網站', u: wUrl, c: '#06C755' }); }
-                sBtns = sBtns.slice(0, 4);
-            }
+            let sBtns = (savedConfig && savedConfig.buttons && savedConfig.buttons.length > 0) ? savedConfig.buttons : autoExtractedBtns;
 
             for(let i=1; i<=4; i++) {
                 const b = sBtns[i-1] || {l:'', u:'', c:'#06C755'};
@@ -343,8 +348,17 @@ window.openECardGenerator = function() {
         }
 
         // 載入 V2 設定
-        v2Socials = (savedConfig && savedConfig.v2Socials) ? savedConfig.v2Socials : [{type:'LINE', u:'https://line.me'}];
-        v2Bars = (savedConfig && savedConfig.v2Bars) ? savedConfig.v2Bars : [{t:"查看更多", u:"https://line.me"}];
+        v2Socials = (savedConfig && savedConfig.v2Socials && savedConfig.v2Socials.length > 0) ? savedConfig.v2Socials : [{type:'LINE', u:'https://line.me'}];
+        
+        if (savedConfig && savedConfig.v2Bars && savedConfig.v2Bars.length > 0) {
+            v2Bars = savedConfig.v2Bars;
+        } else {
+            // ⭐ V2 也能無縫套用萃取出的聯絡資訊
+            v2Bars = autoExtractedBtns.length > 0 
+                ? autoExtractedBtns.map(b => ({ t: b.l, u: b.u })) 
+                : [{t:"查看更多", u:"https://line.me"}];
+        }
+
         if(typeof window.renderV2SocialUI === 'function') window.renderV2SocialUI();
         if(typeof window.renderV2BarsUI === 'function') window.renderV2BarsUI();
 

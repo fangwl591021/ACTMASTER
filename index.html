@@ -1,4 +1,4 @@
-<!-- Version: v2.2.2 (QQ 擴充版：升級營運儀表板為 100% 對齊原生的「橫向滑動詳細資料表」) -->
+<!-- Version: v2.2.3 (QQ 擴充版：優化營運統計的橫向滑動提示 UX，避免被誤認為按鈕) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -926,7 +926,7 @@
     isProcessing = true; setButtonLoading('detail-modal-join-btn', true);
     try {
       await fetchAPI('joinActivity', { userId: userProfile.userId, activityName: name, batchName: batchName, price: price });
-      sessionStorage.removeItem('getActivityDashboard{}'); // ⭐ QQ: 清除快取，確保資料即時更新
+      sessionStorage.removeItem('getActivityDashboard{}'); 
       if (feeType === '收費' || parseInt(price) > 0) showModal("報名成功", `請完成匯款 NT$ ${price} 後，至「報名紀錄」填寫後五碼。`, "history");
       else showModal("報名成功", `期待活動現場見到您！`, "activities");
     } catch(e) { showToast(e.message, true); } finally { isProcessing = false; setButtonLoading('detail-modal-join-btn', false, '我要報名'); }
@@ -973,7 +973,7 @@
     try { 
         await fetchAPI('cancelRegistration', { userId: userProfile.userId, activityName: actName }); 
         sessionStorage.removeItem('getUserHistory{"userId":"' + userProfile.userId + '"}'); 
-        sessionStorage.removeItem('getActivityDashboard{}'); // ⭐ QQ
+        sessionStorage.removeItem('getActivityDashboard{}'); 
         await loadUserHistory(); 
     } catch(e) { showToast("取消失敗", true); } finally { isProcessing = false; setButtonLoading(btn.id, false, '取消'); }
   }
@@ -1037,7 +1037,7 @@
     try { 
         await fetchAPI('toggleStatus', { activityName: activeActivityName, rowId: rowId, currentStatus: currentStatus }); 
         const reg = currentRegistrants.find(r => r.rowId === rowId); if(reg) reg.checkedIn = !currentStatus; 
-        sessionStorage.removeItem('getActivityDashboard{}'); // ⭐ QQ
+        sessionStorage.removeItem('getActivityDashboard{}'); 
         renderAdminRegList(currentRegistrants); 
     } catch(e) { } finally { isProcessing = false; }
   }
@@ -1049,7 +1049,7 @@
     try { 
         await fetchAPI('addWalkIn', { activityName: activeActivityName, name: name }); 
         el.value = ''; const m = document.getElementById('walkin-modal'); if(m) m.classList.add('hidden'); 
-        sessionStorage.removeItem('getActivityDashboard{}'); // ⭐ QQ
+        sessionStorage.removeItem('getActivityDashboard{}'); 
         await openAdminRegistrants(activeActivityName); 
     } catch(e) {} finally { isProcessing = false; setButtonLoading('btn-walkin', false, '新增並簽到'); }
   }
@@ -1084,7 +1084,6 @@
       const m = document.getElementById('qr-scanner-modal'); if(m) m.classList.add('hidden'); 
   }
 
-  // ⭐ QQ 擴充：以「總報名人數」與「繳費狀態」精準渲染的橫向滑動詳細報表
   async function loadAdminStats() {
       const container = document.getElementById('admin-stats-container');
       if(!container) return;
@@ -1148,12 +1147,12 @@
             </div>
           `;
 
-          // ⭐ QQ 擴充：完美無框的滑動式詳細營運報表
+          // ⭐ QQ 優化 UX：將文字標籤改為更明確的圖示與指示，降低誤認按鈕的機率
           html += `
             <div class="mt-6 mx-1">
                 <div class="flex justify-between items-end mb-3 pl-1">
                     <h3 class="text-[15px] font-extrabold text-slate-800 flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px] text-blue-500 icon-filled">analytics</span> 詳細營運報表</h3>
-                    <span class="text-[11px] text-slate-400 font-bold bg-slate-100 px-2 py-1 rounded-md animate-pulse">👉 左右滑動</span>
+                    <span class="text-[11px] text-slate-400 font-medium flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">swipe</span> 在表格上左右滑動</span>
                 </div>
                 <div class="bg-white rounded-[1.5rem] shadow-sm border border-slate-100 overflow-hidden relative">
                     <div class="overflow-x-auto hide-scrollbar">

@@ -1,4 +1,4 @@
-<!-- Version: v2.3.1 -->
+<!-- Version: v2.4.0 (QQ 系統加速版：配合 initApp 達成前端零延遲載入) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -455,6 +455,7 @@
       const newStatus = await fetchAPI('toggleActivityStatus', { activityName: actName });
       showToast(`✅ 活動已切換為：${newStatus}`);
       sessionStorage.removeItem('getActivityDashboard{}'); 
+      currentActivities = []; // QQ：清空暫存強制抓取最新資料
       await loadAdminActivities(); 
     } catch(e) {
       showToast("狀態切換失敗: " + e.message, true);
@@ -480,13 +481,26 @@
       if(document.getElementById('user-profile-badge')) document.getElementById('user-profile-badge').classList.remove('hidden');
       isAdmin = ADMIN_IDS.includes(userProfile.userId);
       
-      const res = await fetchAPI('checkUser', { userId: userProfile.userId });
-      isRegistered = res.isRegistered; registeredInfo = res.info;
+      // ⭐ QQ 系統加速版：使用 initApp 一次性並發拉取所有初始資料
+      const initData = await fetchAPI('initApp', { 
+          userId: userProfile.userId, 
+          reqContacts: true, 
+          reqActivities: true 
+      }, true);
       
+      const res = initData.user || { isRegistered: false };
+      isRegistered = res.isRegistered; 
+      registeredInfo = res.info;
+      globalCardContacts = initData.contacts || [];
+      
+      if (isAdmin) {
+          currentActivities = initData.activities || [];
+      } else {
+          globalPublicActivities = initData.activities || [];
+      }
+
       const targetView = params.get('view');
       const claimCardId = params.get('claimCardId');
-      
-      fetchAPI('getCardContacts').then(data => { globalCardContacts = data || []; }).catch(e => console.log("背景抓取名單失敗", e));
 
       if(document.getElementById('view-loading')) document.getElementById('view-loading').classList.add('hidden'); 
       
@@ -746,7 +760,7 @@
 
       const s1 = document.getElementById('reg-step-1'); if(s1) s1.classList.add('hidden'); 
       const s2 = document.getElementById('reg-step-2'); if(s2) s2.classList.remove('opacity-30', 'pointer-events-none'); 
-    } catch(e) { showToast("註চ্ছ失敗", true); } finally { isProcessing = false; setButtonLoading('btn-reg-step1', false, '儲存並繼續'); }
+    } catch(e) { showToast("註冊失敗", true); } finally { isProcessing = false; setButtonLoading('btn-reg-step1', false, '儲存並繼續'); }
   }
 
   async function openCropper(input, targetMode) {
@@ -794,17 +808,61 @@
   function finishRegistration() { isRegistered = true; registeredInfo = regStep1Data; const nav = document.getElementById('bottom-nav-user'); if(nav) nav.classList.remove('hidden'); switchView('user-activities'); }
 
   let currentCategory = '全部活動';
-  async function reloadActivities() { 
-    if(isProcessing) return; const btn = document.getElementById('btn-refresh-activities'); isProcessing = true;
+  
+  // ⭐ QQ 加速版：全域活動重新抓取機制
+  window.reloadActivities = async function() { 
+    if(isProcessing) return; 
+    const btn = document.getElementById('btn-refresh-activities'); 
+    isProcessing = true;
     if(btn) { btn.classList.add('pointer-events-none', 'opacity-50'); btn.querySelector('span')?.classList.add('refresh-spin'); }
+    
+    sessionStorage.removeItem('getActivityDashboard{}'); 
     sessionStorage.removeItem('getPublicActivities{}'); 
-    try { await loadUserActivities(); } finally { isProcessing = false; if(btn) { btn.classList.remove('pointer-events-none', 'opacity-50'); btn.querySelector('span')?.classList.remove('refresh-spin'); } }
+    currentActivities = [];
+    globalPublicActivities = [];
+    
+    try { 
+        if (isAdmin && isViewModeAdmin) {
+            await loadAdminActivities(); 
+        } else {
+            await loadUserActivities();
+        }
+    } finally { 
+        isProcessing = false; 
+        if(btn) { btn.classList.remove('pointer-events-none', 'opacity-50'); btn.querySelector('span')?.classList.remove('refresh-spin'); } 
+    }
+  }
+
+  async function loadAdminActivities() { 
+    const list = document.getElementById('admin-activity-list-container'); if(!list) return;
+    
+    // ⭐ QQ 加速版：利用 initApp 或 快取直接渲染
+    if (currentActivities && currentActivities.length > 0) {
+        renderActivityList(currentActivities, 'admin');
+        return;
+    }
+    
+    list.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>'; 
+    try { 
+        currentActivities = await fetchAPI('getActivityDashboard', {}, true); 
+        renderActivityList(currentActivities, 'admin'); 
+    } catch (e) { 
+        list.innerHTML = `<p class="text-center text-red-400 font-bold py-10">載入失敗</p>`; 
+    }
   }
 
   async function loadUserActivities() {
     const container = document.getElementById('user-activities-container'); if(!container) return;
     container.className = 'grid grid-cols-2 gap-3 px-1';
-    if (!globalPublicActivities.length) renderActivitiesSkeleton();
+    
+    // ⭐ QQ 加速版：利用 initApp 或 快取直接渲染
+    if (globalPublicActivities && globalPublicActivities.length > 0) {
+        renderCategories(); 
+        filterActivities();
+        return;
+    }
+    
+    renderActivitiesSkeleton();
     try {
       const data = await fetchAPI('getPublicActivities', {}, true); globalPublicActivities = data || [];
       if (!globalPublicActivities.length) { container.className = 'block px-1'; container.innerHTML = '<div class="text-center py-16 bg-white rounded-[2rem] shadow-sm text-slate-400 font-bold w-full">目前無開放的活動</div>'; return; }
@@ -859,7 +917,7 @@
         <div class="bg-white rounded-[2rem] shadow-sm p-6 mx-1">
           <div class="flex justify-between items-start mb-5"><div><span class="text-[11px] font-bold text-primary bg-primary-light px-2.5 py-0.5 rounded-md uppercase tracking-widest mb-2 inline-block">${a.type}</span><h3 class="font-extrabold text-[18px] text-slate-800 leading-tight">${a.name}</h3></div><div class="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl"><span class="material-symbols-outlined text-[16px] text-slate-400">group</span><span class="font-bold text-[15px] text-slate-700">${a.total}</span></div></div>
           <div class="grid grid-cols-3 gap-3 bg-slate-50 rounded-2xl p-4 mb-5"><div class="text-center"><p class="text-[11px] text-slate-500 font-bold mb-0.5">狀態</p><p class="font-bold text-[13px] ${a.status==='上架'?'text-emerald-500':'text-slate-500'}">${a.status}</p></div><div class="text-center border-l border-slate-200"><p class="text-[11px] text-slate-500 font-bold mb-0.5">已到</p><p class="font-bold text-[13px] text-primary">${a.attended}</p></div><div class="text-center border-l border-slate-200"><p class="text-[11px] text-slate-500 font-bold mb-0.5">取消</p><p class="font-bold text-[13px] text-error">${a.cancelled}</p></div></div>
-          <div class="flex gap-3"><button onclick="toggleActivityStatus('${safeName}')" class="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl font-bold text-[14px] active:scale-95 transition-all">${a.status==='上架'?'下架':'上架'}</button><button onclick="openAdminRegistrants('${safeName}')" class="flex-1 py-3 bg-slate-800 text-white rounded-xl font-bold text-[14px] shadow-sm active:scale-95 transition-all">名單核銷</button></div>
+          <div class="flex gap-3"><button onclick="window.toggleActivityStatus('${safeName}')" class="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl font-bold text-[14px] active:scale-95 transition-all">${a.status==='上架'?'下架':'上架'}</button><button onclick="openAdminRegistrants('${safeName}')" class="flex-1 py-3 bg-slate-800 text-white rounded-xl font-bold text-[14px] shadow-sm active:scale-95 transition-all">名單核銷</button></div>
         </div>`;
       }
     });
@@ -994,12 +1052,6 @@
     try { await fetchAPI('updateUser', p); registeredInfo = p; checkMyCardEntry(); showToast("儲存成功"); } catch(e) { showToast("更新失敗", true); } finally { isProcessing = false; setButtonLoading('btn-save-profile', false, '儲存設定'); }
   }
 
-  async function loadAdminActivities() { 
-    const list = document.getElementById('admin-activity-list-container'); if(!list) return;
-    list.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>'; 
-    try { currentActivities = await fetchAPI('getActivityDashboard', {}, true); renderActivityList(currentActivities, 'admin'); } catch (e) { list.innerHTML = `<p class="text-center text-red-400 font-bold py-10">載入失敗</p>`; }
-  }
-
   async function openAdminRegistrants(actName) {
     activeActivityName = actName; const tEl = document.getElementById('admin-reg-title'); if(tEl) tEl.innerText = actName; 
     const list = document.getElementById('admin-reg-list'); if(!list) return;
@@ -1091,7 +1143,9 @@
       container.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>';
       
       try {
-          currentActivities = await fetchAPI('getActivityDashboard', {}, true);
+          if (!currentActivities || currentActivities.length === 0) {
+              currentActivities = await fetchAPI('getActivityDashboard', {}, true);
+          }
           
           let totalRevenue = 0;
           let totalRegistrants = 0; 

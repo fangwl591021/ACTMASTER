@@ -1,4 +1,4 @@
-<!-- Version: v2.6.0 (QQ 體驗升級版：將通訊錄改為折疊收納設計，並將名片入口置頂) -->
+<!-- Version: v2.6.1 (QQ 修復版：解除名片上傳裁切器比例限制，同步最新 iOS 防呆機制) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -56,7 +56,6 @@
 
     .btn-secondary { @apply w-full py-4 bg-slate-200 text-slate-700 rounded-2xl font-bold text-[16px] active:scale-[0.98] transition-transform flex items-center justify-center gap-2; }
     
-    /* 統一乾淨的導航樣式 (Admin/User 共用) */
     .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-slate-400 h-full; min-width: 48px;}
     .nav-btn .icon-box { @apply px-4 py-1.5 rounded-2xl transition-all flex items-center justify-center mb-0.5; }
     .nav-active { @apply text-slate-800 font-bold; }
@@ -159,7 +158,6 @@
     <!-- 個人資料與專屬名片入口 -->
     <div id="view-user-profile" class="hidden animate-in fade-in pt-2 pb-10 space-y-4">
       
-      <!-- ⭐ QQ 體驗升級：將名片入口置頂，避免被埋沒 -->
       <div id="my-card-entry" class="mb-5 bg-[#1e293b] rounded-[2rem] p-6 text-white shadow-lg flex justify-between items-center relative overflow-hidden cursor-pointer active:scale-[0.98] transition-transform hidden">
           <div class="absolute -right-4 -top-4 opacity-10"><span class="material-symbols-outlined text-[120px]">contact_mail</span></div>
           <div class="relative z-10 w-full pr-4" id="my-card-info"></div>
@@ -172,7 +170,6 @@
 
       <h2 class="text-[20px] font-extrabold text-slate-800 tracking-tight pl-1 mb-2">基本資料設定</h2>
       
-      <!-- ⭐ QQ 體驗升級：改用折疊式表單，避免一開始佔用過大空間 -->
       <div class="bg-white p-5 rounded-[2rem] shadow-sm border border-slate-100 transition-all">
           <div class="flex justify-between items-center cursor-pointer select-none active:opacity-70 transition-opacity" onclick="toggleProfileForm()">
               <div class="flex items-center gap-3">
@@ -263,7 +260,6 @@
 
   </main>
 
-  <!-- User 導航 -->
   <nav id="bottom-nav-user" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl flex justify-evenly items-center px-1 py-2 z-40 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.03)] left-1/2 -translate-x-1/2 h-[76px] rounded-t-3xl border-t border-slate-100">
     <button onclick="switchView('user-activities')" id="nav-user-activities" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">explore</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">探索</span></button>
     <button onclick="window.location.href='fate.html'" id="nav-user-fate" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">psychology</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">配對</span></button>
@@ -271,7 +267,6 @@
     <button onclick="switchView('user-profile')" id="nav-user-profile" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">person</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">設定</span></button>
   </nav>
 
-  <!-- Admin 導航 (回歸白底無框原生風格) -->
   <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl flex justify-evenly items-center px-1 py-2 z-40 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.03)] left-1/2 -translate-x-1/2 h-[76px] rounded-t-3xl border-t border-slate-100">
     <button onclick="switchView('admin-activities')" id="nav-admin-activities" class="nav-btn nav-active"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">fact_check</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">核銷</span></button>
     <button onclick="window.location.href='active.html'" id="nav-admin-create" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">add_circle</span></div><span class="text-[10px] font-bold tracking-wide mt-0.5">建立</span></button>
@@ -656,7 +651,6 @@
     else if (view === 'user-history') loadUserHistory();
   }
 
-  // ⭐ QQ 新增：控制折疊表單的展開與收合
   window.toggleProfileForm = function(forceOpen = false) {
       const body = document.getElementById('profile-form-body');
       const chevron = document.getElementById('profile-chevron');
@@ -804,25 +798,49 @@
     } catch(e) { showToast("註冊失敗", true); } finally { isProcessing = false; setButtonLoading('btn-reg-step1', false, '儲存並繼續'); }
   }
 
+  // ⭐ QQ 修復版：解除名片裁切器比例限制 (設為 NaN) 且加入 onload 防呆
   window.openCropper = async function(input, targetMode) {
     const file = input.files[0]; if (!file) return; currentCropTarget = targetMode;
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = document.getElementById('cropper-image'); if(!img) return;
-      img.src = e.target.result; img.style.opacity = '0';
-      const m = document.getElementById('section-image-cropper'); if(m) m.classList.remove('hidden');
-      if (cropperInstance) cropperInstance.destroy();
-      setTimeout(() => { img.style.opacity = '1'; cropperInstance = new Cropper(img, { aspectRatio: currentCropTarget === 'reg' ? NaN : 4 / 3, viewMode: 1, dragMode: 'move', autoCropArea: 0.9, guides: true, center: true, highlight: false }); }, 100);
+      img.onload = () => {
+          const m = document.getElementById('section-image-cropper'); if(m) m.classList.remove('hidden');
+          if (cropperInstance) cropperInstance.destroy();
+          img.style.opacity = '1';
+          
+          // 強制設定 aspectRatio: NaN 讓名片裁切可以自由拉伸
+          cropperInstance = new Cropper(img, { 
+              aspectRatio: NaN, 
+              viewMode: 1, 
+              dragMode: 'move', 
+              autoCropArea: 0.9, 
+              guides: true, 
+              center: true, 
+              highlight: false 
+          });
+      };
+      img.src = e.target.result;
+      input.value = ""; 
     }; 
-    reader.readAsDataURL(file); input.value = ""; 
+    reader.onerror = () => { showToast("讀取圖片失敗，請重試", true); };
+    reader.readAsDataURL(file); 
   }
 
-  window.cancelCrop = function() { if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; } const m = document.getElementById('section-image-cropper'); if(m) m.classList.add('hidden'); }
+  window.cancelCrop = function() { 
+      if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; } 
+      const m = document.getElementById('section-image-cropper'); if(m) m.classList.add('hidden'); 
+      const img = document.getElementById('cropper-image'); if(img) { img.src = ''; img.style.opacity = '0'; }
+  }
 
   window.confirmCrop = function() { 
     if (!cropperInstance) return; 
-    let quality = 0.8; let base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1000, maxHeight: 1000 }).toDataURL('image/webp', quality); 
-    while (base64.length > 40000 && quality > 0.1) { quality -= 0.1; base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1000, maxHeight: 1000 }).toDataURL('image/webp', quality); }
+    let quality = 0.8; 
+    let base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1200, maxHeight: 1200 }).toDataURL('image/jpeg', quality); 
+    while (base64.length > 400000 && quality > 0.1) { 
+        quality -= 0.1; 
+        base64 = cropperInstance.getCroppedCanvas({ maxWidth: 1200, maxHeight: 1200 }).toDataURL('image/jpeg', quality); 
+    }
     cancelCrop(); 
     if (currentCropTarget === 'reg') { regCompressedBase64 = base64; recognizeAndSaveRegCard(); } else if (currentCropTarget === 'profile') { regCompressedBase64 = base64; recognizeAndSaveProfileCard(); }
   }
@@ -1133,7 +1151,7 @@
         registeredInfo = p; 
         checkMyCardEntry(); 
         showToast("儲存成功"); 
-        window.toggleProfileForm(); // 儲存成功後自動收合
+        window.toggleProfileForm(); 
     } catch(e) { 
         showToast("更新失敗: " + e.message, true); 
     } finally { 

@@ -618,8 +618,11 @@ window.openCropper = async function(input, targetMode) {
           if (cropperInstance) cropperInstance.destroy();
           img.style.opacity = '1';
           
+          // ⭐ QQ 擴充：若為 V2 大頭貼，強制鎖定 1:1 裁切比例
+          const cropRatio = currentCropTarget === 'v2logo' ? 1 : NaN;
+          
           cropperInstance = new Cropper(img, { 
-              aspectRatio: NaN, 
+              aspectRatio: cropRatio, 
               viewMode: 1, 
               dragMode: 'move', 
               autoCropArea: 0.9, 
@@ -659,13 +662,14 @@ window.confirmCrop = async function() {
     }
     window.cancelCrop(); 
     
-    if (currentCropTarget === 'ecard') {
+    // ⭐ QQ 擴充支援 v2logo 的本地預覽與上傳
+    if (currentCropTarget === 'ecard' || currentCropTarget === 'v2logo') {
       const btn = document.getElementById('btn-check-format'); 
       const originalHtml = btn ? btn.innerHTML : '';
       if(btn) { btn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin">refresh</span> 上傳中'; btn.classList.add('pointer-events-none'); }
       
       window.optimisticBase64 = base64;
-      if (typeof window.updateECardPreview === 'function') window.updateECardPreview(base64);
+      if (typeof window.updateECardPreview === 'function') window.updateECardPreview(base64, currentCropTarget);
 
       try {
           window.showToast("圖片上傳中...", false);
@@ -673,8 +677,11 @@ window.confirmCrop = async function() {
           
           if (!url || !url.startsWith('http')) throw new Error("伺服器無法回傳有效網址");
 
-          const imgInput = document.getElementById('ec-img-input');
+          // 判斷是寫入 V1 封面還是 V2 標誌
+          const inputId = currentCropTarget === 'v2logo' ? 'ec-v2-logo-url' : 'ec-img-input';
+          const imgInput = document.getElementById(inputId);
           if(imgInput) imgInput.value = url;
+          
           window.optimisticImageUrl = url; 
           
           window.showToast("✅ 圖片上傳成功");

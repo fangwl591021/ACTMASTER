@@ -1,4 +1,4 @@
-<!-- Version: v2.3.0 (QQ 擴充版：導入深色 Admin 導航列，極致區分使用者與管理員模式) -->
+<!-- Version: v2.3.1 -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -592,7 +592,6 @@
     if (isViewModeAdmin) switchView('admin-activities'); else switchView(isRegistered ? 'user-activities' : 'user-register');
   }
 
-  // ⭐ QQ 修復：JS 套用深色背景特定的 admin-nav-active 樣式
   function switchView(view) {
     ['view-loading', 'view-user-register', 'view-user-activities', 'view-user-profile', 'view-user-history', 'view-admin-activities', 'view-admin-stats', 'view-admin-crm', 'view-admin-settings'].forEach(v => { const el = document.getElementById(v); if(el) el.classList.add('hidden'); });
     const activeEl = document.getElementById(`view-${view}`); if (activeEl) activeEl.classList.remove('hidden');
@@ -747,7 +746,7 @@
 
       const s1 = document.getElementById('reg-step-1'); if(s1) s1.classList.add('hidden'); 
       const s2 = document.getElementById('reg-step-2'); if(s2) s2.classList.remove('opacity-30', 'pointer-events-none'); 
-    } catch(e) { showToast("註冊失敗", true); } finally { isProcessing = false; setButtonLoading('btn-reg-step1', false, '儲存並繼續'); }
+    } catch(e) { showToast("註চ্ছ失敗", true); } finally { isProcessing = false; setButtonLoading('btn-reg-step1', false, '儲存並繼續'); }
   }
 
   async function openCropper(input, targetMode) {

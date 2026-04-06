@@ -1,6 +1,6 @@
 /**
  * card-ecard.js
- * Version: v20260405_1500 (QQ 擴充版：加入撥動開關即刻自動存檔功能 togglePrivacyAutoSave)
+ * Version: v20260406_1100 (QQ 終極防禦版：數位名片編輯器一併夾帶防飄移驗證)
  */
 
 window.toggleECardType = function(type) {
@@ -583,7 +583,13 @@ window.saveECardConfig = async function(isSilent = false) {
   
     try {
       if (typeof window.fetchAPI === 'function') {
-         await window.fetchAPI('updateECardConfig', { rowId: currentActiveCard.rowId, config: config }, true);
+         // ⭐ QQ 終極防護：送出時夾帶驗證資訊
+         await window.fetchAPI('updateECardConfig', { 
+             rowId: currentActiveCard.rowId, 
+             targetVerifyUid: currentActiveCard['LINE ID'] || currentActiveCard.userId || '',
+             targetVerifyName: currentActiveCard['姓名'] || currentActiveCard['Name'] || '',
+             config: config 
+         }, true);
       }
       currentActiveCard['自訂名片設定'] = JSON.stringify(config); 
       if(config.imgUrl) currentActiveCard['名片圖檔'] = config.imgUrl; 
@@ -599,7 +605,6 @@ window.saveECardConfig = async function(isSilent = false) {
     return config;
 }
 
-// ⭐ QQ 擴充：隱私開關撥動即時觸發無聲存檔
 window.togglePrivacyAutoSave = async function() {
     const isPublicEl = document.getElementById('ec-isPublic-input');
     const state = isPublicEl ? isPublicEl.checked : true;
@@ -609,7 +614,6 @@ window.togglePrivacyAutoSave = async function() {
     }
     
     if (typeof window.saveECardConfig === 'function') {
-        // 傳入 true 啟動背景無聲存檔 (isSilent = true)
         await window.saveECardConfig(true); 
     }
 };

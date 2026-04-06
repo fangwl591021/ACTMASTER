@@ -1,4 +1,4 @@
-<!-- Version: v2.2.0 (QQ 擴充版：整合「營運統計」儀表板於核銷頁面中，無縫切換不擠壓底部導航) -->
+<!-- Version: v2.2.2 (QQ 擴充版：升級營運儀表板為 100% 對齊原生的「橫向滑動詳細資料表」) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -199,7 +199,6 @@
 
     <!-- 後台：管理核銷 -->
     <div id="view-admin-activities" class="hidden space-y-4 animate-in fade-in pt-2">
-      <!-- ⭐ QQ 擴充：在原本的核銷頁面標題旁，加入「營運統計」入口按鈕 -->
       <div class="flex justify-between items-center pl-1 mb-2">
         <h2 class="text-[24px] font-extrabold text-slate-800 tracking-tight">管理核銷</h2>
         <button onclick="switchView('admin-stats')" class="bg-slate-800 text-white px-4 py-2 rounded-full text-[13px] font-bold flex items-center gap-1.5 active:scale-95 transition-all shadow-sm">
@@ -209,7 +208,7 @@
       <div id="admin-activity-list-container" class="space-y-4"></div>
     </div>
 
-    <!-- ⭐ QQ 擴充：新增營運統計專屬視圖 (依附在管理核銷的層級之下) -->
+    <!-- 後台：營運統計 -->
     <div id="view-admin-stats" class="hidden space-y-4 animate-in slide-in-from-right-8 pt-2">
       <div class="flex items-center gap-3 pl-1 mb-4">
         <button onclick="switchView('admin-activities')" class="w-9 h-9 bg-white rounded-full flex items-center justify-center text-slate-600 shadow-sm active:scale-90 transition-all"><span class="material-symbols-outlined text-[20px]">arrow_back</span></button>
@@ -601,7 +600,6 @@
     
     if (isAdmin && isViewModeAdmin && view.startsWith('admin')) {
       if(navAdmin) navAdmin.classList.remove('hidden');
-      // 將 admin-stats 也視為活動頁面的延伸，保持 nav-admin-activities 高亮
       let highlightView = view === 'admin-stats' ? 'admin-activities' : view;
       ['activities', 'create', 'crm', 'fate', 'cards', 'settings'].forEach(k => { const btn = document.getElementById('nav-admin-'+k); if(btn) btn.className = `nav-btn ${highlightView===('admin-'+k) ? 'nav-active' : ''}`; });
     } else if (isRegistered && (!isAdmin || !isViewModeAdmin) && view.startsWith('user')) {
@@ -928,6 +926,7 @@
     isProcessing = true; setButtonLoading('detail-modal-join-btn', true);
     try {
       await fetchAPI('joinActivity', { userId: userProfile.userId, activityName: name, batchName: batchName, price: price });
+      sessionStorage.removeItem('getActivityDashboard{}'); // ⭐ QQ: 清除快取，確保資料即時更新
       if (feeType === '收費' || parseInt(price) > 0) showModal("報名成功", `請完成匯款 NT$ ${price} 後，至「報名紀錄」填寫後五碼。`, "history");
       else showModal("報名成功", `期待活動現場見到您！`, "activities");
     } catch(e) { showToast(e.message, true); } finally { isProcessing = false; setButtonLoading('detail-modal-join-btn', false, '我要報名'); }
@@ -971,7 +970,12 @@
 
   async function userCancelRegistration(btn, actName) { 
     if(isProcessing) return; if(!confirm(`確定要取消？`)) return; isProcessing = true; setButtonLoading(btn.id, true);
-    try { await fetchAPI('cancelRegistration', { userId: userProfile.userId, activityName: actName }); sessionStorage.removeItem('getUserHistory{"userId":"' + userProfile.userId + '"}'); await loadUserHistory(); } catch(e) { showToast("取消失敗", true); } finally { isProcessing = false; setButtonLoading(btn.id, false, '取消'); }
+    try { 
+        await fetchAPI('cancelRegistration', { userId: userProfile.userId, activityName: actName }); 
+        sessionStorage.removeItem('getUserHistory{"userId":"' + userProfile.userId + '"}'); 
+        sessionStorage.removeItem('getActivityDashboard{}'); // ⭐ QQ
+        await loadUserHistory(); 
+    } catch(e) { showToast("取消失敗", true); } finally { isProcessing = false; setButtonLoading(btn.id, false, '取消'); }
   }
 
   function populateUserProfile() { 
@@ -1030,14 +1034,24 @@
 
   window.toggleCheckIn = async function(btn, rowId, currentStatus) { 
     if(isProcessing) return; isProcessing = true; setButtonLoading(btn.id, true);
-    try { await fetchAPI('toggleStatus', { activityName: activeActivityName, rowId: rowId, currentStatus: currentStatus }); const reg = currentRegistrants.find(r => r.rowId === rowId); if(reg) reg.checkedIn = !currentStatus; renderAdminRegList(currentRegistrants); } catch(e) { } finally { isProcessing = false; }
+    try { 
+        await fetchAPI('toggleStatus', { activityName: activeActivityName, rowId: rowId, currentStatus: currentStatus }); 
+        const reg = currentRegistrants.find(r => r.rowId === rowId); if(reg) reg.checkedIn = !currentStatus; 
+        sessionStorage.removeItem('getActivityDashboard{}'); // ⭐ QQ
+        renderAdminRegList(currentRegistrants); 
+    } catch(e) { } finally { isProcessing = false; }
   }
 
   window.updatePayStatus = async function(rowId, val) { try { await fetchAPI('updateCellStatus', { activityName: activeActivityName, rowId: rowId, colName: '繳費', val: val }); const reg = currentRegistrants.find(r => r.rowId === rowId); if(reg) reg.payStatus = val; } catch(e) {} }
   
   window.submitWalkIn = async function() { 
     if(isProcessing) return; const el = document.getElementById('f-walkin-name'); if(!el) return; const name = el.value; if(!name) return; isProcessing = true; setButtonLoading('btn-walkin', true);
-    try { await fetchAPI('addWalkIn', { activityName: activeActivityName, name: name }); el.value = ''; const m = document.getElementById('walkin-modal'); if(m) m.classList.add('hidden'); await openAdminRegistrants(activeActivityName); } catch(e) {} finally { isProcessing = false; setButtonLoading('btn-walkin', false, '新增並簽到'); }
+    try { 
+        await fetchAPI('addWalkIn', { activityName: activeActivityName, name: name }); 
+        el.value = ''; const m = document.getElementById('walkin-modal'); if(m) m.classList.add('hidden'); 
+        sessionStorage.removeItem('getActivityDashboard{}'); // ⭐ QQ
+        await openAdminRegistrants(activeActivityName); 
+    } catch(e) {} finally { isProcessing = false; setButtonLoading('btn-walkin', false, '新增並簽到'); }
   }
 
   window.startScanner = async function() {
@@ -1070,7 +1084,7 @@
       const m = document.getElementById('qr-scanner-modal'); if(m) m.classList.add('hidden'); 
   }
 
-  // ⭐ QQ 擴充：計算並渲染營運統計資料 (整合至單一頁面內)
+  // ⭐ QQ 擴充：以「總報名人數」與「繳費狀態」精準渲染的橫向滑動詳細報表
   async function loadAdminStats() {
       const container = document.getElementById('admin-stats-container');
       if(!container) return;
@@ -1078,39 +1092,34 @@
       container.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>';
       
       try {
-          if (!currentActivities || currentActivities.length === 0) {
-             currentActivities = await fetchAPI('getActivityDashboard', {}, true);
-          }
+          currentActivities = await fetchAPI('getActivityDashboard', {}, true);
           
           let totalRevenue = 0;
-          let totalAttendees = 0;
+          let totalRegistrants = 0; 
           let activeEventCount = 0;
           
           let performanceData = [];
 
           currentActivities.forEach(act => {
              if (act.status === '上架') activeEventCount++;
-             const attended = act.attended || 0;
-             totalAttendees += attended;
+             
+             const total = act.total || 0;
+             totalRegistrants += total;
              
              let rev = 0;
              if (act.feeType === '收費') {
                  let price = parseInt(String(act.price).replace(/\D/g, '')) || 0;
-                 rev = price * attended;
+                 rev = price * total; 
                  totalRevenue += rev;
              }
              
              performanceData.push({
                  name: act.name,
                  revenue: rev,
-                 attended: attended,
+                 count: total, 
                  type: act.type
              });
           });
-          
-          // 依營收、人次排序
-          performanceData.sort((a, b) => b.revenue - a.revenue || b.attended - a.attended);
-          const topEvents = performanceData.slice(0, 5);
 
           const formatCurrency = (num) => new Intl.NumberFormat('en-US').format(num);
 
@@ -1120,16 +1129,16 @@
                 <div class="bg-white rounded-[1.5rem] p-5 shadow-sm border border-slate-100 flex flex-col justify-center">
                     <div class="flex items-center gap-1.5 mb-2 text-primary">
                         <span class="material-symbols-outlined text-[18px]">payments</span>
-                        <span class="text-[12px] font-bold">總營收</span>
+                        <span class="text-[12px] font-bold">預估總營收</span>
                     </div>
                     <div class="text-[24px] font-black text-slate-800 tracking-tight">NT$ ${formatCurrency(totalRevenue)}</div>
                 </div>
                 <div class="bg-white rounded-[1.5rem] p-5 shadow-sm border border-slate-100 flex flex-col justify-center">
                     <div class="flex items-center gap-1.5 mb-2 text-blue-500">
                         <span class="material-symbols-outlined text-[18px]">how_to_reg</span>
-                        <span class="text-[12px] font-bold">總簽到人次</span>
+                        <span class="text-[12px] font-bold">總報名人數</span>
                     </div>
-                    <div class="text-[24px] font-black text-slate-800 tracking-tight">${formatCurrency(totalAttendees)} <span class="text-[12px] text-slate-400 font-bold ml-1">人</span></div>
+                    <div class="text-[24px] font-black text-slate-800 tracking-tight">${formatCurrency(totalRegistrants)} <span class="text-[12px] text-slate-400 font-bold ml-1">人</span></div>
                 </div>
             </div>
             
@@ -1137,29 +1146,65 @@
                 <span class="text-[14px] font-bold text-slate-600 flex items-center gap-2"><span class="material-symbols-outlined text-[18px] text-slate-400">inventory_2</span> 目前上架活動</span>
                 <span class="text-[18px] font-black text-slate-800">${activeEventCount} <span class="text-[12px] text-slate-400 font-bold">檔</span></span>
             </div>
-
-            <!-- 熱門活動排行 -->
-            <div class="mt-4 mx-1">
-                <h3 class="text-[15px] font-extrabold text-slate-800 mb-3 pl-1 flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px] text-amber-500 icon-filled">local_fire_department</span> 營收 / 人氣排行</h3>
-                <div class="bg-white rounded-[2rem] shadow-sm overflow-hidden border border-slate-100">
-                    ${topEvents.length > 0 ? topEvents.map((evt, idx) => `
-                        <div class="p-4 border-b border-slate-50 last:border-0 flex items-center gap-3">
-                            <div class="w-6 h-6 rounded-full ${idx === 0 ? 'bg-amber-100 text-amber-600' : (idx === 1 ? 'bg-slate-200 text-slate-500' : (idx === 2 ? 'bg-orange-100 text-orange-500' : 'bg-slate-50 text-slate-400'))} flex items-center justify-center font-bold text-[12px] shrink-0">
-                                ${idx + 1}
-                            </div>
-                            <div class="flex-1 overflow-hidden">
-                                <h4 class="text-[14px] font-bold text-slate-800 truncate mb-0.5">${evt.name}</h4>
-                                <span class="text-[10px] text-slate-400 font-bold bg-slate-50 px-2 py-0.5 rounded">${evt.type}</span>
-                            </div>
-                            <div class="flex flex-col items-end shrink-0">
-                                <span class="text-[14px] font-black text-primary">NT$ ${formatCurrency(evt.revenue)}</span>
-                                <span class="text-[11px] text-slate-500 font-bold mt-0.5">${evt.attended} 人參與</span>
-                            </div>
-                        </div>
-                    `).join('') : '<div class="p-8 text-center text-slate-400 font-bold text-[13px]">目前尚無成效資料</div>'}
-                </div>
-            </div>
           `;
+
+          // ⭐ QQ 擴充：完美無框的滑動式詳細營運報表
+          html += `
+            <div class="mt-6 mx-1">
+                <div class="flex justify-between items-end mb-3 pl-1">
+                    <h3 class="text-[15px] font-extrabold text-slate-800 flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px] text-blue-500 icon-filled">analytics</span> 詳細營運報表</h3>
+                    <span class="text-[11px] text-slate-400 font-bold bg-slate-100 px-2 py-1 rounded-md animate-pulse">👉 左右滑動</span>
+                </div>
+                <div class="bg-white rounded-[1.5rem] shadow-sm border border-slate-100 overflow-hidden relative">
+                    <div class="overflow-x-auto hide-scrollbar">
+                        <table class="w-full text-left min-w-[750px] whitespace-nowrap">
+                            <thead>
+                                <tr class="bg-slate-50 text-[12px] text-slate-500 border-b border-slate-100">
+                                    <th class="p-4 font-extrabold sticky left-0 bg-slate-50 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">課程名稱</th>
+                                    <th class="p-4 font-bold text-center">報名總數</th>
+                                    <th class="p-4 font-bold text-center">應收總額</th>
+                                    <th class="p-4 font-bold text-center text-orange-500">待付人數</th>
+                                    <th class="p-4 font-bold text-center text-orange-500">待收金額</th>
+                                    <th class="p-4 font-bold text-center text-emerald-500">已付人數</th>
+                                    <th class="p-4 font-bold text-center text-emerald-500">實收金額</th>
+                                    <th class="p-4 font-bold text-center text-red-500">退款/取消</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-[14px]">
+          `;
+
+          currentActivities.forEach(act => {
+              let price = act.feeType === '收費' ? (parseInt(String(act.price).replace(/\D/g, '')) || 0) : 0;
+              let total = act.total || 0;
+              let paid = act.paidCount || 0;
+              let unpaid = act.unpaidCount || 0;
+              let cancelled = act.cancelled || 0;
+
+              let receivable = total * price;
+              let paidAmount = paid * price;
+              let unpaidAmount = unpaid * price;
+              let refundAmount = cancelled * price;
+
+              html += `
+              <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                  <td class="p-4 font-bold text-slate-800 sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
+                      <div class="flex flex-col">
+                          <span>${act.name}</span>
+                          <span class="text-[10px] text-slate-400 font-bold mt-0.5">${act.type}</span>
+                      </div>
+                  </td>
+                  <td class="p-4 text-center font-black text-slate-700">${total}</td>
+                  <td class="p-4 text-center font-black text-slate-700">$${formatCurrency(receivable)}</td>
+                  <td class="p-4 text-center font-black text-orange-500 bg-orange-50/10">${unpaid}</td>
+                  <td class="p-4 text-center font-black text-orange-500 bg-orange-50/10">$${formatCurrency(unpaidAmount)}</td>
+                  <td class="p-4 text-center font-black text-emerald-500 bg-emerald-50/10">${paid}</td>
+                  <td class="p-4 text-center font-black text-emerald-500 bg-emerald-50/10">$${formatCurrency(paidAmount)}</td>
+                  <td class="p-4 text-center font-black text-red-500 bg-red-50/10">${cancelled} <span class="text-[10px] font-normal">($${formatCurrency(refundAmount)})</span></td>
+              </tr>
+              `;
+          });
+
+          html += `</tbody></table></div></div></div>`;
           
           container.innerHTML = html;
       } catch(e) {

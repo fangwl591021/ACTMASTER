@@ -1,4 +1,4 @@
-<!-- Version: v2.2.3 (QQ 擴充版：優化營運統計的橫向滑動提示 UX，避免被誤認為按鈕) -->
+<!-- Version: v2.3.0 (QQ 擴充版：導入深色 Admin 導航列，極致區分使用者與管理員模式) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -592,6 +592,7 @@
     if (isViewModeAdmin) switchView('admin-activities'); else switchView(isRegistered ? 'user-activities' : 'user-register');
   }
 
+  // ⭐ QQ 修復：JS 套用深色背景特定的 admin-nav-active 樣式
   function switchView(view) {
     ['view-loading', 'view-user-register', 'view-user-activities', 'view-user-profile', 'view-user-history', 'view-admin-activities', 'view-admin-stats', 'view-admin-crm', 'view-admin-settings'].forEach(v => { const el = document.getElementById(v); if(el) el.classList.add('hidden'); });
     const activeEl = document.getElementById(`view-${view}`); if (activeEl) activeEl.classList.remove('hidden');
@@ -1123,7 +1124,6 @@
           const formatCurrency = (num) => new Intl.NumberFormat('en-US').format(num);
 
           let html = `
-            <!-- 總覽數據卡片 -->
             <div class="grid grid-cols-2 gap-3 mx-1">
                 <div class="bg-white rounded-[1.5rem] p-5 shadow-sm border border-slate-100 flex flex-col justify-center">
                     <div class="flex items-center gap-1.5 mb-2 text-primary">
@@ -1147,19 +1147,18 @@
             </div>
           `;
 
-          // ⭐ QQ 優化 UX：將文字標籤改為更明確的圖示與指示，降低誤認按鈕的機率
           html += `
             <div class="mt-6 mx-1">
                 <div class="flex justify-between items-end mb-3 pl-1">
                     <h3 class="text-[15px] font-extrabold text-slate-800 flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px] text-blue-500 icon-filled">analytics</span> 詳細營運報表</h3>
                     <span class="text-[11px] text-slate-400 font-medium flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">swipe</span> 在表格上左右滑動</span>
                 </div>
-                <div class="bg-white rounded-[1.5rem] shadow-sm border border-slate-100 overflow-hidden relative">
+                <div class="bg-white rounded-[1.5rem] shadow-sm border border-slate-200 overflow-hidden relative">
                     <div class="overflow-x-auto hide-scrollbar">
-                        <table class="w-full text-left min-w-[750px] whitespace-nowrap">
+                        <table class="w-full text-left min-w-[750px] whitespace-nowrap bg-white">
                             <thead>
-                                <tr class="bg-slate-50 text-[12px] text-slate-500 border-b border-slate-100">
-                                    <th class="p-4 font-extrabold sticky left-0 bg-slate-50 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">課程名稱</th>
+                                <tr class="text-[12px] text-slate-500 border-b border-slate-200 bg-white">
+                                    <th class="p-4 font-extrabold sticky left-0 bg-slate-50 z-10 border-r border-slate-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">課程名稱</th>
                                     <th class="p-4 font-bold text-center">報名總數</th>
                                     <th class="p-4 font-bold text-center">應收總額</th>
                                     <th class="p-4 font-bold text-center text-orange-500">待付人數</th>
@@ -1185,8 +1184,8 @@
               let refundAmount = cancelled * price;
 
               html += `
-              <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                  <td class="p-4 font-bold text-slate-800 sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
+              <tr class="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+                  <td class="p-4 font-bold text-slate-800 sticky left-0 bg-slate-50 z-10 border-r border-slate-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
                       <div class="flex flex-col">
                           <span>${act.name}</span>
                           <span class="text-[10px] text-slate-400 font-bold mt-0.5">${act.type}</span>
@@ -1194,11 +1193,11 @@
                   </td>
                   <td class="p-4 text-center font-black text-slate-700">${total}</td>
                   <td class="p-4 text-center font-black text-slate-700">$${formatCurrency(receivable)}</td>
-                  <td class="p-4 text-center font-black text-orange-500 bg-orange-50/10">${unpaid}</td>
-                  <td class="p-4 text-center font-black text-orange-500 bg-orange-50/10">$${formatCurrency(unpaidAmount)}</td>
-                  <td class="p-4 text-center font-black text-emerald-500 bg-emerald-50/10">${paid}</td>
-                  <td class="p-4 text-center font-black text-emerald-500 bg-emerald-50/10">$${formatCurrency(paidAmount)}</td>
-                  <td class="p-4 text-center font-black text-red-500 bg-red-50/10">${cancelled} <span class="text-[10px] font-normal">($${formatCurrency(refundAmount)})</span></td>
+                  <td class="p-4 text-center font-black text-orange-600 bg-orange-50/40">${unpaid}</td>
+                  <td class="p-4 text-center font-black text-orange-600 bg-orange-50/40">$${formatCurrency(unpaidAmount)}</td>
+                  <td class="p-4 text-center font-black text-emerald-600 bg-emerald-50/40">${paid}</td>
+                  <td class="p-4 text-center font-black text-emerald-600 bg-emerald-50/40">$${formatCurrency(paidAmount)}</td>
+                  <td class="p-4 text-center font-black text-red-600 bg-red-50/40">${cancelled} <span class="text-[10px] font-normal text-red-400">($${formatCurrency(refundAmount)})</span></td>
               </tr>
               `;
           });

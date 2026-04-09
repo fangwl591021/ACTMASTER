@@ -1,6 +1,6 @@
 /**
  * card.js 
- * Version: v20260406_1100 (QQ 終極防禦版：送出修改時一併夾帶驗證欄位，杜絕寫錯行號)
+ * Version: v20260409_1300 (QQ 終極防禦版：修復名片儲存後視覺斷層，實作 Optimistic UI 即時重繪)
  */
 const LIFF_ID = "2009367829-DLtYBDUm"; 
 const WORKER_URL = "https://actmaster.fangwl591021.workers.dev"; 
@@ -342,8 +342,8 @@ window.renderCardPage = function(isReset = false) {
         const isClaimed = !!(c.userId || c['LINE ID'] || c['Line ID'] || c['lineId']);
         const claimBadge = isClaimed ? '<span class="shrink-0 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md text-[11px] font-bold ml-2">已綁定</span>' : '';
         return `
-        <div onclick="if(typeof window.openCardDetailByRowId === 'function') window.openCardDetailByRowId('${c.rowId}')" class="p-5 bg-white flex items-center gap-4 rounded-[2rem] shadow-sm mb-3 cursor-pointer active:scale-[0.98] transition-transform">
-          <div class="w-[56px] h-[56px] shrink-0 rounded-2xl overflow-hidden bg-slate-50 flex items-center justify-center">
+        <div onclick="if(typeof window.openCardDetailByRowId === 'function') window.openCardDetailByRowId('${c.rowId}')" class="p-5 bg-white flex items-center gap-4 rounded-[2rem] shadow-sm mb-3 cursor-pointer active:scale-[0.98] transition-transform border border-slate-100">
+          <div class="w-[56px] h-[56px] shrink-0 rounded-2xl overflow-hidden bg-slate-50 flex items-center justify-center border border-slate-100">
             ${c['名片圖檔'] && c['名片圖檔'] !== '圖片儲存失敗' && c['名片圖檔'] !== '無圖檔' ? `<img src="${window.getDirectImageUrl(c['名片圖檔'])}" class="w-full h-full object-cover">` : `<span class="material-symbols-outlined text-slate-300 text-[28px]">contact_mail</span>`}
           </div>
           <div class="flex-1 overflow-hidden flex flex-col justify-center gap-1">
@@ -367,7 +367,7 @@ window.renderCardPage = function(isReset = false) {
     if (currentPage * PAGE_LIMIT < filteredCards.length) {
         const wrapper = document.getElementById('card-list-wrapper');
         if (wrapper) {
-            wrapper.insertAdjacentHTML('afterend', `<button id="${loadMoreBtnId}" onclick="if(typeof window.loadMoreCards === 'function') window.loadMoreCards()" class="w-full py-4 mt-2 bg-white text-slate-700 font-bold text-[15px] rounded-[2rem] shadow-sm active:scale-95 transition-transform flex justify-center items-center gap-1">顯示更多</button>`);
+            wrapper.insertAdjacentHTML('afterend', `<button id="${loadMoreBtnId}" onclick="if(typeof window.loadMoreCards === 'function') window.loadMoreCards()" class="w-full py-4 mt-2 bg-white text-slate-700 font-bold text-[15px] rounded-[2rem] shadow-sm active:scale-95 transition-transform flex justify-center items-center gap-1 border border-slate-100">顯示更多</button>`);
         }
     }
 }
@@ -540,13 +540,13 @@ window.closeCardEdit = function() {
     if (modal) modal.classList.add('hidden'); 
 }
 
+// ⭐ QQ 終極修復：實作 Optimistic UI 樂觀渲染，解決修改後視覺斷層
 window.submitCardEdit = async function() {
   if (isProcessing || !currentActiveCard) return;
   isProcessing = true;
   const btn = document.getElementById('btn-save-card-edit');
   if (btn) btn.innerText = '儲存中...';
   
-  // ⭐ QQ 終極防護：送出時一併夾帶當初打開名片的 UID 與姓名，讓後端防範「行號飄移」
   let payload = { 
       rowId: currentActiveCard.rowId, 
       targetVerifyUid: currentActiveCard['LINE ID'] || currentActiveCard.userId || '',
@@ -589,9 +589,50 @@ window.submitCardEdit = async function() {
     await window.fetchAPI('updateCard', payload);
     window.showToast("✅ 資料更新成功");
     
+    // 清除快取
     localStorage.removeItem(CACHE_KEY_CONTACTS);
+    
+    // ⭐ 瞬間把新資料塞入目前的記憶體物件中 (Optimistic Update)
+    Object.assign(currentActiveCard, {
+        '姓名': payload.Name,
+        'Name': payload.Name,
+        '英文名/別名': payload.EnglishName,
+        '職稱': payload.Title,
+        '部門': payload.Department,
+        '公司名稱': payload.CompanyName,
+        '統一編號': payload.TaxID,
+        '手機號碼': payload.Mobile ? `'${payload.Mobile}` : "",
+        'Mobile': payload.Mobile,
+        '公司電話': payload.Tel ? `'${payload.Tel}` : "",
+        'Tel': payload.Tel,
+        '分機': payload.Ext,
+        '傳真': payload.Fax,
+        '公司地址': payload.Address,
+        '電子郵件': payload.Email,
+        '公司網址': payload.Website,
+        '社群帳號': payload.SocialMedia,
+        '服務項目/品牌標語': payload.Slogan,
+        '建檔人/備註': payload.Notes,
+        '生日': payload.Birthday
+    });
+    
+    if (payload.Personality && payload.Personality !== '待分析') {
+        currentActiveCard['個性'] = payload.Personality;
+        currentActiveCard['興趣'] = payload.Hobbies;
+        currentActiveCard['財運'] = payload.Wealth;
+        currentActiveCard['健康'] = payload.Health;
+        currentActiveCard['事業'] = payload.Career;
+    }
+
+    // 關閉編輯視窗
     window.closeCardEdit();
+    
+    // ⭐ 強制立刻重繪底下的唯讀 Modal，實現「所見即所得」的零延遲體驗
+    window.openCardDetailByRowId(payload.rowId);
+
+    // 背景靜默拉取最新資料，確保底層列表與資料庫保持同步
     loadCardContacts();
+    
   } catch(err) { 
       window.showToast("更新失敗：" + err.message, true); 
   } finally { 
@@ -618,7 +659,6 @@ window.openCropper = async function(input, targetMode) {
           if (cropperInstance) cropperInstance.destroy();
           img.style.opacity = '1';
           
-          // ⭐ QQ 擴充：若為 V2 大頭貼，強制鎖定 1:1 裁切比例
           const cropRatio = currentCropTarget === 'v2logo' ? 1 : NaN;
           
           cropperInstance = new Cropper(img, { 
@@ -662,7 +702,6 @@ window.confirmCrop = async function() {
     }
     window.cancelCrop(); 
     
-    // ⭐ QQ 擴充支援 v2logo 的本地預覽與上傳
     if (currentCropTarget === 'ecard' || currentCropTarget === 'v2logo') {
       const btn = document.getElementById('btn-check-format'); 
       const originalHtml = btn ? btn.innerHTML : '';
@@ -677,7 +716,6 @@ window.confirmCrop = async function() {
           
           if (!url || !url.startsWith('http')) throw new Error("伺服器無法回傳有效網址");
 
-          // 判斷是寫入 V1 封面還是 V2 標誌
           const inputId = currentCropTarget === 'v2logo' ? 'ec-v2-logo-url' : 'ec-img-input';
           const imgInput = document.getElementById(inputId);
           if(imgInput) imgInput.value = url;

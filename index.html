@@ -1,4 +1,4 @@
-<!-- Version: v2.6.2 (QQ 品牌更新版：品牌名稱全面升級為 LINE商機引擎) -->
+<!-- Version: v2.7.0 (QQ 科技進化版：導入雙軌 NFC 智慧感應報到機制，無縫相容 LINE 生態) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -89,9 +89,9 @@
 
   <main id="main-content" class="flex-1 overflow-y-auto pb-32 pt-20 px-4 space-y-5">
 
-    <div id="view-loading" class="h-full flex flex-col items-center justify-center space-y-4 pb-20 relative">
+    <div id="view-loading" class="h-full flex flex-col items-center justify-center space-y-4 pb-20 relative z-[9999]">
       <div class="w-10 h-10 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
-      <p class="text-slate-500 font-bold tracking-widest text-[13px]">系統載入中</p>
+      <p id="loading-text" class="text-slate-500 font-bold tracking-widest text-[13px]">系統載入中</p>
     </div>
 
     <!-- 註冊畫面 -->
@@ -338,7 +338,11 @@
           <button onclick="closeAdminRegistrants()" class="w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 active:scale-90 transition-transform"><span class="material-symbols-outlined text-[20px]">arrow_drop_down</span></button>
           <h3 id="admin-reg-title" class="text-[18px] font-extrabold text-slate-800 truncate max-w-[180px]">活動名單</h3>
         </div>
-        <button onclick="document.getElementById('qr-scanner-modal').classList.remove('hidden'); startScanner();" class="px-4 py-2 bg-primary-light text-primary rounded-xl font-bold text-[13px] flex items-center gap-1.5 active:scale-95 transition-all"><span class="material-symbols-outlined text-[18px]">qr_code_scanner</span> 掃碼</button>
+        <div class="flex gap-2">
+          <!-- ⭐ QQ 雙軌報到：加入 NFC 實體卡讀取按鈕 (限 Android) -->
+          <button onclick="startNfcScanner()" class="px-3 py-2 bg-blue-50 text-blue-600 rounded-xl font-bold text-[13px] flex items-center gap-1 active:scale-95 transition-all"><span class="material-symbols-outlined text-[18px]">nfc</span> NFC</button>
+          <button onclick="document.getElementById('qr-scanner-modal').classList.remove('hidden'); startScanner();" class="px-3 py-2 bg-primary-light text-primary rounded-xl font-bold text-[13px] flex items-center gap-1 active:scale-95 transition-all"><span class="material-symbols-outlined text-[18px]">qr_code_scanner</span> 掃碼</button>
+        </div>
       </div>
       
       <div class="bg-white px-5 py-4 shrink-0 flex gap-3 border-b border-slate-100 z-10">
@@ -375,7 +379,7 @@
 <!-- 自訂彈窗 -->
 <div id="custom-modal" class="hidden fixed inset-0 z-[9999] flex items-end justify-center bg-black/40 backdrop-blur-sm">
   <div class="bg-white w-full max-w-md rounded-t-[2rem] p-8 shadow-2xl text-center bottom-sheet-up pb-safe">
-    <div class="w-16 h-16 bg-primary-light text-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><span class="material-symbols-outlined text-[32px] icon-filled">info</span></div>
+    <div class="w-16 h-16 bg-primary-light text-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><span class="material-symbols-outlined text-[32px] icon-filled" id="modal-icon">info</span></div>
     <h3 id="modal-title" class="text-[22px] font-extrabold mb-2 text-slate-800 tracking-tight">系統通知</h3>
     <p id="modal-desc" class="text-slate-500 font-medium mb-8 leading-relaxed text-[15px]"></p>
     <button onclick="closeModalAndGo()" class="w-full py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[16px] shadow-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2">我知道了</button>
@@ -388,14 +392,12 @@
   const LIFF_ID = "2009367829-DLtYBDUm"; 
   const WORKER_URL = "https://actmaster.fangwl591021.workers.dev"; 
   
-  // 防止數字輸入框滾動修改
   document.addEventListener('wheel', function(e) { if (document.activeElement.type === 'number') document.activeElement.blur(); }, { passive: true });
 
   let userProfile = null, isAdmin = false, isViewModeAdmin = false, isRegistered = false, registeredInfo = null;
   let globalPublicActivities = [], currentActivities = [], currentRegistrants = [], activeActivityName = '', modalTargetView = '';
   let globalCrmData = [], filteredCrmData = [], globalCardContacts = [], crmPageLimit = 10, currentCrmViewCount = 10, isProcessing = false;
   let regStep1Data = {}, regCompressedBase64 = "", cropperInstance = null, currentCropTarget = '', html5QrcodeScanner = null;
-
   let profileSocials = [];
 
   function showToast(msg, isError = false) {
@@ -423,9 +425,6 @@
 
   const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55", "U8932b891ad24da512afb9c1a6f41567b"]; 
 
-  const loadScript = (src) => new Promise((res, rej) => { if (document.querySelector(`script[src="${src}"]`)) return res(); const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
-  const loadCSS = (href) => new Promise((res, rej) => { if (document.querySelector(`link[href="${href}"]`)) return res(); const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; l.onload = res; l.onerror = rej; document.head.appendChild(l); });
-
   async function fetchAPI(action, payload = {}, useCache = false) {
     const cacheKey = action + JSON.stringify(payload);
     if (useCache) {
@@ -433,15 +432,7 @@
       if (cachedStr) {
         try {
           const cachedData = JSON.parse(cachedStr);
-          fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, payload }) })
-            .then(r => r.text())
-            .then(resText => {
-                try {
-                    const res = JSON.parse(resText);
-                    if (res.success) sessionStorage.setItem(cacheKey, JSON.stringify(res.data));
-                } catch(e) {}
-            })
-            .catch(e => console.log('Cache update failed', e));
+          fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, payload }) }).then(r => r.text()).then(resText => { try { const res = JSON.parse(resText); if (res.success) sessionStorage.setItem(cacheKey, JSON.stringify(res.data)); } catch(e) {} }).catch(e => console.log('Cache update failed', e));
           return cachedData;
         } catch(e) { sessionStorage.removeItem(cacheKey); }
       }
@@ -463,30 +454,10 @@
     }
   }
 
-  window.toggleActivityStatus = async function(actName) {
-    if (isProcessing) return;
-    if (!confirm(`確定要變更「${actName}」的上架狀態嗎？`)) return;
-    isProcessing = true;
-    try {
-      const newStatus = await fetchAPI('toggleActivityStatus', { activityName: actName });
-      showToast(`✅ 活動已切換為：${newStatus}`);
-      sessionStorage.removeItem('getActivityDashboard{}'); 
-      currentActivities = []; 
-      await loadAdminActivities(); 
-    } catch(e) {
-      showToast("狀態切換失敗: " + e.message, true);
-    } finally {
-      isProcessing = false;
-    }
-  };
-
   window.onload = async () => {
     const params = new URLSearchParams(window.location.search);
     const shareCardId = params.get('shareCardId');
-    if (shareCardId) {
-        window.location.replace(`card.html?shareCardId=${shareCardId}`);
-        return;
-    }
+    if (shareCardId) { window.location.replace(`card.html?shareCardId=${shareCardId}`); return; }
 
     try {
       await liff.init({ liffId: LIFF_ID });
@@ -497,22 +468,17 @@
       if(document.getElementById('user-profile-badge')) document.getElementById('user-profile-badge').classList.remove('hidden');
       isAdmin = ADMIN_IDS.includes(userProfile.userId);
       
-      const initData = await fetchAPI('initApp', { 
-          userId: userProfile.userId, 
-          reqContacts: true, 
-          reqActivities: true 
-      }, true);
-      
-      const res = initData.user || { isRegistered: false };
-      isRegistered = res.isRegistered; 
-      registeredInfo = res.info;
-      globalCardContacts = initData.contacts || [];
-      
-      if (isAdmin) {
-          currentActivities = initData.activities || [];
-      } else {
-          globalPublicActivities = initData.activities || [];
+      // ⭐ QQ 雙軌報到：貴賓自助 NFC 感應報到 (URL 觸發)
+      const nfcAct = params.get('nfcAct');
+      if (nfcAct) {
+          await handleNfcSelfCheckIn(nfcAct);
+          return; // 報到流程接管，暫停後續一般初始化
       }
+
+      const initData = await fetchAPI('initApp', { userId: userProfile.userId, reqContacts: true, reqActivities: true }, true);
+      const res = initData.user || { isRegistered: false };
+      isRegistered = res.isRegistered; registeredInfo = res.info; globalCardContacts = initData.contacts || [];
+      if (isAdmin) currentActivities = initData.activities || []; else globalPublicActivities = initData.activities || [];
 
       const targetView = params.get('view');
       const claimCardId = params.get('claimCardId');
@@ -537,14 +503,8 @@
                 const cardData = await fetchAPI('getCardById', { rowId: claimCardId });
                 if (cardData) {
                     if(document.getElementById('reg-name')) document.getElementById('reg-name').value = cardData['姓名'] || userProfile.displayName;
-                    if (cardData['手機號碼']) {
-                        let phoneStr = String(cardData['手機號碼']).replace(/[^\d]/g, '');
-                        if (phoneStr.startsWith('886')) phoneStr = '0' + phoneStr.substring(3);
-                        if(document.getElementById('reg-phone')) document.getElementById('reg-phone').value = phoneStr;
-                    }
-                    if (cardData['公司名稱'] || cardData['服務項目/品牌標語']) {
-                        if(document.getElementById('reg-industry')) document.getElementById('reg-industry').value = cardData['公司名稱'] || cardData['服務項目/品牌標語'] || '';
-                    }
+                    if (cardData['手機號碼']) { let phoneStr = String(cardData['手機號碼']).replace(/[^\d]/g, ''); if (phoneStr.startsWith('886')) phoneStr = '0' + phoneStr.substring(3); if(document.getElementById('reg-phone')) document.getElementById('reg-phone').value = phoneStr; }
+                    if (cardData['公司名稱'] || cardData['服務項目/品牌標語']) { if(document.getElementById('reg-industry')) document.getElementById('reg-industry').value = cardData['公司名稱'] || cardData['服務項目/品牌標語'] || ''; }
                 }
              } catch(e) { }
           }
@@ -553,15 +513,99 @@
     } catch (err) { 
       if(document.getElementById('view-loading')) document.getElementById('view-loading').classList.add('hidden');
       const container = document.getElementById('main-content');
-      if (container) {
-          container.innerHTML = `
-          <div class="bg-red-50 border border-red-200 rounded-[2rem] p-6 mx-4 mt-10 text-left shadow-sm">
-              <div class="flex items-center gap-2 mb-4 text-red-700"><span class="material-symbols-outlined text-[32px]">error</span><h3 class="font-bold text-[18px]">載入中斷</h3></div>
-              <div class="bg-white p-4 rounded-xl border border-red-100 text-red-600 text-[13px] font-mono break-all mb-4 shadow-sm">${err.message}</div>
-          </div>`;
-      }
+      if (container) container.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-[2rem] p-6 mx-4 mt-10 text-left shadow-sm"><div class="flex items-center gap-2 mb-4 text-red-700"><span class="material-symbols-outlined text-[32px]">error</span><h3 class="font-bold text-[18px]">載入中斷</h3></div><div class="bg-white p-4 rounded-xl border border-red-100 text-red-600 text-[13px] font-mono break-all mb-4 shadow-sm">${err.message}</div></div>`;
     }
   };
+
+  // ⭐ QQ 雙軌報到：處理貴賓點擊 NFC Tag 的自動報到邏輯
+  async function handleNfcSelfCheckIn(actName) {
+      document.getElementById('view-loading').classList.remove('hidden');
+      const loadText = document.getElementById('loading-text');
+      if (loadText) loadText.innerText = "NFC 快速報到中...";
+      
+      try {
+          const res = await fetchAPI('selfCheckIn', { userId: userProfile.userId, activityName: actName });
+          document.getElementById('view-loading').classList.add('hidden');
+          
+          if (res.already) {
+              showModal('已經報到囉', `您已完成「${actName}」的報到手續，請直接入場。`, 'history');
+              document.getElementById('modal-icon').innerText = 'check_circle';
+          } else {
+              showModal('✅ 報到成功', `歡迎參加「${actName}」！\n祝您活動順心。`, 'history');
+              document.getElementById('modal-icon').innerText = 'celebration';
+          }
+      } catch(e) {
+          document.getElementById('view-loading').classList.add('hidden');
+          showModal('報到失敗', e.message, 'activities');
+          document.getElementById('modal-icon').innerText = 'error';
+      }
+  }
+
+  // 共用的報到查驗邏輯 (QR Code 與 Admin NFC 皆呼叫此處)
+  window.processScannedUid = async function(uid) {
+      window.stopScanner(); 
+      try { 
+        const uRes = await fetchAPI('checkUser', { userId: uid }); 
+        if(!uRes.isRegistered) { showToast('該用戶尚未註冊', true); return; }
+        const name = uRes.info.name; 
+        const reg = currentRegistrants.find(r => r['姓名'] === name); 
+        
+        if(reg) { 
+            if(!reg.checkedIn) { 
+                await fetchAPI('toggleStatus', { activityName: activeActivityName, rowId: reg.rowId, currentStatus: false }); 
+                openAdminRegistrants(activeActivityName); 
+                showToast(`✅ ${name} 簽到成功`); 
+            } else {
+                showToast(`⚠️ ${name} 已簽到過`);
+            }
+        } else { 
+            if(confirm(`【${name}】未報名此活動，是否現場報名並簽到？`)) { 
+                await fetchAPI('addWalkIn', { activityName: activeActivityName, name: name }); 
+                openAdminRegistrants(activeActivityName); 
+            } 
+        } 
+      } catch(e) { showToast('感應失敗：' + e.message, true); } 
+  }
+
+  // ⭐ QQ 雙軌報到：啟動管理員專屬 Web NFC 掃描 (限 Android Chrome)
+  window.startNfcScanner = async function() {
+      if (!('NDEFReader' in window)) {
+          alert('⚠️ 您的裝置或瀏覽器不支援 NFC 感應。\n\n※ iOS Safari 與 LINE 內部瀏覽器目前不支援此功能，若要使用請使用 Android 手機並以 Chrome 瀏覽器開啟。');
+          return;
+      }
+      try {
+          const ndef = new NDEFReader();
+          await ndef.scan();
+          showToast('📱 NFC 啟動成功！請將貴賓的名牌靠近手機背面...', false);
+          
+          ndef.onreading = event => {
+              const message = event.message;
+              for (const record of message.records) {
+                  if (record.recordType === "text") {
+                      const textDecoder = new TextDecoder(record.encoding);
+                      const uid = textDecoder.decode(record.data);
+                      if(uid) {
+                          showToast('讀取到卡片，正在核銷...', false);
+                          window.processScannedUid(uid);
+                          return; // 讀到一筆就跳出
+                      }
+                  }
+              }
+          };
+      } catch (error) {
+          showToast('NFC 權限不足或啟動失敗', true);
+      }
+  }
+
+  window.startScanner = async function() {
+    if (html5QrcodeScanner) { html5QrcodeScanner.clear().catch(e=>{}); html5QrcodeScanner = null; }
+    const m = document.getElementById('qr-scanner-modal'); if(m) m.classList.remove('hidden');
+    if (typeof Html5Qrcode === 'undefined') return;
+    html5QrcodeScanner = new Html5Qrcode("qr-reader");
+    html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
+      async (decodedText) => { window.processScannedUid(decodedText); }, () => {}
+    ).catch(err => { window.stopScanner(); });
+  }
 
   function formatTime(isoString) {
     if(!isoString || String(isoString).trim() === '') return '時間未定'; 
@@ -606,9 +650,7 @@
                   updatePayload.Birthday = bday;
                   try { const newTags = await fetchAPI('calculateFateTags', { Name: updatePayload.Name, Mobile: updatePayload.Mobile, Birthday: bday }); Object.assign(updatePayload, newTags); } catch(e) {}
               }
-
               await fetchAPI('updateCard', updatePayload);
-
               globalCardContacts = await fetchAPI('getCardContacts', {}, false);
               if (!document.getElementById('view-user-profile').classList.contains('hidden')) checkMyCardEntry();
           }
@@ -655,7 +697,6 @@
       const body = document.getElementById('profile-form-body');
       const chevron = document.getElementById('profile-chevron');
       if (!body || !chevron) return;
-      
       if (forceOpen || body.classList.contains('hidden')) {
           body.classList.remove('hidden');
           chevron.style.transform = 'rotate(180deg)';
@@ -778,7 +819,6 @@
     
     try { 
       await fetchAPI('registerUser', p); regStep1Data = p; 
-
       if (window.claimCardId) {
           try {
               const cardData = await fetchAPI('getCardById', { rowId: window.claimCardId });
@@ -792,7 +832,6 @@
               }
           } catch(e) {}
       }
-
       const s1 = document.getElementById('reg-step-1'); if(s1) s1.classList.add('hidden'); 
       const s2 = document.getElementById('reg-step-2'); if(s2) s2.classList.remove('opacity-30', 'pointer-events-none'); 
     } catch(e) { showToast("註冊失敗", true); } finally { isProcessing = false; setButtonLoading('btn-reg-step1', false, '儲存並繼續'); }
@@ -807,16 +846,7 @@
           const m = document.getElementById('section-image-cropper'); if(m) m.classList.remove('hidden');
           if (cropperInstance) cropperInstance.destroy();
           img.style.opacity = '1';
-          
-          cropperInstance = new Cropper(img, { 
-              aspectRatio: NaN, 
-              viewMode: 1, 
-              dragMode: 'move', 
-              autoCropArea: 0.9, 
-              guides: true, 
-              center: true, 
-              highlight: false 
-          });
+          cropperInstance = new Cropper(img, { aspectRatio: NaN, viewMode: 1, dragMode: 'move', autoCropArea: 0.9, guides: true, center: true, highlight: false });
       };
       img.src = e.target.result;
       input.value = ""; 
@@ -1180,7 +1210,7 @@
         ${isCanceled ? '<div class="absolute top-0 right-0 bg-slate-500 text-white text-[10px] px-3 py-1 rounded-bl-xl font-bold">已取消</div>' : ''}
         <div class="flex justify-between items-start mb-4">
           <div class="flex flex-col"><h4 class="font-bold text-[16px] text-slate-800 flex items-center gap-1">${r['姓名']} ${cIn ? '<span class="material-symbols-outlined text-[16px] text-emerald-500 icon-filled">check_circle</span>' : ''}</h4><p class="text-[12px] text-slate-500 font-medium mt-1">${r['電話'] || '無電話'}</p></div>
-          <button id="btn-chk-${r.rowId}" ${isCanceled ? 'disabled' : ''} onclick="window.toggleCheckIn(this, ${r.rowId}, ${cIn})" class="px-4 py-2 rounded-xl flex items-center justify-center gap-1 transition-all font-bold text-[13px] ${cIn ? 'bg-emerald-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600 active:scale-95 hover:bg-slate-200'}">${cIn ? '已簽到' : '手手動簽到'}</button>
+          <button id="btn-chk-${r.rowId}" ${isCanceled ? 'disabled' : ''} onclick="window.toggleCheckIn(this, ${r.rowId}, ${cIn})" class="px-4 py-2 rounded-xl flex items-center justify-center gap-1 transition-all font-bold text-[13px] ${cIn ? 'bg-emerald-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600 active:scale-95 hover:bg-slate-200'}">${cIn ? '已簽到' : '手動簽到'}</button>
         </div>
         <div class="flex items-center gap-2 pt-4 border-t border-slate-100">
            <select onchange="window.updatePayStatus(${r.rowId}, this.value)" class="text-[13px] font-bold bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer ${r.payStatus==='已繳費'?'text-emerald-600':(r.payStatus==='匯款審核中'?'text-amber-500':'text-red-500')}" ${isCanceled ? 'disabled' : ''}><option value="未繳費" ${r.payStatus==='未繳費'?'selected':''}>未繳費</option><option value="匯款審核中" ${r.payStatus==='匯款審核中'?'selected':''}>審核中</option><option value="已完款" ${r.payStatus==='已完款'?'selected':''}>已完款</option></select>
@@ -1210,36 +1240,6 @@
         sessionStorage.removeItem('getActivityDashboard{}'); 
         await openAdminRegistrants(activeActivityName); 
     } catch(e) {} finally { isProcessing = false; setButtonLoading('btn-walkin', false, '新增並簽到'); }
-  }
-
-  window.startScanner = async function() {
-    if (html5QrcodeScanner) {
-        html5QrcodeScanner.clear().catch(e=>{});
-        html5QrcodeScanner = null;
-    }
-    const m = document.getElementById('qr-scanner-modal'); if(m) m.classList.remove('hidden');
-    
-    if (typeof Html5Qrcode === 'undefined') {
-        return;
-    }
-
-    html5QrcodeScanner = new Html5Qrcode("qr-reader");
-    html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
-      async (decodedText) => { 
-        window.stopScanner(); 
-        try { 
-          const uRes = await fetchAPI('checkUser', { userId: decodedText }); 
-          if(!uRes.isRegistered) return; 
-          const name = uRes.info.name; const reg = currentRegistrants.find(r => r['姓名'] === name); 
-          if(reg) { if(!reg.checkedIn) { await fetchAPI('toggleStatus', { activityName: activeActivityName, rowId: reg.rowId, currentStatus: false }); openAdminRegistrants(activeActivityName); showToast('簽到成功'); } } else { if(confirm(`未報名，是否現場報名簽到？`)) { await fetchAPI('addWalkIn', { activityName: activeActivityName, name: name }); openAdminRegistrants(activeActivityName); } } 
-        } catch(e) {} 
-      }, () => {}
-    ).catch(err => { window.stopScanner(); });
-  }
-
-  window.stopScanner = function() { 
-      if(html5QrcodeScanner) { html5QrcodeScanner.stop().then(() => { html5QrcodeScanner.clear(); html5QrcodeScanner = null; }).catch(e=>{}); } 
-      const m = document.getElementById('qr-scanner-modal'); if(m) m.classList.add('hidden'); 
   }
 
   async function loadAdminStats() {

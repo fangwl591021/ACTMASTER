@@ -1,4 +1,4 @@
-<!-- Version: v2.7.0 (QQ 科技進化版：導入雙軌 NFC 智慧感應報到機制，無縫相容 LINE 生態) -->
+<!-- Version: v2.6.3 (QQ 退版穩定版：移除所有實驗性 NFC 邏輯，回歸極致穩定狀態) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -338,11 +338,7 @@
           <button onclick="closeAdminRegistrants()" class="w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 active:scale-90 transition-transform"><span class="material-symbols-outlined text-[20px]">arrow_drop_down</span></button>
           <h3 id="admin-reg-title" class="text-[18px] font-extrabold text-slate-800 truncate max-w-[180px]">活動名單</h3>
         </div>
-        <div class="flex gap-2">
-          <!-- ⭐ QQ 雙軌報到：加入 NFC 實體卡讀取按鈕 (限 Android) -->
-          <button onclick="startNfcScanner()" class="px-3 py-2 bg-blue-50 text-blue-600 rounded-xl font-bold text-[13px] flex items-center gap-1 active:scale-95 transition-all"><span class="material-symbols-outlined text-[18px]">nfc</span> NFC</button>
-          <button onclick="document.getElementById('qr-scanner-modal').classList.remove('hidden'); startScanner();" class="px-3 py-2 bg-primary-light text-primary rounded-xl font-bold text-[13px] flex items-center gap-1 active:scale-95 transition-all"><span class="material-symbols-outlined text-[18px]">qr_code_scanner</span> 掃碼</button>
-        </div>
+        <button onclick="document.getElementById('qr-scanner-modal').classList.remove('hidden'); startScanner();" class="px-4 py-2 bg-primary-light text-primary rounded-xl font-bold text-[13px] flex items-center gap-1.5 active:scale-95 transition-all"><span class="material-symbols-outlined text-[18px]">qr_code_scanner</span> 掃碼</button>
       </div>
       
       <div class="bg-white px-5 py-4 shrink-0 flex gap-3 border-b border-slate-100 z-10">
@@ -381,12 +377,12 @@
   <div class="bg-white w-full max-w-md rounded-t-[2rem] p-8 shadow-2xl text-center bottom-sheet-up pb-safe">
     <div class="w-16 h-16 bg-primary-light text-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><span class="material-symbols-outlined text-[32px] icon-filled" id="modal-icon">info</span></div>
     <h3 id="modal-title" class="text-[22px] font-extrabold mb-2 text-slate-800 tracking-tight">系統通知</h3>
-    <p id="modal-desc" class="text-slate-500 font-medium mb-8 leading-relaxed text-[15px]"></p>
+    <p id="modal-desc" class="text-slate-500 font-medium mb-8 leading-relaxed text-[15px] whitespace-pre-wrap"></p>
     <button onclick="closeModalAndGo()" class="w-full py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[16px] shadow-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2">我知道了</button>
   </div>
 </div>
 
-<div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-bold flex items-center gap-2 w-max max-w-[90vw] opacity-0 pointer-events-none border border-slate-700"></div>
+<div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-bold flex items-center gap-2 w-max max-w-[90vw] opacity-0 pointer-events-none border border-slate-700 text-white bg-slate-800"></div>
 
 <script>
   const LIFF_ID = "2009367829-DLtYBDUm"; 
@@ -449,7 +445,7 @@
       if (useCache) sessionStorage.setItem(cacheKey, JSON.stringify(result.data));
       return result.data;
     } catch (err) { 
-      if (err.name === 'AbortError') err.message = '連線已經超時 (20秒)，請檢查網路或伺服器狀態。';
+      if (err.name === 'AbortError') err.message = '連線已經超時 (20秒)，請檢查網路狀態。';
       throw err; 
     }
   }
@@ -467,13 +463,6 @@
       if(document.getElementById('user-avatar')) document.getElementById('user-avatar').src = userProfile.pictureUrl || '';
       if(document.getElementById('user-profile-badge')) document.getElementById('user-profile-badge').classList.remove('hidden');
       isAdmin = ADMIN_IDS.includes(userProfile.userId);
-      
-      // ⭐ QQ 雙軌報到：貴賓自助 NFC 感應報到 (URL 觸發)
-      const nfcAct = params.get('nfcAct');
-      if (nfcAct) {
-          await handleNfcSelfCheckIn(nfcAct);
-          return; // 報到流程接管，暫停後續一般初始化
-      }
 
       const initData = await fetchAPI('initApp', { userId: userProfile.userId, reqContacts: true, reqActivities: true }, true);
       const res = initData.user || { isRegistered: false };
@@ -517,31 +506,6 @@
     }
   };
 
-  // ⭐ QQ 雙軌報到：處理貴賓點擊 NFC Tag 的自動報到邏輯
-  async function handleNfcSelfCheckIn(actName) {
-      document.getElementById('view-loading').classList.remove('hidden');
-      const loadText = document.getElementById('loading-text');
-      if (loadText) loadText.innerText = "NFC 快速報到中...";
-      
-      try {
-          const res = await fetchAPI('selfCheckIn', { userId: userProfile.userId, activityName: actName });
-          document.getElementById('view-loading').classList.add('hidden');
-          
-          if (res.already) {
-              showModal('已經報到囉', `您已完成「${actName}」的報到手續，請直接入場。`, 'history');
-              document.getElementById('modal-icon').innerText = 'check_circle';
-          } else {
-              showModal('✅ 報到成功', `歡迎參加「${actName}」！\n祝您活動順心。`, 'history');
-              document.getElementById('modal-icon').innerText = 'celebration';
-          }
-      } catch(e) {
-          document.getElementById('view-loading').classList.add('hidden');
-          showModal('報到失敗', e.message, 'activities');
-          document.getElementById('modal-icon').innerText = 'error';
-      }
-  }
-
-  // 共用的報到查驗邏輯 (QR Code 與 Admin NFC 皆呼叫此處)
   window.processScannedUid = async function(uid) {
       window.stopScanner(); 
       try { 
@@ -567,36 +531,6 @@
       } catch(e) { showToast('感應失敗：' + e.message, true); } 
   }
 
-  // ⭐ QQ 雙軌報到：啟動管理員專屬 Web NFC 掃描 (限 Android Chrome)
-  window.startNfcScanner = async function() {
-      if (!('NDEFReader' in window)) {
-          alert('⚠️ 您的裝置或瀏覽器不支援 NFC 感應。\n\n※ iOS Safari 與 LINE 內部瀏覽器目前不支援此功能，若要使用請使用 Android 手機並以 Chrome 瀏覽器開啟。');
-          return;
-      }
-      try {
-          const ndef = new NDEFReader();
-          await ndef.scan();
-          showToast('📱 NFC 啟動成功！請將貴賓的名牌靠近手機背面...', false);
-          
-          ndef.onreading = event => {
-              const message = event.message;
-              for (const record of message.records) {
-                  if (record.recordType === "text") {
-                      const textDecoder = new TextDecoder(record.encoding);
-                      const uid = textDecoder.decode(record.data);
-                      if(uid) {
-                          showToast('讀取到卡片，正在核銷...', false);
-                          window.processScannedUid(uid);
-                          return; // 讀到一筆就跳出
-                      }
-                  }
-              }
-          };
-      } catch (error) {
-          showToast('NFC 權限不足或啟動失敗', true);
-      }
-  }
-
   window.startScanner = async function() {
     if (html5QrcodeScanner) { html5QrcodeScanner.clear().catch(e=>{}); html5QrcodeScanner = null; }
     const m = document.getElementById('qr-scanner-modal'); if(m) m.classList.remove('hidden');
@@ -605,6 +539,11 @@
     html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
       async (decodedText) => { window.processScannedUid(decodedText); }, () => {}
     ).catch(err => { window.stopScanner(); });
+  }
+
+  window.stopScanner = function() { 
+      if(html5QrcodeScanner) { html5QrcodeScanner.stop().then(() => { html5QrcodeScanner.clear(); html5QrcodeScanner = null; }).catch(e=>{}); } 
+      const m = document.getElementById('qr-scanner-modal'); if(m) m.classList.add('hidden'); 
   }
 
   function formatTime(isoString) {
@@ -692,6 +631,23 @@
     else if (view === 'user-profile') { populateUserProfile(); checkMyCardEntry(); }
     else if (view === 'user-history') loadUserHistory();
   }
+
+  window.toggleActivityStatus = async function(actName) {
+    if (isProcessing) return;
+    if (!confirm(`確定要變更「${actName}」的上架狀態嗎？`)) return;
+    isProcessing = true;
+    try {
+      const newStatus = await fetchAPI('toggleActivityStatus', { activityName: actName });
+      showToast(`✅ 活動已切換為：${newStatus}`);
+      sessionStorage.removeItem('getActivityDashboard{}'); 
+      currentActivities = []; 
+      await loadAdminActivities(); 
+    } catch(e) {
+      showToast("狀態切換失敗: " + e.message, true);
+    } finally {
+      isProcessing = false;
+    }
+  };
 
   window.toggleProfileForm = function(forceOpen = false) {
       const body = document.getElementById('profile-form-body');
@@ -921,31 +877,15 @@
 
   async function loadAdminActivities() { 
     const list = document.getElementById('admin-activity-list-container'); if(!list) return;
-    
-    if (currentActivities && currentActivities.length > 0) {
-        renderActivityList(currentActivities, 'admin');
-        return;
-    }
-    
+    if (currentActivities && currentActivities.length > 0) { renderActivityList(currentActivities, 'admin'); return; }
     list.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>'; 
-    try { 
-        currentActivities = await fetchAPI('getActivityDashboard', {}, true); 
-        renderActivityList(currentActivities, 'admin'); 
-    } catch (e) { 
-        list.innerHTML = `<p class="text-center text-red-400 font-bold py-10">載入失敗</p>`; 
-    }
+    try { currentActivities = await fetchAPI('getActivityDashboard', {}, true); renderActivityList(currentActivities, 'admin'); } catch (e) { list.innerHTML = `<p class="text-center text-red-400 font-bold py-10">載入失敗</p>`; }
   }
 
   async function loadUserActivities() {
     const container = document.getElementById('user-activities-container'); if(!container) return;
     container.className = 'grid grid-cols-2 gap-3 px-1';
-    
-    if (globalPublicActivities && globalPublicActivities.length > 0) {
-        renderCategories(); 
-        filterActivities();
-        return;
-    }
-    
+    if (globalPublicActivities && globalPublicActivities.length > 0) { renderCategories(); filterActivities(); return; }
     renderActivitiesSkeleton();
     try {
       const data = await fetchAPI('getPublicActivities', {}, true); globalPublicActivities = data || [];
@@ -961,7 +901,6 @@
   }
 
   window.filterByCategory = function(type) { currentCategory = type; renderCategories(); filterActivities(); }
-  
   function filterActivities() { renderActivityList(globalPublicActivities.filter(a => currentCategory === '全部活動' || a.type === currentCategory), 'user'); }
 
   function renderActivityList(data, mode) {
@@ -985,11 +924,8 @@
           <div class="p-3.5 flex flex-col flex-1 bg-white">
             <p class="text-[11px] text-primary font-bold flex items-center gap-1 mb-1.5 uppercase tracking-wider"><span class="material-symbols-outlined text-[14px]">calendar_today</span>${formatTimeShort(a.startTime)}</p>
             <h3 class="text-[15px] font-extrabold text-slate-800 leading-snug line-clamp-2 mb-2 flex-1 cursor-pointer" onclick="openActivityDetailByName('${safeName}')">${a.name}</h3>
-            
             <div class="mt-auto pt-2">
-              <div class="flex items-center mb-2.5 px-1">
-                <span class="text-[15px] font-black ${a.feeType === '收費' ? 'text-orange-500' : 'text-[#06C755]'}">${a.feeType === '收費' ? 'NT$ '+a.price : '免費'}</span>
-              </div>
+              <div class="flex items-center mb-2.5 px-1"><span class="text-[15px] font-black ${a.feeType === '收費' ? 'text-orange-500' : 'text-[#06C755]'}">${a.feeType === '收費' ? 'NT$ '+a.price : '免費'}</span></div>
               <div class="flex gap-2">
                 <button onclick="openActivityDetailByName('${safeName}')" class="flex-1 py-2 bg-slate-100 text-slate-600 rounded-xl text-[13px] font-bold active:scale-95 transition-all">詳細說明</button>
                 <button onclick="openActivityDetailByName('${safeName}')" class="flex-1 py-2 bg-[#06C755] text-white rounded-xl text-[13px] font-bold active:scale-95 transition-all shadow-sm">我要報名</button>
@@ -1023,11 +959,8 @@
     
     const titleEl = document.getElementById('detail-modal-title'); if(titleEl) titleEl.innerText = act.name;
     const startEl = document.getElementById('detail-modal-start'); if(startEl) startEl.innerText = act.startTime ? formatTime(act.startTime) : '未定';
-    
-    const endContainer = document.getElementById('detail-modal-end-container');
-    const endEl = document.getElementById('detail-modal-end');
+    const endContainer = document.getElementById('detail-modal-end-container'); const endEl = document.getElementById('detail-modal-end');
     if (act.endTime) { if(endEl) endEl.innerText = formatTime(act.endTime); if(endContainer) endContainer.classList.remove('hidden'); } else { if(endContainer) endContainer.classList.add('hidden'); }
-    
     const descEl = document.getElementById('detail-modal-desc'); if(descEl) descEl.innerText = act.description || '無詳細說明。';
 
     let batches = []; try { if (act.batches) batches = typeof act.batches === 'string' ? JSON.parse(act.batches) : act.batches; } catch(e) {}
@@ -1040,7 +973,6 @@
             if (bEnd) { if(endEl) endEl.innerText = formatTime(bEnd); if(endContainer) endContainer.classList.remove('hidden'); } else { if(endContainer) endContainer.classList.add('hidden'); }
         };
     }
-
     if (act.isBatch || batches.length > 0) {
         if (batchSelect) {
             batchSelect.innerHTML = batches.map(b => { const tStr = b.startTime ? formatTimeShort(b.startTime) : '時間未定'; const pStr = (b.price && parseInt(b.price) > 0) ? ` - NT$${b.price}` : ' - 免費'; return `<option value="${b.name}" data-price="${b.price || 0}" data-start="${b.startTime || ''}" data-end="${b.endTime || ''}">${b.name} (${tStr}${pStr})</option>`; }).join('');
@@ -1125,10 +1057,7 @@
       const list = document.getElementById('profile-social-list');
       if(!list) return;
       list.innerHTML = '';
-      if(profileSocials.length === 0) {
-          list.innerHTML = '<p class="text-[12px] text-slate-400 font-medium pb-2 pl-1">尚未新增任何社群或網址。</p>';
-          return;
-      }
+      if(profileSocials.length === 0) { list.innerHTML = '<p class="text-[12px] text-slate-400 font-medium pb-2 pl-1">尚未新增任何社群或網址。</p>'; return; }
       profileSocials.forEach((u, idx) => {
           list.innerHTML += `
           <div class="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-transparent hover:border-slate-200 transition-colors relative group">
@@ -1138,21 +1067,12 @@
       });
   }
 
-  window.addProfileSocial = function() {
-      profileSocials.push('');
-      window.renderProfileSocials();
-  }
+  window.addProfileSocial = function() { profileSocials.push(''); window.renderProfileSocials(); }
 
   function populateUserProfile() { 
       if(registeredInfo) { 
-          ['name','gender','phone','industry','birthday','region','address'].forEach(k => { 
-              const el = document.getElementById('edit-'+k); 
-              if(el) el.value=registeredInfo[k]||''; 
-          }); 
-          profileSocials = [];
-          if (registeredInfo.social) {
-              profileSocials = String(registeredInfo.social).split(/[\s,\n]+/).map(s => s.trim()).filter(Boolean);
-          }
+          ['name','gender','phone','industry','birthday','region','address'].forEach(k => { const el = document.getElementById('edit-'+k); if(el) el.value=registeredInfo[k]||''; }); 
+          profileSocials = []; if (registeredInfo.social) profileSocials = String(registeredInfo.social).split(/[\s,\n]+/).map(s => s.trim()).filter(Boolean);
           window.renderProfileSocials();
       } 
   }
@@ -1160,32 +1080,9 @@
   window.submitProfileUpdate = async function() { 
     if(isProcessing) return; isProcessing = true; setButtonLoading('btn-save-profile', true);
     const getVal = (id) => document.getElementById(id)?.value.trim() || '';
-    
     const validSocials = profileSocials.map(s => s.trim()).filter(Boolean).join(',');
-
-    const p = { 
-        userId: userProfile.userId, 
-        name: getVal('edit-name') || userProfile.displayName, 
-        gender: getVal('edit-gender'), 
-        phone: getVal('edit-phone'), 
-        industry: getVal('edit-industry'), 
-        birthday: getVal('edit-birthday'), 
-        region: getVal('edit-region'), 
-        address: getVal('edit-address'),
-        social: validSocials 
-    }; 
-    try { 
-        await fetchAPI('updateUser', p); 
-        registeredInfo = p; 
-        checkMyCardEntry(); 
-        showToast("儲存成功"); 
-        window.toggleProfileForm(); 
-    } catch(e) { 
-        showToast("更新失敗: " + e.message, true); 
-    } finally { 
-        isProcessing = false; 
-        setButtonLoading('btn-save-profile', false, '儲存設定'); 
-    }
+    const p = { userId: userProfile.userId, name: getVal('edit-name') || userProfile.displayName, gender: getVal('edit-gender'), phone: getVal('edit-phone'), industry: getVal('edit-industry'), birthday: getVal('edit-birthday'), region: getVal('edit-region'), address: getVal('edit-address'), social: validSocials }; 
+    try { await fetchAPI('updateUser', p); registeredInfo = p; checkMyCardEntry(); showToast("儲存成功"); window.toggleProfileForm(); } catch(e) { showToast("更新失敗: " + e.message, true); } finally { isProcessing = false; setButtonLoading('btn-save-profile', false, '儲存設定'); }
   }
 
   window.openAdminRegistrants = async function(actName) {
@@ -1243,130 +1140,33 @@
   }
 
   async function loadAdminStats() {
-      const container = document.getElementById('admin-stats-container');
-      if(!container) return;
-      
+      const container = document.getElementById('admin-stats-container'); if(!container) return;
       container.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>';
-      
       try {
-          if (!currentActivities || currentActivities.length === 0) {
-              currentActivities = await fetchAPI('getActivityDashboard', {}, true);
-          }
-          
-          let totalRevenue = 0;
-          let totalRegistrants = 0; 
-          let activeEventCount = 0;
-          
-          let performanceData = [];
-
+          if (!currentActivities || currentActivities.length === 0) currentActivities = await fetchAPI('getActivityDashboard', {}, true);
+          let totalRevenue = 0, totalRegistrants = 0, activeEventCount = 0;
           currentActivities.forEach(act => {
              if (act.status === '上架') activeEventCount++;
-             
-             const total = act.total || 0;
-             totalRegistrants += total;
-             
-             let rev = 0;
-             if (act.feeType === '收費') {
-                 let price = parseInt(String(act.price).replace(/\D/g, '')) || 0;
-                 rev = price * total; 
-                 totalRevenue += rev;
-             }
-             
-             performanceData.push({
-                 name: act.name,
-                 revenue: rev,
-                 count: total, 
-                 type: act.type
-             });
+             const total = act.total || 0; totalRegistrants += total;
+             if (act.feeType === '收費') { let price = parseInt(String(act.price).replace(/\D/g, '')) || 0; totalRevenue += price * total; }
           });
-
           const formatCurrency = (num) => new Intl.NumberFormat('en-US').format(num);
-
           let html = `
             <div class="grid grid-cols-2 gap-3 mx-1">
-                <div class="bg-white rounded-[1.5rem] p-5 shadow-sm border border-slate-100 flex flex-col justify-center">
-                    <div class="flex items-center gap-1.5 mb-2 text-primary">
-                        <span class="material-symbols-outlined text-[18px]">payments</span>
-                        <span class="text-[12px] font-bold">預估總營收</span>
-                    </div>
-                    <div class="text-[24px] font-black text-slate-800 tracking-tight">NT$ ${formatCurrency(totalRevenue)}</div>
-                </div>
-                <div class="bg-white rounded-[1.5rem] p-5 shadow-sm border border-slate-100 flex flex-col justify-center">
-                    <div class="flex items-center gap-1.5 mb-2 text-blue-500">
-                        <span class="material-symbols-outlined text-[18px]">how_to_reg</span>
-                        <span class="text-[12px] font-bold">總報名人數</span>
-                    </div>
-                    <div class="text-[24px] font-black text-slate-800 tracking-tight">${formatCurrency(totalRegistrants)} <span class="text-[12px] text-slate-400 font-bold ml-1">人</span></div>
-                </div>
+                <div class="bg-white rounded-[1.5rem] p-5 shadow-sm border border-slate-100 flex flex-col justify-center"><div class="flex items-center gap-1.5 mb-2 text-primary"><span class="material-symbols-outlined text-[18px]">payments</span><span class="text-[12px] font-bold">預估總營收</span></div><div class="text-[24px] font-black text-slate-800 tracking-tight">NT$ ${formatCurrency(totalRevenue)}</div></div>
+                <div class="bg-white rounded-[1.5rem] p-5 shadow-sm border border-slate-100 flex flex-col justify-center"><div class="flex items-center gap-1.5 mb-2 text-blue-500"><span class="material-symbols-outlined text-[18px]">how_to_reg</span><span class="text-[12px] font-bold">總報名人數</span></div><div class="text-[24px] font-black text-slate-800 tracking-tight">${formatCurrency(totalRegistrants)} <span class="text-[12px] text-slate-400 font-bold ml-1">人</span></div></div>
             </div>
-            
-            <div class="bg-white rounded-[1.5rem] p-5 shadow-sm border border-slate-100 mx-1 flex justify-between items-center">
-                <span class="text-[14px] font-bold text-slate-600 flex items-center gap-2"><span class="material-symbols-outlined text-[18px] text-slate-400">inventory_2</span> 目前上架活動</span>
-                <span class="text-[18px] font-black text-slate-800">${activeEventCount} <span class="text-[12px] text-slate-400 font-bold">檔</span></span>
-            </div>
+            <div class="bg-white rounded-[1.5rem] p-5 shadow-sm border border-slate-100 mx-1 flex justify-between items-center"><span class="text-[14px] font-bold text-slate-600 flex items-center gap-2"><span class="material-symbols-outlined text-[18px] text-slate-400">inventory_2</span> 目前上架活動</span><span class="text-[18px] font-black text-slate-800">${activeEventCount} <span class="text-[12px] text-slate-400 font-bold">檔</span></span></div>
           `;
-
-          html += `
-            <div class="mt-6 mx-1">
-                <div class="flex justify-between items-end mb-3 pl-1">
-                    <h3 class="text-[15px] font-extrabold text-slate-800 flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px] text-blue-500 icon-filled">analytics</span> 詳細營運報表</h3>
-                    <span class="text-[11px] text-slate-400 font-medium flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">swipe</span> 在表格上左右滑動</span>
-                </div>
-                <div class="bg-white rounded-[1.5rem] shadow-sm border border-slate-200 overflow-hidden relative">
-                    <div class="overflow-x-auto hide-scrollbar">
-                        <table class="w-full text-left min-w-[750px] whitespace-nowrap bg-white">
-                            <thead>
-                                <tr class="text-[12px] text-slate-500 border-b border-slate-200 bg-white">
-                                    <th class="p-4 font-extrabold sticky left-0 bg-slate-50 z-10 border-r border-slate-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">課程名稱</th>
-                                    <th class="p-4 font-bold text-center">報名總數</th>
-                                    <th class="p-4 font-bold text-center">應收總額</th>
-                                    <th class="p-4 font-bold text-center text-orange-500">待付人數</th>
-                                    <th class="p-4 font-bold text-center text-orange-500">待收金額</th>
-                                    <th class="p-4 font-bold text-center text-emerald-500">已付人數</th>
-                                    <th class="p-4 font-bold text-center text-emerald-500">實收金額</th>
-                                    <th class="p-4 font-bold text-center text-red-500">退款/取消</th>
-                                </tr>
-                            </thead>
-                            <tbody class="text-[14px]">
-          `;
-
+          html += `<div class="mt-6 mx-1"><div class="flex justify-between items-end mb-3 pl-1"><h3 class="text-[15px] font-extrabold text-slate-800 flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px] text-blue-500 icon-filled">analytics</span> 詳細營運報表</h3><span class="text-[11px] text-slate-400 font-medium flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">swipe</span> 在表格上左右滑動</span></div><div class="bg-white rounded-[1.5rem] shadow-sm border border-slate-200 overflow-hidden relative"><div class="overflow-x-auto hide-scrollbar"><table class="w-full text-left min-w-[750px] whitespace-nowrap bg-white"><thead><tr class="text-[12px] text-slate-500 border-b border-slate-200 bg-white"><th class="p-4 font-extrabold sticky left-0 bg-slate-50 z-10 border-r border-slate-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">課程名稱</th><th class="p-4 font-bold text-center">報名總數</th><th class="p-4 font-bold text-center">應收總額</th><th class="p-4 font-bold text-center text-orange-500">待付人數</th><th class="p-4 font-bold text-center text-orange-500">待收金額</th><th class="p-4 font-bold text-center text-emerald-500">已付人數</th><th class="p-4 font-bold text-center text-emerald-500">實收金額</th><th class="p-4 font-bold text-center text-red-500">退款/取消</th></tr></thead><tbody class="text-[14px]">`;
           currentActivities.forEach(act => {
               let price = act.feeType === '收費' ? (parseInt(String(act.price).replace(/\D/g, '')) || 0) : 0;
-              let total = act.total || 0;
-              let paid = act.paidCount || 0;
-              let unpaid = act.unpaidCount || 0;
-              let cancelled = act.cancelled || 0;
-
-              let receivable = total * price;
-              let paidAmount = paid * price;
-              let unpaidAmount = unpaid * price;
-              let refundAmount = cancelled * price;
-
-              html += `
-              <tr class="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
-                  <td class="p-4 font-bold text-slate-800 sticky left-0 bg-slate-50 z-10 border-r border-slate-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
-                      <div class="flex flex-col">
-                          <span>${act.name}</span>
-                          <span class="text-[10px] text-slate-400 font-bold mt-0.5">${act.type}</span>
-                      </div>
-                  </td>
-                  <td class="p-4 text-center font-black text-slate-700">${total}</td>
-                  <td class="p-4 text-center font-black text-slate-700">$${formatCurrency(receivable)}</td>
-                  <td class="p-4 text-center font-black text-orange-600 bg-orange-50/40">${unpaid}</td>
-                  <td class="p-4 text-center font-black text-orange-600 bg-orange-50/40">$${formatCurrency(unpaidAmount)}</td>
-                  <td class="p-4 text-center font-black text-emerald-600 bg-emerald-50/40">${paid}</td>
-                  <td class="p-4 text-center font-black text-emerald-600 bg-emerald-50/40">$${formatCurrency(paidAmount)}</td>
-                  <td class="p-4 text-center font-black text-red-600 bg-red-50/40">${cancelled} <span class="text-[10px] font-normal text-red-400">($${formatCurrency(refundAmount)})</span></td>
-              </tr>
-              `;
+              let total = act.total || 0, paid = act.paidCount || 0, unpaid = act.unpaidCount || 0, cancelled = act.cancelled || 0;
+              let receivable = total * price, paidAmount = paid * price, unpaidAmount = unpaid * price, refundAmount = cancelled * price;
+              html += `<tr class="border-b border-slate-100 hover:bg-slate-50/50 transition-colors"><td class="p-4 font-bold text-slate-800 sticky left-0 bg-slate-50 z-10 border-r border-slate-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]"><div class="flex flex-col"><span>${act.name}</span><span class="text-[10px] text-slate-400 font-bold mt-0.5">${act.type}</span></div></td><td class="p-4 text-center font-black text-slate-700">${total}</td><td class="p-4 text-center font-black text-slate-700">$${formatCurrency(receivable)}</td><td class="p-4 text-center font-black text-orange-600 bg-orange-50/40">${unpaid}</td><td class="p-4 text-center font-black text-orange-600 bg-orange-50/40">$${formatCurrency(unpaidAmount)}</td><td class="p-4 text-center font-black text-emerald-600 bg-emerald-50/40">${paid}</td><td class="p-4 text-center font-black text-emerald-600 bg-emerald-50/40">$${formatCurrency(paidAmount)}</td><td class="p-4 text-center font-black text-red-600 bg-red-50/40">${cancelled} <span class="text-[10px] font-normal text-red-400">($${formatCurrency(refundAmount)})</span></td></tr>`;
           });
-
-          html += `</tbody></table></div></div></div>`;
-          
-          container.innerHTML = html;
-      } catch(e) {
-          container.innerHTML = '<p class="text-center text-red-400 font-bold py-10">統計資料載入失敗</p>';
-      }
+          html += `</tbody></table></div></div></div>`; container.innerHTML = html;
+      } catch(e) { container.innerHTML = '<p class="text-center text-red-400 font-bold py-10">統計資料載入失敗</p>'; }
   }
 
   async function loadCrmData() { 
@@ -1374,27 +1174,21 @@
     list.innerHTML = '<div class="text-center py-10"><div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div></div>'; 
     try { globalCrmData = await fetchAPI('getAllCrmData', {}, true); filteredCrmData = [...globalCrmData]; currentCrmViewCount = crmPageLimit; renderCrmList(); } catch(e) { list.innerHTML = `<p class="text-center text-red-400 font-bold py-10">載入失敗</p>`; }
   }
-
   window.filterCrmList = function() { const s = document.getElementById('crm-search-input'); const term = s ? s.value.toLowerCase() : ''; filteredCrmData = globalCrmData.filter(u => u.name.toLowerCase().includes(term)); currentCrmViewCount = crmPageLimit; renderCrmList(); }
   window.loadMoreCrm = function() { currentCrmViewCount += crmPageLimit; renderCrmList(); }
-
   function renderCrmList() {
     const list = document.getElementById('admin-crm-list-container'); const moreBtnBox = document.getElementById('crm-load-more-box');
     if(!list) return;
     if(!filteredCrmData.length) { if(moreBtnBox) moreBtnBox.classList.add('hidden'); list.innerHTML = `<div class="text-center text-slate-400 py-16 text-[14px]">查無會員</div>`; return; }
     const displayItems = filteredCrmData.slice(0, currentCrmViewCount);
     let html = '';
-    displayItems.forEach((r, i) => {
-      html += `
-      <div class="px-5 py-4 flex justify-between items-center border-b border-slate-50 last:border-b-0 active:bg-slate-50 transition-colors"><div class="flex items-center gap-4"><span class="text-[13px] text-slate-400 font-bold w-6 text-center">${i + 1}</span><div class="flex flex-col"><span class="text-[16px] text-slate-800 font-bold">${r.name}</span><span class="text-[11px] text-slate-400 uppercase tracking-tight">VIP Member</span></div></div><div class="flex flex-col items-end"><span class="text-[16px] font-black text-primary">${r.attended} <span class="text-[12px] font-medium text-slate-500">次</span></span><span class="text-[10px] text-slate-400 font-bold uppercase mt-0.5">出席總計</span></div></div>`;
-    });
+    displayItems.forEach((r, i) => { html += `<div class="px-5 py-4 flex justify-between items-center border-b border-slate-50 last:border-b-0 active:bg-slate-50 transition-colors"><div class="flex items-center gap-4"><span class="text-[13px] text-slate-400 font-bold w-6 text-center">${i + 1}</span><div class="flex flex-col"><span class="text-[16px] text-slate-800 font-bold">${r.name}</span><span class="text-[11px] text-slate-400 uppercase tracking-tight">VIP Member</span></div></div><div class="flex flex-col items-end"><span class="text-[16px] font-black text-primary">${r.attended} <span class="text-[12px] font-medium text-slate-500">次</span></span><span class="text-[10px] text-slate-400 font-bold uppercase mt-0.5">出席總計</span></div></div>`; });
     list.innerHTML = html;
     if(moreBtnBox) { if (filteredCrmData.length > currentCrmViewCount) moreBtnBox.classList.remove('hidden'); else moreBtnBox.classList.add('hidden'); }
   }
 
   async function loadAdminSettings() { const s = await fetchAPI('getSettings'); const t1 = document.getElementById('set-tg-token'); if(t1) t1.value = s.TG_BOT_TOKEN || ''; const t2 = document.getElementById('set-tg-chat'); if(t2) t2.value = s.TG_CHAT_ID || ''; const l = document.getElementById('set-line-link'); if(l) l.value = s.LINE_LINK || ''; }
   window.autoFetchTgChatId = async function() { const t1 = document.getElementById('set-tg-token'); if(!t1) return; const token = t1.value; if(!token) return; const t2 = document.getElementById('set-tg-chat'); if(t2) { t2.value = "獲取中..."; try { t2.value = await fetchAPI('getTgChatId', { token }); } catch(e) { t2.value = ""; } } }
-  
   window.submitSettings = async function() { 
     if(isProcessing) return; isProcessing = true; setButtonLoading('btn-submit-settings', true);
     const getVal = (id) => document.getElementById(id)?.value || '';

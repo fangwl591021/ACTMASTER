@@ -1,4 +1,4 @@
-<!-- Version: v2.6.4 (QQ 穩定退版：徹底移除 NFC 邏輯，保留 LINE商機引擎、通訊錄折疊與裁切器修復) -->
+<!-- Version: v2.6.5 (QQ 穩定退版：保留 UI 升級與白底無框設計，徹底移除實驗性功能) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -89,9 +89,9 @@
 
   <main id="main-content" class="flex-1 overflow-y-auto pb-32 pt-20 px-4 space-y-5">
 
-    <div id="view-loading" class="h-full flex flex-col items-center justify-center space-y-4 pb-20 relative">
+    <div id="view-loading" class="h-full flex flex-col items-center justify-center space-y-4 pb-20 relative z-[9999]">
       <div class="w-10 h-10 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
-      <p class="text-slate-500 font-bold tracking-widest text-[13px]">系統載入中</p>
+      <p id="loading-text" class="text-slate-500 font-bold tracking-widest text-[13px]">系統載入中</p>
     </div>
 
     <!-- 註冊畫面 -->

@@ -1,4 +1,4 @@
-<!-- Version: v2.6.3 (QQ 退版穩定版：移除所有實驗性 NFC 邏輯，回歸極致穩定狀態) -->
+<!-- Version: v2.6.4 (QQ 穩定退版：徹底移除 NFC 邏輯，保留 LINE商機引擎、通訊錄折疊與裁切器修復) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -89,9 +89,9 @@
 
   <main id="main-content" class="flex-1 overflow-y-auto pb-32 pt-20 px-4 space-y-5">
 
-    <div id="view-loading" class="h-full flex flex-col items-center justify-center space-y-4 pb-20 relative z-[9999]">
+    <div id="view-loading" class="h-full flex flex-col items-center justify-center space-y-4 pb-20 relative">
       <div class="w-10 h-10 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
-      <p id="loading-text" class="text-slate-500 font-bold tracking-widest text-[13px]">系統載入中</p>
+      <p class="text-slate-500 font-bold tracking-widest text-[13px]">系統載入中</p>
     </div>
 
     <!-- 註冊畫面 -->
@@ -279,11 +279,12 @@
 
 <!-- 圖片裁切 Modal (全螢幕) -->
 <div id="section-image-cropper" class="hidden fixed inset-0 bg-slate-900 flex flex-col animate-in fade-in duration-200 w-full max-w-md mx-auto z-[1080]">
-  <div class="flex justify-between items-center p-4 bg-slate-900 text-white shrink-0 z-10">
-    <button onclick="cancelCrop()" class="px-3 py-2 font-bold text-slate-400 active:scale-90 text-[16px]">取消</button>
-    <button onclick="confirmCrop()" class="px-4 py-2 font-bold text-slate-900 bg-[#06C755] rounded-xl active:scale-95 text-[15px]">完成裁切</button>
+  <div class="flex justify-between items-center p-4 bg-slate-900 text-white shrink-0 z-10 shadow-sm border-b border-slate-800">
+    <button onclick="cancelCrop()" class="px-3 py-2 font-bold text-slate-400 active:scale-90 transition-transform text-[15px]">取消</button>
+    <span class="font-bold text-[16px] tracking-wider text-white flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px]">crop</span> 裁切圖片</span>
+    <button onclick="confirmCrop()" class="px-4 py-1.5 font-bold text-white bg-[#06C755] rounded active:scale-95 transition-transform text-[15px] shadow-sm">完成</button>
   </div>
-  <div class="flex-1 relative bg-black flex items-center justify-center overflow-hidden"><img id="cropper-image" src="" class="max-w-full max-h-full block opacity-0"></div>
+  <div class="flex-1 relative bg-black flex items-center justify-center overflow-hidden"><img id="cropper-image" src="" class="max-w-full max-h-full block opacity-0 transition-opacity duration-300"></div>
 </div>
 
 <!-- 底部抽屜 Modal：活動詳情 -->

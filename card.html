@@ -1,4 +1,4 @@
-<!-- Version: v8.1.2 (QQ 終極防掛版：修正 LIFF_ID 錯亂引起的 400 錯誤，加上 Flex 參數防彈裝甲) -->
+<!-- Version: v8.2.0 (QQ 里程碑版：實裝上傳縮圖即時渲染與手機版即時預覽器) -->
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -195,7 +195,7 @@
 
 <!-- ======================== 數位名片編輯器 Modal ======================== -->
 <div id="ecardModal" class="hidden fixed inset-0 bg-white z-50 max-w-md mx-auto flex flex-col overflow-hidden">
-    <div class="bg-white px-5 py-4 border-b flex justify-between items-center sticky top-0 z-10">
+    <div class="bg-white px-5 py-4 border-b flex justify-between items-center sticky top-0 z-20">
         <div class="flex items-center gap-3">
             <button onclick="window.closeEcardModal()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">←</button>
             <span class="font-bold text-slate-800">數位名片編輯器</span>
@@ -203,7 +203,22 @@
         <button onclick="window.saveEcardConfig()" id="saveEcardConfigBtn" class="text-sm bg-blue-50 text-blue-600 px-4 py-2 rounded-full font-medium">儲存草稿</button>
     </div>
 
-    <div class="flex-1 overflow-auto p-5 pb-32">
+    <div class="flex-1 overflow-auto p-5 pb-32 bg-white">
+        
+        <!-- ⭐ 手機端實時預覽器 (Mobile Mockup) -->
+        <div class="lg:hidden flex flex-col items-center mb-8 pb-6 border-b border-slate-100">
+            <div class="flex items-center gap-1.5 mb-3">
+                <span class="material-symbols-outlined text-slate-400 text-[18px]">preview</span>
+                <span class="text-[13px] font-bold text-slate-500 tracking-widest">實時手機預覽</span>
+            </div>
+            <div class="w-[280px] border-[6px] border-slate-800 rounded-[2.5rem] overflow-hidden shadow-2xl bg-white relative">
+                <!-- iPhone 瀏海 -->
+                <div class="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-5 bg-slate-800 rounded-b-xl z-30"></div>
+                <!-- 預覽注入點 -->
+                <div id="mobilePreviewContainer" class="min-h-[380px] w-full relative z-10 bg-slate-50 pt-3"></div>
+            </div>
+        </div>
+
         <div class="flex bg-slate-100 p-1 rounded-xl mb-6">
             <button onclick="window.switchTab('image')" data-type="image" class="tab-btn flex-1 py-2 text-sm font-bold rounded-lg card-editor-tab active">🖼️ 靜態圖片</button>
             <button onclick="window.switchTab('video')" data-type="video" class="tab-btn flex-1 py-2 text-sm font-bold rounded-lg card-editor-tab">🎬 動態影片</button>
@@ -229,9 +244,13 @@
             </div>
             <div>
                 <label class="input-label">封面圖片</label>
-                <div onclick="document.getElementById('ecardFileInput').click()" id="uploadArea" class="drag-area w-full h-36 bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer">
-                    <span class="material-symbols-outlined text-3xl text-slate-400">add_photo_alternate</span>
-                    <p class="text-xs text-slate-400 mt-1">點擊上傳或貼網址</p>
+                <div onclick="document.getElementById('ecardFileInput').click()" id="uploadArea" class="relative drag-area w-full h-36 bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer overflow-hidden">
+                    <!-- 即時縮圖渲染 -->
+                    <img id="v1CoverThumbnail" src="" class="absolute inset-0 w-full h-full object-cover hidden z-10">
+                    <div id="v1CoverPlaceholder" class="flex flex-col items-center z-0">
+                        <span class="material-symbols-outlined text-3xl text-slate-400">add_photo_alternate</span>
+                        <p class="text-xs text-slate-400 mt-1">點擊上傳或貼網址</p>
+                    </div>
                 </div>
                 <input type="text" id="ecard_ImgUrl" class="custom-input mt-2" placeholder="或貼上圖片網址 https://..." oninput="window.updatePreview()">
                 <input type="file" id="ecardFileInput" accept="image/*" class="hidden" onchange="window.handleEcardImageInput(event)">
@@ -250,24 +269,25 @@
             <div>
                 <label class="input-label">LOGO / 大頭貼</label>
                 <div class="flex gap-3 items-center">
-                    <div onclick="document.getElementById('ecardV2LogoInput').click()" id="v2LogoArea" class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center cursor-pointer overflow-hidden border">
-                        <img id="v2LogoPreview" class="w-full h-full object-cover hidden">
-                        <span class="material-symbols-outlined text-slate-400">add_a_photo</span>
+                    <div onclick="document.getElementById('ecardV2LogoInput').click()" id="v2LogoArea" class="w-20 h-20 bg-slate-100 rounded-full flex flex-col items-center justify-center cursor-pointer overflow-hidden border relative shrink-0">
+                        <!-- 即時縮圖渲染 -->
+                        <img id="v2LogoPreview" src="" class="absolute inset-0 w-full h-full object-cover hidden z-10">
+                        <span id="v2LogoPlaceholder" class="material-symbols-outlined text-slate-400 z-0">add_a_photo</span>
                     </div>
                     <input type="text" id="ecard_V2LogoUrl" class="custom-input flex-1" placeholder="圖片網址" oninput="window.updatePreview()">
                     <input type="file" id="ecardV2LogoInput" accept="image/*" class="hidden" onchange="window.handleEcardLogoInput(event)">
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-3">
-                <div><label class="input-label">漸層起色</label><input type="color" id="ecard_V2BgStart" value="#57142b" class="w-full h-10 rounded-lg border" oninput="window.updatePreview()"></div>
-                <div><label class="input-label">漸層迄色</label><input type="color" id="ecard_V2BgEnd" value="#46250c" class="w-full h-10 rounded-lg border" oninput="window.updatePreview()"></div>
+                <div><label class="input-label">漸層起色</label><input type="color" id="ecard_V2BgStart" value="#57142b" class="w-full h-10 rounded-lg border cursor-pointer p-0" oninput="window.updatePreview()"></div>
+                <div><label class="input-label">漸層迄色</label><input type="color" id="ecard_V2BgEnd" value="#46250c" class="w-full h-10 rounded-lg border cursor-pointer p-0" oninput="window.updatePreview()"></div>
             </div>
             <div>
-                <label class="input-label flex justify-between">社群圖示 <button onclick="window.addSocial()" class="text-xs bg-slate-800 text-white px-3 py-1 rounded-full">+ 新增</button></label>
+                <label class="input-label flex justify-between">社群圖示 <button onclick="window.addSocial()" class="text-xs bg-slate-800 text-white px-3 py-1 rounded-full active:scale-95 transition-transform">+ 新增</button></label>
                 <div id="socialList" class="space-y-2 mt-2"></div>
             </div>
             <div>
-                <label class="input-label flex justify-between">導購按鈕 <button onclick="window.addBar()" class="text-xs bg-green-600 text-white px-3 py-1 rounded-full">+ 新增</button></label>
+                <label class="input-label flex justify-between">導購按鈕 <button onclick="window.addBar()" class="text-xs bg-green-600 text-white px-3 py-1 rounded-full active:scale-95 transition-transform">+ 新增</button></label>
                 <div id="barList" class="space-y-2 mt-2"></div>
             </div>
         </div>
@@ -275,14 +295,14 @@
         <div class="mt-6 pt-4 border-t">
             <label class="input-label">LINE 預覽文字</label>
             <input type="text" id="ecard_AltText" class="custom-input mb-4" placeholder="這是我的數位名片">
-            <button onclick="window.shareToLine()" id="shareLineBtn" class="btn-primary bg-green-500 hover:bg-green-600">📤 發送至 LINE</button>
+            <button onclick="window.shareToLine()" id="shareLineBtn" class="btn-primary bg-green-500 hover:bg-green-600 shadow-lg shadow-green-500/20">📤 發送至 LINE</button>
         </div>
     </div>
 
     <!-- 預覽區 (桌面版顯示) -->
     <div class="hidden lg:block absolute right-0 top-0 bottom-0 w-1/2 bg-slate-100 p-4 overflow-auto border-l">
-        <div class="phone-mock max-w-[300px] mx-auto">
-            <div id="previewContainer" class="bg-white min-h-[500px]"></div>
+        <div class="phone-mock max-w-[300px] mx-auto mt-10">
+            <div id="previewContainer" class="bg-white min-h-[500px] relative"></div>
         </div>
     </div>
 </div>
@@ -295,7 +315,7 @@
         <button onclick="window.fetchVoomData()" id="fetchVoomBtn" class="btn-primary py-2 text-sm">解析影片</button>
         <div id="voomResult" class="hidden mt-3">
             <video id="voomPlayer" controls class="w-full rounded-lg"></video>
-            <button onclick="window.applyVoom()" id="applyVoomBtn" class="btn-secondary mt-2 text-sm">套用此影片</button>
+            <button onclick="window.applyVoom()" id="applyVoomBtn" class="btn-secondary mt-2 text-sm border border-blue-200 text-blue-600">套用此影片</button>
         </div>
         <button onclick="window.closeVoomModal()" class="btn-secondary mt-3 text-sm">取消</button>
     </div>
@@ -303,19 +323,18 @@
 
 <!-- 裁切 Modal -->
 <div id="cropModal" class="hidden fixed inset-0 bg-black z-[70] flex flex-col max-w-md mx-auto">
-    <div class="flex justify-between p-4 text-white">
-        <button onclick="window.cancelCrop()">取消</button>
-        <span>裁切圖片</span>
-        <button onclick="window.confirmCrop()">完成</button>
+    <div class="flex justify-between items-center p-4 text-white border-b border-slate-800 bg-slate-900">
+        <button onclick="window.cancelCrop()" class="px-2 py-1 text-slate-400 font-bold active:scale-95 transition-transform">取消</button>
+        <span class="font-bold tracking-wider">裁切圖片</span>
+        <button onclick="window.confirmCrop()" class="px-4 py-1.5 bg-[#06C755] rounded-lg font-bold active:scale-95 transition-transform">完成</button>
     </div>
-    <div class="flex-1 flex items-center justify-center">
+    <div class="flex-1 flex items-center justify-center bg-black">
         <img id="cropImage" class="max-w-full max-h-full">
     </div>
 </div>
 
 <script>
     // ======================== 全域變數與 0 延遲 SVG 佔位符 ========================
-    // ⭐ QQ 防掛解法：確保 LIFF_ID 完全吻合，防止 LINE OAuth 400 Bad Request 錯誤
     const LIFF_ID = "2009367829-DLtYBDUm";
     const API_URL = "https://actmaster.fangwl591021.workers.dev";
     
@@ -345,7 +364,7 @@
         setTimeout(() => toast.classList.remove('show'), 2500);
     }
 
-    // ⭐ 友善無感降級分享器 (Fallback Share) - 修正「手機環境問題」的誤解語氣
+    // ⭐ 友善無感降級分享器 (Fallback Share)
     window.fallbackShare = function(url, altText) {
         const fullText = `${altText}\n${url}`;
         const fallbackInput = document.createElement('textarea');
@@ -391,7 +410,7 @@
     async function initLIFF() {
         await liff.init({ liffId: LIFF_ID });
         if (!liff.isLoggedIn()) {
-            liff.login();
+            liff.login({ redirectUri: window.location.href });
             return false;
         }
         currentUser = await liff.getProfile();
@@ -453,7 +472,7 @@
 
         page.forEach(card => {
             const div = document.createElement('div');
-            div.className = 'bg-white rounded-xl p-3 flex gap-3 shadow-sm cursor-pointer active:scale-95 transition';
+            div.className = 'bg-white rounded-xl p-3 flex gap-3 shadow-sm cursor-pointer active:scale-95 transition border border-slate-100';
             div.onclick = () => window.openCardDetail(card);
             
             let imgHtml = '<span class="material-symbols-outlined text-slate-300">contact_mail</span>';
@@ -462,7 +481,7 @@
             }
             
             div.innerHTML = `
-                <div class="w-14 h-14 bg-slate-100 rounded-lg flex items-center justify-center overflow-hidden shrink-0">
+                <div class="w-14 h-14 bg-slate-100 rounded-lg flex items-center justify-center overflow-hidden shrink-0 border border-slate-100">
                     ${imgHtml}
                 </div>
                 <div class="flex-1 overflow-hidden flex flex-col justify-center">
@@ -486,6 +505,7 @@
     window.handleCameraInput = (e) => { if(e.target.files[0]) window.openCropper(e.target.files[0], (b64) => { document.getElementById('previewImage').src = b64; document.getElementById('listView').classList.add('hidden'); document.getElementById('processView').classList.remove('hidden'); }); };
     window.handleGalleryInput = (e) => { if(e.target.files[0]) window.openCropper(e.target.files[0], (b64) => { document.getElementById('previewImage').src = b64; document.getElementById('listView').classList.add('hidden'); document.getElementById('processView').classList.remove('hidden'); }); };
     
+    // ⭐ 上傳並將 Base64 塞給設定檔，然後立即更新畫面
     window.handleEcardImageInput = (e) => { if(e.target.files[0]) window.openCropper(e.target.files[0], (b64) => { document.getElementById('ecard_ImgUrl').value = b64; window.updatePreview(); }); };
     window.handleEcardLogoInput = (e) => { if(e.target.files[0]) window.openCropper(e.target.files[0], (b64) => { document.getElementById('ecard_V2LogoUrl').value = b64; window.updatePreview(); }); };
 
@@ -753,24 +773,38 @@
 
     window.escapeHtml = function(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; }); }
 
+    // ⭐ 實時預覽引擎：同時渲染給「桌機預覽窗」與「手機迷你預覽器」
     window.updatePreview = function() {
-        const container = document.getElementById('previewContainer');
-        if (!container) return;
+        const desktopContainer = document.getElementById('previewContainer');
+        const mobileContainer = document.getElementById('mobilePreviewContainer');
+        
         const title = document.getElementById('ecard_Title').value || '商務名片';
         const desc = document.getElementById('ecard_Desc').value || '';
         
+        let htmlContent = '';
+
         if (currentEcardType === 'v2') {
             const logo = document.getElementById('ecard_V2LogoUrl').value || SVG_AVATAR;
             const bgStart = document.getElementById('ecard_V2BgStart').value;
             const bgEnd = document.getElementById('ecard_V2BgEnd').value;
             let socialHtml = window.v2Socials.filter(s=>s.label).map(s => `<div class="bg-white/20 px-3 py-1.5 rounded-full text-xs font-bold">${window.escapeHtml(s.label)}</div>`).join('');
             let barsHtml = window.v2Bars.filter(b=>b.text).map(b => `<div class="block bg-white text-[#333] py-3 rounded-full text-sm font-bold mb-3 shadow-md">${window.escapeHtml(b.text)}</div>`).join('');
-            container.innerHTML = `
-                <div class="p-6 text-white text-center min-h-[500px] flex flex-col items-center" style="background: linear-gradient(135deg, ${bgStart}, ${bgEnd});">
-                    <img src="${logo}" class="w-24 h-24 rounded-full mx-auto object-cover border-4 border-white/20 mb-4 shadow-lg" onerror="this.src='${SVG_AVATAR}'">
-                    <div class="font-extrabold text-2xl tracking-tight">${window.escapeHtml(title)}</div>
-                    <div class="text-sm opacity-90 mt-2 leading-relaxed max-w-[250px]">${window.escapeHtml(desc)}</div>
-                    <div class="flex justify-center gap-2 my-6 flex-wrap">${socialHtml}</div>
+            
+            // ⭐ 更新 V2 縮圖渲染
+            const v2LogoPreview = document.getElementById('v2LogoPreview');
+            const v2LogoPlaceholder = document.getElementById('v2LogoPlaceholder');
+            if (v2LogoPreview && logo !== SVG_AVATAR) {
+                v2LogoPreview.src = logo; v2LogoPreview.classList.remove('hidden'); v2LogoPlaceholder.classList.add('hidden');
+            } else if (v2LogoPreview) {
+                v2LogoPreview.classList.add('hidden'); v2LogoPlaceholder.classList.remove('hidden');
+            }
+
+            htmlContent = `
+                <div class="p-6 text-white text-center min-h-[400px] flex flex-col items-center" style="background: linear-gradient(135deg, ${bgStart}, ${bgEnd});">
+                    <img src="${logo}" class="w-20 h-20 rounded-full mx-auto object-cover border-4 border-white/20 mb-4 shadow-lg" onerror="this.src='${SVG_AVATAR}'">
+                    <div class="font-extrabold text-[20px] tracking-tight">${window.escapeHtml(title)}</div>
+                    <div class="text-xs opacity-90 mt-2 leading-relaxed max-w-[250px]">${window.escapeHtml(desc)}</div>
+                    <div class="flex justify-center gap-2 my-5 flex-wrap">${socialHtml}</div>
                     <div class="w-full max-w-[260px]">${barsHtml}</div>
                 </div>
             `;
@@ -778,12 +812,21 @@
             let imgUrl = document.getElementById('ecard_ImgUrl').value;
             if (!imgUrl) imgUrl = SVG_COVER;
             
+            // ⭐ 更新 V1 縮圖渲染
+            const v1CoverThumbnail = document.getElementById('v1CoverThumbnail');
+            const v1CoverPlaceholder = document.getElementById('v1CoverPlaceholder');
+            if (v1CoverThumbnail && imgUrl !== SVG_COVER) {
+                v1CoverThumbnail.src = imgUrl; v1CoverThumbnail.classList.remove('hidden'); v1CoverPlaceholder.classList.add('hidden');
+            } else if (v1CoverThumbnail) {
+                v1CoverThumbnail.classList.add('hidden'); v1CoverPlaceholder.classList.remove('hidden');
+            }
+
             let buttonsHtml = '';
             for (let i = 0; i < 4; i++) {
                 const label = document.querySelector(`[data-btnidx="${i}"][data-field="label"]`)?.value;
                 const color = document.querySelector(`[data-btnidx="${i}"][data-field="color"]`)?.value;
                 if (label) {
-                    buttonsHtml += `<div class="block py-3.5 rounded-xl text-white text-center text-[15px] font-bold mb-2 shadow-sm" style="background:${color}">${window.escapeHtml(label)}</div>`;
+                    buttonsHtml += `<div class="block py-3 rounded-xl text-white text-center text-[14px] font-bold mb-2 shadow-sm" style="background:${color}">${window.escapeHtml(label)}</div>`;
                 }
             }
             
@@ -796,17 +839,20 @@
                 </div>`;
             }
 
-            container.innerHTML = `
-                <div class="bg-white rounded-t-3xl overflow-hidden">
-                    <div class="relative">${heroContent}<div class="absolute top-2 right-2 bg-red-500 text-white text-[10px] px-2 py-1 rounded-full font-bold">分享</div></div>
-                    <div class="p-5 text-center">
-                        <div class="font-black text-[22px] text-slate-800">${window.escapeHtml(title)}</div>
-                        <div class="text-[13px] text-slate-500 mt-2 font-medium leading-relaxed">${window.escapeHtml(desc)}</div>
+            htmlContent = `
+                <div class="bg-white overflow-hidden pb-4">
+                    <div class="relative">${heroContent}<div class="absolute top-2 right-2 bg-red-500 text-white text-[9px] px-2 py-1 rounded-full font-bold">分享</div></div>
+                    <div class="p-4 text-center">
+                        <div class="font-black text-[18px] text-slate-800">${window.escapeHtml(title)}</div>
+                        <div class="text-[12px] text-slate-500 mt-1.5 font-medium leading-relaxed">${window.escapeHtml(desc)}</div>
                     </div>
-                    <div class="p-5 pt-0">${buttonsHtml}</div>
+                    <div class="px-4">${buttonsHtml}</div>
                 </div>
             `;
         }
+        
+        if (desktopContainer) desktopContainer.innerHTML = htmlContent;
+        if (mobileContainer) mobileContainer.innerHTML = htmlContent;
     }
 
     window.saveEcardConfig = async function() {
@@ -816,15 +862,18 @@
 
         try {
             let imgUrl = document.getElementById('ecard_ImgUrl').value;
+            // ⭐ 判斷若為 Base64 則非同步上傳，並寫回 input 再次觸發預覽更新
             if (imgUrl.startsWith('data:image')) {
                 imgUrl = await window.callAPI('uploadImage', { base64Image: imgUrl });
                 document.getElementById('ecard_ImgUrl').value = imgUrl; 
+                window.updatePreview();
             }
 
             let logoUrl = document.getElementById('ecard_V2LogoUrl').value;
             if (logoUrl.startsWith('data:image')) {
                 logoUrl = await window.callAPI('uploadImage', { base64Image: logoUrl });
                 document.getElementById('ecard_V2LogoUrl').value = logoUrl;
+                window.updatePreview();
             }
 
             const config = {
@@ -860,7 +909,7 @@
         }
     }
 
-    // ⭐ LINE 嚴格 JSON 格式防彈裝甲：強制剔除任何空值，確保 shareTargetPicker 永遠順暢！
+    // ⭐ LINE 嚴格 JSON 格式防彈裝甲
     window.buildFlexMessage = function(card, cfg) {
         let safeTitle = (cfg.title && cfg.title.trim() !== '') ? cfg.title.substring(0, 40) : '商務名片';
         let safeDesc = (cfg.desc && cfg.desc.trim() !== '') ? cfg.desc.substring(0, 200) : ' ';
@@ -868,7 +917,6 @@
         if (cfg.cardType === 'v2') {
             const logo = (cfg.v2LogoUrl && cfg.v2LogoUrl.startsWith('http')) ? cfg.v2LogoUrl : "https://cdn-icons-png.flaticon.com/512/149/149071.png";
             
-            // 強制過濾任何沒有文字或沒有網址的按鈕
             let validBars = (cfg.v2Bars || []).filter(b => b.text && b.text.trim() !== '' && b.url && b.url.trim() !== '').map(b => {
                 let u = b.url.trim();
                 if (!u.match(/^(http|https|tel|mailto|line):/i)) u = 'https://' + u;
@@ -893,7 +941,6 @@
             }
             return flex;
         } else {
-            // 強制過濾任何沒有文字或沒有網址的按鈕
             let validBtns = (cfg.buttons || []).filter(b => b.l && b.l.trim() !== '' && b.u && b.u.trim() !== '').map(b => {
                 let u = b.u.trim();
                 if (!u.match(/^(http|https|tel|mailto|line):/i)) u = 'https://' + u;
@@ -940,7 +987,6 @@
             let config = {};
             if (currentCard['自訂名片設定']) try { config = JSON.parse(currentCard['自訂名片設定']); } catch(e){}
 
-            // 呼叫具備強型別過濾的防彈 JSON 引擎
             const flexMsg = window.buildFlexMessage(currentCard, config);
             const altText = (config.altText && config.altText.trim() !== '') ? config.altText : '這是我的數位名片，請多指教';
             const shareUrl = `https://liff.line.me/${LIFF_ID}?shareCardId=${currentCard.rowId}`;

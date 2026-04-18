@@ -1,4 +1,4 @@
-<!-- Version: v8.1.0 (QQ 終極防彈版：改用 Inline 事件綁定，並以防斷線 SVG 替換 Placeholder 圖床) -->
+<!-- Version: v8.1.1 (QQ 終極防掛版：包含環境限制防呆，電腦版/外開分享自動降級複製連結) -->
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -332,7 +332,6 @@
     let currentCropCallback = null;
     let isProcessing = false;
     
-    // 綁定全域，確保 HTML inline onclick 可以直接呼叫
     window.v2Socials = [];
     window.v2Bars = [];
 
@@ -344,6 +343,23 @@
         toast.classList.add('show');
         setTimeout(() => toast.classList.remove('show'), 2500);
     }
+
+    // ⭐ 無感降級分享器 (Fallback Share) - 針對電腦版/非 LINE 環境
+    window.fallbackShare = function(url, altText) {
+        const fullText = `${altText}\n${url}`;
+        const fallbackInput = document.createElement('textarea');
+        fallbackInput.value = fullText;
+        fallbackInput.style.position = 'fixed'; fallbackInput.style.opacity = '0';
+        document.body.appendChild(fallbackInput);
+        fallbackInput.focus(); fallbackInput.select();
+        try {
+            document.execCommand('copy');
+            alert("⚠️ 電腦版或外部瀏覽器無法直接喚起 LINE 轉發功能。\n\n✅ 已為您自動複製「數位名片專屬連結」！\n請直接貼上到聊天室傳送給好友。");
+        } catch(err) {
+            alert("請複製以下連結分享：\n\n" + url);
+        }
+        document.body.removeChild(fallbackInput);
+    };
 
     window.callAPI = async function(action, payload) {
         try {
@@ -381,7 +397,7 @@
         const adminIds = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55", "U8932b891ad24da512afb9c1a6f41567b"];
         isAdmin = adminIds.includes(currentUser.userId);
         
-        document.getElementById('userAvatar').src = currentUser.pictureUrl;
+        document.getElementById('userAvatar').src = currentUser.pictureUrl || SVG_AVATAR;
         document.getElementById('userAvatar').classList.remove('hidden');
         
         if (isAdmin) {
@@ -462,7 +478,6 @@
 
     window.loadMoreCards = function() { currentPageNum++; window.renderCards(); }
 
-    // ======================== 基本操作 (相機、相簿、退回) ========================
     window.openCamera = () => document.getElementById('cameraInput').click();
     window.openGallery = () => document.getElementById('galleryInput').click();
     window.closeProcessView = () => { document.getElementById('processView').classList.add('hidden'); document.getElementById('listView').classList.remove('hidden'); };
@@ -473,7 +488,6 @@
     window.handleEcardImageInput = (e) => { if(e.target.files[0]) window.openCropper(e.target.files[0], (b64) => { document.getElementById('ecard_ImgUrl').value = b64; window.updatePreview(); }); };
     window.handleEcardLogoInput = (e) => { if(e.target.files[0]) window.openCropper(e.target.files[0], (b64) => { document.getElementById('ecard_V2LogoUrl').value = b64; window.updatePreview(); }); };
 
-    // ======================== 名片詳情與編輯 ========================
     window.openCardDetail = function(card) {
         currentCard = card;
         document.getElementById('detailName').innerText = card['姓名'] || '未知';
@@ -595,13 +609,17 @@
         }
     };
 
+    // ⭐ 邀請認領：加上 LIFF 環境防呆
     window.shareClaimLink = async function() {
         if (!currentCard || isProcessing) return;
         isProcessing = true;
         const btn = document.getElementById('shareClaimBtn');
         const oriTxt = btn.innerText; btn.innerText = "發送中..."; btn.classList.add('opacity-50');
+        
+        const url = `https://liff.line.me/${LIFF_ID}/?view=user-profile&claimCardId=${currentCard.rowId}`;
+        const altText = "您的專屬數位名片認領邀請";
+
         try {
-            const url = `https://liff.line.me/${LIFF_ID}/?view=user-profile&claimCardId=${currentCard.rowId}`;
             const flexMessage = {
                 type: "bubble", size: "mega",
                 body: {
@@ -618,12 +636,14 @@
                 }
             };
             if (liff.isApiAvailable('shareTargetPicker')) {
-                await liff.shareTargetPicker([{ type: "flex", altText: "專屬數位名片認領", contents: flexMessage }]);
-                window.showToast('✅ 邀請已發送');
+                const res = await liff.shareTargetPicker([{ type: "flex", altText: altText, contents: flexMessage }]);
+                if (res) window.showToast('✅ 邀請已發送');
             } else {
-                window.showToast('無法開啟分享', true);
+                throw new Error("環境不支援");
             }
-        } catch(e) { window.showToast('發送失敗', true); }
+        } catch(e) { 
+            window.fallbackShare(url, altText);
+        }
         finally { btn.innerText = oriTxt; btn.classList.remove('opacity-50'); isProcessing = false; }
     }
 
@@ -792,7 +812,7 @@
     window.saveEcardConfig = async function() {
         if(isProcessing) return; isProcessing = true;
         const btn = document.getElementById('saveEcardConfigBtn');
-        const oriTxt = btn.innerText; btn.innerText = "儲存中..."; btn.classList.add('opacity-50');
+        const oriTxt = btn.innerText; btn.innerText = "上傳/儲存中..."; btn.classList.add('opacity-50');
 
         try {
             let imgUrl = document.getElementById('ecard_ImgUrl').value;
@@ -840,6 +860,7 @@
         }
     }
 
+    // ⭐ 發送至 LINE：加上環境限制防呆 (LIFF ShareTargetPicker Fallback)
     window.shareToLine = async function() {
         if(isProcessing) return; isProcessing = true;
         const btn = document.getElementById('shareLineBtn');
@@ -852,17 +873,23 @@
 
             const flexMsg = window.buildFlexMessage(currentCard, config);
             const altText = config.altText || '這是我的數位名片，請多指教';
+            const shareUrl = `https://liff.line.me/${LIFF_ID}?shareCardId=${currentCard.rowId}`;
             
             if (liff.isApiAvailable('shareTargetPicker')) {
-                const res = await liff.shareTargetPicker([{ type: 'flex', altText, contents: flexMsg }]);
-                if(res) {
-                    window.showToast('✅ 已發送');
-                    setTimeout(()=> liff.closeWindow(), 1500);
+                try {
+                    const res = await liff.shareTargetPicker([{ type: 'flex', altText, contents: flexMsg }]);
+                    if(res) {
+                        window.showToast('✅ 已發送');
+                        setTimeout(()=> liff.closeWindow(), 1500);
+                    }
+                } catch(e) {
+                    window.fallbackShare(shareUrl, altText);
                 }
             } else {
-                window.showToast('無法開啟分享', true);
+                window.fallbackShare(shareUrl, altText);
             }
         } catch(e) {
+            window.showToast("分享失敗", true);
         } finally {
             btn.innerHTML = oriTxt; btn.classList.remove('opacity-50'); isProcessing = false;
         }
@@ -877,7 +904,7 @@
                     type: 'box', layout: 'vertical', paddingAll: '0px',
                     background: { type: "linearGradient", angle: "135deg", startColor: cfg.v2BgStart || "#57142b", endColor: cfg.v2BgEnd || "#46250c" },
                     contents: [
-                        { type: 'box', layout: 'vertical', margin: 'xl', width: '100px', height: '100px', cornerRadius: '100px', alignSelf: 'center', contents: [{ type: 'image', url: cfg.v2LogoUrl && cfg.v2LogoUrl.startsWith('http') ? cfg.v2LogoUrl : 'https://via.placeholder.com/100', size: 'full', aspectMode: 'cover', aspectRatio: '1:1' }] },
+                        { type: 'box', layout: 'vertical', margin: 'xl', width: '100px', height: '100px', cornerRadius: '100px', alignSelf: 'center', contents: [{ type: 'image', url: cfg.v2LogoUrl || 'https://via.placeholder.com/100', size: 'full', aspectMode: 'cover', aspectRatio: '1:1' }] },
                         { type: 'text', text: cfg.title, weight: 'bold', size: 'xl', color: '#FFFFFF', align: 'center', margin: 'md', wrap: true },
                         { type: 'text', text: cfg.desc || ' ', size: 'sm', color: '#FFFFFF', align: 'center', margin: 'md', wrap: true }
                     ]
@@ -890,9 +917,9 @@
         } else {
             let heroBlock;
             if (cfg.cardType === 'video' && cfg.videoUrl) {
-                 heroBlock = { type: "video", url: cfg.videoUrl, previewUrl: cfg.imgUrl && cfg.imgUrl.startsWith('http') ? cfg.imgUrl : 'https://via.placeholder.com/400x260', altContent: { type: "image", size: "full", aspectRatio: "20:13", aspectMode: "cover", url: cfg.imgUrl && cfg.imgUrl.startsWith('http') ? cfg.imgUrl : 'https://via.placeholder.com/400x260' }, aspectRatio: "20:13" };
+                 heroBlock = { type: "video", url: cfg.videoUrl, previewUrl: cfg.imgUrl, altContent: { type: "image", size: "full", aspectRatio: "20:13", aspectMode: "cover", url: cfg.imgUrl }, aspectRatio: "20:13" };
             } else {
-                 heroBlock = { type: 'image', url: cfg.imgUrl && cfg.imgUrl.startsWith('http') ? cfg.imgUrl : 'https://via.placeholder.com/400x260', size: 'full', aspectRatio: '20:13', aspectMode: 'cover', action: { type: 'uri', uri: cfg.imgActionUrl } };
+                 heroBlock = { type: 'image', url: cfg.imgUrl, size: 'full', aspectRatio: '20:13', aspectMode: 'cover', action: { type: 'uri', uri: cfg.imgActionUrl } };
             }
 
             return {
@@ -902,7 +929,7 @@
                 body: {
                     type: 'box', layout: 'vertical', paddingAll: '10px', contents: [
                         { type: 'text', text: cfg.title, weight: 'bold', size: 'xl', align: 'center', wrap: true },
-                        { type: 'text', text: cfg.desc || ' ', size: 'sm', color: '#666666', margin: 'md', wrap: true }
+                        { type: 'text', text: cfg.desc, size: 'sm', color: '#666666', margin: 'md', wrap: true }
                     ]
                 },
                 footer: { type: 'box', layout: 'vertical', spacing: 'sm', paddingAll: '10px', paddingTop: '0px', contents: cfg.buttons.map(b => ({ type: 'button', style: 'primary', color: b.c, action: { type: 'uri', label: b.l, uri: b.u } })) }
@@ -910,7 +937,6 @@
         }
     }
 
-    // ======================== 裁切 & VOOM & 批次處理 ========================
     window.openCropper = function(file, callback) {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -1000,7 +1026,6 @@
         }
     }
 
-    // 啟動點：使用 DOMContentLoaded 無視任何前端廣告/字型套件阻擋
     document.addEventListener('DOMContentLoaded', () => {
         initLIFF().catch(err => alert("初始化失敗: " + err.message));
     });

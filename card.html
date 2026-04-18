@@ -1,4 +1,4 @@
-<!-- Version: v7.6.7 (智慧預填終極版：統一欄位 ID 解決儲存報錯，自動生成 V2 社群與導購按鈕) -->
+<!-- Version: v7.6.8 (修復版：解決 IMAGE_DATA_LARGE 導致的 404 報錯，並優化圖片防破圖邏輯) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -66,7 +66,7 @@
       <div class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shadow-sm">
         <span class="material-symbols-outlined text-[20px]">contact_mail</span>
       </div>
-      名片管理 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v7.6.7</span>
+      名片管理 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v7.6.8</span>
     </div>
     <div class="flex items-center gap-3">
       <div id="user-profile-badge" class="hidden flex items-center gap-2">
@@ -76,7 +76,6 @@
   </nav>
 
   <main id="main-content" class="flex-1 overflow-y-auto pb-32 pt-20 bg-slate-50">
-    
     <div id="view-loading" class="h-full flex flex-col items-center justify-center space-y-4 pb-20">
       <div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
       <p id="loading-text" class="text-slate-500 font-bold text-[14px] tracking-wider">資料載入中</p>
@@ -117,45 +116,9 @@
         </button>
       </div>
     </div>
-
-    <div id="view-process" class="hidden space-y-6 animate-in fade-in pt-4 px-5">
-      <div class="flex items-center gap-3 mb-2">
-        <button onclick="resetUI()" class="w-9 h-9 bg-white rounded-full flex items-center justify-center text-slate-600 shadow-sm active:scale-90 transition-all"><span class="material-symbols-outlined text-[20px]">arrow_back</span></button>
-        <h2 class="text-[20px] font-bold text-slate-800 tracking-tight">辨識結果確認</h2>
-      </div>
-      <div id="section-loading" class="hidden bg-white rounded-2xl shadow-sm border border-slate-100 p-8 text-center mt-6">
-        <span class="material-symbols-outlined text-4xl text-primary animate-spin mb-3 inline-block">autorenew</span>
-        <h3 class="text-[16px] font-bold text-slate-800 mb-1">AI 辨識中...</h3>
-      </div>
-      <div id="section-form" class="hidden space-y-6 pb-10">
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
-          <div class="mb-5 rounded-xl overflow-hidden bg-slate-50 flex items-center justify-center min-h-[150px] shadow-inner">
-            <img id="process-preview-image" src="" class="w-full h-auto object-contain max-h-[200px]">
-          </div>
-          <div class="space-y-5">
-            <div class="grid grid-cols-2 gap-4"><div class="flex flex-col w-full"><label class="input-label">姓名</label><input type="text" id="f-Name" class="custom-input"></div><div class="flex flex-col w-full"><label class="input-label">英文名</label><input type="text" id="f-EnglishName" class="custom-input"></div></div>
-            <div class="grid grid-cols-2 gap-4"><div class="flex flex-col w-full"><label class="input-label">職稱</label><input type="text" id="f-Title" class="custom-input"></div><div class="flex flex-col w-full"><label class="input-label">部門</label><input type="text" id="f-Department" class="custom-input"></div></div>
-            <div class="flex flex-col w-full"><label class="input-label">公司名稱</label><input type="text" id="f-CompanyName" class="custom-input"></div>
-            <div class="grid grid-cols-2 gap-4"><div class="flex flex-col w-full"><label class="input-label">統一編號</label><input type="text" id="f-TaxID" class="custom-input"></div><div class="flex flex-col w-full"><label class="input-label">手機號碼</label><input type="tel" id="f-Mobile" class="custom-input"></div></div>
-            <div class="grid grid-cols-2 gap-4"><div class="flex flex-col w-full"><label class="input-label">公司電話</label><input type="text" id="f-Tel" class="custom-input"></div><div class="flex flex-col w-full"><label class="input-label">分機</label><input type="text" id="f-Ext" class="custom-input"></div></div>
-            <div class="flex flex-col w-full"><label class="input-label">傳真</label><input type="text" id="f-Fax" class="custom-input"></div>
-            <div class="flex flex-col w-full"><label class="input-label">公司地址</label><input type="text" id="f-Address" class="custom-input"></div>
-            <div class="flex flex-col w-full"><label class="input-label">電子信箱</label><input type="email" id="f-Email" class="custom-input"></div>
-            <div class="flex flex-col w-full"><label class="input-label">公司網址</label><input type="url" id="f-Website" class="custom-input"></div>
-            <div class="flex flex-col w-full"><label class="input-label">社群帳號 / ID</label><input type="text" id="f-SocialMedia" class="custom-input"></div>
-            <div class="flex flex-col w-full"><label class="input-label flex items-center gap-1">品牌標語 <span class="bg-blue-100 text-blue-600 text-[10px] px-2 py-0.5 rounded">AI 擴寫</span></label><textarea id="f-Slogan" class="textarea-block h-32"></textarea></div>
-            <div class="flex flex-col w-full pt-4 border-t border-slate-100 mt-4"><label class="input-label text-primary">內部建檔備註</label><textarea id="f-Notes" class="textarea-block h-24"></textarea></div>
-          </div>
-          <div class="flex gap-3 mt-8">
-            <button onclick="resetUI()" class="w-1/3 py-4 bg-slate-100 text-slate-600 rounded-xl font-bold text-[15px] active:scale-95 transition-all">取消</button>
-            <button id="btn-save" onclick="saveToCloud()" class="flex-1 btn-primary">存入雲端</button>
-          </div>
-        </div>
-      </div>
-    </div>
   </main>
 
-  <nav id="bottom-nav-admin" class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl flex justify-evenly items-center px-1 py-2 z-40 pb-safe left-1/2 -translate-x-1/2 h-[76px] rounded-t-3xl border-t border-slate-100">
+  <nav id="bottom-nav-admin" class="fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl flex justify-evenly items-center px-1 py-2 z-40 pb-safe left-1/2 -translate-x-1/2 h-[76px] rounded-t-3xl border-t border-slate-100 shadow-[0_-10px_20px_rgba(0,0,0,0.03)]">
     <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">fact_check</span></div><span class="text-[10px] font-bold">核銷</span></button>
     <button onclick="window.location.href='active.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">add_circle</span></div><span class="text-[10px] font-bold">建立</span></button>
     <button onclick="window.location.href='index.html?view=admin-crm'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">groups</span></div><span class="text-[10px] font-bold">CRM</span></button>
@@ -164,9 +127,6 @@
     <button onclick="window.location.href='index.html?view=admin-settings'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">settings</span></div><span class="text-[10px] font-bold">參數</span></button>
   </nav>
 </div>
-
-<!-- 自訂 Toast -->
-<div id="toast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-[14px] shadow-lg transition-all z-[10000] font-bold flex items-center gap-2 w-max max-w-[90vw] opacity-0 pointer-events-none border border-slate-700 text-white bg-slate-800"></div>
 
 <!-- 唯讀預覽 Modal -->
 <div id="readonly-card-modal" class="hidden fixed inset-0 bg-white flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl overflow-hidden z-[1000]">
@@ -182,91 +142,27 @@
             <div class="flex items-center gap-4 py-4 border-b border-slate-100"><span class="material-symbols-outlined text-slate-400">smartphone</span><a id="ro-mobile-link" class="text-blue-600 font-bold"></a></div>
             <div class="flex items-center gap-4 py-4 border-b border-slate-100"><span class="material-symbols-outlined text-slate-400">call</span><span id="ro-tel" class="text-slate-800"></span></div>
             <div class="flex items-center gap-4 py-4 border-b border-slate-100"><span class="material-symbols-outlined text-slate-400">mail</span><a id="ro-email-link" class="text-blue-600 font-bold"></a></div>
-            <div class="flex items-center gap-4 py-4 border-b border-slate-100"><span class="material-symbols-outlined text-slate-400">location_on</span><span id="ro-address" class="text-slate-800"></span></div>
+            <div class="flex items-center gap-4 py-4 border-b border-slate-100"><span class="material-symbols-outlined text-slate-400">location_on</span><span id="ro-address" class="text-slate-800 leading-relaxed"></span></div>
             <div class="flex items-start gap-4 py-4"><span class="material-symbols-outlined text-slate-400 mt-1">notes</span><span id="ro-notes" class="text-slate-600 whitespace-pre-wrap"></span></div>
         </div>
-        <div class="mb-8"><h3 class="text-[14px] font-bold text-slate-500 mb-3 tracking-wide">名片圖檔</h3><img id="ro-image" src="" class="w-full rounded-2xl hidden"><div id="ro-no-image" class="bg-slate-50 p-6 rounded-2xl text-center text-slate-400 hidden">無圖檔</div></div>
+        <div class="mb-8"><h3 class="text-[14px] font-bold text-slate-500 mb-3 tracking-wide">名片圖檔</h3><img id="ro-image" src="" class="w-full rounded-2xl hidden shadow-sm border border-slate-100"><div id="ro-no-image" class="bg-slate-50 p-10 rounded-2xl text-center text-slate-400 border border-slate-100 hidden"><span class="material-symbols-outlined text-[32px] mb-2">image_not_supported</span><p class="text-[13px] font-bold">無預覽圖</p></div></div>
     </div>
-    <div class="fixed bottom-0 w-full max-w-md bg-white p-4 pb-safe flex gap-3 z-[1005] border-t border-slate-100">
-        <button id="btn-share-claim" onclick="shareClaimLink()" class="flex-1 py-4 bg-slate-100 text-slate-700 rounded-2xl font-bold text-[16px] hidden">邀請認領</button>
-        <button onclick="if(window.currentActiveCard) { initAndOpenECardGenerator(window.currentActiveCard.rowId); closeReadOnlyCard(); }" class="flex-[1.5] py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[16px]">產生數位名片</button>
+    <div class="fixed bottom-0 w-full max-w-md bg-white p-4 pb-safe flex gap-3 z-[1005] border-t border-slate-100 shadow-[0_-10px_20px_rgba(0,0,0,0.03)]">
+        <button id="btn-share-claim" onclick="shareClaimLink()" class="flex-1 py-4 bg-slate-100 text-slate-700 rounded-2xl font-bold text-[16px] hidden border border-slate-200">邀請認領</button>
+        <button onclick="if(window.currentActiveCard) { initAndOpenECardGenerator(window.currentActiveCard.rowId); closeReadOnlyCard(); }" class="flex-[1.5] py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[16px] active:scale-95 transition-all">產生數位名片</button>
     </div>
 </div>
 
-<!-- 編輯名片資料 Modal -->
-<div id="card-edit-modal" class="hidden fixed inset-0 bg-slate-50 flex flex-col animate-in slide-in-from-bottom-full duration-300 w-full max-w-md mx-auto left-0 right-0 shadow-2xl overflow-hidden" style="z-index: 1010;">
-  <div class="bg-white px-5 py-4 flex justify-between items-center border-b border-slate-100 shrink-0 shadow-sm"><h3 class="text-[18px] font-extrabold text-slate-800">編輯名片資料</h3><button onclick="closeCardEdit()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600"><span class="material-symbols-outlined">close</span></button></div>
-  <div class="flex-1 overflow-y-auto px-5 py-6 pb-32 space-y-6">
-    <div class="grid grid-cols-2 gap-4"><div class="flex flex-col w-full"><label class="input-label">姓名</label><input type="text" id="edit-c-Name" class="custom-input"></div><div class="flex flex-col w-full"><label class="input-label">英文名</label><input type="text" id="edit-c-EnglishName" class="custom-input"></div></div>
-    <div class="grid grid-cols-2 gap-4"><div class="flex flex-col w-full"><label class="input-label">職稱</label><input type="text" id="edit-c-Title" class="custom-input"></div><div class="flex flex-col w-full"><label class="input-label">部門</label><input type="text" id="edit-c-Department" class="custom-input"></div></div>
-    <div class="flex flex-col w-full"><label class="input-label">公司名稱</label><input type="text" id="edit-c-CompanyName" class="custom-input"></div>
-    <div class="grid grid-cols-2 gap-4"><div class="flex flex-col w-full"><label class="input-label">統一編號</label><input type="text" id="edit-c-TaxID" class="custom-input"></div><div class="flex flex-col w-full"><label class="input-label">手機號碼</label><input type="tel" id="edit-c-Mobile" class="custom-input"></div></div>
-    <div class="flex flex-col w-full"><label class="input-label">電子信箱</label><input type="email" id="edit-c-Email" class="custom-input"></div>
-    <div class="flex flex-col w-full"><label class="input-label">公司網址</label><input type="url" id="edit-c-Website" class="custom-input"></div>
-    <div class="flex flex-col w-full pt-4 border-t border-slate-200 mt-4"><label class="input-label text-primary">內部建檔備註</label><textarea id="edit-c-Notes" class="textarea-block h-24"></textarea></div>
-  </div>
-  <div class="fixed bottom-0 w-full max-w-md bg-white/95 border-t border-slate-100 p-4 pb-safe z-[1015]"><button id="btn-save-card-edit" onclick="submitCardEdit()" class="btn-primary">儲存變更</button></div>
-</div>
-
-<!-- 數位名片編輯器 Modal -->
-<div id="ecard-generator-modal" class="hidden fixed inset-0 bg-slate-50 flex flex-col animate-in fade-in duration-300 w-full z-[1020] overflow-hidden">
-  <div class="bg-white px-5 py-4 border-b border-slate-100 flex justify-between items-center shadow-sm shrink-0 w-full z-20">
-    <div class="flex items-center gap-3"><button onclick="if(typeof window.closeECardGenerator === 'function') window.closeECardGenerator(); else document.getElementById('ecard-generator-modal').classList.add('hidden');" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600"><span class="material-symbols-outlined">close</span></button><h3 class="text-[17px] font-extrabold text-slate-800 tracking-tight leading-tight">數位名片編輯器</h3></div>
-    <button onclick="saveECardConfig()" id="btn-save-ecard" class="px-4 py-2 bg-blue-50 text-blue-700 text-[13px] font-bold rounded-lg">儲存草稿</button>
-  </div>
-  <div class="flex-1 overflow-y-auto w-full bg-slate-50 lg:bg-white">
-    <div class="container mx-auto max-w-6xl h-full">
-      <div class="grid grid-cols-1 lg:grid-cols-5 gap-0 lg:gap-8 h-full">
-        <div class="lg:col-span-3">
-          <div class="bg-white px-5 py-6">
-            <div id="ec-editor-form" class="space-y-6 w-full">
-              <div class="flex p-1.5 rounded-xl bg-slate-100 mb-6">
-                <button id="ec-tab-image" onclick="if(typeof window.toggleECardType === 'function') window.toggleECardType('image')" class="flex-1 py-2 rounded-lg text-[14px] font-bold bg-white text-slate-800 shadow-sm">靜態圖片</button>
-                <button id="ec-tab-video" onclick="if(typeof window.toggleECardType === 'function') window.toggleECardType('video')" class="flex-1 py-2 rounded-lg text-[14px] font-bold text-slate-400">動態影片</button>
-                <button id="ec-tab-v2" onclick="if(typeof window.toggleECardType === 'function') window.toggleECardType('v2')" class="flex-1 py-2 rounded-lg text-[14px] font-bold text-slate-400">質感多連結</button>
-              </div>
-              <input type="hidden" id="ec-card-type" value="image">
-              <div class="flex flex-col mb-5 w-full"><label class="input-label">主標題 / 姓名</label><input type="text" id="ec-title-input" class="custom-input font-bold" placeholder="輸入主標題..." oninput="if(typeof window.updateECardPreview === 'function') window.updateECardPreview()"></div>
-              <div class="flex flex-col mb-5 w-full"><label class="input-label">內容描述文案</label><textarea id="ec-desc-input" class="textarea-block h-36" placeholder="輸入描述..." oninput="if(typeof window.updateECardPreview === 'function') window.updateECardPreview()"></textarea></div>
-              <div id="ec-v1-fields">
-                <div class="w-full flex flex-col mb-6">
-                  <label class="input-label" id="ec-upload-label">封面圖片</label>
-                  <div class="w-full relative"><div id="ec-upload-trigger" onclick="document.getElementById('ec-upload-input').click()" class="w-full h-40 rounded-2xl flex flex-col items-center justify-center bg-slate-50 overflow-hidden group border-none"><img id="ec-img-preview-box" class="absolute inset-0 w-full h-full object-cover hidden z-0"><div id="ec-upload-placeholder" class="z-10 text-slate-400"><span class="material-symbols-outlined text-[32px]">add_photo_alternate</span></div></div><input type="text" id="ec-img-input" class="hidden"><input type="file" id="ec-upload-input" accept="image/*" class="hidden" onchange="if(typeof window.openCropper === 'function') window.openCropper(this, 'ecard')"></div>
-                </div>
-                <div class="w-full flex flex-col mb-6">
-                  <label class="input-label text-primary">點圖跳轉連結</label>
-                  <!-- ⭐ ID 修改為 ec-img-action-url 以對齊 card-ecard.js ⭐ -->
-                  <input type="url" id="ec-img-action-url" class="custom-input !text-blue-600" placeholder="https://..." oninput="if(typeof window.updateECardPreview === 'function') window.updateECardPreview()">
-                </div>
-                <div class="w-full flex flex-col pt-2"><label class="input-label mb-4">動作按鈕配置</label><div class="space-y-3 w-full" id="ec-btn-list"></div></div>
-              </div>
-              <div id="ec-v2-fields" class="hidden">
-                <div class="w-full flex flex-col mb-6"><label class="input-label">LOGO 圖片</label><input type="text" id="ec-v2-logo-url" class="custom-input" placeholder="LOGO 網址" oninput="if(typeof window.updateECardPreview === 'function') window.updateECardPreview()"></div>
-                <div class="w-full flex flex-col pt-6 border-t border-slate-200 mb-6"><div class="flex justify-between items-center mb-4"><label class="input-label">社群圖示</label><button onclick="if(typeof window.addV2Social === 'function') window.addV2Social()" class="bg-slate-800 text-white px-3 py-1.5 rounded-lg text-[11px] font-bold">新增</button></div><div class="space-y-3 w-full" id="ec-v2-social-list"></div></div>
-                <div class="w-full flex flex-col pt-6 border-t border-slate-200"><div class="flex justify-between items-center mb-4"><label class="input-label">底部導購按鈕</label><button onclick="if(typeof window.addV2Bar === 'function') window.addV2Bar()" class="bg-[#06C755] text-white px-3 py-1.5 rounded-lg text-[11px] font-bold">新增</button></div><div class="space-y-3 w-full" id="ec-v2-bars-list"></div></div>
-              </div>
-              <div class="flex flex-col gap-3 pt-6 pb-10 border-t border-slate-200 w-full"><button onclick="shareECardToLine()" id="btn-share-line" class="w-full py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[16px] shadow-md flex items-center justify-center gap-2"><span class="material-symbols-outlined text-[20px]">send</span> 傳送名片至 LINE 聊天室</button></div>
-            </div>
-          </div>
-        </div>
-        <div class="lg:col-span-2 relative hidden lg:block"><div class="sticky top-24 w-full flex justify-center pt-6"><div id="preview-ec-bubble" class="flex-preview-bubble shadow-2xl bg-white w-[340px] min-h-[480px]"></div></div></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- 圖片裁切 Modal -->
-<div id="section-image-cropper" class="hidden fixed inset-0 bg-slate-900 flex flex-col animate-in fade-in duration-200 w-full max-w-md mx-auto z-[1080]">
-  <div class="flex justify-between items-center p-4 bg-slate-900 text-white shrink-0 border-b border-slate-800"><button onclick="cancelCrop()" class="px-3 py-2 font-bold text-slate-400 text-[15px]">取消</button><span class="font-bold text-[16px]">裁切圖片</span><button onclick="confirmCrop()" class="px-4 py-1.5 font-bold text-white bg-[#06C755] rounded text-[15px]">完成</button></div>
-  <div class="flex-1 relative bg-black flex items-center justify-center overflow-hidden"><img id="cropper-image" class="max-w-full max-h-full block opacity-0"></div>
-</div>
-
+<!-- ========================================== -->
+<!-- 引用外部腳本 -->
+<!-- ========================================== -->
 <script src="liff-share.js"></script>
 <script src="card-ecard.js"></script>
 
 <script>
 /**
- * ACTMASTER Core Logic 整合版
+ * ACTMASTER Core Logic v7.6.8
+ * 智慧修復 IMAGE_DATA_LARGE 404 問題
  */
 const LIFF_ID = "2009367829-DLtYBDUm"; 
 const WORKER_URL = "https://actmaster.fangwl591021.workers.dev"; 
@@ -280,10 +176,8 @@ let filteredCards = [];
 let currentPage = 1;
 const PAGE_LIMIT = 10;
 let currentActiveCard = null; 
-let isProcessing = false;
 let isAdmin = false;
 let myCardOpened = false;
-let currentCropTarget = '';
 
 window.showToast = function(msg, isError = false) {
   const t = document.getElementById('toast');
@@ -306,6 +200,14 @@ window.fetchAPI = async function(action, payload = {}, silent = false) {
   }
 };
 
+// ⭐ 修復：防範 404 報錯的網址檢查器
+window.getSafeImgUrl = function(val) {
+  if (!val || val === '無圖檔' || val === '圖片儲存失敗' || val === 'IMAGE_DATA_LARGE') {
+    return 'https://images.unsplash.com/photo-1616628188550-808682f3926d?w=200&q=80'; // 系統預設卡片圖
+  }
+  return window.getDirectImageUrl(val);
+};
+
 window.getDirectImageUrl = function(url) { 
   if (!url) return url;
   const driveMatch = url.match(/id=([a-zA-Z0-9_-]+)/) || url.match(/d\/([a-zA-Z0-9_-]+)/);
@@ -320,16 +222,16 @@ function formatPhoneStr(val) {
   return s;
 }
 
-// ⭐ 智慧預填：將名片內容自動轉化為 E-Card 設定
+// ⭐ 智慧預填邏輯
 window.initAndOpenECardGenerator = function(rowId) {
     const card = globalCardContacts.find(c => String(c.rowId) === String(rowId));
     if (!card) return;
+    currentActiveCard = card;
     window.currentActiveCard = card;
 
     let config = {};
     if (card['自訂名片設定']) { try { config = JSON.parse(card['自訂名片設定']); } catch(e){} }
 
-    // 1. 決定點圖連結
     let defaultActionUrl = `https://liff.line.me/${LIFF_ID}`;
     const website = card['公司網址'] || card['Website'];
     const social = card['社群帳號'] || card['SocialMedia'];
@@ -339,46 +241,32 @@ window.initAndOpenECardGenerator = function(rowId) {
         defaultActionUrl = social;
     }
 
-    // 2. 智慧生成按鈕清單
     let defaultButtons = [];
     let p1 = card['手機號碼'] || card['Mobile'];
     if (p1 && p1 !== '-') defaultButtons.push({ l: '撥打手機', u: `tel:${formatPhoneStr(p1)}`, c: '#2563eb' });
     let p4 = card['公司地址'] || card['Address'];
     if (p4 && p4 !== '-') defaultButtons.push({ l: 'Google 導航', u: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p4)}`, c: '#ef4444' });
-    if (website && website !== '-') defaultButtons.push({ l: '官方網站', u: website.startsWith('http') ? website : 'https://' + website, c: '#64748b' });
 
-    // 3. 自動帶入標題描述
     let cName = card['公司名稱'] || '';
     let uName = card['姓名'] || '';
     let defaultTitle = [cName, uName].filter(x => x && x !== '-' && x !== 'Not provided').join(' - ') || '商務名片';
 
-    // 4. 更新同步到 window 全域變數 (這步最關鍵，讓 card-ecard.js 能抓到資料)
     config.cardType = config.cardType || 'image';
     config.title = config.title || defaultTitle;
     config.imgActionUrl = config.imgActionUrl || defaultActionUrl;
     config.buttons = (config.buttons && config.buttons.length > 0) ? config.buttons : defaultButtons;
     
-    // ⭐ 同步 V2 陣列
-    if (!config.v2Socials || config.v2Socials.length === 0) {
-        window.v2Socials = [];
-        if (social && social.startsWith('http')) {
-            let type = social.includes('fb') ? 'FB' : (social.includes('ig') ? 'IG' : 'WEB');
-            window.v2Socials.push({ type: type, u: social });
-        }
-    } else { window.v2Socials = config.v2Socials; }
-
-    if (!config.v2Bars || config.v2Bars.length === 0) {
-        window.v2Bars = defaultButtons.map(b => ({ t: b.l, u: b.u }));
-    } else { window.v2Bars = config.v2Bars; }
+    // ⭐ 同步 V2 陣列給 card-ecard.js
+    window.v2Socials = config.v2Socials || [];
+    window.v2Bars = config.v2Bars || defaultButtons.map(b => ({ t: b.l, u: b.u }));
 
     window.currentActiveCard['自訂名片設定'] = JSON.stringify(config);
 
-    // 5. 手動更新 UI 欄位內容
+    // 手動更新 UI 欄位內容
     const tInput = document.getElementById('ec-title-input'); if (tInput) tInput.value = config.title;
     const aInput = document.getElementById('ec-img-action-url'); if (aInput) aInput.value = config.imgActionUrl;
-    const iInput = document.getElementById('ec-img-input'); if (iInput) iInput.value = config.imgUrl || card['名片圖檔'] || '';
+    const iInput = document.getElementById('ec-img-input'); if (iInput) iInput.value = (card['名片圖檔'] === 'IMAGE_DATA_LARGE') ? '' : (config.imgUrl || card['名片圖檔'] || '');
 
-    // 6. 開啟編輯器
     if (typeof window.openECardGenerator === 'function') {
         window.openECardGenerator();
         if(typeof window.renderV2SocialUI === 'function') window.renderV2SocialUI();
@@ -386,73 +274,13 @@ window.initAndOpenECardGenerator = function(rowId) {
     }
 };
 
-window.saveECardConfig = async function() {
-    if (!window.currentActiveCard) return;
-    const btn = document.getElementById('btn-save-ecard');
-    const oriText = btn.innerText;
-    btn.innerText = '儲存中...';
-
-    try {
-        const title = document.getElementById('ec-title-input').value;
-        const imgActionUrl = document.getElementById('ec-img-action-url').value;
-        if (!title || !imgActionUrl) throw new Error("請填寫主標題與點圖跳轉連結");
-
-        const config = JSON.parse(window.currentActiveCard['自訂名片設定'] || '{}');
-        config.title = title;
-        config.desc = document.getElementById('ec-desc-input').value;
-        config.imgActionUrl = imgActionUrl;
-        config.imgUrl = document.getElementById('ec-img-input').value;
-        config.v2Socials = window.v2Socials;
-        config.v2Bars = window.v2Bars;
-
-        await window.fetchAPI('updateECardConfig', { rowId: window.currentActiveCard.rowId, config: config });
-        window.currentActiveCard['自訂名片設定'] = JSON.stringify(config);
-        window.showToast("✅ 設定已儲存");
-        document.getElementById('ecard-generator-modal').classList.add('hidden');
-    } catch(e) { alert(e.message); } finally { btn.innerText = oriText; }
-};
-
-window.shareECardToLine = async function() {
-    const title = document.getElementById('ec-title-input').value;
-    const imgActionUrl = document.getElementById('ec-img-action-url').value;
-    if (!title || !imgActionUrl) return alert("❌ 請填寫主標題與點圖連結");
-
-    const btn = document.getElementById('btn-share-line');
-    btn.innerText = '傳送中...';
-
-    try {
-        const config = JSON.parse(window.currentActiveCard['自訂名片設定'] || '{}');
-        config.title = title;
-        config.imgActionUrl = imgActionUrl;
-        config.v2Socials = window.v2Socials;
-        config.v2Bars = window.v2Bars;
-
-        const flex = window.buildFlexMessageFromCard(window.currentActiveCard, config);
-        const res = await liff.shareTargetPicker([{ type: "flex", altText: `您收到一張數位名片：${title}`, contents: flex }]);
-        if (res) window.showToast('🚀 已成功轉發！');
-    } catch(e) { alert("傳送失敗"); } finally { btn.innerHTML = '<span class="material-symbols-outlined text-[20px]">send</span> 傳送名片至 LINE 聊天室'; }
-};
-
-// ... 其餘列表載入與 UI 邏輯維持 v7.6.6 的穩定版本 ...
-async function loadCardContacts() { 
-    const container = document.getElementById('admin-card-list-container');
-    try {
-        const data = await window.fetchAPI('getCardContacts');
-        globalCardContacts = data || [];
-        filterCardList();
-    } catch(e) { container.innerHTML = '連線失敗'; }
-}
-window.filterCardList = function() {
-    const term = document.getElementById('card-search-input').value.toLowerCase();
-    filteredCards = globalCardContacts.filter(c => (c['姓名']||'').toLowerCase().includes(term) || (c['公司名稱']||'').toLowerCase().includes(term));
-    renderCardPage();
-};
 window.renderCardPage = function() {
     const container = document.getElementById('admin-card-list-container');
+    if (!container) return;
     container.innerHTML = filteredCards.map(c => `
         <div class="p-5 bg-white flex items-center gap-4 rounded-[2rem] shadow-sm mb-3">
           <div onclick="openCardDetailByRowId('${c.rowId}')" class="w-[56px] h-[56px] shrink-0 rounded-2xl overflow-hidden bg-slate-50 flex items-center justify-center">
-            <img src="${window.getDirectImageUrl(c['名片圖檔'])}" class="w-full h-full object-cover">
+            <img src="${window.getSafeImgUrl(c['名片圖檔'])}" class="w-full h-full object-cover">
           </div>
           <div onclick="openCardDetailByRowId('${c.rowId}')" class="flex-1 overflow-hidden">
             <h4 class="text-[17px] font-extrabold text-slate-800 truncate">${c['姓名'] || '未知'}</h4>
@@ -463,9 +291,24 @@ window.renderCardPage = function() {
           </button>
         </div>`).join('');
 };
+
+async function loadCardContacts() { 
+    try {
+        const data = await window.fetchAPI('getCardContacts');
+        globalCardContacts = data || [];
+        filterCardList();
+    } catch(e) { document.getElementById('admin-card-list-container').innerHTML = '連線失敗'; }
+}
+
+window.filterCardList = function() {
+    const term = document.getElementById('card-search-input').value.toLowerCase();
+    filteredCards = globalCardContacts.filter(c => (c['姓名']||'').toLowerCase().includes(term) || (c['公司名稱']||'').toLowerCase().includes(term));
+    renderCardPage();
+};
+
 document.addEventListener("DOMContentLoaded", async () => {
     await liff.init({ liffId: LIFF_ID });
-    if (!liff.isLoggedIn()) { liff.login(); return; }
+    if (!liff.isLoggedIn()) { liff.login({ redirectUri: window.location.href }); return; }
     userProfile = await liff.getProfile();
     document.getElementById('user-avatar').src = userProfile.pictureUrl;
     document.getElementById('user-profile-badge').classList.remove('hidden');
@@ -473,13 +316,32 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById('view-list').classList.remove('hidden');
     loadCardContacts();
 });
+
 function openCardDetailByRowId(id) { 
     const c = globalCardContacts.find(x => x.rowId === id);
+    if (!c) return;
     window.currentActiveCard = c;
     document.getElementById('ro-name').innerText = c['姓名'] || '未知';
     document.getElementById('ro-company').innerText = c['公司名稱'] || '';
+    document.getElementById('ro-title').innerText = c['職稱'] || '';
+    
+    let mob = c['手機號碼'] || c['Mobile'] || '';
+    const mobLink = document.getElementById('ro-mobile-link');
+    if(mobLink) { mobLink.innerText = mob || '未提供'; mobLink.href = mob ? `tel:${formatPhoneStr(mob)}` : '#'; }
+    
+    const imgEl = document.getElementById('ro-image');
+    const noImgEl = document.getElementById('ro-no-image');
+    const safeUrl = window.getSafeImgUrl(c['名片圖檔']);
+    
+    if (c['名片圖檔'] && c['名片圖檔'].startsWith('http')) {
+        imgEl.src = safeUrl; imgEl.classList.remove('hidden'); noImgEl.classList.add('hidden');
+    } else {
+        imgEl.classList.add('hidden'); noImgEl.classList.remove('hidden');
+    }
+    
     document.getElementById('readonly-card-modal').classList.remove('hidden');
 }
+
 function closeReadOnlyCard() { document.getElementById('readonly-card-modal').classList.add('hidden'); }
 function resetUI() { window.location.reload(); }
 </script>

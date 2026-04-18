@@ -1,4 +1,4 @@
-<!-- Version: v8.1.1 (QQ 終極防掛版：包含環境限制防呆，電腦版/外開分享自動降級複製連結) -->
+<!-- Version: v8.1.2 (QQ 終極防掛版：修正 LIFF_ID 錯亂引起的 400 錯誤，加上 Flex 參數防彈裝甲) -->
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -315,10 +315,11 @@
 
 <script>
     // ======================== 全域變數與 0 延遲 SVG 佔位符 ========================
-    const LIFF_ID = "2008924519-RslRiLoO";
+    // ⭐ QQ 防掛解法：確保 LIFF_ID 完全吻合，防止 LINE OAuth 400 Bad Request 錯誤
+    const LIFF_ID = "2009367829-DLtYBDUm";
     const API_URL = "https://actmaster.fangwl591021.workers.dev";
     
-    // ⭐ 防掛解法：使用 Inline Base64 SVG 替換 via.placeholder.com，徹底解決 ERR_CONNECTION_CLOSED 破圖卡死
+    // 使用 Inline Base64 SVG 替換外部圖床，徹底解決 ERR_CONNECTION_CLOSED
     const SVG_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23e2e8f0'/%3E%3Cpath d='M50 55c-11 0-20 9-20 20v5h40v-5c0-11-9-20-20-20zm0-25c-8.3 0-15 6.7-15 15s6.7 15 15 15 15-6.7 15-15-6.7-15-15-15z' fill='%2394a3b8'/%3E%3C/svg%3E";
     const SVG_COVER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='260' viewBox='0 0 400 260'%3E%3Crect width='400' height='260' fill='%23f1f5f9'/%3E%3Cpath d='M150 130l30-40 40 50 20-25 40 50H120z' fill='%23cbd5e1'/%3E%3Ccircle cx='160' cy='90' r='15' fill='%23cbd5e1'/%3E%3C/svg%3E";
 
@@ -344,7 +345,7 @@
         setTimeout(() => toast.classList.remove('show'), 2500);
     }
 
-    // ⭐ 無感降級分享器 (Fallback Share) - 針對電腦版/非 LINE 環境
+    // ⭐ 友善無感降級分享器 (Fallback Share) - 修正「手機環境問題」的誤解語氣
     window.fallbackShare = function(url, altText) {
         const fullText = `${altText}\n${url}`;
         const fallbackInput = document.createElement('textarea');
@@ -354,9 +355,9 @@
         fallbackInput.focus(); fallbackInput.select();
         try {
             document.execCommand('copy');
-            alert("⚠️ 電腦版或外部瀏覽器無法直接喚起 LINE 轉發功能。\n\n✅ 已為您自動複製「數位名片專屬連結」！\n請直接貼上到聊天室傳送給好友。");
+            alert("⚠️ 目前無法直接喚出 LINE 轉發視窗。\n\n✅ 已為您「自動複製」專屬連結！\n請直接前往 LINE 聊天室「貼上」並發送。");
         } catch(err) {
-            alert("請複製以下連結分享：\n\n" + url);
+            alert("請複製以下連結分享給好友：\n\n" + url);
         }
         document.body.removeChild(fallbackInput);
     };
@@ -390,7 +391,7 @@
     async function initLIFF() {
         await liff.init({ liffId: LIFF_ID });
         if (!liff.isLoggedIn()) {
-            liff.login({ redirectUri: window.location.href });
+            liff.login();
             return false;
         }
         currentUser = await liff.getProfile();
@@ -609,7 +610,6 @@
         }
     };
 
-    // ⭐ 邀請認領：加上 LIFF 環境防呆
     window.shareClaimLink = async function() {
         if (!currentCard || isProcessing) return;
         isProcessing = true;
@@ -860,7 +860,76 @@
         }
     }
 
-    // ⭐ 發送至 LINE：加上環境限制防呆 (LIFF ShareTargetPicker Fallback)
+    // ⭐ LINE 嚴格 JSON 格式防彈裝甲：強制剔除任何空值，確保 shareTargetPicker 永遠順暢！
+    window.buildFlexMessage = function(card, cfg) {
+        let safeTitle = (cfg.title && cfg.title.trim() !== '') ? cfg.title.substring(0, 40) : '商務名片';
+        let safeDesc = (cfg.desc && cfg.desc.trim() !== '') ? cfg.desc.substring(0, 200) : ' ';
+        
+        if (cfg.cardType === 'v2') {
+            const logo = (cfg.v2LogoUrl && cfg.v2LogoUrl.startsWith('http')) ? cfg.v2LogoUrl : "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+            
+            // 強制過濾任何沒有文字或沒有網址的按鈕
+            let validBars = (cfg.v2Bars || []).filter(b => b.text && b.text.trim() !== '' && b.url && b.url.trim() !== '').map(b => {
+                let u = b.url.trim();
+                if (!u.match(/^(http|https|tel|mailto|line):/i)) u = 'https://' + u;
+                return { type: 'button', style: 'primary', color: '#06C755', action: { type: 'uri', label: b.text.substring(0, 20), uri: u.substring(0, 1000) } };
+            });
+
+            let flex = {
+                type: 'bubble', size: 'mega',
+                header: { type: 'box', layout: 'horizontal', justifyContent: 'flex-end', paddingAll: '8px', contents: [{ type: 'box', layout: 'vertical', justifyContent: 'center', backgroundColor: '#FF0000', width: '65px', height: '25px', cornerRadius: '25px', contents: [{ type: 'text', text: '分享', weight: 'bold', align: 'center', color: '#FFFFFF', size: 'xs' }], action: { type: 'uri', label: 'share', uri: `https://liff.line.me/${LIFF_ID}?shareCardId=${card.rowId}` } }] },
+                body: {
+                    type: 'box', layout: 'vertical', paddingAll: '0px',
+                    background: { type: "linearGradient", angle: "135deg", startColor: cfg.v2BgStart || "#57142b", endColor: cfg.v2BgEnd || "#46250c" },
+                    contents: [
+                        { type: 'box', layout: 'vertical', margin: 'xl', width: '100px', height: '100px', cornerRadius: '100px', alignSelf: 'center', contents: [{ type: 'image', url: logo, size: 'full', aspectMode: 'cover', aspectRatio: '1:1' }] },
+                        { type: 'text', text: safeTitle, weight: 'bold', size: 'xl', color: '#FFFFFF', align: 'center', margin: 'md', wrap: true },
+                        { type: 'text', text: safeDesc, size: 'sm', color: '#FFFFFF', align: 'center', margin: 'md', wrap: true }
+                    ]
+                }
+            };
+            if (validBars.length > 0) {
+                flex.footer = { type: 'box', layout: 'vertical', spacing: 'sm', backgroundColor: '#FFFFFF', contents: validBars };
+            }
+            return flex;
+        } else {
+            // 強制過濾任何沒有文字或沒有網址的按鈕
+            let validBtns = (cfg.buttons || []).filter(b => b.l && b.l.trim() !== '' && b.u && b.u.trim() !== '').map(b => {
+                let u = b.u.trim();
+                if (!u.match(/^(http|https|tel|mailto|line):/i)) u = 'https://' + u;
+                return { type: 'button', style: 'primary', color: b.c || "#06C755", action: { type: 'uri', label: b.l.substring(0, 20), uri: u.substring(0, 1000) } };
+            });
+
+            let imgUrl = (cfg.imgUrl && cfg.imgUrl.startsWith('http')) ? cfg.imgUrl : "https://images.unsplash.com/photo-1616628188550-808682f3926d?w=800&q=80";
+            let actionUrl = (cfg.imgActionUrl || '').trim();
+            if (!actionUrl.match(/^(http|https|tel|mailto|line):/i)) actionUrl = `https://liff.line.me/${LIFF_ID}`;
+
+            let heroBlock;
+            if (cfg.cardType === 'video' && cfg.videoUrl && cfg.videoUrl.startsWith('http')) {
+                 heroBlock = { type: "video", url: cfg.videoUrl, previewUrl: imgUrl, altContent: { type: "image", size: "full", aspectRatio: "20:13", aspectMode: "cover", url: imgUrl }, aspectRatio: "20:13" };
+            } else {
+                 heroBlock = { type: 'image', url: imgUrl, size: 'full', aspectRatio: '20:13', aspectMode: 'cover', action: { type: 'uri', uri: actionUrl } };
+            }
+
+            let flex = {
+                type: 'bubble', size: 'mega',
+                header: { type: 'box', layout: 'horizontal', justifyContent: 'flex-end', paddingAll: '8px', contents: [{ type: 'box', layout: 'vertical', justifyContent: 'center', backgroundColor: '#FF0000', width: '65px', height: '25px', cornerRadius: '25px', contents: [{ type: 'text', text: '分享', weight: 'bold', align: 'center', color: '#FFFFFF', size: 'xs' }], action: { type: 'uri', label: 'share', uri: `https://liff.line.me/${LIFF_ID}?shareCardId=${card.rowId}` } }] },
+                hero: heroBlock,
+                body: {
+                    type: 'box', layout: 'vertical', paddingAll: '10px', contents: [
+                        { type: 'text', text: safeTitle, weight: 'bold', size: 'xl', align: 'center', wrap: true },
+                        { type: 'text', text: safeDesc, size: 'sm', color: '#666666', margin: 'md', wrap: true }
+                    ]
+                }
+            };
+            if (validBtns.length > 0) {
+                flex.footer = { type: 'box', layout: 'vertical', spacing: 'sm', paddingAll: '10px', paddingTop: '0px', contents: validBtns };
+            }
+            return flex;
+        }
+    }
+
+    // ⭐ 轉發至 LINE：導入防彈 Flex 驗證與環境降級
     window.shareToLine = async function() {
         if(isProcessing) return; isProcessing = true;
         const btn = document.getElementById('shareLineBtn');
@@ -871,8 +940,9 @@
             let config = {};
             if (currentCard['自訂名片設定']) try { config = JSON.parse(currentCard['自訂名片設定']); } catch(e){}
 
+            // 呼叫具備強型別過濾的防彈 JSON 引擎
             const flexMsg = window.buildFlexMessage(currentCard, config);
-            const altText = config.altText || '這是我的數位名片，請多指教';
+            const altText = (config.altText && config.altText.trim() !== '') ? config.altText : '這是我的數位名片，請多指教';
             const shareUrl = `https://liff.line.me/${LIFF_ID}?shareCardId=${currentCard.rowId}`;
             
             if (liff.isApiAvailable('shareTargetPicker')) {
@@ -892,48 +962,6 @@
             window.showToast("分享失敗", true);
         } finally {
             btn.innerHTML = oriTxt; btn.classList.remove('opacity-50'); isProcessing = false;
-        }
-    }
-
-    window.buildFlexMessage = function(card, cfg) {
-        if (cfg.cardType === 'v2') {
-            return {
-                type: 'bubble', size: 'mega',
-                header: { type: 'box', layout: 'horizontal', justifyContent: 'flex-end', paddingAll: '8px', contents: [{ type: 'box', layout: 'vertical', justifyContent: 'center', backgroundColor: '#FF0000', width: '65px', height: '25px', cornerRadius: '25px', contents: [{ type: 'text', text: '分享', weight: 'bold', align: 'center', color: '#FFFFFF', size: 'xs' }], action: { type: 'uri', label: 'share', uri: `https://liff.line.me/${LIFF_ID}?shareCardId=${card.rowId}` } }] },
-                body: {
-                    type: 'box', layout: 'vertical', paddingAll: '0px',
-                    background: { type: "linearGradient", angle: "135deg", startColor: cfg.v2BgStart || "#57142b", endColor: cfg.v2BgEnd || "#46250c" },
-                    contents: [
-                        { type: 'box', layout: 'vertical', margin: 'xl', width: '100px', height: '100px', cornerRadius: '100px', alignSelf: 'center', contents: [{ type: 'image', url: cfg.v2LogoUrl || 'https://via.placeholder.com/100', size: 'full', aspectMode: 'cover', aspectRatio: '1:1' }] },
-                        { type: 'text', text: cfg.title, weight: 'bold', size: 'xl', color: '#FFFFFF', align: 'center', margin: 'md', wrap: true },
-                        { type: 'text', text: cfg.desc || ' ', size: 'sm', color: '#FFFFFF', align: 'center', margin: 'md', wrap: true }
-                    ]
-                },
-                footer: {
-                    type: 'box', layout: 'vertical', spacing: 'sm', backgroundColor: '#FFFFFF',
-                    contents: cfg.v2Bars.map(b => ({ type: 'button', style: 'primary', color: '#06C755', action: { type: 'uri', label: b.text, uri: b.url } }))
-                }
-            };
-        } else {
-            let heroBlock;
-            if (cfg.cardType === 'video' && cfg.videoUrl) {
-                 heroBlock = { type: "video", url: cfg.videoUrl, previewUrl: cfg.imgUrl, altContent: { type: "image", size: "full", aspectRatio: "20:13", aspectMode: "cover", url: cfg.imgUrl }, aspectRatio: "20:13" };
-            } else {
-                 heroBlock = { type: 'image', url: cfg.imgUrl, size: 'full', aspectRatio: '20:13', aspectMode: 'cover', action: { type: 'uri', uri: cfg.imgActionUrl } };
-            }
-
-            return {
-                type: 'bubble', size: 'mega',
-                header: { type: 'box', layout: 'horizontal', justifyContent: 'flex-end', paddingAll: '8px', contents: [{ type: 'box', layout: 'vertical', justifyContent: 'center', backgroundColor: '#FF0000', width: '65px', height: '25px', cornerRadius: '25px', contents: [{ type: 'text', text: '分享', weight: 'bold', align: 'center', color: '#FFFFFF', size: 'xs' }], action: { type: 'uri', label: 'share', uri: `https://liff.line.me/${LIFF_ID}?shareCardId=${card.rowId}` } }] },
-                hero: heroBlock,
-                body: {
-                    type: 'box', layout: 'vertical', paddingAll: '10px', contents: [
-                        { type: 'text', text: cfg.title, weight: 'bold', size: 'xl', align: 'center', wrap: true },
-                        { type: 'text', text: cfg.desc, size: 'sm', color: '#666666', margin: 'md', wrap: true }
-                    ]
-                },
-                footer: { type: 'box', layout: 'vertical', spacing: 'sm', paddingAll: '10px', paddingTop: '0px', contents: cfg.buttons.map(b => ({ type: 'button', style: 'primary', color: b.c, action: { type: 'uri', label: b.l, uri: b.u } })) }
-            };
         }
     }
 

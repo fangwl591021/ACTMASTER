@@ -1,3 +1,4 @@
+<!-- Version: v8.0.0 (QQ 終極重構版：UI 視覺最佳化，且補齊所有前端與 API 儲存邏輯) -->
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -120,18 +121,18 @@
 
     <!-- 底部導航 (管理員/一般) -->
     <div id="adminNav" class="fixed bottom-0 max-w-md mx-auto w-full bg-slate-900 text-white flex justify-around py-2 rounded-t-2xl hidden z-30">
-        <button class="admin-nav-btn flex flex-col items-center text-xs">📋 核銷</button>
-        <button class="admin-nav-btn flex flex-col items-center text-xs">➕ 建立</button>
-        <button class="admin-nav-btn flex flex-col items-center text-xs">👥 CRM</button>
-        <button class="admin-nav-btn flex flex-col items-center text-xs">🔮 配對</button>
-        <button class="admin-nav-btn flex flex-col items-center text-xs text-green-400">📇 名片</button>
-        <button class="admin-nav-btn flex flex-col items-center text-xs">⚙️ 參數</button>
+        <button onclick="window.location.href='index.html?view=admin-activities'" class="admin-nav-btn flex flex-col items-center text-xs">📋 核銷</button>
+        <button onclick="window.location.href='active.html'" class="admin-nav-btn flex flex-col items-center text-xs">➕ 建立</button>
+        <button onclick="window.location.href='index.html?view=admin-crm'" class="admin-nav-btn flex flex-col items-center text-xs">👥 CRM</button>
+        <button onclick="window.location.href='fate.html'" class="admin-nav-btn flex flex-col items-center text-xs">🔮 配對</button>
+        <button onclick="window.location.href='card.html'" class="admin-nav-btn flex flex-col items-center text-xs text-green-400">📇 名片</button>
+        <button onclick="window.location.href='index.html?view=admin-settings'" class="admin-nav-btn flex flex-col items-center text-xs">⚙️ 參數</button>
     </div>
     <div id="userNav" class="fixed bottom-0 max-w-md mx-auto w-full bg-white border-t flex justify-around py-2 hidden z-30">
-        <button class="nav-btn flex flex-col items-center text-xs text-blue-600">🔍 探索</button>
-        <button class="nav-btn flex flex-col items-center text-xs">🔮 配對</button>
-        <button class="nav-btn flex flex-col items-center text-xs">📜 紀錄</button>
-        <button class="nav-btn flex flex-col items-center text-xs">👤 設定</button>
+        <button onclick="window.location.href='index.html?view=user-activities'" class="nav-btn flex flex-col items-center text-xs text-blue-600">🔍 探索</button>
+        <button onclick="window.location.href='fate.html'" class="nav-btn flex flex-col items-center text-xs">🔮 配對</button>
+        <button onclick="window.location.href='index.html?view=user-history'" class="nav-btn flex flex-col items-center text-xs">📜 紀錄</button>
+        <button onclick="window.location.href='index.html?view=user-profile'" class="nav-btn flex flex-col items-center text-xs">👤 設定</button>
     </div>
 </div>
 
@@ -192,7 +193,7 @@
     </div>
 </div>
 
-<!-- ======================== 數位名片編輯器 Modal (核心) ======================== -->
+<!-- ======================== 數位名片編輯器 Modal ======================== -->
 <div id="ecardModal" class="hidden fixed inset-0 bg-white z-50 max-w-md mx-auto flex flex-col overflow-hidden">
     <div class="bg-white px-5 py-4 border-b flex justify-between items-center sticky top-0 z-10">
         <div class="flex items-center gap-3">
@@ -317,7 +318,7 @@
 
 <script>
     // ======================== 全域變數 ========================
-    const LIFF_ID = "2008924519-RslRiLoO";
+    const LIFF_ID = "2009367829-DLtYBDUm";
     const API_URL = "https://actmaster.fangwl591021.workers.dev";
     let currentUser = null;
     let isAdmin = false;
@@ -330,6 +331,7 @@
     let currentEcardConfig = null;
     let v2Socials = [];
     let v2Bars = [];
+    let isProcessing = false;
 
     // ======================== 工具函數 ========================
     function showToast(msg, isError = false) {
@@ -348,7 +350,7 @@
                 body: JSON.stringify({ action, payload })
             });
             const json = await res.json();
-            if (!json.success) throw new Error(json.error);
+            if (!json.success) throw new Error(json.error || json.msg || "API 回傳失敗");
             return json.data;
         } catch (e) {
             showToast(e.message, true);
@@ -358,7 +360,7 @@
 
     function formatPhone(phone) {
         if (!phone) return '';
-        let s = phone.replace(/[^\d+]/g, '');
+        let s = String(phone).replace(/[^\d+]/g, '');
         if (s.startsWith('+886')) s = '0' + s.slice(4);
         else if (s.startsWith('886')) s = '0' + s.slice(3);
         if (s.startsWith('9') && s.length === 9) s = '0' + s;
@@ -369,11 +371,11 @@
     async function initLIFF() {
         await liff.init({ liffId: LIFF_ID });
         if (!liff.isLoggedIn()) {
-            liff.login();
+            liff.login({ redirectUri: window.location.href });
             return false;
         }
         currentUser = await liff.getProfile();
-        const adminIds = ["Uf729764dbb5b652a5a90a467320bea29"];
+        const adminIds = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55", "U8932b891ad24da512afb9c1a6f41567b"];
         isAdmin = adminIds.includes(currentUser.userId);
         document.getElementById('userAvatar').src = currentUser.pictureUrl;
         document.getElementById('userAvatar').classList.remove('hidden');
@@ -383,9 +385,16 @@
         } else {
             document.getElementById('userNav').classList.remove('hidden');
         }
+        
         await loadCards();
         document.getElementById('loadingView').classList.add('hidden');
         document.getElementById('listView').classList.remove('hidden');
+        
+        const params = new URLSearchParams(window.location.search);
+        if(params.get('mode') === 'mycard' && params.get('rowId')) {
+             const target = allCards.find(c => String(c.rowId) === String(params.get('rowId')));
+             if(target) openCardDetail(target);
+        }
         return true;
     }
 
@@ -394,6 +403,9 @@
         try {
             const data = await callAPI('getCardContacts', {});
             allCards = data.map(c => ({ ...c, rowId: String(c.rowId) }));
+            if(!isAdmin) {
+                allCards = allCards.filter(c => String(c['LINE ID']).trim() === currentUser.userId);
+            }
             filterCards();
         } catch (e) { console.error(e); }
     }
@@ -411,17 +423,30 @@
         const start = (currentPageNum - 1) * 10;
         const page = filteredCards.slice(start, start + 10);
         if (currentPageNum === 1) container.innerHTML = '';
+        
+        if (filteredCards.length === 0) {
+            container.innerHTML = '<div class="text-center py-10 text-slate-400 font-bold">目前無名片資料</div>';
+            document.getElementById('loadMoreBox').classList.add('hidden');
+            return;
+        }
+
         page.forEach(card => {
             const div = document.createElement('div');
-            div.className = 'bg-white rounded-xl p-3 flex gap-3 shadow-sm cursor-pointer active:scale-98 transition';
+            div.className = 'bg-white rounded-xl p-3 flex gap-3 shadow-sm cursor-pointer active:scale-95 transition';
             div.onclick = () => openCardDetail(card);
+            
+            let imgHtml = '<span class="material-symbols-outlined text-slate-300">contact_mail</span>';
+            if (card['名片圖檔'] && card['名片圖檔'].startsWith('http')) {
+                imgHtml = `<img src="${card['名片圖檔']}" class="w-full h-full object-cover">`;
+            }
+            
             div.innerHTML = `
-                <div class="w-14 h-14 bg-slate-100 rounded-lg flex items-center justify-center overflow-hidden">
-                    ${card['名片圖檔'] ? `<img src="${card['名片圖檔']}" class="w-full h-full object-cover">` : '<span class="material-symbols-outlined text-slate-300">contact_mail</span>'}
+                <div class="w-14 h-14 bg-slate-100 rounded-lg flex items-center justify-center overflow-hidden shrink-0">
+                    ${imgHtml}
                 </div>
-                <div class="flex-1">
-                    <div class="font-bold">${card['姓名'] || '未填'}</div>
-                    <div class="text-sm text-slate-500">${card['公司名稱'] || ''}</div>
+                <div class="flex-1 overflow-hidden flex flex-col justify-center">
+                    <div class="font-bold text-slate-800 truncate">${card['姓名'] || '未知'}</div>
+                    <div class="text-sm text-slate-500 truncate">${card['公司名稱'] || card['職稱'] || '未填公司'}</div>
                 </div>
             `;
             container.appendChild(div);
@@ -450,7 +475,8 @@
         document.getElementById('detailAddress').innerText = card['公司地址'] || '';
         let notes = card['服務項目/品牌標語'] || '';
         if (card['建檔人/備註']) notes += '\n\n📝 ' + card['建檔人/備註'];
-        document.getElementById('detailNotes').innerText = notes || '無';
+        document.getElementById('detailNotes').innerText = notes || '無額外資訊';
+        
         const imgEl = document.getElementById('detailImage');
         const noImg = document.getElementById('detailNoImage');
         if (card['名片圖檔'] && card['名片圖檔'].startsWith('http')) {
@@ -483,6 +509,10 @@
     }
 
     async function saveEdit() {
+        if(isProcessing) return; isProcessing = true;
+        const btn = document.getElementById('saveEditBtn');
+        const oriTxt = btn.innerText; btn.innerText = "儲存中..."; btn.classList.add('opacity-50');
+
         const payload = {
             rowId: currentCard.rowId,
             Name: document.getElementById('edit_Name').value,
@@ -498,25 +528,60 @@
         let config = {};
         if (currentCard['自訂名片設定']) try { config = JSON.parse(currentCard['自訂名片設定']); } catch(e) {}
         config.isPrivate = isPrivate;
+
         try {
             await callAPI('updateCard', payload);
             await callAPI('updateECardConfig', { rowId: currentCard.rowId, config });
-            showToast('儲存成功');
+            showToast('✅ 儲存成功');
             closeEditModal();
             await loadCards();
-        } catch(e) { showToast(e.message, true); }
+            openCardDetail(allCards.find(c => String(c.rowId) === String(currentCard.rowId)));
+        } catch(e) { 
+            showToast(e.message, true); 
+        } finally {
+            btn.innerText = oriTxt; btn.classList.remove('opacity-50'); isProcessing = false;
+        }
     }
 
     function closeEditModal() { document.getElementById('cardEditModal').classList.add('hidden'); }
+
+    // ======================== 新增名片 (AI 辨識) ========================
+    document.getElementById('saveCardBtn').onclick = async () => {
+        if(isProcessing) return; isProcessing = true;
+        const btn = document.getElementById('saveCardBtn');
+        const oriTxt = btn.innerText; btn.innerText = '💾 儲存中...'; btn.classList.add('opacity-50');
+        
+        try {
+            const payload = {
+                base64Image: document.getElementById('previewImage').src,
+                Name: document.getElementById('f_Name').value,
+                CompanyName: document.getElementById('f_CompanyName').value,
+                Mobile: document.getElementById('f_Mobile').value,
+                Title: document.getElementById('f_Title').value,
+                Slogan: document.getElementById('f_Slogan').value,
+                Notes: document.getElementById('f_Notes').value,
+                userId: currentUser.userId
+            };
+            await callAPI('saveCard', payload);
+            showToast('✅ 儲存成功');
+            document.getElementById('processView').classList.add('hidden');
+            document.getElementById('listView').classList.remove('hidden');
+            await loadCards();
+        } catch(e) {
+            showToast("儲存失敗: " + e.message, true);
+        } finally {
+            btn.innerText = oriTxt; btn.classList.remove('opacity-50'); isProcessing = false;
+        }
+    };
 
     // ======================== 數位名片編輯器 (三版型) ========================
     let currentEcardType = 'image';
 
     function initEcardModal() {
-        // 載入當前名片的設定
         let saved = null;
         if (currentCard['自訂名片設定']) try { saved = JSON.parse(currentCard['自訂名片設定']); } catch(e) {}
         currentEcardType = saved?.cardType || 'image';
+        
         document.getElementById('ecard_Title').value = saved?.title || currentCard['姓名'] || '';
         document.getElementById('ecard_Desc').value = saved?.desc || currentCard['服務項目/品牌標語'] || '';
         document.getElementById('ecard_AltText').value = saved?.altText || '這是我的數位名片，請多指教';
@@ -526,25 +591,41 @@
         document.getElementById('ecard_V2LogoUrl').value = saved?.v2LogoUrl || '';
         if (saved?.v2BgStart) document.getElementById('ecard_V2BgStart').value = saved.v2BgStart;
         if (saved?.v2BgEnd) document.getElementById('ecard_V2BgEnd').value = saved.v2BgEnd;
-        v2Socials = saved?.v2Socials || [];
+        
+        v2Socials = saved?.v2Socials || [{label:'LINE', url:'https://line.me'}];
         v2Bars = saved?.v2Bars || [];
         renderSocials();
         renderBars();
-        // 渲染按鈕
-        const btns = saved?.buttons || [];
+
+        let btns = saved?.buttons || [];
+        if (btns.length === 0) {
+            if(currentCard['手機號碼']) btns.push({ l: '撥打電話', u: `tel:${formatPhone(currentCard['手機號碼'])}`, c: '#06C755' });
+            if(currentCard['電子郵件']) btns.push({ l: '發送信箱', u: `mailto:${currentCard['電子郵件']}`, c: '#06C755' });
+        }
+
         const container = document.getElementById('buttonsContainer');
         container.innerHTML = '';
         for (let i = 0; i < 4; i++) {
             const b = btns[i] || { l: '', u: '', c: '#06C755' };
             container.innerHTML += `
                 <div class="flex gap-2 items-center">
-                    <input type="color" class="w-10 h-10 rounded-lg border" value="${b.c}" data-btnidx="${i}" data-field="color">
+                    <input type="color" class="w-10 h-10 rounded-lg border cursor-pointer p-0" value="${b.c}" data-btnidx="${i}" data-field="color">
                     <input type="text" class="custom-input flex-1" placeholder="按鈕文字" value="${b.l}" data-btnidx="${i}" data-field="label">
                     <input type="url" class="custom-input flex-1" placeholder="連結網址" value="${b.u}" data-btnidx="${i}" data-field="url">
-                    <button class="text-red-400 remove-btn" data-idx="${i}">🗑️</button>
+                    <button class="text-red-400 remove-btn bg-red-50 w-10 h-10 rounded-xl" data-idx="${i}">🗑️</button>
                 </div>
             `;
         }
+
+        document.querySelectorAll('.remove-btn').forEach(btn => {
+            btn.onclick = (e) => {
+                const idx = e.currentTarget.dataset.idx;
+                document.querySelector(`[data-btnidx="${idx}"][data-field="label"]`).value = '';
+                document.querySelector(`[data-btnidx="${idx}"][data-field="url"]`).value = '';
+                updatePreview();
+            };
+        });
+
         switchTab(currentEcardType);
         document.getElementById('ecardModal').classList.remove('hidden');
         updatePreview();
@@ -553,8 +634,8 @@
     function switchTab(type) {
         currentEcardType = type;
         document.querySelectorAll('.tab-btn').forEach(btn => {
-            if (btn.dataset.type === type) btn.classList.add('active');
-            else btn.classList.remove('active');
+            if (btn.dataset.type === type) btn.className = 'tab-btn flex-1 py-2 text-sm font-bold rounded-lg card-editor-tab active';
+            else btn.className = 'tab-btn flex-1 py-2 text-sm font-bold rounded-lg card-editor-tab text-slate-500 bg-transparent';
         });
         const v1 = document.getElementById('v1Fields');
         const v2 = document.getElementById('v2Fields');
@@ -580,7 +661,7 @@
             <div class="flex gap-2 items-center">
                 <input type="text" class="custom-input flex-1" placeholder="圖示名稱 (FB/LINE)" value="${s.label}" data-social-idx="${i}" data-field="label">
                 <input type="url" class="custom-input flex-1" placeholder="連結網址" value="${s.url}" data-social-idx="${i}" data-field="url">
-                <button class="text-red-400 remove-social" data-idx="${i}">🗑️</button>
+                <button class="text-red-400 remove-social bg-red-50 w-10 h-10 rounded-xl" data-idx="${i}">🗑️</button>
             </div>
         `).join('');
         attachSocialEvents();
@@ -592,7 +673,7 @@
             <div class="flex gap-2 items-center">
                 <input type="text" class="custom-input flex-1" placeholder="按鈕文字" value="${b.text}" data-bar-idx="${i}" data-field="text">
                 <input type="url" class="custom-input flex-1" placeholder="連結網址" value="${b.url}" data-bar-idx="${i}" data-field="url">
-                <button class="text-red-400 remove-bar" data-idx="${i}">🗑️</button>
+                <button class="text-red-400 remove-bar bg-red-50 w-10 h-10 rounded-xl" data-idx="${i}">🗑️</button>
             </div>
         `).join('');
         attachBarEvents();
@@ -636,45 +717,52 @@
         if (!container) return;
         const title = document.getElementById('ecard_Title').value || '商務名片';
         const desc = document.getElementById('ecard_Desc').value || '';
+        
         if (currentEcardType === 'v2') {
-            const logo = document.getElementById('ecard_V2LogoUrl').value || '';
+            const logo = document.getElementById('ecard_V2LogoUrl').value || 'https://via.placeholder.com/80';
             const bgStart = document.getElementById('ecard_V2BgStart').value;
             const bgEnd = document.getElementById('ecard_V2BgEnd').value;
-            let socialHtml = v2Socials.map(s => `<a href="${s.url}" target="_blank" class="bg-white/20 p-2 rounded-full text-xs">${s.label}</a>`).join('');
-            let barsHtml = v2Bars.map(b => `<a href="${b.url}" target="_blank" class="block bg-white/10 py-3 rounded-xl text-sm font-bold mb-2">${b.text}</a>`).join('');
+            let socialHtml = v2Socials.filter(s=>s.label).map(s => `<div class="bg-white/20 px-3 py-1.5 rounded-full text-xs font-bold">${escapeHtml(s.label)}</div>`).join('');
+            let barsHtml = v2Bars.filter(b=>b.text).map(b => `<div class="block bg-white text-[#333] py-3 rounded-full text-sm font-bold mb-3 shadow-md">${escapeHtml(b.text)}</div>`).join('');
             container.innerHTML = `
-                <div class="p-5 text-white text-center" style="background: linear-gradient(135deg, ${bgStart}, ${bgEnd});">
-                    <img src="${logo}" class="w-20 h-20 rounded-full mx-auto object-cover border-2 border-white mb-3" onerror="this.src='https://via.placeholder.com/80'">
-                    <div class="font-bold text-xl">${escapeHtml(title)}</div>
-                    <div class="text-sm opacity-90 mt-1">${escapeHtml(desc)}</div>
-                    <div class="flex justify-center gap-2 my-4 flex-wrap">${socialHtml}</div>
-                    <div class="mt-2">${barsHtml}</div>
-                    <div class="text-[10px] opacity-50 mt-4">Powered by SalesManager</div>
+                <div class="p-6 text-white text-center min-h-[500px] flex flex-col items-center" style="background: linear-gradient(135deg, ${bgStart}, ${bgEnd});">
+                    <img src="${logo}" class="w-24 h-24 rounded-full mx-auto object-cover border-4 border-white/20 mb-4 shadow-lg">
+                    <div class="font-extrabold text-2xl tracking-tight">${escapeHtml(title)}</div>
+                    <div class="text-sm opacity-90 mt-2 leading-relaxed max-w-[250px]">${escapeHtml(desc)}</div>
+                    <div class="flex justify-center gap-2 my-6 flex-wrap">${socialHtml}</div>
+                    <div class="w-full max-w-[260px]">${barsHtml}</div>
                 </div>
             `;
         } else {
             let imgUrl = document.getElementById('ecard_ImgUrl').value;
             if (!imgUrl) imgUrl = 'https://images.unsplash.com/photo-1616628188550-808682f3926d?w=400';
-            const actionUrl = document.getElementById('ecard_ActionUrl').value;
+            
             let buttonsHtml = '';
-            const btns = [];
             for (let i = 0; i < 4; i++) {
                 const label = document.querySelector(`[data-btnidx="${i}"][data-field="label"]`)?.value;
-                const url = document.querySelector(`[data-btnidx="${i}"][data-field="url"]`)?.value;
                 const color = document.querySelector(`[data-btnidx="${i}"][data-field="color"]`)?.value;
-                if (label && url) btns.push({ label, url, color });
+                if (label) {
+                    buttonsHtml += `<div class="block py-3.5 rounded-xl text-white text-center text-[15px] font-bold mb-2 shadow-sm" style="background:${color}">${escapeHtml(label)}</div>`;
+                }
             }
-            btns.forEach(b => {
-                buttonsHtml += `<a href="${b.url}" target="_blank" class="block py-3 rounded-xl text-white text-center text-sm font-bold mb-2" style="background:${b.color}">${escapeHtml(b.label)}</a>`;
-            });
+            
+            let heroContent = `<img src="${imgUrl}" class="w-full aspect-[20/13] object-cover">`;
+            if (currentEcardType === 'video') {
+                heroContent = `
+                <div class="relative w-full aspect-[20/13] bg-black flex items-center justify-center">
+                   <img src="${imgUrl}" class="absolute inset-0 w-full h-full object-cover opacity-50">
+                   <span class="material-symbols-outlined text-white text-5xl z-10">play_circle</span>
+                </div>`;
+            }
+
             container.innerHTML = `
-                <div class="bg-white rounded-2xl overflow-hidden shadow">
-                    <div class="relative"><img src="${imgUrl}" class="w-full aspect-[4/3] object-cover"><div class="absolute top-2 right-2 bg-red-500 text-white text-[10px] px-2 py-1 rounded-full">分享</div></div>
-                    <div class="p-4 text-center">
-                        <div class="font-bold text-lg">${escapeHtml(title)}</div>
-                        <div class="text-sm text-slate-500 mt-1">${escapeHtml(desc)}</div>
+                <div class="bg-white rounded-t-3xl overflow-hidden">
+                    <div class="relative">${heroContent}<div class="absolute top-2 right-2 bg-red-500 text-white text-[10px] px-2 py-1 rounded-full font-bold">分享</div></div>
+                    <div class="p-5 text-center">
+                        <div class="font-black text-[22px] text-slate-800">${escapeHtml(title)}</div>
+                        <div class="text-[13px] text-slate-500 mt-2 font-medium leading-relaxed">${escapeHtml(desc)}</div>
                     </div>
-                    <div class="p-4 pt-0">${buttonsHtml}</div>
+                    <div class="p-5 pt-0">${buttonsHtml}</div>
                 </div>
             `;
         }
@@ -683,62 +771,86 @@
     function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; }); }
 
     async function saveEcardConfig() {
-        const config = {
-            cardType: currentEcardType,
-            title: document.getElementById('ecard_Title').value,
-            desc: document.getElementById('ecard_Desc').value,
-            altText: document.getElementById('ecard_AltText').value,
-            imgUrl: document.getElementById('ecard_ImgUrl').value,
-            imgActionUrl: document.getElementById('ecard_ActionUrl').value,
-            videoUrl: document.getElementById('ecard_VideoUrl').value,
-            v2LogoUrl: document.getElementById('ecard_V2LogoUrl').value,
-            v2BgStart: document.getElementById('ecard_V2BgStart').value,
-            v2BgEnd: document.getElementById('ecard_V2BgEnd').value,
-            v2Socials: v2Socials,
-            v2Bars: v2Bars,
-            buttons: []
-        };
-        for (let i = 0; i < 4; i++) {
-            const label = document.querySelector(`[data-btnidx="${i}"][data-field="label"]`)?.value;
-            const url = document.querySelector(`[data-btnidx="${i}"][data-field="url"]`)?.value;
-            const color = document.querySelector(`[data-btnidx="${i}"][data-field="color"]`)?.value;
-            if (label && url) config.buttons.push({ l: label, u: url, c: color });
-        }
+        if(isProcessing) return; isProcessing = true;
+        const btn = document.getElementById('saveEcardConfigBtn');
+        const oriTxt = btn.innerText; btn.innerText = "上傳/儲存中..."; btn.classList.add('opacity-50');
+
         try {
+            let imgUrl = document.getElementById('ecard_ImgUrl').value;
+            // ⭐ 針對前端直接帶入 Base64 的防呆機制：背景上傳並取得 URL
+            if (imgUrl.startsWith('data:image')) {
+                imgUrl = await callAPI('uploadImage', { base64Image: imgUrl });
+                document.getElementById('ecard_ImgUrl').value = imgUrl; // 寫回 UI
+            }
+
+            let logoUrl = document.getElementById('ecard_V2LogoUrl').value;
+            if (logoUrl.startsWith('data:image')) {
+                logoUrl = await callAPI('uploadImage', { base64Image: logoUrl });
+                document.getElementById('ecard_V2LogoUrl').value = logoUrl;
+            }
+
+            const config = {
+                cardType: currentEcardType,
+                title: document.getElementById('ecard_Title').value,
+                desc: document.getElementById('ecard_Desc').value,
+                altText: document.getElementById('ecard_AltText').value,
+                imgUrl: imgUrl,
+                imgActionUrl: document.getElementById('ecard_ActionUrl').value,
+                videoUrl: document.getElementById('ecard_VideoUrl').value,
+                v2LogoUrl: logoUrl,
+                v2BgStart: document.getElementById('ecard_V2BgStart').value,
+                v2BgEnd: document.getElementById('ecard_V2BgEnd').value,
+                v2Socials: v2Socials,
+                v2Bars: v2Bars,
+                buttons: []
+            };
+            for (let i = 0; i < 4; i++) {
+                const label = document.querySelector(`[data-btnidx="${i}"][data-field="label"]`)?.value;
+                const url = document.querySelector(`[data-btnidx="${i}"][data-field="url"]`)?.value;
+                const color = document.querySelector(`[data-btnidx="${i}"][data-field="color"]`)?.value;
+                if (label && url) config.buttons.push({ l: label, u: url, c: color });
+            }
+            
             await callAPI('updateECardConfig', { rowId: currentCard.rowId, config });
-            showToast('儲存成功');
-            document.getElementById('ecardModal').classList.add('hidden');
-        } catch(e) { showToast(e.message, true); }
+            showToast('✅ 草稿儲存成功');
+            
+            // 同步記憶體
+            currentCard['自訂名片設定'] = JSON.stringify(config);
+            if(imgUrl) currentCard['名片圖檔'] = imgUrl;
+            
+        } catch(e) { 
+            showToast("儲存失敗: " + e.message, true); 
+        } finally {
+            btn.innerText = oriTxt; btn.classList.remove('opacity-50'); isProcessing = false;
+        }
     }
 
     async function shareToLine() {
-        const config = {
-            cardType: currentEcardType,
-            title: document.getElementById('ecard_Title').value,
-            desc: document.getElementById('ecard_Desc').value,
-            imgUrl: document.getElementById('ecard_ImgUrl').value,
-            imgActionUrl: document.getElementById('ecard_ActionUrl').value,
-            videoUrl: document.getElementById('ecard_VideoUrl').value,
-            v2LogoUrl: document.getElementById('ecard_V2LogoUrl').value,
-            v2BgStart: document.getElementById('ecard_V2BgStart').value,
-            v2BgEnd: document.getElementById('ecard_V2BgEnd').value,
-            v2Socials: v2Socials,
-            v2Bars: v2Bars,
-            buttons: []
-        };
-        for (let i = 0; i < 4; i++) {
-            const label = document.querySelector(`[data-btnidx="${i}"][data-field="label"]`)?.value;
-            const url = document.querySelector(`[data-btnidx="${i}"][data-field="url"]`)?.value;
-            const color = document.querySelector(`[data-btnidx="${i}"][data-field="color"]`)?.value;
-            if (label && url) config.buttons.push({ l: label, u: url, c: color });
-        }
-        const flexMsg = buildFlexMessage(currentCard, config);
-        const altText = config.altText || '數位名片';
-        if (liff.isApiAvailable('shareTargetPicker')) {
-            await liff.shareTargetPicker([{ type: 'flex', altText, contents: flexMsg }]);
-            showToast('已發送');
-        } else {
-            showToast('無法開啟分享', true);
+        if(isProcessing) return; isProcessing = true;
+        const btn = document.getElementById('shareLineBtn');
+        const oriTxt = btn.innerHTML; btn.innerHTML = "📤 產生中..."; btn.classList.add('opacity-50');
+
+        try {
+            await saveEcardConfig(); // 先強制儲存
+            let config = {};
+            if (currentCard['自訂名片設定']) try { config = JSON.parse(currentCard['自訂名片設定']); } catch(e){}
+
+            const flexMsg = buildFlexMessage(currentCard, config);
+            const altText = config.altText || '這是我的數位名片，請多指教';
+            
+            if (liff.isApiAvailable('shareTargetPicker')) {
+                const res = await liff.shareTargetPicker([{ type: 'flex', altText, contents: flexMsg }]);
+                if(res) {
+                    showToast('✅ 已發送');
+                    setTimeout(()=> liff.closeWindow(), 1500);
+                }
+            } else {
+                showToast('無法開啟分享', true);
+            }
+        } catch(e) {
+            showToast("分享失敗", true);
+        } finally {
+            btn.innerHTML = oriTxt; btn.classList.remove('opacity-50'); isProcessing = false;
         }
     }
 
@@ -746,27 +858,40 @@
         if (cfg.cardType === 'v2') {
             return {
                 type: 'bubble', size: 'mega',
+                header: { type: 'box', layout: 'horizontal', justifyContent: 'flex-end', paddingAll: '8px', contents: [{ type: 'box', layout: 'vertical', justifyContent: 'center', backgroundColor: '#FF0000', width: '65px', height: '25px', cornerRadius: '25px', contents: [{ type: 'text', text: '分享', weight: 'bold', align: 'center', color: '#FFFFFF', size: 'xs' }], action: { type: 'uri', label: 'share', uri: `https://liff.line.me/${LIFF_ID}?shareCardId=${card.rowId}` } }] },
                 body: {
-                    type: 'box', layout: 'vertical', contents: [
-                        { type: 'text', text: cfg.title, weight: 'bold', size: 'xl', wrap: true },
-                        { type: 'text', text: cfg.desc, size: 'sm', color: '#666666', wrap: true, margin: 'md' }
+                    type: 'box', layout: 'vertical', paddingAll: '0px',
+                    background: { type: "linearGradient", angle: "135deg", startColor: cfg.v2BgStart || "#57142b", endColor: cfg.v2BgEnd || "#46250c" },
+                    contents: [
+                        { type: 'box', layout: 'vertical', margin: 'xl', width: '100px', height: '100px', cornerRadius: '100px', alignSelf: 'center', contents: [{ type: 'image', url: cfg.v2LogoUrl || 'https://via.placeholder.com/100', size: 'full', aspectMode: 'cover', aspectRatio: '1:1' }] },
+                        { type: 'text', text: cfg.title, weight: 'bold', size: 'xl', color: '#FFFFFF', align: 'center', margin: 'md', wrap: true },
+                        { type: 'text', text: cfg.desc || ' ', size: 'sm', color: '#FFFFFF', align: 'center', margin: 'md', wrap: true }
                     ]
                 },
                 footer: {
-                    type: 'box', layout: 'vertical', spacing: 'sm', contents: cfg.v2Bars.map(b => ({ type: 'button', style: 'primary', action: { type: 'uri', label: b.text, uri: b.url } }))
+                    type: 'box', layout: 'vertical', spacing: 'sm', backgroundColor: '#FFFFFF',
+                    contents: cfg.v2Bars.map(b => ({ type: 'button', style: 'primary', color: '#06C755', action: { type: 'uri', label: b.text, uri: b.url } }))
                 }
             };
         } else {
+            let heroBlock;
+            if (cfg.cardType === 'video' && cfg.videoUrl) {
+                 heroBlock = { type: "video", url: cfg.videoUrl, previewUrl: cfg.imgUrl, altContent: { type: "image", size: "full", aspectRatio: "20:13", aspectMode: "cover", url: cfg.imgUrl }, aspectRatio: "20:13" };
+            } else {
+                 heroBlock = { type: 'image', url: cfg.imgUrl, size: 'full', aspectRatio: '20:13', aspectMode: 'cover', action: { type: 'uri', uri: cfg.imgActionUrl } };
+            }
+
             return {
                 type: 'bubble', size: 'mega',
-                hero: { type: 'image', url: cfg.imgUrl, size: 'full', aspectRatio: '20:13', action: { type: 'uri', uri: cfg.imgActionUrl } },
+                header: { type: 'box', layout: 'horizontal', justifyContent: 'flex-end', paddingAll: '8px', contents: [{ type: 'box', layout: 'vertical', justifyContent: 'center', backgroundColor: '#FF0000', width: '65px', height: '25px', cornerRadius: '25px', contents: [{ type: 'text', text: '分享', weight: 'bold', align: 'center', color: '#FFFFFF', size: 'xs' }], action: { type: 'uri', label: 'share', uri: `https://liff.line.me/${LIFF_ID}?shareCardId=${card.rowId}` } }] },
+                hero: heroBlock,
                 body: {
-                    type: 'box', layout: 'vertical', contents: [
-                        { type: 'text', text: cfg.title, weight: 'bold', size: 'xl', wrap: true },
-                        { type: 'text', text: cfg.desc, size: 'sm', color: '#666666', wrap: true, margin: 'md' }
+                    type: 'box', layout: 'vertical', paddingAll: '10px', contents: [
+                        { type: 'text', text: cfg.title, weight: 'bold', size: 'xl', align: 'center', wrap: true },
+                        { type: 'text', text: cfg.desc, size: 'sm', color: '#666666', margin: 'md', wrap: true }
                     ]
                 },
-                footer: { type: 'box', layout: 'vertical', spacing: 'sm', contents: cfg.buttons.map(b => ({ type: 'button', style: 'primary', color: b.c, action: { type: 'uri', label: b.l, uri: b.u } })) }
+                footer: { type: 'box', layout: 'vertical', spacing: 'sm', paddingAll: '10px', paddingTop: '0px', contents: cfg.buttons.map(b => ({ type: 'button', style: 'primary', color: b.c, action: { type: 'uri', label: b.l, uri: b.u } })) }
             };
         }
     }
@@ -776,37 +901,115 @@
         const reader = new FileReader();
         reader.onload = (e) => {
             const img = document.getElementById('cropImage');
+            img.onload = () => {
+                document.getElementById('cropModal').classList.remove('hidden');
+                if (cropper) cropper.destroy();
+                cropper = new Cropper(img, { aspectRatio: NaN, viewMode: 1 });
+                currentCropCallback = callback;
+            };
             img.src = e.target.result;
-            document.getElementById('cropModal').classList.remove('hidden');
-            if (cropper) cropper.destroy();
-            cropper = new Cropper(img, { aspectRatio: NaN, viewMode: 1 });
-            currentCropCallback = callback;
+            document.getElementById('ecardFileInput').value = "";
+            document.getElementById('cameraInput').value = "";
+            document.getElementById('galleryInput').value = "";
         };
         reader.readAsDataURL(file);
     }
+
     function confirmCrop() {
         if (!cropper) return;
         const canvas = cropper.getCroppedCanvas({ maxWidth: 1200 });
-        const base64 = canvas.toDataURL('image/jpeg', 0.8);
+        let base64 = canvas.toDataURL('image/jpeg', 0.8);
         cropper.destroy();
         document.getElementById('cropModal').classList.add('hidden');
         if (currentCropCallback) currentCropCallback(base64);
     }
+
     function cancelCrop() {
         if (cropper) cropper.destroy();
         document.getElementById('cropModal').classList.add('hidden');
+    }
+
+    // ======================== VOOM 解析與批次處理 ========================
+    async function fetchVoomData() {
+        const url = document.getElementById('voomUrl').value;
+        if(!url) return showToast('請輸入網址', true);
+        const btn = document.getElementById('fetchVoomBtn');
+        const oriTxt = btn.innerText; btn.innerText = '解析中...'; btn.classList.add('opacity-50');
+        try {
+            const data = await callAPI('getLineVoomMedia', { url });
+            document.getElementById('voomPlayer').src = data.video.videoUrl;
+            document.getElementById('applyVoomBtn').dataset.videoUrl = data.video.videoUrl;
+            document.getElementById('applyVoomBtn').dataset.thumbUrl = data.video.thumbnailUrl;
+            document.getElementById('voomResult').classList.remove('hidden');
+        } catch(e) {
+            showToast(e.message, true);
+        } finally {
+            btn.innerText = oriTxt; btn.classList.remove('opacity-50');
+        }
+    }
+
+    function applyVoom() {
+        const vBtn = document.getElementById('applyVoomBtn');
+        document.getElementById('ecard_VideoUrl').value = vBtn.dataset.videoUrl;
+        const tUrl = vBtn.dataset.thumbUrl;
+        if(tUrl) document.getElementById('ecard_ImgUrl').value = tUrl;
+        document.getElementById('voomModal').classList.add('hidden');
+        updatePreview();
+        showToast('✅ 影片已載入');
+    }
+
+    async function batchRegenerate() {
+        if (!confirm("系統將「重新讀取」所有名片的聯絡資料，並自動更新數位名片設定。確定要執行嗎？")) return;
+        const btn = document.getElementById('batchRegenBtn');
+        btn.innerHTML = '🔄 處理中...'; btn.classList.add('pointer-events-none', 'opacity-50');
+        let count = 0;
+        try {
+            for(let c of allCards) {
+                let btns = [];
+                if (c['手機號碼']) btns.push({ l: '撥打手機', u: `tel:${formatPhone(c['手機號碼'])}`, c: '#06C755' });
+                if (c['電子郵件']) btns.push({ l: '發送信箱', u: `mailto:${c['電子郵件']}`, c: '#06C755' });
+                if (c['公司地址']) btns.push({ l: 'Google 導航', u: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c['公司地址'])}`, c: '#06C755' });
+                if (c['公司網址']) { let u = c['公司網址']; if(!u.startsWith('http')) u='https://'+u; btns.push({ l: '公司網站', u: u, c: '#06C755' }); }
+                
+                let config = {}; if(c['自訂名片設定']) { try{ config=JSON.parse(c['自訂名片設定']); }catch(e){} }
+                if(!config.buttons || config.buttons.length === 0) {
+                    config.buttons = btns.slice(0,4);
+                    await callAPI('updateECardConfig', { rowId: c.rowId, config });
+                    count++;
+                }
+            }
+            showToast(`✅ 更新了 ${count} 張名片按鈕`);
+            loadCards();
+        } catch(e) { showToast("錯誤", true); } finally {
+            btn.innerHTML = '🔄 批次更新名片按鈕'; btn.classList.remove('pointer-events-none', 'opacity-50');
+        }
     }
 
     // ======================== 事件綁定 ========================
     function bindEvents() {
         document.getElementById('openCameraBtn').onclick = () => document.getElementById('cameraInput').click();
         document.getElementById('openGalleryBtn').onclick = () => document.getElementById('galleryInput').click();
-        document.getElementById('batchRegenBtn').onclick = async () => { showToast('批次更新功能開發中'); };
+        document.getElementById('cameraInput').onchange = (e) => {
+            if(e.target.files[0]) openCropper(e.target.files[0], (base64) => { 
+                document.getElementById('previewImage').src = base64; 
+                document.getElementById('listView').classList.add('hidden');
+                document.getElementById('processView').classList.remove('hidden');
+            });
+        };
+        document.getElementById('galleryInput').onchange = (e) => {
+            if(e.target.files[0]) openCropper(e.target.files[0], (base64) => { 
+                document.getElementById('previewImage').src = base64; 
+                document.getElementById('listView').classList.add('hidden');
+                document.getElementById('processView').classList.remove('hidden');
+            });
+        };
+
+        document.getElementById('batchRegenBtn').onclick = () => batchRegenerate();
         document.getElementById('refreshListBtn').onclick = () => loadCards();
         document.getElementById('searchInput').oninput = () => filterCards();
         document.getElementById('loadMoreBtn').onclick = () => loadMoreCards();
+        
         document.getElementById('backToListBtn').onclick = () => { document.getElementById('processView').classList.add('hidden'); document.getElementById('listView').classList.remove('hidden'); };
-        document.getElementById('saveCardBtn').onclick = async () => { showToast('儲存功能開發中'); };
         document.getElementById('closeDetailBtn').onclick = () => closeDetail();
         document.getElementById('editCardBtn').onclick = () => { closeDetail(); openEditModal(); };
         document.getElementById('closeEditBtn').onclick = () => closeEditModal();
@@ -815,11 +1018,13 @@
         document.getElementById('closeEcardModalBtn').onclick = () => document.getElementById('ecardModal').classList.add('hidden');
         document.getElementById('saveEcardConfigBtn').onclick = () => saveEcardConfig();
         document.getElementById('shareLineBtn').onclick = () => shareToLine();
+        
         document.querySelectorAll('.tab-btn').forEach(btn => btn.onclick = () => switchTab(btn.dataset.type));
         document.getElementById('uploadArea').onclick = () => document.getElementById('ecardFileInput').click();
         document.getElementById('ecardFileInput').onchange = (e) => {
             if (e.target.files[0]) openCropper(e.target.files[0], (base64) => { document.getElementById('ecard_ImgUrl').value = base64; updatePreview(); });
         };
+        
         document.getElementById('ecard_ImgUrl').oninput = () => updatePreview();
         document.getElementById('ecard_Title').oninput = () => updatePreview();
         document.getElementById('ecard_Desc').oninput = () => updatePreview();
@@ -829,10 +1034,12 @@
         document.getElementById('ecard_V2BgEnd').oninput = () => updatePreview();
         document.getElementById('addSocialBtn').onclick = () => { v2Socials.push({ label: '', url: '' }); renderSocials(); updatePreview(); };
         document.getElementById('addBarBtn').onclick = () => { v2Bars.push({ text: '', url: '' }); renderBars(); updatePreview(); };
-        document.getElementById('openVoomBtn').onclick = () => document.getElementById('voomModal').classList.remove('hidden');
+        
+        document.getElementById('openVoomBtn').onclick = () => { document.getElementById('voomUrl').value = ''; document.getElementById('voomResult').classList.add('hidden'); document.getElementById('voomModal').classList.remove('hidden'); };
         document.getElementById('closeVoomBtn').onclick = () => document.getElementById('voomModal').classList.add('hidden');
-        document.getElementById('fetchVoomBtn').onclick = async () => { showToast('VOOM功能需後端支援'); };
-        document.getElementById('applyVoomBtn').onclick = () => { showToast('套用影片'); };
+        document.getElementById('fetchVoomBtn').onclick = () => fetchVoomData();
+        document.getElementById('applyVoomBtn').onclick = () => applyVoom();
+        
         document.getElementById('cancelCropBtn').onclick = () => cancelCrop();
         document.getElementById('confirmCropBtn').onclick = () => confirmCrop();
     }

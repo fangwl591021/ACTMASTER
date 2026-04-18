@@ -506,6 +506,7 @@
 
       try {
           const data = await fetchAPI('getCardContacts');
+          console.log("【後端回傳名片資料】", data); // 加入 Log 供排錯
           globalCardContacts = data || [];
           filterCardList();
       } catch (e) {

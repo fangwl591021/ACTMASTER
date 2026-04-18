@@ -637,7 +637,7 @@
         const title = document.getElementById('ecard_Title').value || '商務名片';
         const desc = document.getElementById('ecard_Desc').value || '';
         if (currentEcardType === 'v2') {
-            const logo = document.getElementById('ecard_V2LogoUrl').value || 'https://via.placeholder.com/100';
+            const logo = document.getElementById('ecard_V2LogoUrl').value || '';
             const bgStart = document.getElementById('ecard_V2BgStart').value;
             const bgEnd = document.getElementById('ecard_V2BgEnd').value;
             let socialHtml = v2Socials.map(s => `<a href="${s.url}" target="_blank" class="bg-white/20 p-2 rounded-full text-xs">${s.label}</a>`).join('');

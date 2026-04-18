@@ -1,4 +1,4 @@
-<!-- Version: v2.6.5 (QQ 穩定退版：保留 UI 升級與白底無框設計，徹底移除實驗性功能) -->
+<!-- Version: v2.6.5 (QQ 終極防掛版：將 onload 替換為 DOMContentLoaded，無視擴充功能干擾，達成秒開載入) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -94,7 +94,6 @@
       <p id="loading-text" class="text-slate-500 font-bold tracking-widest text-[13px]">系統載入中</p>
     </div>
 
-    <!-- 註冊畫面 -->
     <div id="view-user-register" class="hidden animate-in fade-in duration-500 pt-2 pb-10 space-y-6">
       <div class="mb-4 pl-1">
         <h1 class="text-[24px] font-extrabold text-slate-800 tracking-tight">建立會員檔案</h1>
@@ -451,7 +450,8 @@
     }
   }
 
-  window.onload = async () => {
+  // ⭐ QQ 終極防掛修復：捨棄 window.onload，改用 DOMContentLoaded 瞬間啟動！
+  document.addEventListener("DOMContentLoaded", async () => {
     const params = new URLSearchParams(window.location.search);
     const shareCardId = params.get('shareCardId');
     if (shareCardId) { window.location.replace(`card.html?shareCardId=${shareCardId}`); return; }
@@ -505,7 +505,7 @@
       const container = document.getElementById('main-content');
       if (container) container.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-[2rem] p-6 mx-4 mt-10 text-left shadow-sm"><div class="flex items-center gap-2 mb-4 text-red-700"><span class="material-symbols-outlined text-[32px]">error</span><h3 class="font-bold text-[18px]">載入中斷</h3></div><div class="bg-white p-4 rounded-xl border border-red-100 text-red-600 text-[13px] font-mono break-all mb-4 shadow-sm">${err.message}</div></div>`;
     }
-  };
+  });
 
   window.processScannedUid = async function(uid) {
       window.stopScanner(); 

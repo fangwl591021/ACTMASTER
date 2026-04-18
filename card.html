@@ -1,4 +1,4 @@
-<!-- Version: v7.6.2 (版面修復版：補回數位名片遺失的點圖連結欄位，並完美整合最新 card.js 邏輯) -->
+<!-- Version: v7.6.3 (智慧預填版：點擊產生數位名片時，自動帶入官網、導航地圖與聯絡按鈕) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -66,7 +66,7 @@
       <div class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shadow-sm">
         <span class="material-symbols-outlined text-[20px]">contact_mail</span>
       </div>
-      名片管理 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v7.6.2</span>
+      名片管理 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v7.6.3</span>
     </div>
     <div class="flex items-center gap-3">
       <div id="user-profile-badge" class="hidden flex items-center gap-2">
@@ -219,7 +219,7 @@
     </div>
     <div class="fixed bottom-0 w-full max-w-md bg-white p-4 pb-safe flex gap-3 z-[1005] border-t border-slate-100 shadow-[0_-10px_20px_rgba(0,0,0,0.03)]">
         <button id="btn-share-claim" onclick="shareClaimLink()" class="flex-1 py-4 bg-slate-100 text-slate-700 rounded-2xl font-bold text-[16px] active:scale-95 transition-all hidden border border-slate-200">邀請認領</button>
-        <button onclick="if(typeof window.openECardGenerator === 'function') window.openECardGenerator(); closeReadOnlyCard();" class="flex-[1.5] py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[16px] active:scale-95 transition-all shadow-sm">產生數位名片</button>
+        <button onclick="initAndOpenECardGenerator(window.currentActiveCard.rowId); closeReadOnlyCard();" class="flex-[1.5] py-4 bg-[#06C755] text-white rounded-2xl font-bold text-[16px] active:scale-95 transition-all shadow-sm">產生數位名片</button>
     </div>
 </div>
 
@@ -250,7 +250,7 @@
   </div>
 </div>
 
-<!-- 數位名片產生器 Modal (補回 ec-img-action-input 欄位) -->
+<!-- 數位名片產生器 Modal -->
 <div id="ecard-generator-modal" class="hidden fixed inset-0 bg-slate-50 flex flex-col animate-in fade-in duration-300 w-full z-[1020] overflow-hidden">
   <div class="bg-white px-5 py-4 border-b border-slate-100 flex justify-between items-center shadow-sm shrink-0 w-full z-20">
     <div class="flex items-center gap-3">
@@ -315,7 +315,6 @@
                   </div>
                 </div>
 
-                <!-- ⭐ 這裡就是當初漏掉的「點圖跳轉連結」欄位 ⭐ -->
                 <div class="w-full flex flex-col mb-6 pb-6 border-b border-slate-100">
                   <label class="input-label text-primary">點圖跳轉連結</label>
                   <input type="url" id="ec-img-action-input" class="custom-input !text-blue-600" placeholder="https://liff.line.me/..." oninput="if(typeof window.updateECardPreview === 'function') window.updateECardPreview()">
@@ -510,6 +509,96 @@ function setButtonLoading(btnId, isLoading, originalText = '') {
         return false;
     }
 }
+
+// ⭐ 新增：產生數位名片前自動生成豐富預設值 (Auto-Fill Generator)
+window.initAndOpenECardGenerator = function(rowId) {
+    const card = globalCardContacts.find(c => String(c.rowId) === String(rowId));
+    if (!card) return;
+    window.currentActiveCard = card;
+
+    let config = {};
+    if (card['自訂名片設定']) {
+        try { config = JSON.parse(card['自訂名片設定']); } catch(e){}
+    }
+
+    // 決定點圖跳轉連結
+    let defaultActionUrl = `https://liff.line.me/${LIFF_ID}`;
+    const website = card['公司網址'] || card['Website'];
+    const social = card['社群帳號'] || card['SocialMedia'];
+    if (website && String(website).trim() !== '-' && String(website).trim() !== '') {
+        defaultActionUrl = String(website).trim();
+        if (!defaultActionUrl.startsWith('http')) defaultActionUrl = 'https://' + defaultActionUrl;
+    } else if (social && String(social).startsWith('http')) {
+        defaultActionUrl = String(social).trim();
+    }
+
+    // 自動補完點圖連結 (如果原先沒設定)
+    if (!config.imgActionUrl || config.imgActionUrl.trim() === '') {
+        config.imgActionUrl = defaultActionUrl;
+    }
+
+    // 如果名片目前完全沒有設定任何按鈕，系統自動幫忙填滿！
+    if ((!config.buttons || config.buttons.length === 0) && (!config.v2bars || config.v2bars.length === 0)) {
+        let defaultButtons = [];
+        
+        let p1 = card['手機號碼'] || card['Mobile'];
+        if (p1 && p1 !== '-') { let phone = String(p1).split(',')[0].replace(/[^\d+]/g, ''); if (phone.startsWith('886')) phone = '0' + phone.substring(3); if (phone) defaultButtons.push({ l: '撥打手機', u: `tel:${phone}`, c: '#2563eb' }); }
+        
+        let p2 = card['公司電話'] || card['Tel'];
+        if (p2 && p2 !== '-') { let tel = String(p2).split(',')[0].replace(/[^\d+]/g, ''); if (tel.startsWith('886')) tel = '0' + tel.substring(3); if (tel) defaultButtons.push({ l: '撥打電話', u: `tel:${tel}`, c: '#0f172a' }); }
+        
+        let p3 = card['電子郵件'] || card['Email'];
+        if (p3 && p3 !== '-') { let email = String(p3).split(/[\s,]+/)[0]; if (email.includes('@')) defaultButtons.push({ l: '發送信箱', u: `mailto:${email}`, c: '#0891b2' }); }
+        
+        let p4 = card['公司地址'] || card['Address'];
+        if (p4 && p4 !== '-') defaultButtons.push({ l: 'Google 導航', u: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p4.split(',')[0])}`, c: '#ef4444' });
+        
+        let p5 = card['公司網址'] || card['Website'];
+        if (p5 && p5 !== '-' && defaultButtons.length < 4) { let wUrl = String(p5).trim(); if (wUrl && !wUrl.startsWith('http')) wUrl = 'https://' + wUrl; if (wUrl) defaultButtons.push({ l: '官方網站', u: wUrl, c: '#64748b' }); }
+
+        let cName = card['公司名稱'] && card['公司名稱'] !== 'Not provided' && card['公司名稱'] !== '-' ? card['公司名稱'] : '';
+        let uName = card['姓名'] && card['姓名'] !== 'Not provided' && card['姓名'] !== '-' ? card['姓名'] : '';
+        let defaultTitle = [cName, uName].filter(Boolean).join(' - ') || card['Name'] || '商務名片';
+        let defaultDesc = card['服務項目/品牌標語'] || ''; if (defaultDesc === 'Not provided' || defaultDesc === '未提供' || defaultDesc === '-') defaultDesc = '';
+
+        config.cardType = config.cardType || 'image';
+        config.title = config.title || defaultTitle;
+        config.desc = config.desc || defaultDesc;
+        config.buttons = defaultButtons;
+        
+        // 同步轉換給 V2 使用的按鈕格式
+        config.v2bars = defaultButtons.map(b => {
+            let icon = 'link';
+            if (b.l.includes('手機') || b.l.includes('電話')) icon = 'call';
+            if (b.l.includes('信箱')) icon = 'mail';
+            if (b.l.includes('導航')) icon = 'location_on';
+            return { icon: icon, label: b.l, url: b.u, color: b.c };
+        });
+        
+        // 產生預設的 V2 社群圖示 (從社群網址判斷)
+        config.v2socials = [];
+        if (social && social !== '-') {
+            let sUrl = String(social).trim();
+            if(!sUrl.startsWith('http') && sUrl.includes('.')) sUrl = 'https://' + sUrl;
+            if(sUrl.startsWith('http')) {
+                let type = 'globe';
+                if(sUrl.includes('facebook.com') || sUrl.includes('fb.com')) type = 'facebook';
+                else if(sUrl.includes('instagram.com')) type = 'instagram';
+                else if(sUrl.includes('line.me')) type = 'line';
+                else if(sUrl.includes('youtube.com')) type = 'youtube';
+                config.v2socials.push({ type: type, url: sUrl });
+            }
+        }
+    }
+
+    // 將包裝好的完美預設值，直接覆蓋回記憶體中的卡片物件
+    window.currentActiveCard['自訂名片設定'] = JSON.stringify(config);
+
+    // 呼叫原本的開啟編輯器函式
+    if (typeof window.openECardGenerator === 'function') {
+        window.openECardGenerator();
+    }
+};
 
 function checkAndOpenMyCard() {
     const params = new URLSearchParams(window.location.search);
@@ -708,13 +797,18 @@ window.renderCardPage = function(isReset = false) {
         const isClaimed = !!(c.userId || c['LINE ID'] || c['Line ID'] || c['lineId']);
         const claimBadge = isClaimed ? '<span class="shrink-0 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md text-[11px] font-bold ml-2">已綁定</span>' : '';
         return `
-        <div onclick="if(typeof window.openCardDetailByRowId === 'function') window.openCardDetailByRowId('${c.rowId}')" class="p-5 bg-white flex items-center gap-4 rounded-[2rem] shadow-sm mb-3 cursor-pointer active:scale-[0.98] transition-transform">
-          <div class="w-[56px] h-[56px] shrink-0 rounded-2xl overflow-hidden bg-slate-50 flex items-center justify-center">
+        <div class="p-5 bg-white flex items-center gap-4 rounded-[2rem] shadow-sm mb-3 cursor-pointer active:scale-[0.98] transition-transform">
+          <div onclick="if(typeof window.openCardDetailByRowId === 'function') window.openCardDetailByRowId('${c.rowId}')" class="w-[56px] h-[56px] shrink-0 rounded-2xl overflow-hidden bg-slate-50 flex items-center justify-center">
             ${c['名片圖檔'] && c['名片圖檔'] !== '圖片儲存失敗' && c['名片圖檔'] !== '無圖檔' ? `<img src="${window.getDirectImageUrl(c['名片圖檔'])}" class="w-full h-full object-cover">` : `<span class="material-symbols-outlined text-slate-300 text-[28px]">contact_mail</span>`}
           </div>
-          <div class="flex-1 overflow-hidden flex flex-col justify-center gap-1">
+          <div onclick="if(typeof window.openCardDetailByRowId === 'function') window.openCardDetailByRowId('${c.rowId}')" class="flex-1 overflow-hidden flex flex-col justify-center gap-1">
             <div class="flex items-center"><h4 class="text-[17px] font-extrabold text-slate-800 truncate">${c['姓名'] || '未知姓名'}</h4>${isAdmin ? claimBadge : ''}</div>
             <p class="text-[13px] text-slate-500 font-medium truncate">${c['公司名稱'] || c['職稱'] || '無資訊'}</p>
+          </div>
+          <div class="flex flex-col gap-2 shrink-0 border-l border-slate-100 pl-3">
+              <button onclick="initAndOpenECardGenerator('${c.rowId}')" class="w-10 h-10 bg-[#06C755]/10 text-[#06C755] rounded-full flex items-center justify-center active:scale-90 transition-transform">
+                  <span class="material-symbols-outlined text-[18px]">contact_mail</span>
+              </button>
           </div>
         </div>
     `}).join('');

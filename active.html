@@ -498,6 +498,32 @@
         btn.classList.add('opacity-70');
     }
 
+    // ⭐ QQ 終極修復：建立活動前，先將 Base64 轉換為 R2 短網址，再存入資料庫
+    let rawImageUrl = document.getElementById(`in-image-url-${mode}`) ? document.getElementById(`in-image-url-${mode}`).value : '';
+    let finalImageUrl = rawImageUrl;
+
+    if (rawImageUrl.startsWith('data:image')) {
+        try {
+            if (btn) btn.innerHTML = '<span class="material-symbols-outlined animate-spin align-middle mr-1 text-[20px]">refresh</span> 上傳圖片至 CDN...';
+            
+            const upRes = await fetch(WORKER_URL, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'uploadImage', payload: { base64Image: rawImageUrl } })
+            });
+            const upJson = await upRes.json();
+            
+            if(upJson.success && upJson.data) {
+                finalImageUrl = upJson.data;
+            } else {
+                throw new Error(upJson.error || "上傳失敗");
+            }
+        } catch(e) {
+            alert('⚠️ 圖片上傳失敗，請重試: ' + e.message);
+            if(btn) { btn.innerHTML = oriText; btn.disabled = false; btn.classList.remove('opacity-70'); }
+            return;
+        }
+    }
+
     let p = { 
       activityName: name,
       activityType: document.getElementById(`${pfx}-type`) ? document.getElementById(`${pfx}-type`).value : '例會', 
@@ -506,7 +532,7 @@
       startTime: formatDT(document.getElementById(`${pfx}-start`) ? document.getElementById(`${pfx}-start`).value : ''),
       endTime: formatDT(document.getElementById(`${pfx}-end`) ? document.getElementById(`${pfx}-end`).value : ''),
       description: document.getElementById(`${pfx}-desc`) ? document.getElementById(`${pfx}-desc`).value.trim() : '',
-      imageUrl: document.getElementById(`in-image-url-${mode}`) ? document.getElementById(`in-image-url-${mode}`).value : '',
+      imageUrl: finalImageUrl, // ⭐ 使用轉換後的 R2 短網址
       names: [],
       defaultIdentity: document.getElementById(`${pfx}-identity`) ? document.getElementById(`${pfx}-identity`).value : '來賓',
       isBatch: (mode === 'series'),

@@ -1,18 +1,13 @@
-<!-- Version: v8.2.0 (QQ 里程碑版：實裝上傳縮圖即時渲染與手機版即時預覽器) -->
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>數位名片產生器 | 三種版型</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0" />
-    <!-- LIFF SDK -->
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <!-- Cropper.js -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <style>
@@ -42,10 +37,8 @@
 
 <div id="toast" class="toast-message"></div>
 
-<!-- 主容器 -->
 <div class="max-w-md mx-auto bg-white min-h-screen relative shadow-2xl overflow-hidden flex flex-col">
     
-    <!-- 頂部導航 -->
     <div class="fixed top-0 left-0 right-0 max-w-md mx-auto bg-white/90 backdrop-blur-md z-30 px-5 py-3 flex justify-between items-center border-b border-slate-200">
         <div class="flex items-center gap-2">
             <span class="material-symbols-outlined text-primary text-2xl">contact_mail</span>
@@ -58,18 +51,14 @@
         </div>
     </div>
 
-    <!-- 主要內容區 -->
     <div class="flex-1 overflow-y-auto pt-16 pb-28 px-4">
         
-        <!-- 讀取畫面 -->
         <div id="loadingView" class="flex flex-col items-center justify-center py-20">
             <div class="loading-spinner"></div>
             <p class="text-slate-500 text-sm mt-2">載入中...</p>
         </div>
 
-        <!-- 名片列表區 (管理者) -->
         <div id="listView" class="hidden">
-            <!-- AI 掃描卡片 -->
             <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 text-center mb-6">
                 <div class="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-3">
                     <span class="material-symbols-outlined text-blue-600">document_scanner</span>
@@ -85,7 +74,6 @@
                 <button onclick="window.batchRegenerate()" id="batchRegenBtn" class="text-xs text-slate-400 mt-4 flex items-center justify-center gap-1 mx-auto hover:text-blue-600 transition">🔄 批次更新名片按鈕</button>
             </div>
 
-            <!-- 搜尋列 -->
             <div class="flex gap-2 mb-4">
                 <div class="relative flex-1">
                     <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
@@ -94,14 +82,12 @@
                 <button onclick="window.loadCards()" class="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center text-slate-500 active:scale-95">🔄</button>
             </div>
 
-            <!-- 名片列表容器 -->
             <div id="cardListContainer" class="space-y-3"></div>
             <div id="loadMoreBox" class="text-center py-4 hidden">
                 <button onclick="window.loadMoreCards()" class="text-slate-500 text-sm bg-white px-6 py-2 rounded-full shadow-sm">顯示更多</button>
             </div>
         </div>
 
-        <!-- AI 辨識表單區 -->
         <div id="processView" class="hidden">
             <button onclick="window.closeProcessView()" class="flex items-center gap-1 text-slate-600 mb-4 text-sm">← 返回</button>
             <div class="bg-white rounded-2xl p-5 shadow-sm">
@@ -119,7 +105,6 @@
         </div>
     </div>
 
-    <!-- 底部導航 (管理員/一般) -->
     <div id="adminNav" class="fixed bottom-0 max-w-md mx-auto w-full bg-slate-900 text-white flex justify-around py-2 rounded-t-2xl hidden z-30">
         <button onclick="window.location.href='index.html?view=admin-activities'" class="admin-nav-btn flex flex-col items-center text-xs">📋 核銷</button>
         <button onclick="window.location.href='active.html'" class="admin-nav-btn flex flex-col items-center text-xs">➕ 建立</button>
@@ -136,7 +121,6 @@
     </div>
 </div>
 
-<!-- ======================== 名片詳情 Modal ======================== -->
 <div id="cardDetailModal" class="hidden fixed inset-0 bg-white z-50 max-w-md mx-auto flex flex-col overflow-hidden shadow-2xl">
     <div class="absolute top-4 right-4 flex gap-2 z-10">
         <button onclick="window.openEditModal()" class="w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow-md">✏️</button>
@@ -165,7 +149,6 @@
     </div>
 </div>
 
-<!-- ======================== 名片編輯 Modal ======================== -->
 <div id="cardEditModal" class="hidden fixed inset-0 bg-slate-50 z-50 max-w-md mx-auto flex flex-col overflow-hidden">
     <div class="bg-white px-5 py-4 flex justify-between items-center border-b">
         <h3 class="font-bold text-lg">編輯名片</h3>
@@ -193,7 +176,6 @@
     </div>
 </div>
 
-<!-- ======================== 數位名片編輯器 Modal ======================== -->
 <div id="ecardModal" class="hidden fixed inset-0 bg-white z-50 max-w-md mx-auto flex flex-col overflow-hidden">
     <div class="bg-white px-5 py-4 border-b flex justify-between items-center sticky top-0 z-20">
         <div class="flex items-center gap-3">
@@ -205,16 +187,13 @@
 
     <div class="flex-1 overflow-auto p-5 pb-32 bg-white">
         
-        <!-- ⭐ 手機端實時預覽器 (Mobile Mockup) -->
         <div class="lg:hidden flex flex-col items-center mb-8 pb-6 border-b border-slate-100">
             <div class="flex items-center gap-1.5 mb-3">
                 <span class="material-symbols-outlined text-slate-400 text-[18px]">preview</span>
                 <span class="text-[13px] font-bold text-slate-500 tracking-widest">實時手機預覽</span>
             </div>
             <div class="w-[280px] border-[6px] border-slate-800 rounded-[2.5rem] overflow-hidden shadow-2xl bg-white relative">
-                <!-- iPhone 瀏海 -->
                 <div class="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-5 bg-slate-800 rounded-b-xl z-30"></div>
-                <!-- 預覽注入點 -->
                 <div id="mobilePreviewContainer" class="min-h-[380px] w-full relative z-10 bg-slate-50 pt-3"></div>
             </div>
         </div>
@@ -245,7 +224,6 @@
             <div>
                 <label class="input-label">封面圖片</label>
                 <div onclick="document.getElementById('ecardFileInput').click()" id="uploadArea" class="relative drag-area w-full h-36 bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer overflow-hidden">
-                    <!-- 即時縮圖渲染 -->
                     <img id="v1CoverThumbnail" src="" class="absolute inset-0 w-full h-full object-cover hidden z-10">
                     <div id="v1CoverPlaceholder" class="flex flex-col items-center z-0">
                         <span class="material-symbols-outlined text-3xl text-slate-400">add_photo_alternate</span>
@@ -270,7 +248,6 @@
                 <label class="input-label">LOGO / 大頭貼</label>
                 <div class="flex gap-3 items-center">
                     <div onclick="document.getElementById('ecardV2LogoInput').click()" id="v2LogoArea" class="w-20 h-20 bg-slate-100 rounded-full flex flex-col items-center justify-center cursor-pointer overflow-hidden border relative shrink-0">
-                        <!-- 即時縮圖渲染 -->
                         <img id="v2LogoPreview" src="" class="absolute inset-0 w-full h-full object-cover hidden z-10">
                         <span id="v2LogoPlaceholder" class="material-symbols-outlined text-slate-400 z-0">add_a_photo</span>
                     </div>
@@ -299,7 +276,6 @@
         </div>
     </div>
 
-    <!-- 預覽區 (桌面版顯示) -->
     <div class="hidden lg:block absolute right-0 top-0 bottom-0 w-1/2 bg-slate-100 p-4 overflow-auto border-l">
         <div class="phone-mock max-w-[300px] mx-auto mt-10">
             <div id="previewContainer" class="bg-white min-h-[500px] relative"></div>
@@ -307,7 +283,6 @@
     </div>
 </div>
 
-<!-- VOOM Modal -->
 <div id="voomModal" class="hidden fixed inset-0 bg-black/50 z-[60] flex items-end max-w-md mx-auto">
     <div class="bg-white w-full rounded-t-2xl p-5 animate-slide-up">
         <h4 class="font-bold mb-2">LINE VOOM 轉換</h4>
@@ -321,7 +296,6 @@
     </div>
 </div>
 
-<!-- 裁切 Modal -->
 <div id="cropModal" class="hidden fixed inset-0 bg-black z-[70] flex flex-col max-w-md mx-auto">
     <div class="flex justify-between items-center p-4 text-white border-b border-slate-800 bg-slate-900">
         <button onclick="window.cancelCrop()" class="px-2 py-1 text-slate-400 font-bold active:scale-95 transition-transform">取消</button>
@@ -338,9 +312,9 @@
     const LIFF_ID = "2009367829-DLtYBDUm";
     const API_URL = "https://actmaster.fangwl591021.workers.dev";
     
-    // 使用 Inline Base64 SVG 替換外部圖床，徹底解決 ERR_CONNECTION_CLOSED
-    const SVG_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23e2e8f0'/%3E%3Cpath d='M50 55c-11 0-20 9-20 20v5h40v-5c0-11-9-20-20-20zm0-25c-8.3 0-15 6.7-15 15s6.7 15 15 15 15-6.7 15-15-6.7-15-15-15z' fill='%2394a3b8'/%3E%3C/svg%3E";
-    const SVG_COVER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='260' viewBox='0 0 400 260'%3E%3Crect width='400' height='260' fill='%23f1f5f9'/%3E%3Cpath d='M150 130l30-40 40 50 20-25 40 50H120z' fill='%23cbd5e1'/%3E%3Ccircle cx='160' cy='90' r='15' fill='%23cbd5e1'/%3E%3C/svg%3E";
+    // ⭐ 防爆修復：將單引號替換為 %27，完美解決 HTML/JS 字串衝突導致的 SyntaxError
+    const SVG_AVATAR = "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27100%27 height=%27100%27 viewBox=%270 0 100 100%27%3E%3Ccircle cx=%2750%27 cy=%2750%27 r=%2750%27 fill=%27%23e2e8f0%27/%3E%3Cpath d=%27M50 55c-11 0-20 9-20 20v5h40v-5c0-11-9-20-20-20zm0-25c-8.3 0-15 6.7-15 15s6.7 15 15 15 15-6.7 15-15-6.7-15-15-15z%27 fill=%27%2394a3b8%27/%3E%3C/svg%3E";
+    const SVG_COVER = "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27400%27 height=%27260%27 viewBox=%270 0 400 260%27%3E%3Crect width=%27400%27 height=%27260%27 fill=%27%23f1f5f9%27/%3E%3Cpath d=%27M150 130l30-40 40 50 20-25 40 50H120z%27 fill=%27%23cbd5e1%27/%3E%3Ccircle cx=%27160%27 cy=%2790%27 r=%2715%27 fill=%27%23cbd5e1%27/%3E%3C/svg%3E";
 
     let currentUser = null;
     let isAdmin = false;
@@ -364,7 +338,6 @@
         setTimeout(() => toast.classList.remove('show'), 2500);
     }
 
-    // ⭐ 友善無感降級分享器 (Fallback Share)
     window.fallbackShare = function(url, altText) {
         const fullText = `${altText}\n${url}`;
         const fallbackInput = document.createElement('textarea');
@@ -505,7 +478,6 @@
     window.handleCameraInput = (e) => { if(e.target.files[0]) window.openCropper(e.target.files[0], (b64) => { document.getElementById('previewImage').src = b64; document.getElementById('listView').classList.add('hidden'); document.getElementById('processView').classList.remove('hidden'); }); };
     window.handleGalleryInput = (e) => { if(e.target.files[0]) window.openCropper(e.target.files[0], (b64) => { document.getElementById('previewImage').src = b64; document.getElementById('listView').classList.add('hidden'); document.getElementById('processView').classList.remove('hidden'); }); };
     
-    // ⭐ 上傳並將 Base64 塞給設定檔，然後立即更新畫面
     window.handleEcardImageInput = (e) => { if(e.target.files[0]) window.openCropper(e.target.files[0], (b64) => { document.getElementById('ecard_ImgUrl').value = b64; window.updatePreview(); }); };
     window.handleEcardLogoInput = (e) => { if(e.target.files[0]) window.openCropper(e.target.files[0], (b64) => { document.getElementById('ecard_V2LogoUrl').value = b64; window.updatePreview(); }); };
 
@@ -771,9 +743,8 @@
     window.addSocial = function() { window.v2Socials.push({ label: '', url: '' }); window.renderSocials(); window.updatePreview(); }
     window.addBar = function() { window.v2Bars.push({ text: '', url: '' }); window.renderBars(); window.updatePreview(); }
 
-    window.escapeHtml = function(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; }); }
+    window.escapeHtml = function(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m) { if (m === '&') return '&'; if (m === '<') return '<'; if (m === '>') return '>'; return m; }); }
 
-    // ⭐ 實時預覽引擎：同時渲染給「桌機預覽窗」與「手機迷你預覽器」
     window.updatePreview = function() {
         const desktopContainer = document.getElementById('previewContainer');
         const mobileContainer = document.getElementById('mobilePreviewContainer');
@@ -790,7 +761,6 @@
             let socialHtml = window.v2Socials.filter(s=>s.label).map(s => `<div class="bg-white/20 px-3 py-1.5 rounded-full text-xs font-bold">${window.escapeHtml(s.label)}</div>`).join('');
             let barsHtml = window.v2Bars.filter(b=>b.text).map(b => `<div class="block bg-white text-[#333] py-3 rounded-full text-sm font-bold mb-3 shadow-md">${window.escapeHtml(b.text)}</div>`).join('');
             
-            // ⭐ 更新 V2 縮圖渲染
             const v2LogoPreview = document.getElementById('v2LogoPreview');
             const v2LogoPlaceholder = document.getElementById('v2LogoPlaceholder');
             if (v2LogoPreview && logo !== SVG_AVATAR) {
@@ -812,7 +782,6 @@
             let imgUrl = document.getElementById('ecard_ImgUrl').value;
             if (!imgUrl) imgUrl = SVG_COVER;
             
-            // ⭐ 更新 V1 縮圖渲染
             const v1CoverThumbnail = document.getElementById('v1CoverThumbnail');
             const v1CoverPlaceholder = document.getElementById('v1CoverPlaceholder');
             if (v1CoverThumbnail && imgUrl !== SVG_COVER) {
@@ -862,7 +831,6 @@
 
         try {
             let imgUrl = document.getElementById('ecard_ImgUrl').value;
-            // ⭐ 判斷若為 Base64 則非同步上傳，並寫回 input 再次觸發預覽更新
             if (imgUrl.startsWith('data:image')) {
                 imgUrl = await window.callAPI('uploadImage', { base64Image: imgUrl });
                 document.getElementById('ecard_ImgUrl').value = imgUrl; 
@@ -976,7 +944,6 @@
         }
     }
 
-    // ⭐ 轉發至 LINE：導入防彈 Flex 驗證與環境降級
     window.shareToLine = async function() {
         if(isProcessing) return; isProcessing = true;
         const btn = document.getElementById('shareLineBtn');
@@ -1073,6 +1040,7 @@
         window.showToast('✅ 影片已載入');
     }
 
+    // ⭐ QQ 防呆修復：批次更新地圖變數缺失與 Template Literal 引號錯誤
     window.batchRegenerate = async function() {
         if (!confirm("系統將「重新讀取」所有名片的聯絡資料，並自動更新數位名片設定。確定要執行嗎？")) return;
         const btn = document.getElementById('batchRegenBtn');

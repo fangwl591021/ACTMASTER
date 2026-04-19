@@ -1,39 +1,31 @@
-<!-- Version: v8.1.7 (QQ 退版版：恢復詳情入口，不含後續轉發 Modal 修改) -->
+<!-- Version: v8.3.0 (QQ 終極完全體：恢復三大版型分頁，修復入口邏輯) -->
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>數位名片產生器 | 三種版型</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0" />
-    <!-- LIFF SDK -->
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <!-- Cropper.js -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { background: #f1f5f9; font-family: 'Inter', 'Noto Sans TC', sans-serif; }
-        .card-editor-tab { transition: all 0.2s ease; cursor: pointer; }
-        .card-editor-tab.active { background: white; color: #2563eb; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        body { background: #f1f5f9; font-family: 'Inter', 'Noto Sans TC', sans-serif; -webkit-user-select: none; user-select: none; }
         .phone-mock { border: 10px solid #1e293b; border-radius: 2.5rem; background: #f8fafc; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
-        .preview-card-v2 { transition: all 0.2s ease; }
-        .gradient-bg { background: linear-gradient(135deg, #57142b, #46250c); }
         .toast-message { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 24px; border-radius: 50px; font-size: 14px; font-weight: 500; z-index: 9999; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2); opacity: 0; transition: opacity 0.2s; pointer-events: none; white-space: nowrap; }
         .toast-message.show { opacity: 1; }
         .loading-spinner { width: 32px; height: 32px; border: 3px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .hidden { display: none !important; }
-        .btn-primary { background: #2563eb; color: white; padding: 14px 20px; border-radius: 16px; font-weight: 600; text-align: center; cursor: pointer; transition: 0.2s; border: none; width: 100%; font-size: 15px; }
-        .btn-primary:active { transform: scale(0.97); background: #1d4ed8; }
-        .btn-secondary { background: #f1f5f9; color: #334155; padding: 14px 20px; border-radius: 16px; font-weight: 600; text-align: center; cursor: pointer; transition: 0.2s; border: 1px solid #e2e8f0; width: 100%; }
-        .custom-input { width: 100%; padding: 12px 16px; border: 1px solid #e2e8f0; border-radius: 16px; font-size: 14px; outline: none; transition: 0.2s; background: #f8fafc; }
-        .custom-input:focus { border-color: #2563eb; background: white; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
-        .textarea-block { width: 100%; padding: 12px 16px; border: 1px solid #e2e8f0; border-radius: 16px; font-size: 14px; outline: none; resize: vertical; background: #f8fafc; }
+        .btn-primary { background: #06C755; color: white; padding: 14px 20px; border-radius: 16px; font-weight: 700; text-align: center; cursor: pointer; transition: 0.2s; border: none; width: 100%; font-size: 16px; }
+        .btn-primary:active { transform: scale(0.97); }
+        .btn-secondary { background: #f1f5f9; color: #334155; padding: 14px 20px; border-radius: 16px; font-weight: 700; text-align: center; cursor: pointer; transition: 0.2s; border: 1px solid #e2e8f0; width: 100%; }
+        .custom-input { width: 100%; padding: 12px 16px; border: none; border-radius: 16px; font-size: 15px; outline: none; transition: 0.2s; background: #f1f5f9; font-weight: 500; }
+        .custom-input:focus { background: white; box-shadow: 0 0 0 3px rgba(6, 199, 85, 0.1); }
+        .textarea-block { width: 100%; padding: 12px 16px; border: none; border-radius: 16px; font-size: 15px; outline: none; resize: none; background: #f1f5f9; font-weight: 500; min-height: 80px; }
         .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1.5rem); }
         .nav-btn { @apply flex flex-col items-center justify-center transition-all flex-1 text-slate-400 h-full; min-width: 48px;}
         .nav-btn .icon-box { @apply px-4 py-1.5 rounded-2xl transition-all flex items-center justify-center mb-0.5; }
@@ -43,79 +35,92 @@
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400; vertical-align: middle; }
     </style>
 </head>
-<body class="bg-slate-100">
+<body class="bg-slate-50">
 
 <div id="toast" class="toast-message"></div>
 
 <div class="max-w-md mx-auto bg-white min-h-screen relative shadow-2xl overflow-hidden flex flex-col">
     
-    <div class="fixed top-0 left-0 right-0 max-w-md mx-auto bg-white/90 backdrop-blur-md z-30 px-5 py-3 flex justify-between items-center border-b border-slate-200">
+    <!-- Top Nav -->
+    <div class="fixed top-0 left-0 right-0 max-w-md mx-auto bg-white/90 backdrop-blur-md z-30 px-5 py-3.5 flex justify-between items-center border-b border-slate-100 shadow-sm">
         <div class="flex items-center gap-2">
-            <span class="material-symbols-outlined text-primary text-2xl">contact_mail</span>
-            <span class="font-extrabold text-slate-800 text-lg">名片管理</span>
+            <span class="material-symbols-outlined text-[#06C755] text-2xl" style="font-variation-settings: 'FILL' 1;">contact_mail</span>
+            <span class="font-extrabold text-slate-800 text-lg tracking-tight">名片通訊錄</span>
         </div>
         <div id="userArea" class="flex items-center gap-2">
-            <img id="userAvatar" class="w-8 h-8 rounded-full object-cover border border-slate-200 hidden">
-            <button id="roleSwitchBtn" onclick="window.location.href='index.html'" class="hidden w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center active:scale-95 transition">🔄</button>
+            <div id="user-profile-badge" class="hidden flex items-center gap-2">
+                <img id="userAvatar" src="" class="w-9 h-9 rounded-full object-cover border border-slate-100">
+            </div>
+            <button id="roleSwitchBtn" onclick="window.location.href='index.html'" class="hidden w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center active:scale-95 transition">
+                <span class="material-symbols-outlined text-[20px] text-slate-600">swap_horiz</span>
+            </button>
         </div>
     </div>
 
-    <div class="flex-1 overflow-y-auto pt-16 pb-28 px-4">
+    <!-- Main Content Area -->
+    <div class="flex-1 overflow-y-auto pt-20 pb-28 px-4 space-y-6">
         
-        <div id="loadingView" class="flex flex-col items-center justify-center py-20">
+        <!-- Loading -->
+        <div id="loadingView" class="h-full flex flex-col items-center justify-center py-20 space-y-4">
             <div class="loading-spinner"></div>
-            <p id="loading-text" class="text-slate-500 text-sm mt-2">載入中...</p>
+            <p id="loading-text" class="text-slate-500 font-bold tracking-widest text-[13px]">通訊錄同步中...</p>
         </div>
 
-        <div id="listView" class="hidden">
-            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 text-center mb-6">
-                <div class="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <span class="material-symbols-outlined text-blue-600">document_scanner</span>
+        <!-- List View -->
+        <div id="listView" class="hidden space-y-6">
+            <div class="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 text-center">
+                <div class="w-14 h-14 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="material-symbols-outlined text-[#06C755] text-3xl">document_scanner</span>
                 </div>
-                <h3 class="font-bold text-slate-800">AI 智慧名片辨識</h3>
-                <p class="text-xs text-slate-500 mt-1 mb-4">拍照或上傳名片，自動擷取資訊</p>
+                <h3 class="text-lg font-black text-slate-800">AI 智慧名片辨識</h3>
+                <p class="text-xs text-slate-400 mt-1 mb-6 font-medium">拍照或上傳，AI 自動分析並建立命理標籤</p>
                 <div class="flex gap-3">
-                    <button onclick="window.openCamera()" class="flex-1 btn-primary text-sm py-3">📷 拍照</button>
-                    <button onclick="window.openGallery()" class="flex-1 btn-secondary text-sm py-3">🖼️ 相簿</button>
+                    <button onclick="window.openCamera()" class="flex-1 btn-primary text-sm py-4 shadow-lg shadow-green-500/20">📷 拍照辨識</button>
+                    <button onclick="window.openGallery()" class="flex-1 btn-secondary text-sm py-4 bg-slate-50 border-none text-slate-600">🖼️ 手機相簿</button>
                 </div>
                 <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" onchange="window.handleCameraInput(event)">
                 <input type="file" id="galleryInput" accept="image/*" class="hidden" onchange="window.handleGalleryInput(event)">
-                <button onclick="window.batchRegenerateECards()" id="btn-batch-regenerate" class="text-xs text-slate-400 mt-4 flex items-center justify-center gap-1 mx-auto hover:text-blue-600 transition">🔄 批次更新名片按鈕</button>
+                <button onclick="window.batchRegenerateECards()" id="btn-batch-regenerate" class="text-[11px] text-slate-400 mt-5 flex items-center justify-center gap-1 mx-auto hover:text-blue-600 transition font-bold uppercase tracking-wider">🔄 Sync All E-Cards</button>
             </div>
 
-            <div class="flex gap-2 mb-4">
+            <div class="flex gap-2">
                 <div class="relative flex-1">
-                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
-                    <input type="text" id="searchInput" oninput="window.filterCardList()" placeholder="搜尋姓名或公司..." class="custom-input pl-10">
+                    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+                    <input type="text" id="searchInput" oninput="window.filterCardList()" placeholder="搜尋姓名或公司..." class="custom-input !pl-12 !h-[50px] shadow-sm">
                 </div>
-                <button id="btn-refresh-cards" onclick="window.reloadCardContacts()" class="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center text-slate-500 active:scale-95 border border-slate-100"><span class="material-symbols-outlined">refresh</span></button>
+                <button id="btn-refresh-cards" onclick="window.reloadCardContacts()" class="w-[50px] h-[50px] bg-white rounded-2xl shadow-sm flex items-center justify-center text-slate-500 active:scale-95 border border-slate-100 transition-all">
+                    <span class="material-symbols-outlined">refresh</span>
+                </button>
             </div>
 
             <div id="admin-card-list-container" class="space-y-3"></div>
         </div>
 
-        <div id="processView" class="hidden">
-            <button onclick="window.resetUI()" class="flex items-center gap-1 text-slate-600 mb-4 text-sm">← 返回</button>
-            <div id="section-loading" class="hidden text-center py-20">
+        <!-- Process View (OCR Form) -->
+        <div id="processView" class="hidden animate-in fade-in">
+            <button onclick="window.resetUI()" class="flex items-center gap-1.5 text-slate-500 mb-6 text-sm font-bold active:opacity-60">
+                <span class="material-symbols-outlined text-[18px]">arrow_back</span> 返回清單
+            </button>
+            <div id="section-loading" class="hidden text-center py-20 space-y-4">
                 <div class="loading-spinner"></div>
-                <p class="text-slate-500 font-bold">AI 正在辨識名片...</p>
+                <p class="text-[#06C755] font-black tracking-widest">AI 正在解析名片資訊...</p>
             </div>
-            <div id="section-form" class="bg-white rounded-2xl p-5 shadow-sm hidden">
-                <img id="process-preview-image" class="w-full rounded-xl mb-4 max-h-48 object-contain bg-slate-50">
-                <div class="space-y-3">
+            <div id="section-form" class="bg-white rounded-[2.5rem] p-6 shadow-sm hidden space-y-4 border border-slate-100">
+                <img id="process-preview-image" class="w-full rounded-2xl mb-4 max-h-52 object-contain bg-slate-50 border border-slate-100 shadow-inner">
+                <div class="space-y-4">
                     <input type="text" id="f-Name" placeholder="姓名" class="custom-input">
                     <input type="text" id="f-CompanyName" placeholder="公司名稱" class="custom-input">
                     <input type="tel" id="f-Mobile" placeholder="手機號碼" class="custom-input">
                     <input type="text" id="f-Title" placeholder="職稱" class="custom-input">
-                    <textarea id="f-Slogan" rows="2" placeholder="品牌標語 / 服務項目" class="textarea-block"></textarea>
-                    <textarea id="f-Notes" rows="2" placeholder="內部備註 (管理員可見)" class="textarea-block"></textarea>
-                    <button onclick="window.saveToCloud()" id="btn-save" class="btn-primary">💾 存入雲端</button>
+                    <textarea id="f-Slogan" placeholder="品牌標語 / 服務項目" class="textarea-block min-h-[80px]"></textarea>
+                    <textarea id="f-Notes" placeholder="內部備註 (管理員可見)" class="textarea-block"></textarea>
+                    <button onclick="window.saveToCloud()" id="btn-save" class="btn-primary mt-4 py-5 shadow-lg shadow-green-500/20">💾 存入雲端通訊錄</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 底部導航 (加高版) -->
+    <!-- Bottom Nav (76px Native) -->
     <nav id="bottom-nav-admin" class="hidden fixed bottom-0 w-full max-w-md bg-white/95 backdrop-blur-xl flex justify-evenly items-center px-1 py-2 z-40 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.03)] left-1/2 -translate-x-1/2 h-[76px] rounded-t-3xl border-t border-slate-100">
         <button onclick="window.location.href='index.html?view=admin-activities'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">fact_check</span></div><span class="text-[10px] mt-1 font-bold whitespace-nowrap">核銷</span></button>
         <button onclick="window.location.href='active.html'" class="nav-btn"><div class="icon-box"><span class="material-symbols-outlined text-[24px]">add_circle</span></div><span class="text-[10px] mt-1 font-bold whitespace-nowrap">建立</span></button>
@@ -133,169 +138,204 @@
     </nav>
 </div>
 
-<!-- ======================== 名片詳情 Modal (恢復版型選擇入口) ======================== -->
-<div id="readonly-card-modal" class="hidden fixed inset-0 bg-white z-50 max-w-md mx-auto flex flex-col overflow-hidden shadow-2xl">
+<!-- ======================== 名片詳情 Modal (恢復正常內容入口) ======================== -->
+<div id="readonly-card-modal" class="hidden fixed inset-0 bg-slate-50/95 backdrop-blur-md z-50 max-w-md mx-auto flex flex-col overflow-hidden animate-in slide-in-from-bottom-full duration-300">
     <div class="absolute top-4 right-4 flex gap-2 z-10">
-        <button onclick="window.openCardEdit()" class="w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow-md">✏️</button>
-        <button onclick="window.closeReadOnlyCard()" class="w-10 h-10 bg-black/50 rounded-full flex items-center justify-center text-white">✕</button>
+        <button onclick="window.openCardEdit()" class="w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow-md active:scale-90 transition-all text-slate-600"><span class="material-symbols-outlined text-[20px]">edit</span></button>
+        <button onclick="window.closeReadOnlyCard()" class="w-10 h-10 bg-black/40 backdrop-blur rounded-full flex items-center justify-center text-white active:scale-90 transition-all"><span class="material-symbols-outlined text-[20px]">close</span></button>
     </div>
-    <div class="flex-1 overflow-auto pb-24">
-        <div class="w-full aspect-[4/3] bg-slate-100 relative">
+    <div class="flex-1 overflow-auto pb-28">
+        <div class="w-full aspect-[4/3] bg-slate-100 relative overflow-hidden">
             <img id="ro-image" class="w-full h-full object-cover">
-            <div id="ro-no-image" class="absolute inset-0 flex items-center justify-center text-slate-300">📷 無名片圖檔</div>
+            <div id="ro-no-image" class="absolute inset-0 flex items-center justify-center text-slate-300 bg-slate-100 hidden"><span class="material-symbols-outlined text-6xl">contact_mail</span></div>
         </div>
-        <div class="p-5">
-            <h2 id="ro-name" class="text-2xl font-extrabold"></h2>
-            <p id="ro-title" class="text-slate-500 text-sm mt-1"></p>
-            <div class="mt-4 space-y-3 border-y py-3">
-                <div class="flex gap-3"><span class="material-symbols-outlined text-slate-400">business</span><span id="ro-company"></span></div>
-                <div class="flex gap-3"><span class="material-symbols-outlined text-slate-400">smartphone</span><a id="ro-mobile-link" class="text-blue-600 font-bold"></a></div>
-                <div class="flex gap-3"><span class="material-symbols-outlined text-slate-400">email</span><a id="ro-email-link" class="text-blue-600"></a></div>
+        <div class="p-6 -mt-6 bg-white rounded-t-[2.5rem] relative z-10 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] space-y-6">
+            <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                    <h2 id="ro-name" class="text-[26px] font-black text-slate-800 tracking-tight"></h2>
+                    <span id="ro-claim-status" class="hidden"></span>
+                </div>
+                <p id="ro-title" class="text-slate-500 font-bold text-sm tracking-wide"></p>
             </div>
-            <div id="ro-notes" class="mt-4 text-slate-600 text-[13px] whitespace-pre-wrap bg-slate-50 p-4 rounded-xl"></div>
+            
+            <div class="space-y-4 border-y border-slate-100 py-6">
+                <div class="flex gap-4 items-center"><span class="w-10 h-10 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[20px]">business</span></span><span id="ro-company" class="font-bold text-slate-700"></span></div>
+                <div class="flex gap-4 items-center"><span class="w-10 h-10 rounded-xl bg-green-50 text-[#06C755] flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[20px]">smartphone</span></span><a id="ro-mobile-link" class="text-[#06C755] font-black tracking-widest text-[16px]"></a></div>
+                <div class="flex gap-4 items-center"><span class="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[20px]">email</span></span><a id="ro-email-link" class="text-blue-500 font-bold text-sm"></a></div>
+            </div>
+            
+            <div class="space-y-3">
+                <h4 class="text-[13px] font-black text-slate-400 uppercase tracking-widest">關於我 / 備註</h4>
+                <div id="ro-notes" class="text-slate-600 text-[14px] whitespace-pre-wrap leading-relaxed bg-slate-50 p-5 rounded-[1.5rem] border border-slate-100 font-medium"></div>
+            </div>
         </div>
     </div>
-    <div class="absolute bottom-0 w-full bg-white p-4 border-t flex gap-3 pb-safe">
-        <button onclick="window.shareClaimLink()" id="btn-share-claim" class="flex-1 btn-secondary py-3 text-sm hidden">邀請認領</button>
-        <button onclick="window.openECardGenerator()" class="flex-1 btn-primary py-3 text-sm bg-green-500">✨ 產生數位名片</button>
+    <div class="absolute bottom-0 w-full bg-white/90 backdrop-blur-xl p-4 border-t border-slate-100 flex gap-3 pb-safe shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
+        <button onclick="window.shareClaimLink()" id="btn-share-claim" class="flex-1 btn-secondary py-4 text-[15px] font-bold border-none bg-slate-100 hidden">邀請認領</button>
+        <button onclick="window.openECardGenerator()" class="flex-1 btn-primary py-4 text-[15px] font-bold shadow-lg shadow-green-500/20">✨ 進入版型編輯器</button>
     </div>
 </div>
 
 <!-- ======================== 名片編輯 Modal ======================== -->
-<div id="card-edit-modal" class="hidden fixed inset-0 bg-slate-50 z-50 max-w-md mx-auto flex flex-col overflow-hidden">
-    <div class="bg-white px-5 py-4 flex justify-between items-center border-b shrink-0">
-        <h3 class="font-bold text-lg text-slate-800">編輯資料</h3>
-        <button onclick="window.closeCardEdit()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">✕</button>
+<div id="card-edit-modal" class="hidden fixed inset-0 bg-slate-50 z-[60] max-w-md mx-auto flex flex-col overflow-hidden animate-in fade-in">
+    <div class="bg-white px-5 py-4 flex justify-between items-center border-b border-slate-100 shrink-0 shadow-sm">
+        <h3 class="font-black text-lg text-slate-800 tracking-tight">編輯名片資料</h3>
+        <button onclick="window.closeCardEdit()" class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-90 transition-all"><span class="material-symbols-outlined">close</span></button>
     </div>
-    <div class="flex-1 overflow-auto p-5 space-y-4 pb-28">
-        <input type="text" id="edit-c-Name" placeholder="姓名" class="custom-input">
-        <input type="text" id="edit-c-CompanyName" placeholder="公司名稱" class="custom-input">
-        <input type="tel" id="edit-c-Mobile" placeholder="手機號碼" class="custom-input">
-        <input type="text" id="edit-c-Title" placeholder="職稱" class="custom-input">
-        <textarea id="edit-c-Slogan" rows="2" placeholder="品牌標語" class="textarea-block"></textarea>
-        <textarea id="edit-c-Notes" rows="2" placeholder="內部備註" class="textarea-block"></textarea>
+    <div class="flex-1 overflow-auto p-6 space-y-5 pb-32">
+        <div class="space-y-1.5"><label class="text-[12px] font-bold text-slate-400 ml-1 uppercase">姓名</label><input type="text" id="edit-c-Name" class="custom-input shadow-sm"></div>
+        <div class="space-y-1.5"><label class="text-[12px] font-bold text-slate-400 ml-1 uppercase">公司名稱</label><input type="text" id="edit-c-CompanyName" class="custom-input shadow-sm"></div>
+        <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-1.5"><label class="text-[12px] font-bold text-slate-400 ml-1 uppercase">職稱</label><input type="text" id="edit-c-Title" class="custom-input shadow-sm"></div>
+            <div class="space-y-1.5"><label class="text-[12px] font-bold text-slate-400 ml-1 uppercase">手機</label><input type="tel" id="edit-c-Mobile" class="custom-input shadow-sm"></div>
+        </div>
+        <div class="space-y-1.5"><label class="text-[12px] font-bold text-slate-400 ml-1 uppercase">品牌標語 / 服務項目</label><textarea id="edit-c-Slogan" class="textarea-block shadow-sm h-24"></textarea></div>
+        <div class="space-y-1.5"><label class="text-[12px] font-bold text-slate-400 ml-1 uppercase">內部備註</label><textarea id="edit-c-Notes" class="textarea-block shadow-sm h-24"></textarea></div>
     </div>
-    <div class="absolute bottom-0 w-full bg-white p-4 border-t pb-safe">
-        <button onclick="window.submitCardEdit()" id="btn-save-card-edit" class="btn-primary">儲存變更</button>
+    <div class="absolute bottom-0 w-full bg-white p-5 border-t border-slate-100 pb-safe shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
+        <button onclick="window.submitCardEdit()" id="btn-save-card-edit" class="btn-primary py-4 shadow-lg shadow-green-500/20">儲存變更並重新分析</button>
     </div>
 </div>
 
-<!-- ======================== 數位名片編輯器 Modal ======================== -->
-<div id="ecard-generator-modal" class="hidden fixed inset-0 bg-white z-50 max-w-md mx-auto flex flex-col overflow-hidden">
-    <div class="bg-white px-5 py-4 border-b flex justify-between items-center sticky top-0 z-20 shadow-sm shrink-0">
+<!-- ======================== 數位名片編輯器 Modal (三大版型完全體) ======================== -->
+<div id="ecard-generator-modal" class="hidden fixed inset-0 bg-white z-[70] max-w-md mx-auto flex flex-col overflow-hidden animate-in slide-in-from-right-full duration-300">
+    <div class="bg-white px-5 py-4 border-b border-slate-100 flex justify-between items-center sticky top-0 z-20 shadow-sm shrink-0">
         <div class="flex items-center gap-3">
-            <button onclick="window.closeECardGenerator()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">←</button>
-            <span class="font-bold text-slate-800">數位名片編輯器</span>
+            <button onclick="window.closeECardGenerator()" class="w-9 h-9 rounded-full bg-slate-50 flex items-center justify-center active:scale-90 transition-all">
+                <span class="material-symbols-outlined text-slate-600">arrow_back</span>
+            </button>
+            <span class="font-black text-slate-800 tracking-tight text-lg">數位名片編輯器</span>
         </div>
-        <button onclick="window.saveECardConfig()" id="btn-save-ecard" class="text-sm bg-blue-50 text-blue-600 px-4 py-2 rounded-full font-bold shadow-sm active:scale-95 transition-all">儲存草稿</button>
+        <button onclick="window.saveECardConfig()" id="btn-save-ecard" class="text-sm bg-blue-50 text-blue-600 px-5 py-2.5 rounded-full font-black shadow-sm active:scale-95 transition-all">儲存草稿</button>
     </div>
 
-    <div class="flex-1 overflow-auto p-5 pb-32 bg-white">
+    <div class="flex-1 overflow-auto p-5 pb-32 bg-white space-y-6">
         
-        <!-- 手機實時預覽器 -->
-        <div class="lg:hidden flex flex-col items-center mb-8 pb-6 border-b border-slate-100">
-            <div class="flex items-center gap-1.5 mb-3">
-                <span class="material-symbols-outlined text-slate-400 text-[18px]">preview</span>
-                <span class="text-[13px] font-bold text-slate-500 tracking-widest">實時手機預覽</span>
+        <!-- 手機實時預覽 -->
+        <div class="lg:hidden flex flex-col items-center mb-8 pb-6 border-b border-slate-50">
+            <div class="flex items-center gap-1.5 mb-3 text-slate-400">
+                <span class="material-symbols-outlined text-[18px]">preview</span>
+                <span class="text-[12px] font-black uppercase tracking-widest">實時手機預覽</span>
             </div>
-            <div class="w-[280px] border-[6px] border-slate-800 rounded-[2.5rem] overflow-hidden shadow-2xl bg-white relative">
-                <div class="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-5 bg-slate-800 rounded-b-xl z-30"></div>
-                <div id="mobilePreviewContainer" class="min-h-[380px] w-full relative z-10 bg-slate-50 pt-3"></div>
+            <div class="w-[280px] border-[8px] border-slate-900 rounded-[2.5rem] overflow-hidden shadow-2xl bg-white relative">
+                <div class="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-5 bg-slate-900 rounded-b-2xl z-30"></div>
+                <div id="mobilePreviewContainer" class="min-h-[400px] w-full relative z-10 bg-slate-50"></div>
             </div>
         </div>
 
-        <!-- ⭐ 衝突點：頁籤呼叫名稱 switchTab (HTML) vs toggleECardType (JS) -->
-        <div class="flex bg-slate-100 p-1 rounded-xl mb-6">
-            <button onclick="window.switchTab('image')" data-type="image" class="tab-btn flex-1 py-2 text-sm font-bold rounded-lg card-editor-tab active">🖼️ 靜態圖片</button>
-            <button onclick="window.switchTab('video')" data-type="video" class="tab-btn flex-1 py-2 text-sm font-bold rounded-lg card-editor-tab">🎬 動態影片</button>
-            <button onclick="window.switchTab('v2')" data-type="v2" class="tab-btn flex-1 py-2 text-sm font-bold rounded-lg card-editor-tab">✨ 質感多連結</button>
+        <input type="hidden" id="ec-card-type" value="image">
+        
+        <!-- ⭐ 三大頁籤切換器 -->
+        <div class="flex p-1.5 rounded-2xl bg-slate-100 border border-slate-200/50 mb-6">
+            <button id="ec-tab-image" onclick="window.toggleECardType('image')" class="flex-1 py-3 text-[13px] font-black rounded-xl bg-white text-blue-600 shadow-sm transition-all flex items-center justify-center gap-1.5"><span class="material-symbols-outlined text-[18px]">image</span> 圖片</button>
+            <button id="ec-tab-video" onclick="window.toggleECardType('video')" class="flex-1 py-3 text-[13px] font-black rounded-xl text-slate-500 bg-transparent transition-all flex items-center justify-center gap-1.5"><span class="material-symbols-outlined text-[18px]">play_circle</span> 影片</button>
+            <button id="ec-tab-v2" onclick="window.toggleECardType('v2')" class="flex-1 py-3 text-[13px] font-black rounded-xl text-slate-500 bg-transparent transition-all flex items-center justify-center gap-1.5"><span class="material-symbols-outlined text-[18px]">auto_awesome</span> 多連結</button>
         </div>
 
         <div class="space-y-5">
-            <div>
-                <label class="input-label">主標題 / 姓名</label>
-                <input type="text" id="ec-title-input" class="custom-input" placeholder="例如：王小明 / 某某科技" oninput="window.updateECardPreview()">
+            <div class="space-y-1.5">
+                <label class="text-[12px] font-black text-slate-400 ml-1 uppercase tracking-widest">名片主標題</label>
+                <input type="text" id="ec-title-input" class="custom-input shadow-sm" placeholder="例如：台慶房屋 - 蔡志宜" oninput="window.updateECardPreview()">
             </div>
-            <div>
-                <label class="input-label">內容描述</label>
-                <textarea id="ec-desc-input" rows="3" class="textarea-block" placeholder="品牌介紹、服務項目..." oninput="window.updateECardPreview()"></textarea>
+            <div class="space-y-1.5">
+                <label class="text-[12px] font-black text-slate-400 ml-1 uppercase tracking-widest">內容描述</label>
+                <textarea id="ec-desc-input" rows="3" class="textarea-block shadow-sm h-32" placeholder="輸入個人簡介、品牌優勢..." oninput="window.updateECardPreview()"></textarea>
             </div>
         </div>
 
-        <div id="ec-v1-fields" class="space-y-5 mt-5">
-            <div id="ec-video-input-group" class="hidden">
-                <label class="input-label">影片網址 (MP4)</label>
-                <input type="url" id="ec-video-url" class="custom-input" placeholder="https://..." oninput="window.updateECardPreview()">
+        <!-- V1 區塊 (圖片/影片) -->
+        <div id="ec-v1-fields" class="space-y-6 mt-6">
+            <div id="ec-video-input-group" class="hidden animate-in slide-in-from-top-2">
+                <label class="text-[12px] font-black text-blue-600 ml-1 uppercase tracking-widest">影片連結 (MP4)</label>
+                <div class="flex gap-2">
+                    <input type="url" id="ec-video-url" class="custom-input !h-[44px] shadow-sm flex-1" placeholder="https://..." oninput="window.updateECardPreview()">
+                    <button onclick="window.openVoomModal()" class="w-[44px] h-[44px] bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center active:scale-90 transition-all"><span class="material-symbols-outlined">movie_edit</span></button>
+                </div>
             </div>
-            <div>
-                <label class="input-label">封面圖片</label>
-                <div onclick="document.getElementById('ec-file-input').click()" class="relative drag-area w-full h-36 bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer overflow-hidden">
+            <div class="space-y-2">
+                <label class="text-[12px] font-black text-slate-400 ml-1 uppercase tracking-widest">封面圖片</label>
+                <div onclick="document.getElementById('ec-file-input').click()" class="relative drag-area w-full h-40 bg-slate-50 rounded-[1.5rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-all hover:bg-slate-100">
                     <img id="ec-img-preview-box" src="" class="absolute inset-0 w-full h-full object-cover hidden z-10">
-                    <div id="ec-upload-placeholder" class="flex flex-col items-center z-0">
-                        <span class="material-symbols-outlined text-3xl text-slate-400">add_photo_alternate</span>
-                        <p class="text-xs text-slate-400 mt-1">點擊上傳或貼網址</p>
+                    <div id="ec-upload-placeholder" class="flex flex-col items-center z-0 text-slate-400">
+                        <span class="material-symbols-outlined text-4xl mb-1">add_photo_alternate</span>
+                        <p class="text-[11px] font-black tracking-widest">點擊上傳裁切</p>
                     </div>
                 </div>
-                <input type="text" id="ec-img-input" class="custom-input mt-2" placeholder="或貼上圖片網址 https://..." oninput="window.updateECardPreview()">
-                <input type="file" id="ec-file-input" accept="image/*" class="hidden" onchange="window.handleECardImageUpload(this, 'ecard')">
+                <input type="text" id="ec-img-input" class="custom-input !h-[44px] mt-2 shadow-sm text-xs font-mono" placeholder="或貼上圖片網址" oninput="window.updateECardPreview()">
+                <input type="file" id="ec-file-input" accept="image/*" class="hidden" onchange="window.openCropper(this, 'ecard')">
             </div>
-            <div id="ec-btn-list" class="space-y-3"></div>
+            <div class="space-y-3 pt-4 border-t border-slate-50">
+                <label class="text-[12px] font-black text-slate-400 ml-1 uppercase tracking-widest">聯絡按鈕配置 (最多4個)</label>
+                <div id="ec-btn-list" class="space-y-3"></div>
+            </div>
         </div>
 
-        <div id="ec-v2-fields" class="hidden space-y-5 mt-5">
-            <div>
-                <label class="input-label">LOGO / 大頭貼</label>
-                <div class="flex gap-3 items-center">
-                    <div onclick="document.getElementById('ec-v2-logo-file').click()" class="w-20 h-20 bg-slate-100 rounded-full flex flex-col items-center justify-center cursor-pointer overflow-hidden border relative shrink-0">
+        <!-- V2 區塊 (質感多連結) -->
+        <div id="ec-v2-fields" class="hidden space-y-6 mt-6">
+            <div class="space-y-2">
+                <label class="text-[12px] font-black text-slate-400 ml-1 uppercase tracking-widest">LOGO / 大頭貼</label>
+                <div class="flex gap-4 items-center">
+                    <div onclick="document.getElementById('ec-v2-logo-file').click()" class="w-20 h-20 bg-slate-50 rounded-full flex flex-col items-center justify-center border-2 border-dashed border-slate-200 relative shrink-0 overflow-hidden shadow-inner">
                         <img id="ec-v2-logo-preview" src="" class="absolute inset-0 w-full h-full object-cover hidden z-10">
-                        <span id="ec-v2-logo-placeholder" class="material-symbols-outlined text-slate-400 z-0">add_a_photo</span>
+                        <span id="ec-v2-logo-placeholder" class="material-symbols-outlined text-slate-300">add_a_photo</span>
                     </div>
-                    <input type="text" id="ec-v2-logo-url" class="custom-input flex-1" placeholder="圖片網址" oninput="window.updateECardPreview()">
-                    <input type="file" id="ec-v2-logo-file" accept="image/*" class="hidden" onchange="window.handleECardImageUpload(this, 'v2logo')">
+                    <input type="text" id="ec-v2-logo-url" class="custom-input !h-[44px] flex-1 shadow-sm text-xs" placeholder="圖片網址" oninput="window.updateECardPreview()">
+                    <input type="file" id="ec-v2-logo-file" accept="image/*" class="hidden" onchange="window.openCropper(this, 'v2logo')">
                 </div>
             </div>
-            <div class="grid grid-cols-2 gap-3">
-                <div><label class="input-label">漸層起色</label><input type="color" id="ec-v2-bg-start" value="#57142b" class="w-full h-10 rounded-lg border cursor-pointer p-0" oninput="window.updateECardPreview()"></div>
-                <div><label class="input-label">漸層迄色</label><input type="color" id="ec-v2-bg-end" value="#46250c" class="w-full h-10 rounded-lg border cursor-pointer p-0" oninput="window.updateECardPreview()"></div>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1.5"><label class="text-[11px] font-black text-slate-400 ml-1">漸層起點</label><input type="color" id="ec-v2-bg-start" value="#57142b" class="w-full h-12 rounded-xl cursor-pointer border-none bg-slate-100 p-1 shadow-sm" oninput="window.updateECardPreview()"></div>
+                <div class="space-y-1.5"><label class="text-[11px] font-black text-slate-400 ml-1">漸層迄點</label><input type="color" id="ec-v2-bg-end" value="#46250c" class="w-full h-12 rounded-xl cursor-pointer border-none bg-slate-100 p-1 shadow-sm" oninput="window.updateECardPreview()"></div>
             </div>
-            <div>
-                <label class="input-label flex justify-between">社群圖示 <button onclick="window.addV2Social()" class="text-xs bg-slate-800 text-white px-3 py-1 rounded-full">+ 新增</button></label>
-                <div id="ec-v2-social-list" class="space-y-2 mt-2"></div>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center mb-2"><label class="text-[12px] font-black text-slate-400 ml-1 uppercase tracking-widest">社群圖示</label><button onclick="window.addV2Social()" class="px-4 py-1.5 bg-slate-800 text-white rounded-full text-[11px] font-black active:scale-90 transition-all">+ 新增</button></div>
+                <div id="ec-v2-social-list" class="space-y-2"></div>
             </div>
-            <div>
-                <label class="input-label flex justify-between">導購按鈕 <button onclick="window.addV2Bar()" class="text-xs bg-green-600 text-white px-3 py-1 rounded-full">+ 新增</button></label>
-                <div id="ec-v2-bars-list" class="space-y-2 mt-2"></div>
+            <div class="space-y-4 pt-4 border-t border-slate-50">
+                <div class="flex justify-between items-center mb-2"><label class="text-[12px] font-black text-slate-400 ml-1 uppercase tracking-widest">導購按鈕</label><button onclick="window.addV2Bar()" class="px-4 py-1.5 bg-[#06C755] text-white rounded-full text-[11px] font-black active:scale-90 transition-all">+ 新增</button></div>
+                <div id="ec-v2-bars-list" class="space-y-3"></div>
             </div>
         </div>
 
-        <div class="mt-6 pt-4 border-t">
-            <input type="text" id="ec-alt-text-input" class="custom-input mb-4" placeholder="這是我的數位名片">
-            <button onclick="window.shareECardToLine()" id="btn-share-line" class="btn-primary bg-[#06C755] py-4">🚀 發送至 LINE</button>
+        <div class="mt-8 pt-6 border-t border-slate-100 space-y-4">
+            <div class="space-y-1.5"><label class="text-[12px] font-black text-[#06C755] ml-1 uppercase tracking-widest">LINE 聊天室預覽文字</label><input type="text" id="ec-alt-text-input" class="custom-input !h-[44px] shadow-sm" placeholder="這是我的數位名片"></div>
+            <button onclick="window.shareECardToLine()" id="btn-share-line" class="btn-primary py-5 bg-[#06C755] shadow-lg shadow-green-500/30 text-[17px] tracking-widest flex items-center justify-center gap-2">🚀 發送名片至 LINE 聊天室</button>
         </div>
     </div>
-
+    
     <div class="hidden lg:block absolute right-0 top-0 bottom-0 w-1/2 bg-slate-100 p-4 border-l">
-        <div class="phone-mock max-w-[300px] mx-auto mt-10">
-            <div id="previewContainer" class="bg-white min-h-[500px] relative"></div>
-        </div>
+        <div class="phone-mock max-w-[320px] mx-auto mt-10"><div id="previewContainer" class="bg-white min-h-[550px]"></div></div>
     </div>
 </div>
 
 <!-- 裁切 Modal -->
-<div id="section-image-cropper" class="hidden fixed inset-0 bg-slate-900 flex flex-col animate-in fade-in duration-200 w-full max-w-md mx-auto z-[1080]">
-  <div class="flex justify-between items-center p-4 bg-slate-900 text-white shrink-0 z-10 shadow-sm border-b border-slate-800">
-    <button onclick="window.cancelCrop()" class="px-3 py-2 font-bold text-slate-400 active:scale-90 transition-transform text-[15px]">取消</button>
-    <span class="font-bold text-[16px] tracking-wider text-white flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px]">crop</span> 裁切圖片</span>
-    <button onclick="window.confirmCrop()" class="px-4 py-1.5 font-bold text-white bg-[#06C755] rounded active:scale-95 transition-transform text-[15px] shadow-sm">完成</button>
+<div id="section-image-cropper" class="hidden fixed inset-0 bg-slate-900 flex flex-col z-[1080] animate-in fade-in">
+  <div class="flex justify-between items-center p-5 text-white border-b border-slate-800 bg-slate-900 shadow-xl shrink-0">
+    <button onclick="window.cancelCrop()" class="px-4 py-2 font-black text-slate-400 active:scale-90 transition-all">取消</button>
+    <span class="font-black text-lg tracking-widest flex items-center gap-2"><span class="material-symbols-outlined text-[20px]">crop</span> 調整圖片</span>
+    <button onclick="window.confirmCrop()" class="px-6 py-2 font-black bg-[#06C755] rounded-xl active:scale-95 transition-all shadow-lg shadow-green-500/20">完成裁切</button>
   </div>
   <div class="flex-1 relative bg-black flex items-center justify-center overflow-hidden">
       <img id="cropper-image" class="max-w-full max-h-full block opacity-0 transition-opacity duration-300">
   </div>
 </div>
 
-<!-- 依賴載入區 -->
-<script src="card.js?v=20260419_1530"></script>
-<script src="card-ecard.js?v=20260419_1530"></script>
+<!-- VOOM Modal -->
+<div id="voomModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[1090] flex items-end animate-in fade-in">
+    <div class="bg-white w-full rounded-t-[2.5rem] p-8 shadow-2xl max-w-md mx-auto space-y-6 pb-safe">
+        <div class="flex justify-between items-center"><h4 class="text-xl font-black text-slate-800">LINE VOOM 解析器</h4><button onclick="window.closeVoomModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-400">✕</button></div>
+        <div class="space-y-4">
+            <input type="url" id="voomUrl" class="custom-input !bg-slate-50 border border-slate-100" placeholder="貼上 LINE VOOM 貼文網址">
+            <button onclick="window.fetchVoomData()" id="fetchVoomBtn" class="btn-primary !bg-blue-600 shadow-lg shadow-blue-500/20">開始解析影音網址</button>
+        </div>
+        <div id="voomResult" class="hidden animate-in zoom-in-95">
+            <video id="voomPlayer" controls class="w-full rounded-2xl shadow-lg aspect-[9/16] bg-black"></video>
+            <button onclick="window.applyVoom()" id="applyVoomBtn" class="w-full py-4 mt-4 bg-emerald-500 text-white rounded-2xl font-bold active:scale-95 transition-all shadow-lg shadow-emerald-500/20">✅ 套用此影片與封面</button>
+        </div>
+    </div>
+</div>
 
+<script src="card.js?v=20260419_1810"></script>
+<script src="card-ecard.js?v=20260419_1810"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 /**
  * card-ecard.js
- * Version: v20260419_1530 (QQ 防爆分離版：完美修復切換失效，同步實時預覽與 R2 上傳)
+ * Version: v20260419_1545 (QQ 防爆分離版：完美修復傳輸截斷與 SyntaxError)
  */
 
 const SVG_AVATAR = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxMDAnIGhlaWdodD0nMTAwJyB2aWV3Qm94PScwIDAgMTAwIDEwMCc+PGNpcmNsZSBjeD0nNTAnIGN5PSc1MCcgcj0nNTAnIGZpbGw9JyNlMmU4ZjAnLz48cGF0aCBkPSdNNTAgNTVjLTExIDAtMjAgOS0yMCAyMHY1aDQwdi01YzAtMTEtOS0yMC0yMC0yMHptMC0yNWMtOC4zIDAtMTUgNi43LTE1IDE1czYuNyAxNSAxNSAxNSAxNS02LjcgMTUtMTUtNi43LTE1LTE1LTE1eicgZmlsbD0nIzk0YTNiOCcvPjwvc3ZnPg==";
@@ -336,7 +336,6 @@ window.saveECardConfig = async function(isSilent = false) {
     let logoUrl = getVal('ec-v2-logo-url', '');
 
     try {
-        // ⭐ R2 圖床極速寫入
         if (imgUrl.startsWith('data:image') && imgUrl !== SVG_COVER && imgUrl !== SVG_AVATAR) {
             imgUrl = await window.fetchAPI('uploadImage', { base64Image: imgUrl });
             document.getElementById('ec-img-input').value = imgUrl;
@@ -468,7 +467,7 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
   
     let heroBlock;
     if (cardType === 'video' && config?.videoUrl && config.videoUrl.match(/^https:\/\//i)) {
-        heroBlock = { "type": "video", "url": config.videoUrl, "previewUrl": imgUrl, "altContent": { "type": "image", "size": "full", "aspectRatio": dynamicAr || "20:13", "aspectMode": "cover", "url": imgUrl }, "aspectRatio": dynamicAr || "20:13" };
+        heroBlock = { "type": "video", "url": config.videoUrl, "previewUrl": imgUrl, "altContent": { "type": "image", "size": "full", "aspectRatio": dynamicAr || "20:13", "aspectMode": "cover", "url": imgUrl }, "aspectRatio": "20:13" };
     } else {
         heroBlock = { "type": "image", "url": imgUrl, "size": "full", "aspectRatio": dynamicAr || "20:13", "aspectMode": "cover", "action": { "type": "uri", "label": "cover", "uri": safeImgActionUrl.substring(0, 1000) } };
     }
@@ -510,7 +509,7 @@ window.shareECardToLine = async function() {
               if (typeof window.triggerFlexSharing === 'function') await window.triggerFlexSharing(flexMessageObj, altText);
               else await liff.shareTargetPicker([{ type: "flex", altText: altText, contents: flexMessageObj }]);
               window.showToast('✅ 數位名片已發送！');
-              setTimeout(()=>liff.closeWindow(), 1000);
+              setTimeout(()=> liff.closeWindow(), 1000);
           } catch(e) { window.fallbackShare(shareUrl, altText); }
       } else {
           window.fallbackShare(shareUrl, altText);
@@ -539,4 +538,38 @@ window.fetchVoomData = async function() {
         if (data && data.video && data.video.videoUrl) {
             document.getElementById('voomPlayer').src = data.video.videoUrl;
             document.getElementById('applyVoomBtn').dataset.videoUrl = data.video.videoUrl;
-            document.getElementById('applyVoomBtn').dataset.thumb
+            document.getElementById('applyVoomBtn').dataset.thumbUrl = data.video.thumbnailUrl || '';
+            document.getElementById('voomResult').classList.remove('hidden');
+            window.showToast('✅ 影片解析成功');
+        } else {
+            throw new Error("無法取得影片網址");
+        }
+    } catch(e) {
+        window.showToast("解析失敗：" + e.message, true);
+    } finally {
+        if (btn) {
+            btn.innerText = oriTxt;
+            btn.classList.remove('opacity-50', 'pointer-events-none');
+        }
+    }
+}
+
+window.applyVoom = function() {
+    const vBtn = document.getElementById('applyVoomBtn');
+    if (!vBtn) return;
+    const videoUrl = vBtn.dataset.videoUrl;
+    const thumbUrl = vBtn.dataset.thumbUrl;
+    
+    if (videoUrl) {
+        const vidInput = document.getElementById('ec-video-url');
+        if (vidInput) vidInput.value = videoUrl;
+    }
+    if (thumbUrl) {
+        const imgInput = document.getElementById('ec-img-input');
+        if (imgInput) imgInput.value = thumbUrl;
+    }
+    
+    window.closeVoomModal();
+    window.updateECardPreview();
+    window.showToast('✅ 影片已套用至數位名片');
+}

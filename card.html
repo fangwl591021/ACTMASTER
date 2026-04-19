@@ -1,4 +1,4 @@
-<!-- Version: v8.1.8 (QQ 終極防爆版：修復上傳函數綁定遺漏，消除 TypeError 卡死問題) -->
+<!-- Version: v8.1.9 (QQ 終極防爆版：補齊唯讀轉發引擎，推進快取版本號) -->
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -256,7 +256,6 @@
                     </div>
                 </div>
                 <input type="text" id="ec-img-input" class="custom-input mt-2" placeholder="或貼上圖片網址 https://..." oninput="window.updateECardPreview()">
-                <!-- ⭐ QQ 修復：統一使用 window.openCropper 綁定事件 -->
                 <input type="file" id="ec-file-input" accept="image/*" class="hidden" onchange="window.openCropper(this, 'ecard')">
             </div>
             <div>
@@ -278,7 +277,6 @@
                         <span id="ec-v2-logo-placeholder" class="material-symbols-outlined text-slate-400 z-0">add_a_photo</span>
                     </div>
                     <input type="text" id="ec-v2-logo-url" class="custom-input flex-1" placeholder="圖片網址" oninput="window.updateECardPreview()">
-                    <!-- ⭐ QQ 修復：統一使用 window.openCropper 綁定事件 -->
                     <input type="file" id="ec-v2-logo-file" accept="image/*" class="hidden" onchange="window.openCropper(this, 'v2logo')">
                 </div>
             </div>
@@ -327,9 +325,22 @@
   </div>
 </div>
 
-<!-- 依賴載入區：遵守架構分離鐵律 -->
-<script src="card.js?v=20260419_1600"></script>
-<script src="card-ecard.js?v=20260419_1600"></script>
+<div id="voomModal" class="hidden fixed inset-0 bg-black/50 z-[60] flex items-end max-w-md mx-auto">
+    <div class="bg-white w-full rounded-t-2xl p-5 animate-slide-up">
+        <h4 class="font-bold mb-2">LINE VOOM 轉換</h4>
+        <input type="url" id="voomUrl" class="custom-input mb-3" placeholder="貼上 LINE VOOM 網址">
+        <button onclick="window.fetchVoomData()" id="fetchVoomBtn" class="btn-primary py-2 text-sm">解析影片</button>
+        <div id="voomResult" class="hidden mt-3">
+            <video id="voomPlayer" controls class="w-full rounded-lg"></video>
+            <button onclick="window.applyVoom()" id="applyVoomBtn" class="btn-secondary mt-2 text-sm border border-blue-200 text-blue-600">套用此影片</button>
+        </div>
+        <button onclick="window.closeVoomModal()" class="btn-secondary mt-3 text-sm">取消</button>
+    </div>
+</div>
+
+<!-- 依賴載入區：遵守架構分離鐵律並強制破除快取 -->
+<script src="card.js?v=20260419_1630"></script>
+<script src="card-ecard.js?v=20260419_1630"></script>
 
 </body>
 </html>

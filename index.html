@@ -1,4 +1,4 @@
-<!-- Version: v2.6.5 (QQ 終極防掛版：將 onload 替換為 DOMContentLoaded，無視擴充功能干擾，達成秒開載入) -->
+<!-- Version: v2.6.5 (QQ 終極防掛版：純淨無 NFC，DOMContentLoaded 瞬間啟動，拒絕擴充卡死) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -94,6 +94,7 @@
       <p id="loading-text" class="text-slate-500 font-bold tracking-widest text-[13px]">系統載入中</p>
     </div>
 
+    <!-- 註冊畫面 -->
     <div id="view-user-register" class="hidden animate-in fade-in duration-500 pt-2 pb-10 space-y-6">
       <div class="mb-4 pl-1">
         <h1 class="text-[24px] font-extrabold text-slate-800 tracking-tight">建立會員檔案</h1>
@@ -364,6 +365,7 @@
   </div>
 </div>
 
+<!-- QR Code 掃描器 -->
 <div id="qr-scanner-modal" class="hidden fixed inset-0 z-[1070] bg-black flex flex-col animate-in fade-in duration-300 w-full max-w-md mx-auto left-0 right-0">
   <div class="flex justify-between items-center p-5 bg-gradient-to-b from-black/80 to-transparent absolute top-0 w-full z-10">
     <span class="text-white font-bold tracking-widest text-[14px]">掃描 QR Code</span>
@@ -410,11 +412,13 @@
       if (isLoading) {
           if (!btn.dataset.oriText) btn.dataset.oriText = btn.innerHTML;
           btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[20px] align-middle">refresh</span>';
-          btn.classList.add('opacity-50', 'pointer-events-none');
+          btn.disabled = true;
+          btn.classList.add('opacity-50');
           return true;
       } else {
           btn.innerHTML = originalText || btn.dataset.oriText || '送出';
-          btn.classList.remove('opacity-50', 'pointer-events-none');
+          btn.disabled = false;
+          btn.classList.remove('opacity-50');
           return false;
       }
   }
@@ -450,7 +454,6 @@
     }
   }
 
-  // ⭐ QQ 終極防掛修復：捨棄 window.onload，改用 DOMContentLoaded 瞬間啟動！
   document.addEventListener("DOMContentLoaded", async () => {
     const params = new URLSearchParams(window.location.search);
     const shareCardId = params.get('shareCardId');
@@ -503,7 +506,7 @@
     } catch (err) { 
       if(document.getElementById('view-loading')) document.getElementById('view-loading').classList.add('hidden');
       const container = document.getElementById('main-content');
-      if (container) container.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-[2rem] p-6 mx-4 mt-10 text-left shadow-sm"><div class="flex items-center gap-2 mb-4 text-red-700"><span class="material-symbols-outlined text-[32px]">error</span><h3 class="font-bold text-[18px]">載入中斷</h3></div><div class="bg-white p-4 rounded-xl border border-red-100 text-red-600 text-[13px] font-mono break-all mb-4 shadow-sm">${err.message}</div></div>`;
+      if (container) container.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-[2rem] p-6 mx-4 mt-10 text-left shadow-sm"><div class="flex items-center gap-2 mb-4 text-red-700"><span class="material-symbols-outlined text-[32px]">error</span><h3 class="font-bold text-[18px]">系統連線中斷</h3></div><div class="bg-white p-4 rounded-xl border border-red-100 text-red-600 text-[13px] font-mono break-all mb-4 shadow-sm">${err.message}</div></div>`;
     }
   });
 
@@ -769,7 +772,10 @@
   }
 
   window.submitUserRegistrationStep1 = async function() {
-    if (isProcessing) return; isProcessing = true; setButtonLoading('btn-reg-step1', true);
+    const btn = document.getElementById('btn-reg-step1');
+    if (btn && btn.disabled) return;
+    
+    setButtonLoading('btn-reg-step1', true);
     
     const getVal = (id) => document.getElementById(id)?.value.trim() || '';
     const p = { userId: userProfile.userId, name: getVal('reg-name') || userProfile.displayName, gender: getVal('reg-gender'), industry: getVal('reg-industry'), phone: getVal('reg-phone'), birthday: getVal('reg-birthday'), region: getVal('reg-region'), address: getVal('reg-address'), referrerId: window.claimReferrer || '', claimCardId: window.claimCardId || '' };
@@ -791,7 +797,11 @@
       }
       const s1 = document.getElementById('reg-step-1'); if(s1) s1.classList.add('hidden'); 
       const s2 = document.getElementById('reg-step-2'); if(s2) s2.classList.remove('opacity-30', 'pointer-events-none'); 
-    } catch(e) { showToast("註冊失敗", true); } finally { isProcessing = false; setButtonLoading('btn-reg-step1', false, '儲存並繼續'); }
+    } catch(e) { 
+        showToast("註冊失敗", true); 
+    } finally { 
+        setButtonLoading('btn-reg-step1', false, '儲存並繼續'); 
+    }
   }
 
   window.openCropper = async function(input, targetMode) {
@@ -854,10 +864,10 @@
   let currentCategory = '全部活動';
   
   window.reloadActivities = async function() { 
-    if(isProcessing) return; 
-    const btn = document.getElementById('btn-refresh-activities'); 
-    isProcessing = true;
-    if(btn) { btn.classList.add('pointer-events-none', 'opacity-50'); btn.querySelector('span')?.classList.add('refresh-spin'); }
+    const btn = document.getElementById('btn-refresh-activities');
+    if (btn && btn.disabled) return;
+    
+    if(btn) { btn.disabled = true; btn.classList.add('opacity-50'); btn.querySelector('span')?.classList.add('refresh-spin'); }
     
     sessionStorage.removeItem('getActivityDashboard{}'); 
     sessionStorage.removeItem('getPublicActivities{}'); 
@@ -871,8 +881,7 @@
             await loadUserActivities();
         }
     } finally { 
-        isProcessing = false; 
-        if(btn) { btn.classList.remove('pointer-events-none', 'opacity-50'); btn.querySelector('span')?.classList.remove('refresh-spin'); } 
+        if(btn) { btn.disabled = false; btn.classList.remove('opacity-50'); btn.querySelector('span')?.classList.remove('refresh-spin'); } 
     }
   }
 
@@ -998,14 +1007,20 @@
   window.closeActivityDetail = function() { const m = document.getElementById('activity-detail-modal'); if(m) m.classList.add('hidden'); }
 
   async function userJoinActivity(btn, name, feeType, price, batchName = null) {
-    if (isProcessing) return; const confirmMsg = batchName ? `確定報名「${name} - ${batchName}」？` : `確定報名「${name}」？`; if (!confirm(confirmMsg)) return;
-    isProcessing = true; setButtonLoading('detail-modal-join-btn', true);
+    if (btn && btn.disabled) return;
+    const confirmMsg = batchName ? `確定報名「${name} - ${batchName}」？` : `確定報名「${name}」？`; if (!confirm(confirmMsg)) return;
+    
+    setButtonLoading('detail-modal-join-btn', true);
     try {
       await fetchAPI('joinActivity', { userId: userProfile.userId, activityName: name, batchName: batchName, price: price });
       sessionStorage.removeItem('getActivityDashboard{}'); 
       if (feeType === '收費' || parseInt(price) > 0) showModal("報名成功", `請完成匯款 NT$ ${price} 後，至「報名紀錄」填寫後五碼。`, "history");
       else showModal("報名成功", `期待活動現場見到您！`, "activities");
-    } catch(e) { showToast(e.message, true); } finally { isProcessing = false; setButtonLoading('detail-modal-join-btn', false, '我要報名'); }
+    } catch(e) { 
+        showToast(e.message, true); 
+    } finally { 
+        setButtonLoading('detail-modal-join-btn', false, '我要報名'); 
+    }
   }
 
   async function loadUserHistory() {
@@ -1039,19 +1054,37 @@
   }
 
   window.submitLast5 = async function(btn, actName, inputId) { 
-    if(isProcessing) return; const el = document.getElementById(`pay-${inputId}`); if(!el) return; const val = el.value; if(!val || val.length < 4) return; 
-    isProcessing = true; setButtonLoading(btn.id, true);
-    try { await fetchAPI('updateLast5Digits', { userId: userProfile.userId, activityName: actName, last5Digits: val }); sessionStorage.removeItem('getUserHistory{"userId":"' + userProfile.userId + '"}'); await loadUserHistory(); } catch(e) { showToast("錯誤", true); } finally { isProcessing = false; setButtonLoading(btn.id, false, '回報'); }
+    if(btn && btn.disabled) return;
+    const el = document.getElementById(`pay-${inputId}`); if(!el) return; 
+    const val = el.value; if(!val || val.length < 4) return; 
+    
+    setButtonLoading(btn.id, true);
+    try { 
+        await fetchAPI('updateLast5Digits', { userId: userProfile.userId, activityName: actName, last5Digits: val }); 
+        sessionStorage.removeItem('getUserHistory{"userId":"' + userProfile.userId + '"}'); 
+        await loadUserHistory(); 
+    } catch(e) { 
+        showToast("錯誤", true); 
+    } finally { 
+        setButtonLoading(btn.id, false, '回報'); 
+    }
   }
 
   window.userCancelRegistration = async function(btn, actName) { 
-    if(isProcessing) return; if(!confirm(`確定要取消？`)) return; isProcessing = true; setButtonLoading(btn.id, true);
+    if(btn && btn.disabled) return;
+    if(!confirm(`確定要取消？`)) return; 
+    
+    setButtonLoading(btn.id, true);
     try { 
         await fetchAPI('cancelRegistration', { userId: userProfile.userId, activityName: actName }); 
         sessionStorage.removeItem('getUserHistory{"userId":"' + userProfile.userId + '"}'); 
         sessionStorage.removeItem('getActivityDashboard{}'); 
         await loadUserHistory(); 
-    } catch(e) { showToast("取消失敗", true); } finally { isProcessing = false; setButtonLoading(btn.id, false, '取消'); }
+    } catch(e) { 
+        showToast("取消失敗", true); 
+    } finally { 
+        setButtonLoading(btn.id, false, '取消'); 
+    }
   }
 
   window.renderProfileSocials = function() {
@@ -1079,11 +1112,26 @@
   }
   
   window.submitProfileUpdate = async function() { 
-    if(isProcessing) return; isProcessing = true; setButtonLoading('btn-save-profile', true);
+    if(isProcessing) return; 
+    isProcessing = true; 
+    setButtonLoading('btn-save-profile', true);
+    
     const getVal = (id) => document.getElementById(id)?.value.trim() || '';
     const validSocials = profileSocials.map(s => s.trim()).filter(Boolean).join(',');
     const p = { userId: userProfile.userId, name: getVal('edit-name') || userProfile.displayName, gender: getVal('edit-gender'), phone: getVal('edit-phone'), industry: getVal('edit-industry'), birthday: getVal('edit-birthday'), region: getVal('edit-region'), address: getVal('edit-address'), social: validSocials }; 
-    try { await fetchAPI('updateUser', p); registeredInfo = p; checkMyCardEntry(); showToast("儲存成功"); window.toggleProfileForm(); } catch(e) { showToast("更新失敗: " + e.message, true); } finally { isProcessing = false; setButtonLoading('btn-save-profile', false, '儲存設定'); }
+    
+    try { 
+        await fetchAPI('updateUser', p); 
+        registeredInfo = p; 
+        checkMyCardEntry(); 
+        showToast("儲存成功"); 
+        window.toggleProfileForm(); 
+    } catch(e) { 
+        showToast("更新失敗: " + e.message, true); 
+    } finally { 
+        isProcessing = false; 
+        setButtonLoading('btn-save-profile', false, '儲存設定'); 
+    }
   }
 
   window.openAdminRegistrants = async function(actName) {
@@ -1119,25 +1167,38 @@
   }
 
   window.toggleCheckIn = async function(btn, rowId, currentStatus) { 
-    if(isProcessing) return; isProcessing = true; setButtonLoading(btn.id, true);
+    if(btn && btn.disabled) return;
+    setButtonLoading(btn.id, true);
     try { 
         await fetchAPI('toggleStatus', { activityName: activeActivityName, rowId: rowId, currentStatus: currentStatus }); 
         const reg = currentRegistrants.find(r => r.rowId === rowId); if(reg) reg.checkedIn = !currentStatus; 
         sessionStorage.removeItem('getActivityDashboard{}'); 
         renderAdminRegList(currentRegistrants); 
-    } catch(e) { } finally { isProcessing = false; }
+    } catch(e) { 
+    } finally { 
+        setButtonLoading(btn.id, false, currentStatus ? '已簽到' : '手動簽到');
+    }
   }
 
   window.updatePayStatus = async function(rowId, val) { try { await fetchAPI('updateCellStatus', { activityName: activeActivityName, rowId: rowId, colName: '繳費', val: val }); const reg = currentRegistrants.find(r => r.rowId === rowId); if(reg) reg.payStatus = val; } catch(e) {} }
   
   window.submitWalkIn = async function() { 
-    if(isProcessing) return; const el = document.getElementById('f-walkin-name'); if(!el) return; const name = el.value; if(!name) return; isProcessing = true; setButtonLoading('btn-walkin', true);
+    const el = document.getElementById('f-walkin-name'); if(!el) return; 
+    const name = el.value; if(!name) return; 
+    const btnId = 'btn-walkin';
+    
+    if(document.getElementById(btnId).disabled) return;
+    setButtonLoading(btnId, true);
+    
     try { 
         await fetchAPI('addWalkIn', { activityName: activeActivityName, name: name }); 
         el.value = ''; const m = document.getElementById('walkin-modal'); if(m) m.classList.add('hidden'); 
         sessionStorage.removeItem('getActivityDashboard{}'); 
         await openAdminRegistrants(activeActivityName); 
-    } catch(e) {} finally { isProcessing = false; setButtonLoading('btn-walkin', false, '新增並簽到'); }
+    } catch(e) {
+    } finally { 
+        setButtonLoading(btnId, false, '新增並簽到'); 
+    }
   }
 
   async function loadAdminStats() {
@@ -1191,9 +1252,19 @@
   async function loadAdminSettings() { const s = await fetchAPI('getSettings'); const t1 = document.getElementById('set-tg-token'); if(t1) t1.value = s.TG_BOT_TOKEN || ''; const t2 = document.getElementById('set-tg-chat'); if(t2) t2.value = s.TG_CHAT_ID || ''; const l = document.getElementById('set-line-link'); if(l) l.value = s.LINE_LINK || ''; }
   window.autoFetchTgChatId = async function() { const t1 = document.getElementById('set-tg-token'); if(!t1) return; const token = t1.value; if(!token) return; const t2 = document.getElementById('set-tg-chat'); if(t2) { t2.value = "獲取中..."; try { t2.value = await fetchAPI('getTgChatId', { token }); } catch(e) { t2.value = ""; } } }
   window.submitSettings = async function() { 
-    if(isProcessing) return; isProcessing = true; setButtonLoading('btn-submit-settings', true);
+    const btnId = 'btn-submit-settings';
+    if(document.getElementById(btnId).disabled) return;
+    
+    setButtonLoading(btnId, true);
     const getVal = (id) => document.getElementById(id)?.value || '';
-    try { await fetchAPI('saveSettings', { TG_BOT_TOKEN: getVal('set-tg-token'), TG_CHAT_ID: getVal('set-tg-chat'), LINE_LINK: getVal('set-line-link') }); showToast('已儲存'); } catch(e) { showToast("儲存失敗", true); } finally { isProcessing = false; setButtonLoading('btn-submit-settings', false, '儲存設定'); }
+    try { 
+        await fetchAPI('saveSettings', { TG_BOT_TOKEN: getVal('set-tg-token'), TG_CHAT_ID: getVal('set-tg-chat'), LINE_LINK: getVal('set-line-link') }); 
+        showToast('已儲存'); 
+    } catch(e) { 
+        showToast("儲存失敗", true); 
+    } finally { 
+        setButtonLoading(btnId, false, '儲存設定'); 
+    }
   }
 </script>
 </body>

@@ -1,4 +1,4 @@
-<!-- Version: v8.1.4 (QQ 終極防爆版：升級純 Base64 SVG，徹底阻斷上傳崩潰迴圈) -->
+<!-- Version: v8.1.5 (QQ 終極防掛版：拔除 isProcessing 變數，改用按鈕層級獨立鎖定防止死鎖) -->
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -334,7 +334,6 @@
     const LIFF_ID = "2009367829-DLtYBDUm";
     const API_URL = "https://actmaster.fangwl591021.workers.dev";
     
-    // ⭐ 防爆修復：改用純 Base64 編碼的 SVG 佔位符，徹底解決 HTML/JS 字串衝突與上傳解析崩潰
     const SVG_AVATAR = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxMDAnIGhlaWdodD0nMTAwJyB2aWV3Qm94PScwIDAgMTAwIDEwMCc+PGNpcmNsZSBjeD0nNTAnIGN5PSc1MCcgcj0nNTAnIGZpbGw9JyNlMmU4ZjAnLz48cGF0aCBkPSdNNTAgNTVjLTExIDAtMjAgOS0yMCAyMHY1aDQwdi01YzAtMTEtOS0yMC0yMC0yMHptMC0yNWMtOC4zIDAtMTUgNi43LTE1IDE1czYuNyAxNSAxNSAxNSAxNS02LjcgMTUtMTUtNi43LTE1LTE1LTE1eicgZmlsbD0nIzk0YTNiOCcvPjwvc3ZnPg==";
     const SVG_COVER = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSc0MDAnIGhlaWdodD0nMjYwJyB2aWV3Qm94PScwIDAgNDAwIDI2MCc+PHJlY3Qgd2lkdGg9JzQwMCcgaGVpZ2h0PScyNjAnIGZpbGw9JyNmMWY1ZjknLz48cGF0aCBkPSdNMTUwIDEzMGwzMC00MCA0MCA1MCAyMC0yNSA0MCA1MEgxMjB6JyBmaWxsPScjY2JkNWUxJy8+PGNpcmNsZSBjeD0nMTYwJyBjeT0nOTAnIHI9JzE1JyBmaWxsPScjY2JkNWUxJy8+PC9zdmc+";
 
@@ -346,7 +345,8 @@
     let currentPageNum = 1;
     let cropper = null;
     let currentCropCallback = null;
-    let isProcessing = false;
+    
+    // ⭐ 防爆修復：移除全域 isProcessing，完全改用 btn.disabled 防範死鎖
     
     window.v2Socials = [];
     window.v2Bars = [];
@@ -563,10 +563,18 @@
 
     window.closeEditModal = function() { document.getElementById('cardEditModal').classList.add('hidden'); }
 
+    // ⭐ 防爆修復：拔除 isProcessing 變數，改用按鈕層級獨立鎖定
     window.saveEdit = async function() {
-        if(isProcessing) return; isProcessing = true;
         const btn = document.getElementById('saveEditBtn');
-        const oriTxt = btn.innerText; btn.innerText = "儲存中..."; btn.classList.add('opacity-50');
+        if (btn && btn.disabled) return;
+        
+        let oriTxt = '';
+        if (btn) {
+            oriTxt = btn.innerText;
+            btn.disabled = true;
+            btn.innerText = "儲存中...";
+            btn.classList.add('opacity-50');
+        }
 
         const payload = {
             rowId: currentCard.rowId,
@@ -593,14 +601,25 @@
             window.openCardDetail(allCards.find(c => String(c.rowId) === String(currentCard.rowId)));
         } catch(e) { 
         } finally {
-            btn.innerText = oriTxt; btn.classList.remove('opacity-50'); isProcessing = false;
+            if (btn) {
+                btn.innerText = oriTxt;
+                btn.classList.remove('opacity-50');
+                btn.disabled = false;
+            }
         }
     }
 
     window.saveCard = async function() {
-        if(isProcessing) return; isProcessing = true;
         const btn = document.getElementById('saveCardBtn');
-        const oriTxt = btn.innerText; btn.innerText = '💾 儲存中...'; btn.classList.add('opacity-50');
+        if (btn && btn.disabled) return;
+        
+        let oriTxt = '';
+        if (btn) {
+            oriTxt = btn.innerText;
+            btn.disabled = true;
+            btn.innerText = '💾 儲存中...';
+            btn.classList.add('opacity-50');
+        }
         
         try {
             const payload = {
@@ -620,15 +639,26 @@
             await window.loadCards();
         } catch(e) {
         } finally {
-            btn.innerText = oriTxt; btn.classList.remove('opacity-50'); isProcessing = false;
+            if (btn) {
+                btn.innerText = oriTxt;
+                btn.classList.remove('opacity-50');
+                btn.disabled = false;
+            }
         }
     };
 
     window.shareClaimLink = async function() {
-        if (!currentCard || isProcessing) return;
-        isProcessing = true;
+        if (!currentCard) return;
         const btn = document.getElementById('shareClaimBtn');
-        const oriTxt = btn.innerText; btn.innerText = "發送中..."; btn.classList.add('opacity-50');
+        if (btn && btn.disabled) return;
+
+        let oriTxt = '';
+        if (btn) {
+            oriTxt = btn.innerText;
+            btn.disabled = true;
+            btn.innerText = "發送中...";
+            btn.classList.add('opacity-50');
+        }
         
         const url = `https://liff.line.me/${LIFF_ID}/?view=user-profile&claimCardId=${currentCard.rowId}`;
         const altText = "您的專屬數位名片認領邀請";
@@ -658,7 +688,13 @@
         } catch(e) { 
             window.fallbackShare(url, altText);
         }
-        finally { btn.innerText = oriTxt; btn.classList.remove('opacity-50'); isProcessing = false; }
+        finally { 
+            if (btn) {
+                btn.innerText = oriTxt;
+                btn.classList.remove('opacity-50');
+                btn.disabled = false;
+            }
+        }
     }
 
     // ======================== 數位名片編輯器 (三版型) ========================
@@ -765,7 +801,6 @@
     window.addSocial = function() { window.v2Socials.push({ label: '', url: '' }); window.renderSocials(); window.updatePreview(); }
     window.addBar = function() { window.v2Bars.push({ text: '', url: '' }); window.renderBars(); window.updatePreview(); }
 
-    // ⭐ 防爆修復：復原 HTML 跳脫函式，確保不會替換成錯誤的字元
     window.escapeHtml = function(str) { 
         if (!str) return ''; 
         return String(str).replace(/[&<>]/g, function(m) { 
@@ -855,14 +890,21 @@
         if (mobileContainer) mobileContainer.innerHTML = htmlContent;
     }
 
-    window.saveEcardConfig = async function() {
-        if(isProcessing) return; isProcessing = true;
+    // ⭐ 防爆修復：改用 btn.disabled 防禦機制取代全域 isProcessing
+    window.saveEcardConfig = async function(isSilent = false) {
         const btn = document.getElementById('saveEcardConfigBtn');
-        const oriTxt = btn.innerText; btn.innerText = "上傳/儲存中..."; btn.classList.add('opacity-50');
+        if (!isSilent && btn && btn.disabled) return;
+
+        let oriTxt = '';
+        if (!isSilent && btn) {
+            oriTxt = btn.innerText;
+            btn.disabled = true;
+            btn.innerText = "上傳/儲存中...";
+            btn.classList.add('opacity-50');
+        }
 
         try {
             let imgUrl = document.getElementById('ecard_ImgUrl').value;
-            // ⭐ 防爆修復：確保使用者不慎貼上的「預設佔位圖 SVG」不會被當作新圖片送去後端上傳
             if (imgUrl.startsWith('data:image') && imgUrl !== SVG_COVER && imgUrl !== SVG_AVATAR) {
                 imgUrl = await window.callAPI('uploadImage', { base64Image: imgUrl });
                 document.getElementById('ecard_ImgUrl').value = imgUrl; 
@@ -905,7 +947,11 @@
             
         } catch(e) { 
         } finally {
-            btn.innerText = oriTxt; btn.classList.remove('opacity-50'); isProcessing = false;
+            if (!isSilent && btn) {
+                btn.innerText = oriTxt;
+                btn.classList.remove('opacity-50');
+                btn.disabled = false;
+            }
         }
     }
 
@@ -976,14 +1022,68 @@
         }
     }
 
-    // ⭐ 轉發至 LINE：導入防彈 Flex 驗證與環境降級
-    window.shareToLine = async function() {
-        if(isProcessing) return; isProcessing = true;
-        const btn = document.getElementById('shareLineBtn');
-        const oriTxt = btn.innerHTML; btn.innerHTML = "📤 產生中..."; btn.classList.add('opacity-50');
+    // ⭐ 修復唯讀 Modal 轉發按鈕：補上遺失的 buildFlexMessage 關聯
+    window.shareReadOnlyCardToLine = async function(btnEl) {
+        const btnShare = btnEl || document.querySelector('#readonly-card-modal button:last-child');
+        if (btnShare && btnShare.disabled) return;
+
+        let originalHTML = '';
+        if (btnShare) {
+            originalHTML = btnShare.innerHTML;
+            btnShare.disabled = true;
+            btnShare.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> 處理中...';
+            btnShare.classList.add('opacity-70');
+        }
 
         try {
-            await window.saveEcardConfig(); 
+            let config = {};
+            if (currentActiveCard && currentActiveCard['自訂名片設定']) { 
+                try { config = JSON.parse(currentActiveCard['自訂名片設定']); } catch(e){} 
+            }
+            
+            // 呼叫統一的 Flex 產生引擎
+            const flexMessageObj = window.buildFlexMessage(currentActiveCard, config);
+            const altText = config.altText || '這是我的電子名片，請多指教';
+            const shareUrl = `https://liff.line.me/${LIFF_ID}?shareCardId=${currentActiveCard.rowId}`;
+
+            if (liff.isApiAvailable('shareTargetPicker')) {
+                try {
+                    const res = await liff.shareTargetPicker([{ type: 'flex', altText, contents: flexMessageObj }]);
+                    if (res) {
+                        window.showToast('🚀 數位名片已成功轉發！');
+                        setTimeout(() => liff.closeWindow(), 1500);
+                    }
+                } catch(e) {
+                    window.fallbackShare(shareUrl, altText);
+                }
+            } else {
+                window.fallbackShare(shareUrl, altText);
+            }
+        } catch(err) {
+            alert("發生錯誤：" + err.message);
+        } finally {
+            if (btnShare) {
+                btnShare.innerHTML = originalHTML;
+                btnShare.disabled = false;
+                btnShare.classList.remove('opacity-70');
+            }
+        }
+    }
+
+    window.shareToLine = async function() {
+        const btn = document.getElementById('shareLineBtn');
+        if (btn && btn.disabled) return;
+
+        let oriTxt = '';
+        if (btn) {
+            oriTxt = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = "📤 產生中...";
+            btn.classList.add('opacity-50');
+        }
+
+        try {
+            await window.saveEcardConfig(true); // silent save
             let config = {};
             if (currentCard['自訂名片設定']) try { config = JSON.parse(currentCard['自訂名片設定']); } catch(e){}
 
@@ -1007,7 +1107,11 @@
         } catch(e) {
             window.showToast("分享失敗", true);
         } finally {
-            btn.innerHTML = oriTxt; btn.classList.remove('opacity-50'); isProcessing = false;
+            if (btn) {
+                btn.innerHTML = oriTxt;
+                btn.classList.remove('opacity-50');
+                btn.disabled = false;
+            }
         }
     }
 
@@ -1049,8 +1153,17 @@
     window.fetchVoomData = async function() {
         const url = document.getElementById('voomUrl').value;
         if(!url) return window.showToast('請輸入網址', true);
+        
         const btn = document.getElementById('fetchVoomBtn');
-        const oriTxt = btn.innerText; btn.innerText = '解析中...'; btn.classList.add('opacity-50');
+        if (btn && btn.disabled) return;
+
+        let oriTxt = '';
+        if (btn) {
+            oriTxt = btn.innerText;
+            btn.disabled = true;
+            btn.innerText = '解析中...';
+            btn.classList.add('opacity-50');
+        }
         try {
             const data = await window.callAPI('getLineVoomMedia', { url });
             document.getElementById('voomPlayer').src = data.video.videoUrl;
@@ -1059,7 +1172,11 @@
             document.getElementById('voomResult').classList.remove('hidden');
         } catch(e) {
         } finally {
-            btn.innerText = oriTxt; btn.classList.remove('opacity-50');
+            if (btn) {
+                btn.innerText = oriTxt;
+                btn.classList.remove('opacity-50');
+                btn.disabled = false;
+            }
         }
     }
 
@@ -1074,9 +1191,19 @@
     }
 
     window.batchRegenerate = async function() {
-        if (!confirm("系統將「重新讀取」所有名片的聯絡資料，並自動更新數位名片設定。確定要執行嗎？")) return;
         const btn = document.getElementById('batchRegenBtn');
-        btn.innerHTML = '🔄 處理中...'; btn.classList.add('pointer-events-none', 'opacity-50');
+        if (btn && btn.disabled) return;
+
+        if (!confirm("系統將「重新讀取」所有名片的聯絡資料，並自動更新數位名片設定。確定要執行嗎？")) return;
+        
+        let oriTxt = '';
+        if (btn) {
+            oriTxt = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '🔄 處理中...';
+            btn.classList.add('pointer-events-none', 'opacity-50');
+        }
+
         let count = 0;
         try {
             for(let c of allCards) {
@@ -1096,7 +1223,11 @@
             window.showToast(`✅ 更新了 ${count} 張名片按鈕`);
             window.loadCards();
         } catch(e) { window.showToast("錯誤", true); } finally {
-            btn.innerHTML = '🔄 批次更新名片按鈕'; btn.classList.remove('pointer-events-none', 'opacity-50');
+            if (btn) {
+                btn.innerHTML = oriTxt;
+                btn.classList.remove('pointer-events-none', 'opacity-50');
+                btn.disabled = false;
+            }
         }
     }
 

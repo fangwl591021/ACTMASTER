@@ -1,6 +1,6 @@
 /**
  * card-ecard.js
- * Version: v20260419_1545 (QQ 防爆分離版：完美修復傳輸截斷與 SyntaxError)
+ * Version: v20260419_1630 (QQ 防爆分離版：完美補齊唯讀視圖轉發引擎)
  */
 
 const SVG_AVATAR = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxMDAnIGhlaWdodD0nMTAwJyB2aWV3Qm94PScwIDAgMTAwIDEwMCc+PGNpcmNsZSBjeD0nNTAnIGN5PSc1MCcgcj0nNTAnIGZpbGw9JyNlMmU4ZjAnLz48cGF0aCBkPSdNNTAgNTVjLTExIDAtMjAgOS0yMCAyMHY1aDQwdi01YzAtMTEtOS0yMC0yMC0yMHptMC0yNWMtOC4zIDAtMTUgNi43LTE1IDE1czYuNyAxNSAxNSAxNSAxNS02LjcgMTUtMTUtNi43LTE1LTE1LTE1eicgZmlsbD0nIzk0YTNiOCcvPjwvc3ZnPg==";
@@ -186,7 +186,6 @@ window.openECardGenerator = function() {
       
         const safeSetValue = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
 
-        // 智能萃取聯絡資訊
         let autoExtractedBtns = [];
         let autoExtractedSocials = [];
 
@@ -454,7 +453,7 @@ window.buildFlexMessageFromCard = function(card, config, dynamicAr = null) {
 
     let imgUrl = config?.imgUrl || card['名片圖檔'];
     if (!imgUrl || !imgUrl.startsWith('http')) imgUrl = 'https://images.unsplash.com/photo-1616628188550-808682f3926d?w=800&q=80';
-    imgUrl = window.getDirectImageUrl(imgUrl);
+    if(typeof window.getDirectImageUrl === 'function') imgUrl = window.getDirectImageUrl(imgUrl);
     
     let safeImgActionUrl = sanitizeUri(config?.imgActionUrl || `https://liff.line.me/${LIFF_ID}`);
     let buttons = config?.buttons || [];
@@ -497,8 +496,11 @@ window.shareECardToLine = async function() {
       let rawUrl = imgInput ? imgInput.value : '';
       if (!rawUrl) rawUrl = currentActiveCard['名片圖檔'] || 'https://images.unsplash.com/photo-1616628188550-808682f3926d?w=800&q=80';
       
-      const currentImgUrl = window.getDirectImageUrl(rawUrl);
-      const detectedAr = await window.getTrueAspectRatio(currentImgUrl);
+      let currentImgUrl = rawUrl;
+      if(typeof window.getDirectImageUrl === 'function') currentImgUrl = window.getDirectImageUrl(rawUrl);
+      
+      let detectedAr = "20:13";
+      if(typeof window.getTrueAspectRatio === 'function') detectedAr = await window.getTrueAspectRatio(currentImgUrl);
 
       const flexMessageObj = window.buildFlexMessageFromCard(currentActiveCard, config, detectedAr);
       const altText = config.altText || '這是我的電子名片，請多指教';
@@ -506,11 +508,14 @@ window.shareECardToLine = async function() {
   
       if (liff.isApiAvailable('shareTargetPicker')) {
           try {
-              if (typeof window.triggerFlexSharing === 'function') await window.triggerFlexSharing(flexMessageObj, altText);
-              else await liff.shareTargetPicker([{ type: "flex", altText: altText, contents: flexMessageObj }]);
-              window.showToast('✅ 數位名片已發送！');
-              setTimeout(()=> liff.closeWindow(), 1000);
-          } catch(e) { window.fallbackShare(shareUrl, altText); }
+              const res = await liff.shareTargetPicker([{ type: 'flex', altText, contents: flexMessageObj }]);
+              if(res) {
+                  window.showToast('✅ 已發送');
+                  setTimeout(()=> liff.closeWindow(), 1500);
+              }
+          } catch(e) {
+              window.fallbackShare(shareUrl, altText);
+          }
       } else {
           window.fallbackShare(shareUrl, altText);
       }
@@ -521,7 +526,6 @@ window.shareECardToLine = async function() {
     }
 }
 
-// VOOM 轉換器邏輯
 window.openVoomModal = function() { document.getElementById('voomModal')?.classList.remove('hidden'); };
 window.closeVoomModal = function() { document.getElementById('voomModal')?.classList.add('hidden'); };
 
@@ -572,4 +576,61 @@ window.applyVoom = function() {
     window.closeVoomModal();
     window.updateECardPreview();
     window.showToast('✅ 影片已套用至數位名片');
+}
+
+// ⭐ QQ 終極修復：補齊在唯讀名片視圖 (Read-Only) 中，用來發送預設名片的轉發函式
+window.shareReadOnlyCardToLine = async function(btnEl) {
+    const btnShare = btnEl || document.querySelector('#readonly-card-modal button:last-child');
+    let originalHTML = '';
+    if (btnShare) {
+        originalHTML = btnShare.innerHTML;
+        btnShare.innerHTML = '<span class="material-symbols-outlined animate-spin text-[18px] align-middle">refresh</span> 處理中...';
+        btnShare.classList.add('pointer-events-none', 'opacity-70');
+    }
+
+    try {
+        if (!currentActiveCard) throw new Error("無效的名片資料");
+        
+        let config = null;
+        if (currentActiveCard['自訂名片設定']) { 
+            try { config = JSON.parse(currentActiveCard['自訂名片設定']); } catch(e){} 
+        }
+        
+        let rawImg = config?.imgUrl || currentActiveCard['名片圖檔'] || '';
+        if (!rawImg || typeof rawImg !== 'string' || !rawImg.startsWith('http')) {
+            rawImg = 'https://images.unsplash.com/photo-1616628188550-808682f3926d?w=800&q=80';
+        }
+        
+        let currentImgUrl = rawImg;
+        if (typeof window.getDirectImageUrl === 'function') currentImgUrl = window.getDirectImageUrl(rawImg);
+        
+        let detectedAr = "20:13";
+        if (typeof window.getTrueAspectRatio === 'function') detectedAr = await window.getTrueAspectRatio(currentImgUrl);
+        
+        const flexMessageObj = window.buildFlexMessageFromCard(currentActiveCard, config, detectedAr);
+        
+        const altText = (config && config.altText) ? config.altText : '這是我的電子名片，請多指教';
+        const shareUrl = `https://liff.line.me/${LIFF_ID}?shareCardId=${currentActiveCard.rowId}`;
+
+        if (liff.isApiAvailable('shareTargetPicker')) {
+            try {
+                const res = await liff.shareTargetPicker([{ type: 'flex', altText, contents: flexMessageObj }]);
+                if (res) {
+                    window.showToast('🚀 數位名片已成功轉發！');
+                    setTimeout(() => liff.closeWindow(), 1500);
+                }
+            } catch(e) {
+                window.fallbackShare(shareUrl, altText);
+            }
+        } else {
+            window.fallbackShare(shareUrl, altText);
+        }
+    } catch(err) {
+        alert("發生錯誤：" + err.message);
+    } finally {
+        if (btnShare) {
+            btnShare.innerHTML = originalHTML;
+            btnShare.classList.remove('pointer-events-none', 'opacity-70');
+        }
+    }
 }

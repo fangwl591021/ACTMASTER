@@ -1,4 +1,4 @@
-<!-- Version: v2.0.1 (QQ 修復版：補齊全域變數宣告，徹底解決建立活動時 ReferenceError 導致的按鈕空轉問題) -->
+<!-- Version: v2.0.2 (QQ 擴充版：導入深色 Admin 導航列，保持設計一致性) -->
 <!DOCTYPE html>
 <html class="light" lang="zh-TW">
 <head>
@@ -64,7 +64,7 @@
   
   <nav class="fixed top-0 w-full max-w-md z-40 bg-white/90 backdrop-blur-md px-5 py-3.5 flex justify-between items-center left-1/2 -translate-x-1/2 border-b border-slate-100">
     <div class="text-[20px] font-extrabold text-slate-800 tracking-tight flex items-center gap-1">
-      建立活動 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v2.0.1</span>
+      建立活動 <span class="text-[10px] text-primary bg-primary-light px-1.5 py-0.5 rounded ml-1 font-bold tracking-wider">v2.0.2</span>
     </div>
     <button onclick="window.location.href='index.html?view=admin-activities'" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-90 transition-transform">
       <span class="material-symbols-outlined text-[20px]">close</span>
@@ -317,19 +317,16 @@
   const WORKER_URL = "https://actmaster.fangwl591021.workers.dev";
   const ADMIN_IDS = ["Uf729764dbb5b652a5a90a467320bea29", "U58eb5c1a747450140ce1335af709ae55", "U8932b891ad24da512afb9c1a6f41567b"];
   
-  // ⭐ QQ 修復：補齊所有全域變數的宣告
   let batchCount = 0;
   let currentCropTarget = '';
   let cropperInstance = null;
   let userProfile = null;
-  let isProcessing = false;
 
   document.addEventListener("DOMContentLoaded", async () => {
     try {
       await liff.init({ liffId: LIFF_ID });
       if (!liff.isLoggedIn()) { liff.login({ redirectUri: window.location.href }); return; }
       
-      // ⭐ QQ 修復：將取得的 profile 賦值給全域變數 userProfile
       userProfile = await liff.getProfile();
       
       if (!ADMIN_IDS.includes(userProfile.userId)) { 
@@ -482,20 +479,18 @@
       return val.replace('T', ' ');
   };
 
-  // ⭐ QQ 修復：使用全域的 isProcessing 進行連點防護
   async function handleSubmit(mode) { 
-    if(isProcessing) return; 
-    
+    const btnId = `btn-submit-${mode}`;
+    const btn = document.getElementById(btnId);
+    if (btn && btn.disabled) return;
+
     const pfx = mode === 'quick' ? 'q' : (mode === 'full' ? 'f' : 's');
     
     const nameInput = document.getElementById(`${pfx}-name`);
     const name = nameInput ? nameInput.value.trim() : '';
     if(!name) { alert('⚠️ 請填寫活動名稱/標題'); return nameInput?.focus(); }
 
-    const btnId = `btn-submit-${mode}`;
-    const btn = document.getElementById(btnId);
     const oriText = btn ? btn.innerHTML : '建立';
-    isProcessing = true;
     
     if (btn) {
         btn.innerHTML = '<span class="material-symbols-outlined animate-spin align-middle mr-1 text-[20px]">refresh</span> 處理中...';
@@ -515,7 +510,7 @@
       names: [],
       defaultIdentity: document.getElementById(`${pfx}-identity`) ? document.getElementById(`${pfx}-identity`).value : '來賓',
       isBatch: (mode === 'series'),
-      userId: userProfile.userId // ⭐ QQ 修復：此處不再引發 ReferenceError
+      userId: userProfile.userId 
     }; 
     
     if(mode === 'quick' || mode === 'full') {
@@ -524,7 +519,7 @@
       p.price = document.getElementById(`${pfx}-price`) ? document.getElementById(`${pfx}-price`).value : '';
       
       if(p.feeType === '收費' && (!p.price || p.price <= 0)) {
-          isProcessing=false; if(btn){btn.innerHTML = oriText; btn.disabled = false; btn.classList.remove('opacity-70');} return alert("⚠️ 請輸入正確的收費金額");
+          if(btn){btn.innerHTML = oriText; btn.disabled = false; btn.classList.remove('opacity-70');} return alert("⚠️ 請輸入正確的收費金額");
       }
       
       if (mode === 'quick') {
@@ -542,8 +537,8 @@
         limit: card.querySelector('.batch-limit-input').value
       }));
       
-      if(p.batches.length === 0) { isProcessing=false; if(btn){btn.innerHTML = oriText; btn.disabled = false; btn.classList.remove('opacity-70');} return alert("⚠️ 至少需新增一個梯次"); }
-      for(let b of p.batches) { if(!b.name) { isProcessing=false; if(btn){btn.innerHTML = oriText; btn.disabled = false; btn.classList.remove('opacity-70');} return alert("⚠️ 梯次名稱必填"); } }
+      if(p.batches.length === 0) { if(btn){btn.innerHTML = oriText; btn.disabled = false; btn.classList.remove('opacity-70');} return alert("⚠️ 至少需新增一個梯次"); }
+      for(let b of p.batches) { if(!b.name) { if(btn){btn.innerHTML = oriText; btn.disabled = false; btn.classList.remove('opacity-70');} return alert("⚠️ 梯次名稱必填"); } }
       
       if(p.batches.length > 0) {
            p.startTime = p.batches[0].startTime;
@@ -572,7 +567,6 @@
       alert('⚠️ 建立失敗：' + e.message);
     } finally {
       if(btn) { btn.innerHTML = oriText; btn.disabled = false; btn.classList.remove('opacity-70'); }
-      isProcessing = false;
     }
   }
 </script>

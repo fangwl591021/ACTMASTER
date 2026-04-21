@@ -590,61 +590,8 @@
 
         let btns = saved?.buttons || [];
         if(btns.length === 0){
-    window.initEcardModal = function() {
-        window.closeDetail();
-        let saved = null;
-        if(currentCard['自訂名片設定']) try{ saved = JSON.parse(currentCard['自訂名片設定']); }catch(e){}
-        
-        currentEcardType = saved?.cardType || 'image';
-        document.getElementById('ecard_Title').value = saved?.title || currentCard['姓名'] || '';
-        document.getElementById('ecard_Desc').value = saved?.desc || currentCard['服務項目/品牌標語'] || '';
-        document.getElementById('ecard_AltText').value = saved?.altText || '您收到一張數位名片';
-        document.getElementById('ecard_ImgUrl').value = saved?.imgUrl || currentCard['名片圖檔'] || '';
-        document.getElementById('ecard_ActionUrl').value = saved?.imgActionUrl || `https://liff.line.me/2009367829-DLtYBDUm`;
-        document.getElementById('ecard_VideoUrl').value = saved?.videoUrl || '';
-        document.getElementById('ecard_V2LogoUrl').value = saved?.v2LogoUrl || '';
-        
-        if(saved?.v2BgStart) document.getElementById('ecard_V2BgStart').value = saved.v2BgStart;
-        if(saved?.v2BgEnd) document.getElementById('ecard_V2BgEnd').value = saved.v2BgEnd;
-        
-        window.v2Bars = saved?.v2Bars || [];
-        window.renderBars();
-
-        let btns = saved?.buttons || [];
-        
-        // 若沒有儲存過按鈕設定，則自動從名片資料產生
-        if(btns.length === 0){
-            // 1. 手機 / 公司電話 (優先手機)
-            let phone = window.formatPhone(currentCard['手機號碼'] || currentCard['Mobile']);
-            if(!phone) phone = window.formatPhone(currentCard['公司電話'] || currentCard['Tel']);
-            if(phone) btns.push({l:'撥打電話', u:`tel:${phone}`, c:'#06C755'});
-
-            // 2. 電子郵件
-            let email = currentCard['電子郵件'] || currentCard['Email'];
-            if(email) {
-                // 取第一個 email
-                email = String(email).split(/[\s,]+/)[0];
-                if(email.includes('@')) btns.push({l:'發送信箱', u:`mailto:${email}`, c:'#06C755'});
-            }
-
-            // 3. 公司地址 -> Google Maps
-            let address = currentCard['公司地址'] || currentCard['Address'];
-            if(address) {
-                // 取逗號前的地址，避免過長
-                const mapAddr = encodeURIComponent(String(address).split(',')[0]);
-                btns.push({l:'Google 導航', u:`http://googleusercontent.com/maps.google.com/maps?q=${mapAddr}`, c:'#06C755'});
-            }
-
-            // 4. 公司網址
-            let website = currentCard['公司網址'] || currentCard['Website'];
-            if(website && btns.length < 4) {
-                let wUrl = String(website).trim();
-                if(wUrl && !wUrl.startsWith('http')) wUrl = 'https://' + wUrl;
-                if(wUrl) btns.push({l:'公司網站', u:wUrl, c:'#06C755'});
-            }
-            
-            // 確保最多只有 4 個按鈕
-            btns = btns.slice(0, 4);
+            if(currentCard['手機號碼']) btns.push({l:'撥打電話', u:`tel:${window.formatPhone(currentCard['手機號碼'])}`, c:'#06C755'});
+            if(currentCard['電子郵件']) btns.push({l:'發送信箱', u:`mailto:${currentCard['電子郵件']}`, c:'#06C755'});
         }
         
         const btnContainer = document.getElementById('buttonsContainer');

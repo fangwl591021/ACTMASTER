@@ -1,10 +1,17 @@
 /**
  * card.js 
- * Version: v20260419_1810 (QQ 完全體版：負責核心 CRUD、OCR 與 R2 上傳)
+ * Version: v20260419_1810_FIXED (QQ 完整欄位處理版)
  */
 const LIFF_ID = "2009367829-DLtYBDUm"; 
 const WORKER_URL = "https://actmaster.fangwl591021.workers.dev"; 
 const CACHE_KEY_CONTACTS = "app_cache_card_contacts_v1";
+
+// 定義所有需要自動處理的欄位清單 (與 HTML ID 統一對應為 f_欄位名稱)
+const OCR_FIELDS = [
+    'Name', 'EnglishName', 'Title', 'Department', 'CompanyName', 
+    'TaxID', 'Mobile', 'Tel', 'Ext', 'Fax', 'Birthday', 
+    'SocialMedia', 'Address', 'Email', 'Website', 'Slogan', 'Notes'
+];
 
 let compressedBase64 = "";
 let userProfile = null;
@@ -262,6 +269,7 @@ window.cancelCrop = function() {
     document.getElementById('section-image-cropper').classList.add('hidden');
 }
 
+// [關鍵修復 1] confirmCrop：處理完整 OCR 欄位映射
 window.confirmCrop = async function() {
     if (!cropperInstance) return;
     const canvas = cropperInstance.getCroppedCanvas({ maxWidth: 1200 });
@@ -284,15 +292,21 @@ window.confirmCrop = async function() {
     
     try {
         const data = await window.fetchAPI('recognizeCard', { base64Image: b64 });
-        const fields = ['Name', 'CompanyName', 'Mobile', 'Title', 'Slogan', 'Notes'];
-        fields.forEach(f => { 
-            const el = document.getElementById(`f-${f}`); 
-            if(el) { el.value = data[f] || ''; if(f === 'Mobile') el.value = formatPhoneStr(el.value); }
+        
+        // 遍歷所有欄位，若 UI 有對應 ID 則寫入
+        OCR_FIELDS.forEach(f => { 
+            const el = document.getElementById(`f_${f}`); 
+            if(el) { 
+                el.value = data[f] || ''; 
+                // 格式化處理
+                if(f === 'Mobile' || f === 'Tel') el.value = formatPhoneStr(el.value);
+            }
         });
         window.switchProcessSection('section-form');
     } catch(e) { window.resetUI(); }
 }
 
+// [關鍵修復 2] saveToCloud：蒐集所有欄位資料存入雲端
 window.saveToCloud = async function() {
     const btn = document.getElementById('btn-save');
     btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[18px]">refresh</span> 寫入中...';
@@ -305,8 +319,12 @@ window.saveToCloud = async function() {
             base64Image: r2Url,
             userId: userProfile.userId
         };
-        const fields = ['Name', 'CompanyName', 'Mobile', 'Title', 'Slogan', 'Notes'];
-        fields.forEach(f => { payload[f] = document.getElementById(`f-${f}`).value; });
+        
+        // 遍歷所有定義的欄位
+        OCR_FIELDS.forEach(f => { 
+            const el = document.getElementById(`f_${f}`);
+            if(el) payload[f] = el.value;
+        });
         
         await window.fetchAPI('saveCard', payload);
         window.showToast('🎉 名片建立成功！');
